@@ -17,6 +17,7 @@ for cmd in $CMDLINE; do
     esac
 done
 
+#this should be part of the 'base' hook
 msg -n "Loading pci modules..."
 /bin/modprobe -a -q $(/bin/cat /sys/bus/pci/devices/*/modalias) >/dev/null 2>&1 &
 msg "done."
@@ -38,9 +39,11 @@ if [ -e "/hooks" ]; then
         eval "TST=\$${h}"
         if [ "${TST}" != "disabled" ]; then
             run_hook () { msg "$h: no run function defined"; }
-            . $h
-            msg ":: Running Hook [${h##*/}]"
-            run_hook
+            if [ -e "/hooks/$h" ]; then
+               . $h
+               msg ":: Running Hook [${h}]"
+               run_hook
+            fi
         fi
     done
 fi
@@ -71,4 +74,5 @@ if [ "${break}" = "y" ]; then
 fi
 
 # Optimize fs type loop for mounting rootfs
+msg ":: End Initramfs - control passing to kinit"
 exec /bin/kinit rootfstype=${FSTYPE} $CMDLINE < /dev/console > /dev/console

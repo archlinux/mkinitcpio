@@ -11,25 +11,35 @@
 #   incase of embedded spaces, quote all path names and string comaprissons
 #
 # TODO
-#  sudo cp img /boot
 
-HOOKDIR="hooks"
 
 # Settings
 BASEDIR=""
 KERNELVERSION="$(uname -r)"
 CONFIG="mkinitcpio.conf"
+HOOKDIR="hooks"
 SAVELIST=""
 GENIMG=""
 APPEND=""
+QUIET="n"
+
+APPNAME=$(basename "${0}")
 
 usage ()
 {
-    echo "TODO usage..."
+    echo "${APPNAME}: usage"
+    echo "  -c CONFIG        Use CONFIG file. default: /etc/mkinitcpio.conf"
+    echo "  -k KERNELVERSION Use KERNELVERSION. default: $(uname -r)"
+    echo "  -s               Save filelist. default: no"
+    echo "  -b BASEDIR       Use BASEDIR. default: /"
+    echo "  -g IMAGE         Generate a cpio image as IMAGE. default: no"
+    echo "  -a               Append to an existing filelist. default: no"
+    echo "  -q               Quiet output. Default: no"
+    echo "  -h               This message."
     exit 1
 }
 
-while getopts 'c:k:sb:g:a' arg; do
+while getopts 'c:k:sb:g:aqh' arg; do
     case "$arg" in
         c) CONFIG="$OPTARG" ;;
         k) KERNELVERSION="$OPTARG" ;;
@@ -37,7 +47,8 @@ while getopts 'c:k:sb:g:a' arg; do
         b) BASEDIR="$OPTARG" ;;
         g) GENIMG="$OPTARG" ;;
         a) APPEND="y" ;;
-        ?) usage ;;
+        q) QUIET="y" ;;
+        h|?) usage ;;
         *) echo "invalid argument '$arg'"; usage ;;
     esac
 done
@@ -77,7 +88,7 @@ else
     touch "${FILELIST}"
 fi
 
-# this function is a helper for the *-auto install functions
+# Helper functions, just to make syntax clearer
 auto_modules ()
 {
     aliases=$(find /sys/devices/ -name modalias -exec cat {} \;)
@@ -85,18 +96,43 @@ auto_modules ()
         sed "s|insmod \(.*\)|\1|" | sort -u
 }
 
+all_modules ()
+{
+    find ${MODULEDIR} -name *.ko 2>/dev/null | sort -u
+}
+
+msg() { [ "${QUIET}" = "n" ] && echo "${@}"; }
+err() { [ echo "ERROR: ${@}" >2; }
+
 add_dir()
 {
     local dir
-    dir="${1}"
+    dir="$(dirname ${1})"
     if [ "x${dir}" != "x" -a "${dir}" != "/" ]; then
         dir="${dir}" #this got stripped off above... put it back
 
         if ! grep "dir ${dir} " "${FILELIST}" 2>&1 > /dev/null; then
-            add_dir $(dirname ${dir})
-            echo "  adding dir ${dir}"
+            add_dir "${dir}"
+            msg "  adding dir ${dir}"
             echo "dir ${dir} 755 0 0" >> "${FILELIST}"
         fi
+    fi
+}
+
+# add_devnode /dev/foo type major minor [permissions]
+add_devnode()
+{
+    if [ $# -ge 4 ]; then
+        local perms
+        perms="${5:-644}"
+        add_dir "${1}"
+        if ! grep "nod ${1}" "${FILELIST}" 2>&1 > /dev/null; then
+            msg "       adding device node ${1}"
+            echo "nod ${1} ${perms} 0 0 ${2} ${3} ${4}" >> "${FILELIST}"
+        fi
+    else
+        err "invalid device node format: $@" >2
+        return 1
     fi
 }
 
@@ -106,12 +142,14 @@ add_symlink ()
     if [ -L ${1} ]; then
         fil="${1}"
         dest="${fil##$BASEDIR}"
-        dir=$(dirname "${dest}")
-        add_dir "${dir}"
+        add_dir "${dest}"
         if ! grep "slink ${fil} " "${FILELIST}" 2>&1 > /dev/null; then
-            echo "  adding symlink ${dest}"
+            msg "  adding symlink ${dest}"
             echo "slink ${dest} ${fil} $(stat -c '%a %u %g' ${fil})" >> "${FILELIST}"
         fi
+    else
+        err "ERROR: file '${1}' is not a symlink" >2
+        return 1
     fi
 }
 
@@ -131,13 +169,15 @@ add_file ()
             dest="${fil##$BASEDIR}"
         fi
 
-        dir=$(dirname "${dest}")
-        add_dir "${dir}"
+        add_dir "${dest}"
 
         if ! grep "file ${fil} " "${FILELIST}" 2>&1 > /dev/null; then
-            echo "  adding file ${dest}"
+            msg "  adding file ${dest}"
             echo "file ${dest} ${fil} $(stat -c '%a %u %g' ${fil})" >> "${FILELIST}"
         fi
+    else
+        err "file '${1}' does not exist" >2
+        return 1
     fi
 }
 
@@ -168,7 +208,7 @@ add_binary()
     fi
 
     if [ ! -f "${bin}" ]; then
-        echo "add_binary: '${bin}' is not a file"
+        err "'${bin}' is not a file" >2
         return 1
     fi
 
@@ -193,7 +233,7 @@ add_binary()
             done
             ;;
             *)
-            echo "add_binary: unknown type '${type}' for binary '${bin}'"
+            err "unknown type '${type}' for binary '${bin}'" >2
             return 1
             ;;
         esac
@@ -229,12 +269,13 @@ for hook in $HOOKS; do
     unset MODULES
     unset BINARIES
     unset FILES
-    install () { msg "$hook: no install function..."; }
+    install () { msg "${hook}: no install function..."; }
     source "${HOOKDIR}/${hook}"
     install
     parse_hook
     #quick test to check for existance... need a better way...
-    if grep "run_hook" "${HOOKDIR}/${hook}" 2>&1>/dev/null; then
+    # note, this will only pick up valid run_hooks - a space is required
+    if grep "run_hook ()" "${HOOKDIR}/${hook}" 2>&1>/dev/null; then
         add_file "${HOOKDIR}/${hook}" "/hooks/${hook}"
     fi
 done
@@ -246,8 +287,12 @@ if [ "${HAS_MODULES}" == "y" ]; then
 fi
 
 if [ "x$GENIMG" != "x" ]; then
-    gen_init_cpio ${FILELIST} | gzip -9 > "${GENIMG}"
+    if ! gen_init_cpio ${FILELIST} | gzip -9 > "${GENIMG}"; then
+        err "ERROR: Failed to create '${GENIMG}' image" >2
+    fi
+
     if [ "x${SAVELIST}" == "x" ]; then
         rm ${FILELIST}
     fi
 fi
+#vim:set ft=sh ts=4 sw=4 noet:
