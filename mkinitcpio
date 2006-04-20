@@ -93,12 +93,13 @@ auto_modules ()
 {
     aliases=$(find /sys/devices/ -name modalias -exec cat {} \;)
     modprobe --show-depends -a $aliases 2>/dev/null |\
-        sed "s|insmod \(.*\)|\1|" | sort -u
+        sed "s|insmod \(.*\)|\1|" | grep "${1}" | sort -u
 }
 
 all_modules ()
 {
-    find ${MODULEDIR} -name *.ko 2>/dev/null | sort -u
+    find ${MODULEDIR} -name *.ko 2>/dev/null |\
+        grep "${1}" | sort -u
 }
 
 msg() { [ "${QUIET}" = "n" ] && echo "${@}"; }
