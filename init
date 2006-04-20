@@ -1,0 +1,74 @@
+#!/bin/sh
+
+msg () { [ "${quiet}" != "y" ] && echo $@; }
+err () { echo "ERROR: $@"; }
+
+msg ":: Begin Initramfs"
+
+/bin/mount -t sysfs none /sys
+/bin/mount -t proc  none /proc
+
+CMDLINE=$(/bin/cat /proc/cmdline)
+
+for cmd in $CMDLINE; do
+    case "$cmd" in
+        *=*) export "${cmd}" ;;
+        *) export "${cmd}=y" ;;
+    esac
+done
+
+msg -n "Loading pci modules..."
+/bin/modprobe -a -q $(/bin/cat /sys/bus/pci/devices/*/modalias) >/dev/null 2>&1 &
+msg "done."
+
+if [ "x${disablehooks}" != "x" ]; then
+    OLDIFS=$IFS
+    IFS=,
+    for d in ${disablehooks}; do
+        export "${d}=disabled"
+    done
+    IFS=$OLDIFS
+fi
+
+. /config
+
+if [ -e "/hooks" ]; then
+    for h in $HOOKS; do
+        TST=""
+        eval "TST=\$${h}"
+        if [ "${TST}" != "disabled" ]; then
+            run_hook () { msg "$h: no run function defined"; }
+            . $h
+            msg ":: Running Hook [${h##*/}]"
+            run_hook
+        fi
+    done
+fi
+
+msg -n ":: Loading root filesystem module..."
+if [ "x${rootfstype}" != "x" ]; then
+    FSTYPE="${rootfstype}"
+else
+    if [ "x${root}" != "x" ]; then
+        msg "Attempting mkrootdev ${root}"
+        if /bin/mkrootdev "${root}"; then
+            eval $(/bin/fstype < /dev/root)
+        else
+            FSTYPE="unknown"
+            echo "ERROR: mkrootdev failed. Try passing the rootfstype= parameter to the kernel."
+        fi
+    else
+        FSTYPE="unknown"
+        echo "ERROR: root fs cannot be detected. Use the rootfstype= kernel parameter..."
+    fi
+fi
+msg "fs=${FSTYPE}"
+/bin/modprobe -q "${FSTYPE}" 2>&1 >/dev/null
+
+if [ "${break}" = "y" ]; then
+    echo ":: Break requested, type 'exit' to resume operation"
+    PS1="ramfs$ " /bin/sh -i
+fi
+
+# Optimize fs type loop for mounting rootfs
+exec /bin/kinit rootfstype=${FSTYPE} $CMDLINE < /dev/console > /dev/console

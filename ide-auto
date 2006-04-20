@@ -1,0 +1,35 @@
+# vim: set ft=sh:
+
+install ()
+{
+    MODULES=""
+    for m in $(auto_modules | grep "/ide/");
+    do
+        MODULES="$MODULES $(basename $m)"
+    done
+    BINARIES=""
+    FILES=""
+}
+
+run_hook ()
+{
+    if [ -e /proc/ide ]; then
+        msg -n "Loading ide modules..."
+        /bin/modprobe -q ide-generic 2>&1 >/dev/null
+        for d in /proc/ide/*; do
+            unit=${d#/proc/ide/}
+            if [ -e "${d}/media" -a ! -d "/sys/block/${unit}" ]; then
+                read m < "${d}/media"
+                case "${m}" in
+                    disk)   /bin/modprobe -q ide-disk   2>&1 >/dev/null ;;
+                    cdrom)  /bin/modprobe -q ide-cd     2>&1 >/dev/null ;;
+                    tape)   /bin/modprobe -q ide-tape   2>&1 >/dev/null ;;
+                    floppy) /bin/modprobe -q ide-floppy 2>&1 >/dev/null ;;
+                esac
+            fi
+        done
+        msg "done"
+    else
+        err "no ide devices detected..."
+    fi
+}
