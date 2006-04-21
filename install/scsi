@@ -1,0 +1,20 @@
+# vim: set ft=sh:
+
+install ()
+{
+    MODULES=" $(all_modules "/scsi/" | grep -v "ata") 
+              $(all_modules "/block/")
+              $(all_modules "/fusion/")"
+    BINARIES=""
+    FILES=""
+    SCRIPT="scsi"
+}
+
+help ()
+{
+cat<<HELPEOF
+  This hook loads the necessary modules for an scsi root device.
+  Detection will take place at runtime. To minimize the modules
+  in the image, use the -auto flavor.
+HELPEOF
+}

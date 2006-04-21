@@ -1,0 +1,32 @@
+# vim:set ft=sh:
+
+install ()
+{
+    add_dir "/proc"
+    add_dir "/sys"
+    add_dir "/dev"
+
+    add_nod "/dev/null"    644 c 1 3
+    add_nod "/dev/zero"    644 c 1 5
+    add_nod "/dev/console" 644 c 5 1
+
+    for f in /lib -name klibc-*.so; do
+        add_file $f
+    done
+
+    for f in /usr/lib/klibc/bin/*; do
+        add_file $f /bin/$(basename $f)
+    done
+
+    add_file "/lib/initramfs/init" "/init"
+    add_file "${CONFIG}" "/config"
+}
+
+help ()
+{
+cat <<HELPEOF
+  This hook sets up all initial directories and installs base
+  klibc utilities and libraries.  DO NOT remove this one unless
+  you know what you're doing.
+HELPEOF
+}

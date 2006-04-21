@@ -1,0 +1,13 @@
+# vim:set ft=sh:
+run_hook ()
+{
+    fmtdevice () { echo "${1}:${2}"; }
+    if [ -e /sys/power/resume ]; then
+        if [ -e "${resume}" ]; then
+            dev_t=$( /bin/parseblock "${resume}" )
+            fmtdevice ${dev_t} > /sys/power/resume
+        fi
+
+        [ -e /proc/suspend2 ] && echo "" > /proc/suspend2/do_resume
+    fi
+}

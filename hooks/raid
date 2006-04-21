@@ -1,0 +1,17 @@
+# vim: set ft=sh:
+
+# kinit handles md/raid assembly
+#   we just need modules
+
+install ()
+{
+    MODULES=" $(find "${MODULEDIR}/kernel/drivers/md/" -name *.ko) md raid0 raid1 raid2 raid5 raid6"
+    BINARIES=""
+    FILES=""
+}
+
+run_hook ()
+{
+    #TODO
+    /bin/modprobe -aq raid0 raid1 raid2 raid5 raid6
+}

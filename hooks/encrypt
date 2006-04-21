@@ -1,0 +1,17 @@
+# vim: set ft=sh:
+run_hook ()
+{
+    echo ""
+    echo "A password is required to access the root filesystem:"
+    echo -n "password: "
+    if /bin/cryptsetup.static isLuks ${root} >/dev/null 2>&1; then
+        /bin/cryptsetup.static luksOpen ${root} root
+    else
+        /bin/cryptsetup create root ${root}
+    fi
+
+    if [ $? != 0 ]; then
+        echo "ERROR: Password Verification Failed"
+        exit 1
+    fi
+}

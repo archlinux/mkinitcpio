@@ -1,0 +1,34 @@
+# vim: set ft=sh:
+run_hook ()
+{
+    if [ -e /sys/bus/scsi/devices/ ]; then
+        msg -n "Loading scsi modules..."
+        for d in /sys/bus/scsi/devices/*; do
+            if [ -e "${d}/type" ]; then
+                read m < "${d}/type"
+                case "$m" in
+                    0)   /bin/modprobe -q sd_mod 2>&1 >/dev/null ;;
+                    # this below is take from the Arch udev rules
+                    1)   read vendor < "${d}/vendor"
+                         if [ "${vendor}" = "Onstream" ]; then
+                             read model < "${d}/model"
+                             case "$model" in
+                                 ADR*) /bin/modprobe -q st >/dev/null 2>&1;;
+                                 *) /bin/modprobe -q osst >/dev/null 2>&1;;
+                             esac
+                         else
+                             /bin/modprobe -q st >/dev/null 2>&1
+                         fi
+                         ;;
+                    2|3) /bin/modprobe -q sg     >/dev/null 2>&1;;
+                    4|5) /bin/modprobe -q sr_mod >/dev/null 2>&1;;
+                    6)   /bin/modprobe -q sg     >/dev/null 2>&1;;
+                    7)   /bin/modprobe -q sd_mod >/dev/null 2>&1;;
+                    8|9) /bin/modprobe -q sg     >/dev/null 2>&1;;
+                    14)  /bin/modprobe -q sd_mod >/dev/null 2>&1;;
+                esac
+            fi
+        done
+        msg "done."
+    fi
+}

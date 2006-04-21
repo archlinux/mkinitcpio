@@ -8,9 +8,10 @@
 #   variables should be quoted and bracketed "${SOMEVAR}"
 #   inline execution should be done with $() instead of backticks
 #   use "x${var}" = "x" to test for nulls/empty strings
-#   incase of embedded spaces, quote all path names and string comaprissons
+#   incase of embedded spaces, quote all path names and string comarpisons
 #
 # TODO
+# hook help: help() function in install script, "-h base" 
 
 
 # Settings
@@ -18,6 +19,7 @@ BASEDIR=""
 KERNELVERSION="$(uname -r)"
 CONFIG="mkinitcpio.conf"
 HOOKDIR="hooks"
+INSTDIR="install"
 SAVELIST=""
 GENIMG=""
 APPEND=""
@@ -88,181 +90,6 @@ else
     touch "${FILELIST}"
 fi
 
-# Helper functions, just to make syntax clearer
-auto_modules ()
-{
-    aliases=$(find /sys/devices/ -name modalias -exec cat {} \;)
-    modprobe --show-depends -a $aliases 2>/dev/null |\
-        sed "s|insmod \(.*\)|\1|" | grep "${1}" | sort -u
-}
-
-all_modules ()
-{
-    find ${MODULEDIR} -name *.ko 2>/dev/null |\
-        grep "${1}" | sort -u
-}
-
-msg() { [ "${QUIET}" = "n" ] && echo "${@}"; }
-err() { [ echo "ERROR: ${@}" >2; }
-
-add_dir()
-{
-    local dir
-    dir="$(dirname ${1})"
-    if [ "x${dir}" != "x" -a "${dir}" != "/" ]; then
-        dir="${dir}" #this got stripped off above... put it back
-
-        if ! grep "dir ${dir} " "${FILELIST}" 2>&1 > /dev/null; then
-            add_dir "${dir}"
-            msg "  adding dir ${dir}"
-            echo "dir ${dir} 755 0 0" >> "${FILELIST}"
-        fi
-    fi
-}
-
-# add_devnode /dev/foo type major minor [permissions]
-add_devnode()
-{
-    if [ $# -ge 4 ]; then
-        local perms
-        perms="${5:-644}"
-        add_dir "${1}"
-        if ! grep "nod ${1}" "${FILELIST}" 2>&1 > /dev/null; then
-            msg "       adding device node ${1}"
-            echo "nod ${1} ${perms} 0 0 ${2} ${3} ${4}" >> "${FILELIST}"
-        fi
-    else
-        err "invalid device node format: $@" >2
-        return 1
-    fi
-}
-
-add_symlink ()
-{
-    local fil dest dir
-    if [ -L ${1} ]; then
-        fil="${1}"
-        dest="${fil##$BASEDIR}"
-        add_dir "${dest}"
-        if ! grep "slink ${fil} " "${FILELIST}" 2>&1 > /dev/null; then
-            msg "  adding symlink ${dest}"
-            echo "slink ${dest} ${fil} $(stat -c '%a %u %g' ${fil})" >> "${FILELIST}"
-        fi
-    else
-        err "ERROR: file '${1}' is not a symlink" >2
-        return 1
-    fi
-}
-
-add_file ()
-{
-    local fil lnk dir dest
-    if [ -e "${1}" ]; then
-        fil="${1}"
-        lnk=$(readlink -f "${fil}")
-        if [ -n "${lnk}" ]; then
-            add_symlink "${fil}"
-            fil="${lnk}"
-        fi
-        if [ $# -eq 2 ]; then
-            dest="${2}"
-        else
-            dest="${fil##$BASEDIR}"
-        fi
-
-        add_dir "${dest}"
-
-        if ! grep "file ${fil} " "${FILELIST}" 2>&1 > /dev/null; then
-            msg "  adding file ${dest}"
-            echo "file ${dest} ${fil} $(stat -c '%a %u %g' ${fil})" >> "${FILELIST}"
-        fi
-    else
-        err "file '${1}' does not exist" >2
-        return 1
-    fi
-}
-
-HAS_MODULES="n"
-add_module()
-{
-    local fil path mod deps
-    #cleanup - remove .ko, replace - and _ with [-_] to match either
-    fil=$(basename "${1}" | sed -e "s|[-_]|\[-_\]|g" -e "s|\.ko$||g")
-
-    for path in $(find "${MODULEDIR}" -type f -name "${fil}.ko"); do
-        for mod in $(modinfo -F depends "${path}" | tr ',' ' '); do
-            if [ "x${mod}" != "x" ]; then
-                add_module "${mod}"
-                HAS_MODULES="y"
-            fi
-        done
-        add_file "${path}"
-    done
-}
-
-add_binary()
-{
-    local bin type lib
-    bin=$(which "${1}")
-    if [ $? -ne 0 ]; then
-        bin="${1}"
-    fi
-
-    if [ ! -f "${bin}" ]; then
-        err "'${bin}' is not a file" >2
-        return 1
-    fi
-
-    if [ $? -eq 0 ]; then
-        type=$(file -b "${bin}")
-        case "${type}" in
-            *script*)
-            msg "   adding '${type}' script, ensure proper interp exists..."
-            add_file "${bin}"
-            ;;
-            *executable*)
-            add_file "${bin}"
-            #note, this will also handle 'not a dynamic executable' spit out by
-            # static binaries... the deps will produce nothing
-            for lib in $(ldd ${bin} 2>/dev/null | sed "s|.*=>\(.*\)|\1|"); do
-                if [ "x${lib}" != "x" ]; then
-                    #remove TLS libraries
-                    notls=$(echo ${lib} | sed 's|/lib/tls.*/\(lib.*\)|/lib/\1|')
-                    [ -e "${notls}" ] && lib="${notls}"
-                    [ -f "${lib}" ] && add_file "${lib}"
-                fi
-            done
-            ;;
-            *)
-            err "unknown type '${type}' for binary '${bin}'" >2
-            return 1
-            ;;
-        esac
-    fi
-}
-
-function parse_hook()
-{
-    local mod bin fil
-    for mod in $MODULES; do
-        if [ "x${mod}" != "x" ]; then
-            add_module "${mod}"
-        fi
-    done
-
-    for bin in $BINARIES; do
-        if [ "x${bin}" != "x" ]; then
-            add_binary "${bin}"
-        fi
-    done
-
-    for fil in $FILES; do
-        if [ "x${fil}" != "x" ]; then
-            add_file "${fil}"
-        fi
-    done
-}
-
 #parse 'global' hook, as defined in ${CONFIG}
 parse_hook
 
@@ -271,9 +98,11 @@ for hook in $HOOKS; do
     unset BINARIES
     unset FILES
     install () { msg "${hook}: no install function..."; }
-    source "${HOOKDIR}/${hook}"
-    install
-    parse_hook
+    if grep "install ()" "${INSTDIR}/${hook}" /dev/null 2>&1; then
+        source "${INSTDIR}/${hook}"
+        install
+        parse_hook
+    fi
     #quick test to check for existance... need a better way...
     # note, this will only pick up valid run_hooks - a space is required
     if grep "run_hook ()" "${HOOKDIR}/${hook}" 2>&1>/dev/null; then
@@ -289,7 +118,7 @@ fi
 
 if [ "x$GENIMG" != "x" ]; then
     if ! gen_init_cpio ${FILELIST} | gzip -9 > "${GENIMG}"; then
-        err "ERROR: Failed to create '${GENIMG}' image" >2
+        err "Failed to create '${GENIMG}' image" >2
     fi
 
     if [ "x${SAVELIST}" == "x" ]; then

@@ -1,0 +1,15 @@
+# vim: set ft=sh:
+
+install ()
+{
+    MODULES=" aes-i586 $(find "${MODULEDIR}/kernel/drivers/md" -name dm*.ko) "
+    BINARIES="cryptsetup.static"
+    FILES=""
+}
+
+help ()
+{
+cat<<HELPEOF
+  This hook allows for an encrypted root device.
+HELPEOF
+}

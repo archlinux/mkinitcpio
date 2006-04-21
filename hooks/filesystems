@@ -1,0 +1,25 @@
+# vim: set ft=sh:
+run_hook ()
+{
+    msg -n ":: Loading root filesystem module..."
+    if [ "x${rootfstype}" != "x" ]; then
+        FSTYPE="${rootfstype}"
+    else
+        if [ "x${root}" != "x" ]; then
+            msg "Attempting to create root device '${root}'"
+            dev_t=$( /bin/parseblock "${root}" )
+            if [ "x${dev_t}" != "x" ]; then
+                /bin/mknod "${root}" b ${dev_t}
+                eval $( /bin/fstype < "${root}" )
+            else
+                FSTYPE="unknown"
+                echo "ERROR: Failed to parse block device '${root}'"
+            fi
+        else
+            FSTYPE="unknown"
+            echo "ERROR: root fs cannot be detected. Try using the rootfstype= kernel parameter."
+        fi
+    fi
+    msg "   ${FSTYPE}"
+    /bin/modprobe -q "${FSTYPE}" >/dev/null 2>&1
+}

@@ -1,0 +1,9 @@
+# vim:set ft=sh:
+run_hook ()
+{
+    if [ -e "/sys/bus/pci" ]; then
+        msg -n "Loading base modules..."
+        /bin/modprobe -a -q $(/bin/cat /sys/bus/pci/devices/*/modalias) >/dev/null 2>&1 &
+        msg "done."
+    fi
+}

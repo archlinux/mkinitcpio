@@ -1,0 +1,18 @@
+# vim:set ft=sh:
+
+install ()
+{
+    MODULES=""
+    BINARIES=""
+    FILES=" /etc/udev/rules.d/udev.rules /etc/udev/udev.conf "
+    add_file /lib/initramfs/udevd /bin/udevd
+}
+
+help ()
+{
+cat <<HELPEOF
+  This hook will use udev to create your root device node.
+  It is recommended to use this hook if you are using any
+  non ide/sata block device.
+HELPEOF
+}

@@ -1,0 +1,21 @@
+# vim: set ft=sh:
+
+install ()
+{
+    MODULES=" $(all_modules "scsi/.*ata") "
+    for m in $MODULES; do
+        [ "$m" == "ata_piix" ] && MODULES="$MODULES piix"
+    done
+    BINARIES=""
+    FILES=""
+    SCRIPT="sata"
+}
+
+help ()
+{
+cat<<HELPEOF
+  This hook loads the necessary modules for an sata root device.
+  Detection will take place at runtime. To minimize the modules
+  in the image, use the -auto flavor.
+HELPEOF
+}
