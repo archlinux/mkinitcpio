@@ -53,7 +53,7 @@ add_symlink ()
     if [ -L ${1} ]; then
         fil="${1}"
         dest="${fil##$BASEDIR}"
-        add_dir "${dest}"
+        add_dir $(dirname "${dest}")
         if ! grep "slink ${fil} " "${FILELIST}" 2>&1 > /dev/null; then
             msg "  adding symlink ${dest}"
             echo "slink ${dest} ${fil} $(stat -c '%a %u %g' ${fil})" >> "${FILELIST}"
@@ -78,7 +78,7 @@ add_file ()
             dest="${fil##$BASEDIR}"
         fi
 
-        add_dir "${dest}"
+        add_dir $(dirname "${dest}")
 
         if ! grep "file ${fil} " "${FILELIST}" 2>&1 > /dev/null; then
             msg "  adding file ${dest}"

@@ -39,7 +39,7 @@ if [ -e "/hooks" ]; then
         if [ "${TST}" != "disabled" ]; then
             run_hook () { msg "$h: no run function defined"; }
             if [ -e "/hooks/$h" ]; then
-               . $h
+               . /hooks/$h
                msg ":: Running Hook [${h}]"
                run_hook
             fi

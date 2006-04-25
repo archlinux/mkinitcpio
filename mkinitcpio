@@ -105,7 +105,7 @@ for hook in $HOOKS; do
     unset BINARIES
     unset FILES
     install () { msg "${hook}: no install function..."; }
-    if grep "install" "${INSTDIR}/${hook}" /dev/null 2>&1; then
+    if grep "install" "${INSTDIR}/${hook}" >/dev/null 2>&1; then
         source "${INSTDIR}/${hook}"
         install
         parse_hook
