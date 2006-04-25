@@ -82,8 +82,13 @@ fi
 source "${CONFIG}"
 
 if [ -f "${FILELIST}" -a "x${APPEND}" == "x" ]; then
-    echo "destination file list '${FILELIST}' exists - remove before running"
-    exit 1
+    if [ "x${SAVELIST}" == "x" ]; then
+        rm ${FILELIST}
+        touch "${FILELIST}"
+    else
+        echo "destination file list '${FILELIST}' exists - remove before running"
+        exit 1
+    fi
 elif [ -f "${DESTIMG}" ]; then
     echo "destination image '${DESTIMG}' exists - remove before running"
     exit 1
@@ -100,15 +105,10 @@ for hook in $HOOKS; do
     unset BINARIES
     unset FILES
     install () { msg "${hook}: no install function..."; }
-    if grep "install ()" "${INSTDIR}/${hook}" /dev/null 2>&1; then
+    if grep "install" "${INSTDIR}/${hook}" /dev/null 2>&1; then
         source "${INSTDIR}/${hook}"
         install
         parse_hook
-    fi
-    #quick test to check for existance... need a better way...
-    # note, this will only pick up valid run_hooks - a space is required
-    if grep "run_hook ()" "${HOOKDIR}/${hook}" 2>&1>/dev/null; then
-        add_file "${HOOKDIR}/${hook}" "/hooks/${hook}"
     fi
 done
 

@@ -18,12 +18,12 @@ err() { echo "ERROR: ${@}" >&2; }
 add_dir()
 {
     local dir
-    dir="$(dirname ${1})"
-    if [ "x${dir}" != "x" -a "${dir}" != "/" ]; then
-        dir="${dir}" #this got stripped off above... put it back
+    if [ "x${1}" != "x" -a "${1}" != "/" ]; then
+		dir="$(dirname ${1})"
+		[ "${dir}" = "/" ] && dir="${1}"
 
         if ! grep "dir ${dir} " "${FILELIST}" 2>&1 > /dev/null; then
-            add_dir "${dir}"
+            add_dir $(dirname "${dir}")
             msg "  adding dir ${dir}"
             echo "dir ${dir} 755 0 0" >> "${FILELIST}"
         fi
@@ -171,7 +171,7 @@ parse_hook()
     done
 
 	if [ "x${SCRIPT}" != "x" ]; then
-		add_file "${HOOKDIR}/${SCRIPT}"
+		add_file "${HOOKDIR}/${SCRIPT}" "/hooks/${SCRIPT}"
 	fi
 }
 # vim: set ft=sh ts=4 sw=4 noet:
