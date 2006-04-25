@@ -58,10 +58,8 @@ add_symlink ()
             msg "  adding symlink ${dest}"
             echo "slink ${dest} ${fil} $(stat -c '%a %u %g' ${fil})" >> "${FILELIST}"
         fi
-    else
-        err "ERROR: file '${1}' is not a symlink"
-        return 1
     fi
+	#fail quietly
 }
 
 add_file ()
