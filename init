@@ -17,25 +17,35 @@ for cmd in $CMDLINE; do
     esac
 done
 
+OLDIFS=$IFS
+IFS=,
 if [ "x${disablehooks}" != "x" ]; then
-    OLDIFS=$IFS
-    IFS=,
     for d in ${disablehooks}; do
-        export "${d}=disabled"
+        export "hook_${d}=disabled"
     done
-    IFS=$OLDIFS
 fi
+
+if [ "x${disablemodules}" != "x" ]; then
+    for d in ${disablemodules}; do
+        export "mod_${d}=disabled"
+    done
+fi
+IFS=$OLDIFS
 
 . /config
 
 for m in $MODULES; do
-    /bin/modprobe -q $m > /dev/null 2>&1
+    TST=""
+    eval "TST=\$mod_${h}"
+    if [ "${TST}" != "disabled" ]; then
+        /bin/modprobe -q $m > /dev/null 2>&1
+    fi
 done
 
 if [ -e "/hooks" ]; then
     for h in $HOOKS; do
         TST=""
-        eval "TST=\$${h}"
+        eval "TST=\$hook_${h}"
         if [ "${TST}" != "disabled" ]; then
             run_hook () { msg "$h: no run function defined"; }
             if [ -e "/hooks/$h" ]; then
