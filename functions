@@ -171,7 +171,7 @@ parse_hook()
     done
 
 	if [ "x${SCRIPT}" != "x" ]; then
-		add_file "${HOOKDIR}${SCRIPT}"
+		add_file "${HOOKDIR}/${SCRIPT}"
 	fi
 }
 # vim: set ft=sh ts=4 sw=4 noet:
