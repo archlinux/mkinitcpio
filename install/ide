@@ -3,7 +3,7 @@
 install ()
 {
     MODULES=""
-    for m in $(all_modules | grep "/ide/");
+    for m in $(all_modules "/ide/");
     do
         MODULES="$MODULES $(basename $m)"
     done

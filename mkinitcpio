@@ -17,6 +17,7 @@
 # Settings
 BASEDIR=""
 KERNELVERSION="$(uname -r)"
+FUNCTIONS="functions" #/lib/initramfs/functions
 CONFIG="mkinitcpio.conf"
 HOOKDIR="hooks"
 INSTDIR="install"
@@ -90,6 +91,7 @@ else
     touch "${FILELIST}"
 fi
 
+source "${FUNCTIONS}"
 #parse 'global' hook, as defined in ${CONFIG}
 parse_hook
 
@@ -118,7 +120,7 @@ fi
 
 if [ "x$GENIMG" != "x" ]; then
     if ! gen_init_cpio ${FILELIST} | gzip -9 > "${GENIMG}"; then
-        err "Failed to create '${GENIMG}' image" >2
+        err "Failed to create '${GENIMG}' image"
     fi
 
     if [ "x${SAVELIST}" == "x" ]; then
