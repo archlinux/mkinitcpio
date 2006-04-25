@@ -16,6 +16,7 @@
 
 # Settings
 BASEDIR=""
+FILELIST=".tmpfilelist"
 KERNELVERSION="$(uname -r)"
 FUNCTIONS="functions" #/lib/initramfs/functions
 CONFIG="mkinitcpio.conf"
@@ -33,23 +34,23 @@ usage ()
     echo "${APPNAME}: usage"
     echo "  -c CONFIG        Use CONFIG file. default: /etc/mkinitcpio.conf"
     echo "  -k KERNELVERSION Use KERNELVERSION. default: $(uname -r)"
-    echo "  -s               Save filelist. default: no"
+    echo "  -s NAME          Save filelist. default: no"
     echo "  -b BASEDIR       Use BASEDIR. default: /"
     echo "  -g IMAGE         Generate a cpio image as IMAGE. default: no"
-    echo "  -a               Append to an existing filelist. default: no"
+    echo "  -a NAME          Append to an existing filelist. default: no"
     echo "  -q               Quiet output. Default: no"
     echo "  -h               This message."
     exit 1
 }
 
-while getopts 'c:k:sb:g:aqh' arg; do
+while getopts 'c:k:s:b:g:a:qh' arg; do
     case "$arg" in
         c) CONFIG="$OPTARG" ;;
         k) KERNELVERSION="$OPTARG" ;;
-        s) SAVELIST="y" ;;
+        s) SAVELIST="y"; FILELIST="$OPTARG" ;;
         b) BASEDIR="$OPTARG" ;;
         g) GENIMG="$OPTARG" ;;
-        a) APPEND="y" ;;
+        a) APPEND="y" FILELIST="$OPTARG" ;;
         q) QUIET="y" ;;
         h|?) usage ;;
         *) echo "invalid argument '$arg'"; usage ;;
@@ -63,7 +64,6 @@ if [ "${BASEDIR:${#BASEDIR}}" == "/" ]; then
 fi
 
 MODULEDIR="${BASEDIR}/lib/modules/${KERNELVERSION}"
-FILELIST=${1:-"initcpio.filelist"}
 
 if [ "x${BASEDIR}" != "x" ]; then
     if [ "${BASEDIR:0:1}" != "/" ]; then
