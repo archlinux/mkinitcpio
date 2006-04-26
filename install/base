@@ -20,6 +20,7 @@ install ()
 
     add_file "/lib/initramfs/init" "/init"
     add_file "${CONFIG}" "/config"
+    SCRIPT="base"
 }
 
 help ()

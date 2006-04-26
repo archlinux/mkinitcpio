@@ -17,15 +17,12 @@ err() { echo "ERROR: ${@}" >&2; }
 
 add_dir()
 {
-    local dir
     if [ "x${1}" != "x" -a "${1}" != "/" ]; then
-		dir="$(dirname ${1})"
-		[ "${dir}" = "/" ] && dir="${1}"
 
-        if ! grep "dir ${dir} " "${FILELIST}" 2>&1 > /dev/null; then
-            add_dir $(dirname "${dir}")
-            msg "  adding dir ${dir}"
-            echo "dir ${dir} 755 0 0" >> "${FILELIST}"
+        if ! grep "dir ${1} " "${FILELIST}" 2>&1 > /dev/null; then
+            add_dir $(dirname "${1}")
+            msg "  adding dir ${1}"
+            echo "dir ${1} 755 0 0" >> "${FILELIST}"
         fi
     fi
 }
@@ -36,9 +33,9 @@ add_device()
     if [ $# -ge 4 ]; then
         local perms
         perms="${5:-644}"
-        add_dir "${1}"
         if ! grep "nod ${1}" "${FILELIST}" 2>&1 > /dev/null; then
-            msg "  adding device node ${1}"
+			add_dir $(dirname "${1}")
+            msg "  adding node ${1}"
             echo "nod ${1} ${perms} 0 0 ${2} ${3} ${4}" >> "${FILELIST}"
         fi
     else
