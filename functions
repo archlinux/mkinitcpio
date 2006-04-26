@@ -21,7 +21,7 @@ add_dir()
 
         if ! grep "dir ${1} " "${FILELIST}" 2>&1 > /dev/null; then
             add_dir $(dirname "${1}")
-            msg "  adding dir ${1}"
+            msg "  adding  dir ${1}"
             echo "dir ${1} 755 0 0" >> "${FILELIST}"
         fi
     fi
