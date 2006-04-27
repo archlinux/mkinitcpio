@@ -14,18 +14,17 @@ run_hook ()
         if /bin/cryptsetup isLuks ${root} >/dev/null 2>&1; then
             echo ""
             echo "A password is required to access the root filesystem:"
-            echo -n "password: "
+
             /bin/cryptsetup luksOpen ${root} root
-            if [ $? -ne 0 ]; then
-                err "Password verification failed, aborting..."
-                exit 1
+            while [ $? -ne 0 ]; do
+                #loop until we get a real password
+                /bin/cryptsetup luksOpen ${root} root
+            done
+            if [ -e "/dev/mapper/root" ]; then
+                export root="/dev/mapper/root"
             else
-                if [ -e "/dev/mapper/root" ]; then
-                    export root="/dev/mapper/root"
-                else
-                    err "Password succeeded, but root creation failed, aborting..."
-                    exit 1
-                fi
+                err "Password succeeded, but root creation failed, aborting..."
+                exit 1
             fi
         elif [ "x${crypto}" != "x" ]; then
             do_oldcrypto ()
@@ -42,7 +41,6 @@ run_hook ()
                     [ "x${5}" != "x" ] && exe="$exe --skip \"${5}\""
                     echo ""
                     echo "A password is required to access the root filesystem:"
-                    echo -n "password: "
                     eval "${exe}"
                 fi
             }
