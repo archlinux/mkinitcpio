@@ -3,15 +3,12 @@
 run_hook ()
 {
     fmtdevice () { echo "${1}:${2}"; }
-    if [ -e "/sys/power/resume" ]; then
-        if [ -e "${resume}" ]; then
-            dev_t=$( /bin/parseblock "${resume}" )
-            fmtdevice ${dev_t} > /sys/power/resume
-        fi
-
-        if [ -e "/proc/suspend2" ]; then
-            echo "" > /proc/suspend2/do_resume
-            echo ${resume2} > /proc/suspend2/resume2
-        fi
+    if [ -e "/sys/power/resume" -a -e "${resume}" ]; then
+        dev_t=$( /bin/parseblock "${resume}" )
+        fmtdevice ${dev_t} > /sys/power/resume
+    fi
+    if [ -e "/proc/suspend2" -a "x${resume2}" != "x" ]; then
+        echo ${resume2} > /proc/suspend2/resume2
+        echo "" > /proc/suspend2/do_resume
     fi
 }

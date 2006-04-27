@@ -50,8 +50,8 @@ run_hook ()
             IFS=$OLDIFS
 
             if [ $? -ne 0 ]; then
-                err "Password verification failed, aborting..."
-                err "Verify parameter format: crypto=hash:cipher:keysize:offset:skip"
+                err "Non-LUKS device decryption failed. verify format: "
+                err "      crypto=hash:cipher:keysize:offset:skip"
                 exit 1
             else
                 if [ -e "/dev/mapper/root" ]; then
