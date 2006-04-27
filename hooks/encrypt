@@ -15,10 +15,9 @@ run_hook ()
             echo ""
             echo "A password is required to access the root filesystem:"
 
-            /bin/cryptsetup luksOpen ${root} root
-            while [ $? -ne 0 ]; do
-                #loop until we get a real password
-                /bin/cryptsetup luksOpen ${root} root
+            #loop until we get a real password
+            while !/bin/cryptsetup luksOpen ${root} root; do
+                sleep 2;
             done
             if [ -e "/dev/mapper/root" ]; then
                 export root="/dev/mapper/root"
