@@ -27,34 +27,37 @@ run_hook ()
                     exit 1
                 fi
             fi
-        else
+        elif [ "x${crypto}" != "x" ]; then
             do_oldcrypto ()
             {
-                exe="/bin/cryptsetup create root ${root}"
-                [ "x${1}" != "x" ] && exe="$exe --hash \"${1}\""
-                [ "x${2}" != "x" ] && exe="$exe --cipher \"${2}\""
-                [ "x${3}" != "x" ] && exe="$exe --key-size \"${3}\""
-                [ "x${4}" != "x" ] && exe="$exe --offset \"${4}\""
-                [ "x${5}" != "x" ] && exe="$exe --skip \"${5}\""
-                echo ""
-                echo "A password is required to access the root filesystem:"
-                echo -n "password: "
-                eval "${exe}"
+                if [ $# -ne 5 ]; then
+                    err "Verify parameter format: crypto=hash:cipher:keysize:offset:skip"
+                    err "Non-LUKS decryption not attempted..."
+                else
+                    exe="/bin/cryptsetup create root ${root}"
+                    [ "x${1}" != "x" ] && exe="$exe --hash \"${1}\""
+                    [ "x${2}" != "x" ] && exe="$exe --cipher \"${2}\""
+                    [ "x${3}" != "x" ] && exe="$exe --key-size \"${3}\""
+                    [ "x${4}" != "x" ] && exe="$exe --offset \"${4}\""
+                    [ "x${5}" != "x" ] && exe="$exe --skip \"${5}\""
+                    echo ""
+                    echo "A password is required to access the root filesystem:"
+                    echo -n "password: "
+                    eval "${exe}"
+                fi
             }
             msg "Non-LUKS encrypted device found..."
-            if [ "x${crypto}" != "x" ]; then
-                do_oldcrypt ${crypto}
-                if [ $? -ne 0 ]; then
-                    err "Password verification failed, aborting..."
-                    err "Verify parameter format: crypto=hash:cipher:keysize:offset:skip"
-                    exit 1
+            do_oldcrypt ${crypto}
+            if [ $? -ne 0 ]; then
+                err "Password verification failed, aborting..."
+                err "Verify parameter format: crypto=hash:cipher:keysize:offset:skip"
+                exit 1
+            else
+                if [ -e "/dev/mapper/root" ]; then
+                    export root="/dev/mapper/root"
                 else
-                    if [ -e "/dev/mapper/root" ]; then
-                        export root="/dev/mapper/root"
-                    else
-                        err "Password succeeded, but root creation failed, aborting..."
-                        exit 1
-                    fi
+                    err "Password succeeded, but root creation failed, aborting..."
+                    exit 1
                 fi
             fi
         fi
