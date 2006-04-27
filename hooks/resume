@@ -1,13 +1,17 @@
 # vim:set ft=sh:
+# TODO encrypted swap partition if resume2 begins with 'swap:'
 run_hook ()
 {
     fmtdevice () { echo "${1}:${2}"; }
-    if [ -e /sys/power/resume ]; then
+    if [ -e "/sys/power/resume" ]; then
         if [ -e "${resume}" ]; then
             dev_t=$( /bin/parseblock "${resume}" )
             fmtdevice ${dev_t} > /sys/power/resume
         fi
 
-        [ -e /proc/suspend2 ] && echo "" > /proc/suspend2/do_resume
+        if [ -e "/proc/suspend2" ]; then
+            echo "" > /proc/suspend2/do_resume
+            echo ${resume2} > /proc/suspend2/resume2
+        fi
     fi
 }

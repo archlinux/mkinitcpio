@@ -43,8 +43,12 @@ run_hook ()
                     eval "${exe}"
                 fi
             }
+
             msg "Non-LUKS encrypted device found..."
+            OLDIFS=$IFS; IFS=:
             do_oldcrypt ${crypto}
+            IFS=$OLDIFS
+
             if [ $? -ne 0 ]; then
                 err "Password verification failed, aborting..."
                 err "Verify parameter format: crypto=hash:cipher:keysize:offset:skip"
