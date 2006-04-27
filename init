@@ -12,6 +12,7 @@ CMDLINE=$(/bin/cat /proc/cmdline)
 
 for cmd in $CMDLINE; do
     case "$cmd" in
+        [0123456Ss]) continue ;;
         *=*) export "${cmd}" ;;
         *) export "${cmd}=y" ;;
     esac
