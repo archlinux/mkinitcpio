@@ -1,0 +1,25 @@
+# vim: set ft=sh:
+
+install ()
+{
+    msg ":: Autodetecting modules"
+    #blegh, we'll let /tmp clean itself up
+    modtmp=$( mktemp /tmp/initcpio_modules.XXXXXX )
+    MODULES=" $(auto_modules "/scsi/" | grep -v "ata") 
+              $(auto_modules "/block/")
+              $(auto_modules "/fusion/")
+              $(auto_modules "/usb/") usb_storage usbhid
+              $(auto_modules "scsi/.*ata")
+              $(auto_modules "/ide/")
+              $(cat /proc/filesystems | grep -v nodev) "
+    for m in $MODULES; do
+        echo $(basename ${m//\.ko/}) >> $modtmp
+        [ "$m" == "ata_piix" ] && echo "piix" >> $modtmp
+    done
+
+    add_file $modtmp "/modules"
+
+    BINARIES=""
+    FILES=""
+    SCRIPT="autodetect"
+}

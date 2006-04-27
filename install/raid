@@ -1,0 +1,17 @@
+# vim: set ft=sh:
+
+install ()
+{
+    MODULES=" $(all_modules "/md/raid*")"
+    BINARIES=""
+    FILES=""
+    SCRIPT="raid"
+}
+
+help ()
+{
+cat<<HELPEOF
+  This hook loads the necessary modules for an raid root device.
+  Detection will take place at runtime.
+HELPEOF
+}

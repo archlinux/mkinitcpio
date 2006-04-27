@@ -3,19 +3,7 @@ run_hook ()
 {
     if [ -e /proc/ide ]; then
         msg -n "Loading ide modules..."
-        /bin/modprobe -q ide-generic >/dev/null 2>&1 
-        for d in /proc/ide/*; do
-            unit=${d#/proc/ide/}
-            if [ -e "${d}/media" -a ! -d "/sys/block/${unit}" ]; then
-                read m < "${d}/media"
-                case "${m}" in
-                    disk)   /bin/modprobe -q ide-disk   >/dev/null 2>&1;;
-                    cdrom)  /bin/modprobe -q ide-cd     >/dev/null 2>&1;;
-                    tape)   /bin/modprobe -q ide-tape   >/dev/null 2>&1;;
-                    floppy) /bin/modprobe -q ide-floppy >/dev/null 2>&1;;
-                esac
-            fi
-        done
+        /bin/modprobe -q -a $(/bin/cat /sys/bus/ide/devices/*/modalias) >/dev/null 2>&1 
         msg "done"
     else
         msg "No ide devices detected..."
