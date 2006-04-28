@@ -2,8 +2,9 @@
 auto_modules ()
 {
     aliases=$(find /sys/devices/ -name modalias -exec cat {} \;)
-    modprobe --show-depends -a $aliases 2>/dev/null |\
-        sed "s|insmod \(.*\)|\1|" | grep ${@} | sort -u
+    modprobe --set-version ${KERNELVERSION} --show-depends -a \
+		$aliases 2>/dev/null | sed "s|insmod \(.*\)|\1|" |\
+		grep ${@} | sort -u
 }
 
 all_modules ()
