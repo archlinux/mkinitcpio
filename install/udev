@@ -4,8 +4,14 @@ install ()
 {
     MODULES=""
     BINARIES=""
-    FILES=" /etc/udev/rules.d/udev.rules /etc/udev/udev.conf "
-    add_file /lib/initramfs/udevd /bin/udevd
+    FILES=" /etc/udev/udev.conf /lib/udev/modalias_ieee1394"
+    SCRIPT="udev"
+    add_file /lib/initcpio/udev/udevd /sbin/udevd
+    add_file /lib/initcpio/udev/udevtrigger /sbin/udevtrigger
+    add_file /lib/initcpio/udev/udevsettle /sbin/udevsettle
+    add_file /lib/initcpio/udev/udev.rules etc/udev/rules.d/udev.rules
+    add_file /lib/initcpio/udev/start_udev /etc/start_udev
+    add_file /lib/initcpio/udev/load-modules.sh /lib/udev/load-modules.sh
 }
 
 help ()

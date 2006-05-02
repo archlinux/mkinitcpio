@@ -65,4 +65,5 @@ fi
 
 # Optimize fs type loop for mounting rootfs
 msg ":: Initramfs Completed - control passing to kinit"
+
 exec /bin/kinit rootfstype=${FSTYPE} $CMDLINE < /dev/console > /dev/console

@@ -13,10 +13,10 @@ all_modules ()
         grep ${@} | sort -u
 }
 
-msg() { [ "${QUIET}" = "n" ] && echo "${@}"; }
-err() { echo "ERROR: ${@}" >&2; }
+msg () { [ "${QUIET}" = "n" ] && echo "${@}"; }
+err () { echo "ERROR: ${@}" >&2; }
 
-add_dir()
+add_dir ()
 {
     if [ "x${1}" != "x" -a "${1}" != "/" ]; then
 
@@ -28,8 +28,8 @@ add_dir()
     fi
 }
 
-# add_devnode /dev/foo type major minor [permissions]
-add_device()
+# add_device /dev/foo type major minor [permissions]
+add_device ()
 {
     if [ $# -ge 4 ]; then
         local perms
@@ -50,10 +50,10 @@ add_symlink ()
     local fil dest dir
     if [ -L ${1} ]; then
         fil="${1}"
-        dest="${fil##$BASEDIR}"
+        dest="${2##$BASEDIR}"
         add_dir $(dirname "${dest}")
         if ! grep "slink ${dest} " "${FILELIST}" 2>&1 > /dev/null; then
-            msg "  adding symlink ${dest}"
+			msg "  adding link ${fil} -> ${dest}"
             echo "slink ${dest} ${fil} $(stat -c '%a %u %g' ${fil})" >> "${FILELIST}"
         fi
     fi
@@ -67,7 +67,7 @@ add_file ()
         fil="${1}"
         lnk=$(readlink -f "${fil}")
         if [ -n "${lnk}" ]; then
-            add_symlink "${fil}"
+            add_symlink "${fil}" "${lnk}"
             fil="${lnk}"
         fi
         if [ $# -eq 2 ]; then
@@ -89,7 +89,8 @@ add_file ()
 }
 
 HAS_MODULES="n"
-add_module()
+#modules are handled specially in order to enable autodetection
+add_module ()
 {
     local fil path mod deps
     #cleanup - remove .ko, replace - and _ with [-_] to match either
@@ -106,7 +107,13 @@ add_module()
     done
 }
 
-add_binary()
+_finish_modules ()
+{
+	echo "wtf!"
+
+}
+
+add_binary ()
 {
     local bin type lib
     bin=$(which "${1}")
@@ -147,7 +154,7 @@ add_binary()
     fi
 }
 
-parse_hook()
+parse_hook ()
 {
     local mod bin fil
     for mod in $MODULES; do
