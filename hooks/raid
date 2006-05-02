@@ -1,7 +1,7 @@
 # vim: set ft=sh:
-# kinit handles md/raid assembly we just need modules
 run_hook ()
 {
-    #TODO
-    /bin/modprobe -aq raid0 raid1 raid2 raid5 raid6
+    #TODO scan for these somehow...
+    /bin/modprobe -aq raid0 raid1 raid2 raid5 raid6 >/dev/null 2>&1
+    /bin/mdassemble ${md} ${raid}
 }

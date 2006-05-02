@@ -9,7 +9,7 @@ run_hook ()
             msg "Attempting to create root device '${root}'"
             dev_t=$( /bin/parseblock "${root}" )
             if [ "x${dev_t}" != "x" ]; then
-                /bin/mknod "${root}" b ${dev_t}
+                /bin/mknod "${root}" b ${dev_t} >/dev/null 2>&1
                 eval $( /bin/fstype < "${root}" )
             else
                 FSTYPE="unknown"

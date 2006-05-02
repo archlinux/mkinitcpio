@@ -2,8 +2,8 @@
 
 install ()
 {
-    MODULES=" $(all_modules "/scsi/" | grep -v "ata") 
-              $(all_modules "/block/")
+    MODULES=" $(all_modules "/scsi/" | grep -ve "imm" -e "pdc_adma" -e "ahci" -e "ata" -e "pcmcia" -e "ide") 
+              $(all_modules "/block/" | grep -v "sx8")
               $(all_modules "/fusion/")"
     BINARIES=""
     FILES=""

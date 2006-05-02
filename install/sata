@@ -2,10 +2,7 @@
 
 install ()
 {
-    MODULES=" $(all_modules "scsi/.*ata") "
-    for m in $MODULES; do
-        [ "$m" == "ata_piix" ] && MODULES="$MODULES piix"
-    done
+    MODULES=" $(all_modules "scsi/.*ata") sx8 ahci pdc_adma sd_mod sr_mod piix"
     BINARIES=""
     FILES=""
     SCRIPT="sata"

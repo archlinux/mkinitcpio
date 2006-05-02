@@ -6,12 +6,24 @@ install ()
     BINARIES=""
     FILES=""
     SCRIPT="raid"
+    add_file "/usr/lib/klibc/bin/mdassemble" "/bin/mdassemble"
 }
 
 help ()
 {
 cat<<HELPEOF
-  This hook loads the necessary modules for an raid root device.
-  Detection will take place at runtime.
+  This hook loads the necessary modules for an raid root device,
+  and assemble the raid device when run.
+
+  Supported Kernel Parameters:
+  * raid=noautodetect : This setting is only effective if set to
+  noautodetect.  When set to noautodetect, the md= parameter is used.
+  * md= ::: TODO ::: md=0,/dev/sda3,/dev/sda4
+
+  Important Note: kinit handles raid assembly by itself.  If you
+  do not need to run any additional hooks on the assembled array
+  (i.e. LVM, encrypted root, etc), it is recommended that you
+  let kinit handle the assembly.  You will still need to load
+  the proper raid* modules via the MODULES setting.
 HELPEOF
 }

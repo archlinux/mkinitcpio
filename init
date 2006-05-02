@@ -3,7 +3,7 @@
 msg () { [ "${quiet}" != "y" ] && echo $@; }
 err () { echo "ERROR: $@"; }
 
-msg ":: Begin Initramfs"
+msg ":: Loading Initramfs"
 
 /bin/mount -t sysfs none /sys
 /bin/mount -t proc  none /proc
@@ -64,5 +64,5 @@ if [ "${break}" = "y" ]; then
 fi
 
 # Optimize fs type loop for mounting rootfs
-msg ":: End Initramfs - control passing to kinit"
+msg ":: Initramfs Completed - control passing to kinit"
 exec /bin/kinit rootfstype=${FSTYPE} $CMDLINE < /dev/console > /dev/console
