@@ -1,7 +1,20 @@
-# vim: set ft=sh:
+# vim:set ft=sh:
 run_hook ()
 {
-    if [ -e /sys/bus/scsi/devices/ ]; then
+    msg ":: Begin manual module load"
+    if [ -e "/sys/bus/pci/" ]; then
+        msg -n "Loading pci bus modules..."
+        /bin/modprobe -a -q $(/bin/cat /sys/bus/pci/devices/*/modalias) >/dev/null 2>&1
+        msg "done."
+    fi
+
+    if [ -e "/sys/bus/ide/devices/" ]; then
+        msg -n "Loading ide modules..."
+        /bin/modprobe -q -a $(/bin/cat /sys/bus/ide/devices/*/modalias) >/dev/null 2>&1 
+        msg "done"
+    fi
+
+    if [ -e "/sys/bus/scsi/devices/" ]; then
         msg -n "Loading scsi modules..."
         for d in /sys/bus/scsi/devices/*; do
             if [ -e "${d}/type" ]; then
@@ -31,4 +44,5 @@ run_hook ()
         done
         msg "done."
     fi
+    msg ":: End manual module load"
 }

@@ -7,7 +7,7 @@ install ()
               $(all_modules "/fusion/")"
     BINARIES=""
     FILES=""
-    SCRIPT="scsi"
+    SCRIPT=""
 }
 
 help ()

@@ -63,6 +63,13 @@ if [ "${break}" = "y" ]; then
     PS1="ramfs$ " /bin/sh -i
 fi
 
+#Special handling is udev is running
+udevpid=$(/bin/minips -C udevd -o pid=)
+if [ "x${udevpid}" != "x" ]; then
+    /bin/kill -9 $udevpid
+    /bin/sleep 0.01
+fi
+
 # Optimize fs type loop for mounting rootfs
 msg ":: Initramfs Completed - control passing to kinit"
 

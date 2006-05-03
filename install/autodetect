@@ -5,21 +5,33 @@ install ()
     msg ":: Autodetecting modules"
     #blegh, we'll let /tmp clean itself up
     modtmp=$( mktemp /tmp/initcpio_modules.XXXXXX )
-    MODULES=" $(auto_modules "/scsi/" | grep -v "ata") 
-              $(auto_modules "/block/")
-              $(auto_modules "/fusion/")
-              $(auto_modules "/usb/") usb_storage usbhid
-              $(auto_modules "scsi/.*ata")
-              $(auto_modules "/ide/")
-              $(cat /proc/filesystems | grep -v nodev) "
-    for m in $MODULES; do
+    modall=$( mktemp /tmp/initcpio_modulesall.XXXXXX )
+    AUTODETECT=" $(auto_modules "/scsi/" | grep -v "imm"| grep -v "pcmcia" | grep -v "ide" && echo "sd_mod sr_mod") 
+                 $(auto_modules "/block/" && echo "sd_mod sr_mod")
+                 $(auto_modules "/fusion/" && echo "sd_mod sr_mod")
+                 $(auto_modules "/usb/" && echo "usb_storage usbhid sd_mod sr_mod")
+                 $(auto_modules "/ide/")
+                 $(auto_modules "/ieee1394/" && echo "sbp2 sd_mod sr_mod")
+                 $(auto_modules "/cdrom/") 
+                 $(cat /proc/filesystems | grep -v nodev) "
+              
+    for m in $AUTODETECT; do
         echo $(basename ${m//\.ko/}) >> $modtmp
-        [ "$m" == "ata_piix" ] && echo "piix" >> $modtmp
+        [ "$m" == "ext3" ] && echo "jbd" >> $modtmp
     done
 
-    add_file $modtmp "/modules"
-
+    grep "file /lib/modules" ${FILELIST} >>$modall
+	for i in `cat $modtmp`; do
+        sed -i -e "\=/$i=d" $modall
+    done
+	for i in `grep "file /lib/modules" $modall | awk '{print $2}'`; do
+        sed -i -e "\=$i=d" ${FILELIST}
+	done
+	msg "Included MODULES:"
+	msg "-----------------"
+	msg "$(grep "file /lib/modules/" ${FILELIST} | awk '{print $2}')"
+	msg "-----------------"
     BINARIES=""
     FILES=""
-    SCRIPT="autodetect"
+    SCRIPT=""
 }

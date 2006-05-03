@@ -1,0 +1,18 @@
+# vim: set ft=sh:
+
+install ()
+{
+    MODULES=""
+    BINARIES=""
+    FILES=""
+    SCRIPT="modload"
+}
+
+help ()
+{
+cat<<HELPEOF
+  This hook manually detects and loads modules.  It is much
+  slower than udev and the udev hook should be preferred.
+  This remains meerly as another option for a user.
+HELPEOF
+}

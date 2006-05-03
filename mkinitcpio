@@ -10,8 +10,6 @@
 #   use "x${var}" = "x" to test for nulls/empty strings
 #   incase of embedded spaces, quote all path names and string comarpisons
 #
-# TODO
-# hook help: help() function in install script, "-h base" 
 
 
 # Settings
@@ -118,9 +116,12 @@ for hook in $HOOKS; do
 done
 
 if [ "${HAS_MODULES}" == "y" ]; then
-    add_file "${MODULEDIR}/modules.dep"
-    add_file "${MODULEDIR}/modules.alias"
-    add_file "${MODULEDIR}/modules.symbols"
+    [ -e /tmp${MODULEDIR}/ ] && rm -r /tmp${MODULEDIR}/
+    cp --parents `grep "file /lib/modules" .tmpfilelist | awk '{print $2}'` /tmp/
+    depmod -b /tmp ${KERNELVERSION}
+    add_file /tmp${MODULEDIR}/modules.dep ${MODULEDIR}/modules.dep
+    add_file /tmp${MODULEDIR}/modules.alias ${MODULEDIR}/modules.alias
+    add_file /tmp${MODULEDIR}/modules.symbols ${MODULEDIR}/modules.symbols
 fi
 
 if [ "x$GENIMG" != "x" ]; then
