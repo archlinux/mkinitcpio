@@ -117,7 +117,7 @@ done
 
 if [ "${HAS_MODULES}" == "y" ]; then
     [ -e /tmp${MODULEDIR}/ ] && rm -r /tmp${MODULEDIR}/
-    cp --parents `grep "file /lib/modules" .tmpfilelist | awk '{print $2}'` /tmp/
+    cp --parents $(grep "file /lib/modules" ${FILELIST} | awk '{print $2}') /tmp/
     depmod -b /tmp ${KERNELVERSION}
     add_file /tmp${MODULEDIR}/modules.dep ${MODULEDIR}/modules.dep
     add_file /tmp${MODULEDIR}/modules.alias ${MODULEDIR}/modules.alias

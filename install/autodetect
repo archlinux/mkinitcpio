@@ -17,7 +17,17 @@ install ()
               
     for m in $AUTODETECT; do
         echo $(basename ${m//\.ko/}) >> $modtmp
+        # fixing missing depends for filesystems
         [ "$m" == "ext3" ] && echo "jbd" >> $modtmp
+        [ "$m" == "afs" ] && echo "rxrpc" >> $modtmp
+        [ "$m" == "cramfs" ] && echo "zlib_inflate" >> $modtmp
+        [ "$m" == "isofs" ] && echo "zlib_inflate" >> $modtmp
+        [ "$m" == "msdos" ] && echo "fat" >> $modtmp
+        [ "$m" == "vfat" ] && echo "fat" >> $modtmp
+        [ "$m" == "ocfs2" ] && echo "ocfs2_dlm" >> $modtmp
+        [ "$m" == "ocfs2" ] && echo "jbd" >> $modtmp
+        [ "$m" == "ocfs2" ] && echo "ocfs2_nodemanager" >> $modtmp
+        [ "$m" == "ocfs2" ] && echo "configfs" >> $modtmp
     done
 
     grep "file /lib/modules" ${FILELIST} >>$modall
@@ -34,4 +44,17 @@ install ()
     BINARIES=""
     FILES=""
     SCRIPT=""
+}
+
+help ()
+{
+cat <<HELPEOF
+  This hook shrinks your initramdisk to a smaller size 
+  by autodetecting your needed modules. 
+  Please take a look at the included modules for completeness,
+  else your system might be unbootable.
+  Valid Hooks are: base,udev,ide,scsi,sata,usb,fw,filesystems
+  Put this hook at the end of your valid hooks. 
+  Put other hooks behind autodetect hook.
+HELPEOF
 }

@@ -13,6 +13,6 @@ help ()
 cat<<HELPEOF
   This hook is responsible for loading filesystems for the root device.
   Detection will be done at runtime.  If you would like to minimize the
-  modules installed in the image, use the -auto flavor.
+  modules installed in the image, add the autodetect hook too.
 HELPEOF
 }

@@ -2,7 +2,7 @@
 
 install ()
 {
-    MODULES=" $(all_modules "/usb/" | grep -ve "_cs" -e "sl1811-hcd" -e "isp116x-hcd")
+    MODULES=" $(all_modules "/usb/host" | grep -ve "_cs" -e "sl1811-hcd" -e "isp116x-hcd")
               usb_storage usbhid sd_mod sr_mod "
     BINARIES=""
     FILES=""
@@ -14,6 +14,6 @@ help ()
 cat<<HELPEOF
   This hook loads the necessary modules for an usb root device.
   Detection will take place at runtime. To minimize the modules
-  in the image, use the -auto flavor.
+  in the image, add the autodetect hook too.
 HELPEOF
 }

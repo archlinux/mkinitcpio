@@ -13,6 +13,6 @@ help ()
 cat<<HELPEOF
   This hook loads the necessary modules for an ide root device.
   Detection will take place at runtime. To minimize the modules
-  in the image, use the -auto flavor.
+  in the image, add the autodetect hook too.
 HELPEOF
 }

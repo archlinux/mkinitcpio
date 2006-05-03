@@ -1,8 +1,6 @@
 # vim: set ft=sh:
 run_hook ()
 {
-    msg -n "Loading usb modules..."
-    /bin/modprobe -aq $(/bin/cat /sys/bus/usb/devices/*/modalias) >/dev/null 2>&1
     #allow 'usbdelay' on the kernel param line
     msg -n "waiting for usb to settle..."
     /bin/sleep ${usbdelay:-5}

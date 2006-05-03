@@ -11,15 +11,14 @@ install ()
     add_file /lib/initcpio/udev/udevsettle /sbin/udevsettle
     add_file /lib/initcpio/udev/udev.rules /etc/udev/rules.d/udev.rules
     add_file /lib/initcpio/udev/start_udev /etc/start_udev
-    add_file /lib/initcpio/udev/load-modules.sh /lib/udev/load-modules.sh
     add_file /lib/initcpio/udev/modalias_ieee1394 /lib/udev/modalias_ieee1394
 }
 
 help ()
 {
 cat <<HELPEOF
-  This hook will use udev to create your root device node.
-  It is recommended to use this hook if you are using any
-  non ide/sata block device.
+  This hook will use udev to create your root device node
+  and detect the needed modules for your root device.
+  It is recommended to use this hook instead of modload.
 HELPEOF
 }
