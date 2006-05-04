@@ -13,7 +13,6 @@ build()
 {
   cd $startdir/src/
   # fixing paths in mkinitcpio
-  sed -i -e 's|FILELIST=".tmpfilelist"|FILELIST="/tmp/.tmpfilelist"|g' mkinitcpio
   sed -i -e 's|CONFIG="mkinitcpio.conf"|CONFIG="/etc/mkinitcpio.conf"|g' mkinitcpio
   sed -i -e 's|FUNCTIONS="functions"|FUNCTIONS="/lib/initcpio/functions"|g' mkinitcpio
   sed -i -e 's|HOOKDIR="hooks"|HOOKDIR="/lib/initcpio/hooks"|g' mkinitcpio

@@ -14,7 +14,7 @@
 
 # Settings
 BASEDIR=""
-FILELIST=".tmpfilelist"
+FILELIST="/tmp/.tmpfilelist"
 KERNELVERSION="$(uname -r)"
 FUNCTIONS="functions" #/lib/initramfs/functions
 CONFIG="mkinitcpio.conf"
