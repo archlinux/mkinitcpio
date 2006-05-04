@@ -21,15 +21,13 @@ all_modules ()
 
 checked_modules ()
 {
-    ret=1
     if [ -e "${MODULE_FILE}" ]; then
         for mod in $(all_modules ${@}); do
             if grep "$(basename ${mod%%\.ko})" "${MODULE_FILE}" >/dev/null 2>&1; then
-                ret=0
                 echo ${mod}
             fi
         done
-        return $ret
+        return 1
     else
         all_modules ${@}
     fi
@@ -77,7 +75,7 @@ add_symlink ()
         add_dir $(dirname "${dest}")
         if ! grep "slink ${dest} " "${FILELIST}" 2>&1 > /dev/null; then
             msg "  adding link ${fil} -> ${dest}"
-            echo "slink ${dest} ${fil} $(stat -c '%a %u %g' ${fil})" >> "${FILELIST}"
+            echo "slink ${dest} ${fil} $(stat -c '%a' ${fil}) 0 0" >> "${FILELIST}"
         fi
     fi
     #fail quietly
@@ -103,7 +101,7 @@ add_file ()
 
         if ! grep "file ${dest} " "${FILELIST}" 2>&1 > /dev/null; then
             msg "  adding file ${dest}"
-            echo "file ${dest} ${fil} $(stat -c '%a %u %g' ${fil})" >> "${FILELIST}"
+            echo "file ${dest} ${fil} $(stat -c '%a' ${fil}) 0 0" >> "${FILELIST}"
         fi
     else
         err "file '${1}' does not exist"

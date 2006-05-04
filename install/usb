@@ -2,8 +2,12 @@
 
 install ()
 {
-    MODULES=" $(checked_modules "/usb/host" | grep -ve "_cs" -e "sl1811-hcd" -e "isp116x-hcd")
-              usb_storage usbhid sd_mod sr_mod "
+    MODULES=" $(checked_modules "/usb/host" | grep -ve "_cs" -e "sl1811-hcd" -e "isp116x-hcd")"
+
+    MODULES=$(echo ${MODULES}) #trim whitespace
+    if [ "x${MODULES}" != "x" ]; then
+        MODULES="${MODULES} usb_storage sd_mod sr_mod"
+    fi
     BINARIES=""
     FILES=""
     SCRIPT="usb"

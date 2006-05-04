@@ -2,7 +2,13 @@
 
 install ()
 {
-    MODULES=" $(checked_modules "scsi/.*ata" && echo "sx8 ahci pdc_adma sd_mod sr_mod")"
+    MODULES=" $(checked_modules "scsi/.*ata") "
+
+    MODULES=$(echo ${MODULES}) #trim whitespace
+    if [ "x${MODULES}" != "x" ]; then
+        MODULES="${MODULES} sx8 ahci pdc_adma sd_mod sr_mod"
+    fi
+
     BINARIES=""
     FILES=""
     SCRIPT=""

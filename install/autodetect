@@ -5,27 +5,24 @@ install ()
     msg ":: Autodetecting modules"
     MODULE_FILE="$(mktemp /tmp/initcpio_modules.XXXXXX)"
     #blegh, we'll let /tmp clean itself up
-    AUTODETECT=" $((auto_modules "/scsi/" | grep -ve "imm" -e "pcmcia" -e "ide") && echo "sd_mod sr_mod") 
-                 $(auto_modules "/block/" && echo "sd_mod sr_mod")
-                 $(auto_modules "/fusion/" && echo "sd_mod sr_mod")
-                 $(auto_modules "/usb/" && echo "usb_storage usbhid sd_mod sr_mod")
-                 $(auto_modules "/ide/")
-                 $(auto_modules "/ieee1394/" && echo "sbp2 sd_mod sr_mod")
-                 $(auto_modules "/cdrom/") 
-                 $(cat /proc/filesystems | grep -v nodev) "
+    AUTODETECT="$(auto_modules -e "/scsi/" -e "/block" -e "/fusion/" \
+                    -e "/usb/" -e "/ide/" -e "/ieee1394/" -e "/cdrom")
+                $(cat /proc/filesystems | grep -v nodev) "
 
     for m in $AUTODETECT; do
         modname="$(basename ${m%%\.ko})"
         grep "${modname}" "${MODULE_FILE}" >/dev/null 2>&1 && continue
+        case "${m}" in 
+            #*/ieee1394/*) echo -e "sbp2\nsd_mod\nsr_mod" >> "${MODULE_FILE}";;
+            *ext3*) echo "jbd" >> "${MODULE_FILE}" ;;
+            *afs*)echo "rxrpc" >> "${MODULE_FILE}" ;;
+            *cramfs*) echo "zlib_inflate" >> "${MODULE_FILE}" ;;
+            *isofs*) echo "zlib_inflate" >> "${MODULE_FILE}" ;;
+            *msdos*) echo "fat" >> "${MODULE_FILE}" ;;
+            *vfat*)echo "fat" >> "${MODULE_FILE}" ;;
+            *ocfs2*) echo -e "ocfs2_dlm\njbd\nocfs2_nodemanager\nconfigfs" >> "${MODULE_FILE}" ;;
+        esac
         echo "${modname}" >> "${MODULE_FILE}"
-        # fixing missing depends for filesystems
-        [ "$m" = "ext3" ] && echo "jbd" >> "${MODULE_FILE}"
-        [ "$m" = "afs" ] && echo "rxrpc" >> "${MODULE_FILE}"
-        [ "$m" = "cramfs" ] && echo "zlib_inflate" >> "${MODULE_FILE}"
-        [ "$m" = "isofs" ] && echo "zlib_inflate" >> "${MODULE_FILE}"
-        [ "$m" = "msdos" ] && echo "fat" >> "${MODULE_FILE}"
-        [ "$m" = "vfat" ] && echo "fat" >> "${MODULE_FILE}"
-        [ "$m" = "ocfs2" ] && echo -e "ocfs2_dlm\njbd\nocfs2_nodemanager\nconfigfs" >> "${MODULE_FILE}"
     done
 
     BINARIES=""

@@ -111,6 +111,7 @@ for hook in $HOOKS; do
     install () { msg "${hook}: no install function..."; }
     if grep "install" "${INSTDIR}/${hook}" >/dev/null 2>&1; then
         source "${INSTDIR}/${hook}"
+        msg ":: Parsing hook [${hook}]"
         install
         parse_hook
     fi
@@ -123,7 +124,6 @@ if [ "${HAS_MODULES}" == "y" ]; then
     add_file /tmp${MODULEDIR}/modules.dep ${MODULEDIR}/modules.dep
     add_file /tmp${MODULEDIR}/modules.alias ${MODULEDIR}/modules.alias
     add_file /tmp${MODULEDIR}/modules.symbols ${MODULEDIR}/modules.symbols
-    add_file "${MODULE_FILE}" "/modules"
 fi
 
 if [ "x$GENIMG" != "x" ]; then
