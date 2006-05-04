@@ -43,7 +43,7 @@ usage ()
     exit 1
 }
 
-while getopts 'c:k:s:b:g:a:qH:h' arg; do
+while getopts 'c:k:s:b:g:a:H:hv' arg; do
     case "$arg" in
         c) CONFIG="$OPTARG" ;;
         k) KERNELVERSION="$OPTARG" ;;
