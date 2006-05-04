@@ -2,7 +2,6 @@
 
 install ()
 {
-    msg ":: Autodetecting modules"
     MODULE_FILE="$(mktemp /tmp/initcpio_modules.XXXXXX)"
     #blegh, we'll let /tmp clean itself up
     AUTODETECT="$(auto_modules -e "/scsi/" -e "/block" -e "/fusion/" \
