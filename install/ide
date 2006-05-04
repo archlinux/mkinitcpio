@@ -2,7 +2,7 @@
 
 install ()
 {
-    MODULES=" $(all_modules "/ide/" | grep -v "legacy") ";
+    MODULES=" $(checked_modules "/ide/" | grep -v "legacy") ";
     BINARIES=""
     FILES=""
     SCRIPT=""

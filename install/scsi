@@ -2,9 +2,9 @@
 
 install ()
 {
-    MODULES=" $(all_modules "/scsi/" | grep -ve "imm" -e "pdc_adma" -e "ahci" -e "ata" -e "pcmcia" -e "ide") 
-              $(all_modules "/block/" | grep -v "sx8")
-              $(all_modules "/fusion/")"
+    MODULES=" $(checked_modules "/scsi/" | grep -ve "imm" -e "pdc_adma" -e "ahci" -e "ata" -e "pcmcia" -e "ide") 
+              $(checked_modules "/block/" | grep -v "sx8")
+              $(checked_modules "/fusion/")"
     BINARIES=""
     FILES=""
     SCRIPT=""

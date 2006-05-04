@@ -2,19 +2,42 @@
 auto_modules ()
 {
     aliases=$(find /sys/devices/ -name modalias -exec cat {} \;)
-    modprobe --set-version ${KERNELVERSION} --show-depends -a \
-		$aliases 2>/dev/null | sed "s|insmod \(.*\)|\1|" |\
-		grep ${@} | sort -u
+    mods=$(modprobe --set-version ${KERNELVERSION} --show-depends -a \
+        $aliases 2>/dev/null | sed 's|insmod \(.*\)|\1|' | grep ${@} | sort -u)
+
+    echo "${mods}"
+    [ "x${mods}" = "x" ] && return 1
+    return 0
 }
 
 all_modules ()
 {
-    find ${MODULEDIR} -name *.ko 2>/dev/null |\
-        grep ${@} | sort -u
+    mods=$(find ${MODULEDIR} -name *.ko 2>/dev/null | grep ${@} | sort -u)
+
+    echo "${mods}"
+    [ "x${mods}" = "x" ] && return 1
+    return 0
+}
+
+checked_modules ()
+{
+    ret=1
+    if [ -e "${MODULE_FILE}" ]; then
+        for mod in $(all_modules ${@}); do
+            if grep "$(basename ${mod%%\.ko})" "${MODULE_FILE}" >/dev/null 2>&1; then
+                ret=0
+                echo ${mod}
+            fi
+        done
+        return $ret
+    else
+        all_modules ${@}
+    fi
 }
 
 msg () { [ "${QUIET}" = "n" ] && echo "${@}"; }
 err () { echo "ERROR: ${@}" >&2; }
+die () { echo "FATAL: ${@}" >&2; exit 1; }
 
 add_dir ()
 {
@@ -35,7 +58,7 @@ add_device ()
         local perms
         perms="${5:-644}"
         if ! grep "nod ${1}" "${FILELIST}" 2>&1 > /dev/null; then
-			add_dir $(dirname "${1}")
+            add_dir $(dirname "${1}")
             msg "  adding node ${1}"
             echo "nod ${1} ${perms} 0 0 ${2} ${3} ${4}" >> "${FILELIST}"
         fi
@@ -53,11 +76,11 @@ add_symlink ()
         dest="${2##$BASEDIR}"
         add_dir $(dirname "${dest}")
         if ! grep "slink ${dest} " "${FILELIST}" 2>&1 > /dev/null; then
-			msg "  adding link ${fil} -> ${dest}"
+            msg "  adding link ${fil} -> ${dest}"
             echo "slink ${dest} ${fil} $(stat -c '%a %u %g' ${fil})" >> "${FILELIST}"
         fi
     fi
-	#fail quietly
+    #fail quietly
 }
 
 add_file ()
@@ -109,7 +132,7 @@ add_module ()
 
 _finish_modules ()
 {
-	echo "wtf!"
+    echo "wtf!"
 
 }
 
@@ -175,8 +198,8 @@ parse_hook ()
         fi
     done
 
-	if [ "x${SCRIPT}" != "x" ]; then
-		add_file "${HOOKDIR}/${SCRIPT}" "/hooks/${SCRIPT}"
-	fi
+    if [ "x${SCRIPT}" != "x" ]; then
+        add_file "${HOOKDIR}/${SCRIPT}" "/hooks/${SCRIPT}"
+    fi
 }
-# vim: set ft=sh ts=4 sw=4 noet:
+# vim: set ft=sh ts=4 sw=4 et:

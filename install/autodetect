@@ -3,10 +3,9 @@
 install ()
 {
     msg ":: Autodetecting modules"
+    MODULE_FILE="$(mktemp /tmp/initcpio_modules.XXXXXX)"
     #blegh, we'll let /tmp clean itself up
-    modtmp=$( mktemp /tmp/initcpio_modules.XXXXXX )
-    modall=$( mktemp /tmp/initcpio_modulesall.XXXXXX )
-    AUTODETECT=" $(auto_modules "/scsi/" | grep -v "imm"| grep -v "pcmcia" | grep -v "ide" && echo "sd_mod sr_mod") 
+    AUTODETECT=" $((auto_modules "/scsi/" | grep -ve "imm" -e "pcmcia" -e "ide") && echo "sd_mod sr_mod") 
                  $(auto_modules "/block/" && echo "sd_mod sr_mod")
                  $(auto_modules "/fusion/" && echo "sd_mod sr_mod")
                  $(auto_modules "/usb/" && echo "usb_storage usbhid sd_mod sr_mod")
@@ -14,33 +13,21 @@ install ()
                  $(auto_modules "/ieee1394/" && echo "sbp2 sd_mod sr_mod")
                  $(auto_modules "/cdrom/") 
                  $(cat /proc/filesystems | grep -v nodev) "
-              
+
     for m in $AUTODETECT; do
-        echo $(basename ${m//\.ko/}) >> $modtmp
+        modname="$(basename ${m%%\.ko})"
+        grep "${modname}" "${MODULE_FILE}" >/dev/null 2>&1 && continue
+        echo "${modname}" >> "${MODULE_FILE}"
         # fixing missing depends for filesystems
-        [ "$m" == "ext3" ] && echo "jbd" >> $modtmp
-        [ "$m" == "afs" ] && echo "rxrpc" >> $modtmp
-        [ "$m" == "cramfs" ] && echo "zlib_inflate" >> $modtmp
-        [ "$m" == "isofs" ] && echo "zlib_inflate" >> $modtmp
-        [ "$m" == "msdos" ] && echo "fat" >> $modtmp
-        [ "$m" == "vfat" ] && echo "fat" >> $modtmp
-        [ "$m" == "ocfs2" ] && echo "ocfs2_dlm" >> $modtmp
-        [ "$m" == "ocfs2" ] && echo "jbd" >> $modtmp
-        [ "$m" == "ocfs2" ] && echo "ocfs2_nodemanager" >> $modtmp
-        [ "$m" == "ocfs2" ] && echo "configfs" >> $modtmp
+        [ "$m" = "ext3" ] && echo "jbd" >> "${MODULE_FILE}"
+        [ "$m" = "afs" ] && echo "rxrpc" >> "${MODULE_FILE}"
+        [ "$m" = "cramfs" ] && echo "zlib_inflate" >> "${MODULE_FILE}"
+        [ "$m" = "isofs" ] && echo "zlib_inflate" >> "${MODULE_FILE}"
+        [ "$m" = "msdos" ] && echo "fat" >> "${MODULE_FILE}"
+        [ "$m" = "vfat" ] && echo "fat" >> "${MODULE_FILE}"
+        [ "$m" = "ocfs2" ] && echo -e "ocfs2_dlm\njbd\nocfs2_nodemanager\nconfigfs" >> "${MODULE_FILE}"
     done
 
-    grep "file /lib/modules" ${FILELIST} >>$modall
-	for i in `cat $modtmp`; do
-        sed -i -e "\=/$i=d" $modall
-    done
-	for i in `grep "file /lib/modules" $modall | awk '{print $2}'`; do
-        sed -i -e "\=$i=d" ${FILELIST}
-	done
-	msg "Included MODULES:"
-	msg "-----------------"
-	msg "$(grep "file /lib/modules/" ${FILELIST} | awk '{print $2}')"
-	msg "-----------------"
     BINARIES=""
     FILES=""
     SCRIPT=""
@@ -50,11 +37,10 @@ help ()
 {
 cat <<HELPEOF
   This hook shrinks your initramdisk to a smaller size 
-  by autodetecting your needed modules. 
-  Please take a look at the included modules for completeness,
-  else your system might be unbootable.
-  Valid Hooks are: base,udev,ide,scsi,sata,usb,fw,filesystems
-  Put this hook at the end of your valid hooks. 
-  Put other hooks behind autodetect hook.
+  by autodetecting your needed modules. Be sure to verify
+  included modules are correct and none are missing.
+  This hook must be run before other subsystem hooks in
+  order to take advantage of auto-detection.  Any hooks
+  placed before 'autodetect' will be installed in full.
 HELPEOF
 }

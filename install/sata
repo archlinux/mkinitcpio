@@ -2,7 +2,7 @@
 
 install ()
 {
-    MODULES=" $(all_modules "scsi/.*ata") sx8 ahci pdc_adma sd_mod sr_mod piix"
+    MODULES=" $(checked_modules "scsi/.*ata" && echo "sx8 ahci pdc_adma sd_mod sr_mod piix")"
     BINARIES=""
     FILES=""
     SCRIPT=""
