@@ -1,0 +1,25 @@
+# vim: set ft=sh:
+
+install ()
+{
+    MODULES=" $(checked_modules "/pcmcia/" | grep -ve "sound" -e "net") $(checked_modules "/ide/legacy")"
+    MODULES=$(echo ${MODULES}) #trim whitespace
+    if [ "x${MODULES}" != "x" ]; then
+        MODULES="${MODULES} sd_mod\nsr_mod\nide-disk\nide-cd"
+    fi
+    BINARIES=""
+    FILES=""
+    SCRIPT=""
+    add_file "/sbin/pcmcia-socket-startup.static" "/sbin/pcmcia-socket-startup"
+    add_file "/sbin/pcmcia-check-broken-cis.static" "/sbin/pcmcia-check-broken-cis"
+    add_file "/etc/pcmcia/config.opts"
+}
+
+help ()
+{
+cat<<HELPEOF
+  This hook loads the necessary modules for a pcmcia root device.
+  Detection will take place at runtime. To minimize the modules
+  in the image, add the autodetect hook too.
+HELPEOF
+}

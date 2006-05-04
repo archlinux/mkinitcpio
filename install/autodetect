@@ -6,7 +6,7 @@ install ()
     #blegh, we'll let /tmp clean itself up
     AUTODETECT="$(auto_modules -e "/scsi/" -e "/block" -e "/fusion/" \
                     -e "/usb/" -e "/ide/" -e "/ieee1394/" -e "/cdrom"\
-                    -e "/net/")
+                    -e "/net/" -e "/pcmcia")
                 $(cat /proc/filesystems | grep -v nodev) "
 
     for m in $AUTODETECT; do
