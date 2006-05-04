@@ -6,7 +6,8 @@ install ()
     MODULE_FILE="$(mktemp /tmp/initcpio_modules.XXXXXX)"
     #blegh, we'll let /tmp clean itself up
     AUTODETECT="$(auto_modules -e "/scsi/" -e "/block" -e "/fusion/" \
-                    -e "/usb/" -e "/ide/" -e "/ieee1394/" -e "/cdrom")
+                    -e "/usb/" -e "/ide/" -e "/ieee1394/" -e "/cdrom"\
+                    -e "/net/")
                 $(cat /proc/filesystems | grep -v nodev) "
 
     for m in $AUTODETECT; do

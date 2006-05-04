@@ -1,0 +1,23 @@
+# vim: set ft=sh:
+
+install ()
+{
+    MODULES=" $(checked_modules "/usb/host" | grep -ve "_cs" -e "sl1811-hcd" -e "isp116x-hcd") "
+
+    MODULES=$(echo ${MODULES}) #trim whitespace
+    if [ "x${MODULES}" != "x" ]; then
+        MODULES="${MODULES} usbhid"
+    fi
+    BINARIES=""
+    FILES=""
+    SCRIPT=""
+}
+
+help ()
+{
+cat<<HELPEOF
+  This hook loads the necessary modules for an usb input device.
+  Detection will take place at runtime. To minimize the modules
+  in the image, add the autodetect hook too.
+HELPEOF
+}
