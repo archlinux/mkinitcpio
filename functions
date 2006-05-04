@@ -23,7 +23,7 @@ checked_modules ()
 {
     if [ -e "${MODULE_FILE}" ]; then
         for mod in $(all_modules ${@}); do
-            if grep "$(basename ${mod%%\.ko})" "${MODULE_FILE}" >/dev/null 2>&1; then
+            if grep "^$(basename ${mod%%\.ko})$" "${MODULE_FILE}" >/dev/null 2>&1; then
                 echo ${mod}
             fi
         done
