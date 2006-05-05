@@ -4,8 +4,9 @@
 run_hook ()
 {
     mkdevice () { /bin/mknod "/dev/mapper/control" c ${1} ${2}; }
+
+    /bin/modprobe -a -q dm-crypt >/dev/null 2>&1
     if [ -e "/sys/class/misc/device-mapper" ]; then
-        /bin/modprobe -a -q dm-crypt >/dev/null 2>&1
         read dev_t < /sys/class/misc/device-mapper/dev
         OLDIFS=$IFS; IFS=:
         mkdevice $dev_t
