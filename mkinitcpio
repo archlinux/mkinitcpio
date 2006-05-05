@@ -25,6 +25,7 @@ SAVELIST=""
 GENIMG=""
 APPEND=""
 QUIET="y"
+SHOW_AUTOMODS="n"
 
 APPNAME=$(basename "${0}")
 
@@ -38,13 +39,14 @@ usage ()
     echo "  -g IMAGE         Generate a cpio image as IMAGE. default: no"
     echo "  -a NAME          Append to an existing filelist. default: no"
     echo "  -v               Verbose output. Default: no"
+    echo "  -M               Display modules found via autodetection." 
     echo "  -L               List all available hooks." 
     echo "  -H HOOKNAME      Output help for hook 'HOOKNAME'."
     echo "  -h               This message."
     exit 1
 }
 
-while getopts 'c:k:s:b:g:a:H:hvL' arg; do
+while getopts 'c:k:s:b:g:a:vH:LMh' arg; do
     case "$arg" in
         c) CONFIG="$OPTARG" ;;
         k) KERNELVERSION="$OPTARG" ;;
@@ -62,6 +64,7 @@ while getopts 'c:k:s:b:g:a:H:hvL' arg; do
                echo "   $(basename ${h})"
            done
            exit 0 ;;
+        M) SHOW_AUTOMODS="y" ;;
         h|?) usage ;;
         *) echo "invalid argument '$arg'"; usage ;;
     esac
@@ -107,6 +110,15 @@ else
 fi
 
 source "${FUNCTIONS}"
+
+if [ "${SHOW_AUTOMODS}" = "y" ]; then
+    echo "Modules autodetected:"
+    for m in $(auto_modules "\.ko"); do
+        echo "   ${m}"
+    done
+    exit 0
+fi
+
 echo ":: Begin build"
 #parse 'global' hook, as defined in ${CONFIG}
 parse_hook
