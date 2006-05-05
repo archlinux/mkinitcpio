@@ -2,7 +2,7 @@
 
 install ()
 {
-    MODULES=" dm-crypt $(all_modules "/crypto/") "
+    MODULES=" dm-crypt $(all_modules "/crypto/" | grep -v "aes.ko" ) "
     BINARIES=""
     add_file "/sbin/cryptsetup.static" "/bin/cryptsetup"
     FILES=""

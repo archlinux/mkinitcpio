@@ -11,6 +11,9 @@ msg ":: Loading Initramfs"
 read CMDLINE </proc/cmdline
 export CMDLINE
 
+# Used so hooks can override params to kinit
+export kinit_params=""
+
 for cmd in $CMDLINE; do
     case "$cmd" in
         [0123456Ss]) continue ;;
@@ -74,4 +77,4 @@ fi
 # Optimize fs type loop for mounting rootfs
 msg ":: Initramfs Completed - control passing to kinit"
 
-exec /bin/kinit rootfstype=${FSTYPE} $CMDLINE < /dev/console > /dev/console
+exec /bin/kinit "root=${root}" ${kinit_params} < /dev/console > /dev/console

@@ -3,17 +3,6 @@
 #       encryption schemes
 run_hook ()
 {
-    replace_root ()
-    {
-       newcmdline=""
-       for cmd in $CMDLINE; do
-          case "$cmd" in
-             root=*) newcmdline="${newcmdline} root=${1}" ;;
-             *) newcmdline="${newcmdline} ${cmd}" ;;
-          esac
-       done
-       export CMDLINE="${newcmdline}"
-    }
     mkdevice () { /bin/mknod "/dev/mapper/control" c ${1} ${2}; }
 
     /bin/modprobe -a -q dm-crypt >/dev/null 2>&1
@@ -33,7 +22,6 @@ run_hook ()
             done
             if [ -e "/dev/mapper/root" ]; then
                 export root="/dev/mapper/root"
-                replace_root ${root}
             else
                 err "Password succeeded, but root creation failed, aborting..."
                 exit 1
@@ -69,7 +57,6 @@ run_hook ()
             else
                 if [ -e "/dev/mapper/root" ]; then
                     export root="/dev/mapper/root"
-                    replace_root ${root}
                 else
                     err "Password succeeded, but root creation failed, aborting..."
                     exit 1

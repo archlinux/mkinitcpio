@@ -22,5 +22,6 @@ run_hook ()
         fi
     fi
     msg "   ${FSTYPE}"
+    kinit_params="${kinit_params} rootfstype=${FSTYPE}"
     /bin/modprobe -q "${FSTYPE}" >/dev/null 2>&1
 }
