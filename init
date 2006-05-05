@@ -8,7 +8,8 @@ msg ":: Loading Initramfs"
 /bin/mount -t sysfs none /sys
 /bin/mount -t proc  none /proc
 
-CMDLINE=$(/bin/cat /proc/cmdline)
+read CMDLINE </proc/cmdline
+export CMDLINE
 
 for cmd in $CMDLINE; do
     case "$cmd" in
