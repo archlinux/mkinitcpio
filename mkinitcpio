@@ -38,12 +38,13 @@ usage ()
     echo "  -g IMAGE         Generate a cpio image as IMAGE. default: no"
     echo "  -a NAME          Append to an existing filelist. default: no"
     echo "  -v               Verbose output. Default: no"
+    echo "  -L               List all available hooks." 
     echo "  -H HOOKNAME      Output help for hook 'HOOKNAME'."
     echo "  -h               This message."
     exit 1
 }
 
-while getopts 'c:k:s:b:g:a:H:hv' arg; do
+while getopts 'c:k:s:b:g:a:H:hvL' arg; do
     case "$arg" in
         c) CONFIG="$OPTARG" ;;
         k) KERNELVERSION="$OPTARG" ;;
@@ -55,6 +56,11 @@ while getopts 'c:k:s:b:g:a:H:hv' arg; do
         H) source "${INSTDIR}/${OPTARG}";
            echo "Help for hook '${OPTARG}':"
            help
+           exit 0 ;;
+        L) echo "Available hooks: " 
+           for h in ${INSTDIR}/*; do
+               echo "   $(basename ${h})"
+           done
            exit 0 ;;
         h|?) usage ;;
         *) echo "invalid argument '$arg'"; usage ;;
