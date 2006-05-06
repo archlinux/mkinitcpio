@@ -2,11 +2,12 @@
 
 install ()
 {
-    MODULES=" $(checked_modules "scsi/.*ata") "
+    MODULES=" $(checked_modules "scsi/.*ata") $(checked_modules "block/sx8") \ 
+              $(checked_modules "scsi/ahci") $(checked_modules "scsi/pdc_adma")"
 
     MODULES=$(echo ${MODULES}) #trim whitespace
     if [ "x${MODULES}" != "x" ]; then
-        MODULES="${MODULES} sx8 ahci pdc_adma sd_mod sr_mod"
+        MODULES="${MODULES} sd_mod sr_mod"
     fi
 
     BINARIES=""
