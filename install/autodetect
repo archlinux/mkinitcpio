@@ -7,7 +7,8 @@ install ()
     AUTODETECT="$(auto_modules -e "/scsi/" -e "/block" -e "/fusion/" \
                     -e "/usb/" -e "/ide/" -e "/ieee1394/" -e "/cdrom"\
                     -e "/net/" -e "/pcmcia")
-                $(cat /proc/filesystems | grep -v nodev) "
+                $(cat /proc/filesystems | grep -v nodev) \
+                $(mdadm -E -s /dev/hd* /dev/sd* | awk -Flevel= '{print $2}' | awk '{print $1}') "
 
     for m in $AUTODETECT; do
         modname="$(basename ${m%%\.ko})"

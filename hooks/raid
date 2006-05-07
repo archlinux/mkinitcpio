@@ -2,7 +2,7 @@
 run_hook ()
 {
     #TODO scan for these somehow...
-    /bin/modprobe -aq raid0 raid1 raid2 raid5 raid6 >/dev/null 2>&1
+    /bin/modprobe -aq linear multipath raid0 raid1 raid5 raid6 raid10>/dev/null 2>&1
     # md= can be specified multiple times.  The simplistic commandline
     #  parsing does not handle this, so we will let mdassemble parse it
     /bin/mdassemble ${CMDLINE}
