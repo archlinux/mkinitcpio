@@ -113,13 +113,9 @@ source "${FUNCTIONS}"
 
 if [ "${SHOW_AUTOMODS}" = "y" ]; then
     echo "Modules autodetected:"
-    for m in $(auto_modules "\.ko"); do
-        echo "   ${m}"
-    done
-    for fs in $(grep -ve nodev /proc/filesystems); do
-        filname="$(modinfo -F filename ${fs} 2>/dev/null)"
-        [ "x${filname}" != "x" ] && echo "   ${filname}"
-    done
+    source "${INSTDIR}/autodetect"
+    install
+    cat "${MODULE_FILE}"
     exit 0
 fi
 
