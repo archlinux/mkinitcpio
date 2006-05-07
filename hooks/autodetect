@@ -1,9 +1,0 @@
-# vim: set ft=sh:
-run_hook ()
-{
-    if [ -e /modules ]; then
-        while read mod; do
-            /bin/modprobe -q $mod >/dev/null 2>&1
-        done < /modules
-    fi
-}
