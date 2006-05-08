@@ -7,12 +7,16 @@ install ()
     AUTODETECT="$(auto_modules -e "/scsi/" -e "/block" -e "/fusion/" \
                     -e "/usb/" -e "/ide/" -e "/ieee1394/" -e "/cdrom"\
                     -e "/net/" -e "/pcmcia")
-                $(cat /proc/filesystems | grep -v nodev) \
-                $([ -e /sbin/mdadm ] && mdadm -E -s /dev/hd* /dev/sd* /dev/rd/* /dev/ida/* \
-                 /dev/cciss/* /dev/ataraid/* | awk -Flevel= '{print $2}' | awk '{print $1}') "
+                $(cat /proc/filesystems | grep -v nodev) "
 
-    [ -e /sbin/mdadm ] &&  if ! [ $UID -eq 0 -o "$(groups | grep disk)" != "" ]; then \
-        err "User does not have proper permissions to read superblocks, raid modules are not detected" ;fi
+    if [ -e /sbin/mdadm ]; then
+        if [ $UID -eq 0 -o "$(groups | grep disk)" != "" ]; then \
+            AUTODETECT="$AUTODETECT $(mdadm -E -s /dev/hd* /dev/sd* /dev/rd/* /dev/ida/* \
+                           /dev/cciss/* /dev/ataraid/* | awk -Flevel= '{print $2}' | awk '{print $1}')"
+        else
+            err "User does not have proper permissions to read superblocks, raid modules are not detected"
+        fi
+    fi
 
     for m in $AUTODETECT; do
         modname="$(basename ${m%%\.ko})"
