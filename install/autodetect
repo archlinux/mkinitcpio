@@ -8,7 +8,11 @@ install ()
                     -e "/usb/" -e "/ide/" -e "/ieee1394/" -e "/cdrom"\
                     -e "/net/" -e "/pcmcia")
                 $(cat /proc/filesystems | grep -v nodev) \
-                $([ -e /sbin/mdadm ] && mdadm -E -s /dev/hd* /dev/sd* | awk -Flevel= '{print $2}' | awk '{print $1}') "
+                $([ -e /sbin/mdadm ] && mdadm -E -s /dev/hd* /dev/sd* /dev/rd/* /dev/ida/* \
+                 /dev/cciss/* /dev/ataraid/* | awk -Flevel= '{print $2}' | awk '{print $1}') "
+
+    [ -e /sbin/mdadm ] &&  if ! [ $UID -eq 0 -o "$(groups | grep disk)" != "" ]; then \
+        err "User does not have proper permissions to read superblocks, raid modules are not detected" ;fi
 
     for m in $AUTODETECT; do
         modname="$(basename ${m%%\.ko})"
