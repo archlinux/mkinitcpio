@@ -22,8 +22,9 @@ install ()
     [ "$CONSOLEFONT" != "" ] && add_file /usr/share/kbd/consolefonts/$(grep "CONSOLEFONT=" /etc/rc.conf | awk -FCONSOLEFONT= '{print $2}')*
     [ "$CONSOLEMAP" != "" ] && add_file /usr/share/kbd/unimaps/$(grep "CONSOLEMAP=" /etc/rc.conf | awk -FCONSOLEMAP= '{print $2}')*
     if [ "$KEYMAP" != "" ]; then
-        for i in $(find /usr/share/kbd/ -name "$(grep "KEYMAP=" /etc/rc.conf | awk -FKEYMAP= '{print $2}' | awk -F- '{print $1}')*.map.gz")
-            do add_file $i
+        for i in $(find /usr/share/kbd/ -name "$(grep "KEYMAP=" /etc/rc.conf |\
+            awk -FKEYMAP= '{print $2}' | awk -F- '{print $1}')*.map.gz"); do
+            add_file $i
         done
         for i in $(echo /usr/share/kbd/keymaps/include/*); do
             add_file $i
