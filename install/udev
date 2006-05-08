@@ -12,6 +12,7 @@ install ()
     add_file /lib/initcpio/udev/udev.rules /etc/udev/rules.d/udev.rules
     add_file /lib/initcpio/udev/start_udev /etc/start_udev
     add_file /lib/initcpio/udev/modalias_ieee1394 /lib/udev/modalias_ieee1394
+    add_file /lib/initcpio/udev/firmware_helper /lib/udev/firmware_helper
 }
 
 help ()

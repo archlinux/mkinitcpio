@@ -1,0 +1,24 @@
+# vim: set ft=sh:
+
+install ()
+{
+    MODULES=""
+    BINARIES=""
+    FILES=""
+    SCRIPT=""
+   if [ -e /lib/firmware ]; then
+       for i in /lib/firmware/*; do 
+           add_file $i
+       done
+    else
+            err "No firmware files found!"
+    fi
+}
+
+help ()
+{
+cat<<HELPEOF
+  This hook adds the firmware files that are placed at /lib/firmware/
+  to the image.
+HELPEOF
+}
