@@ -1,13 +1,36 @@
 # vim: set ft=sh:
 run_hook ()
 {
+    isnumeric ()
+    {
+        i=0;
+        while [ $i -lt ${#1} ]; do
+            case ${1:$i:1} in
+                [0-9A-Fa-f]) i=$(($i+1)); continue;;
+                *) return 1;;
+            esac
+        done
+        return 0
+    }
+
     msg -n ":: Loading root filesystem module..."
     if [ "x${rootfstype}" != "x" ]; then
         FSTYPE="${rootfstype}"
     else
         if [ ! -e "${root}" ]; then
             msg "Attempting to create root device '${root}'"
+
+            if [ "x${rootdelay}" != "x" ]; then
+                msg -n "Waiting for devices to settle..."
+                /bin/sleep "${rootdelay}"
+                msg "done."
+                export rootdelay=0
+            fi
+
             dev_t=$( /bin/parseblock "${root}" )
+            if isnumeric "${root}"; then
+                export root="/dev/root"
+            fi
             if [ "x${dev_t}" != "x" ]; then
                 /bin/mknod "${root}" b ${dev_t} >/dev/null 2>&1
             else
@@ -15,7 +38,12 @@ run_hook ()
                 echo "ERROR: Failed to parse block device '${root}'"
             fi
         fi
-        eval $( /bin/fstype < "${root}" )
+
+        if [ -e "${root}" ]; then
+            eval $( /bin/fstype < "${root}" )
+        else
+            FSTYPE="unknown"
+        fi
 
         if [ "${FSTYPE}" = "unknown" ]; then
             echo "ERROR: root fs cannot be detected. Try using the rootfstype= kernel parameter."

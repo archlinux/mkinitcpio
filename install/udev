@@ -4,7 +4,7 @@ install ()
 {
     MODULES=""
     BINARIES=""
-    FILES=" /etc/udev/udev.conf /lib/udev/modalias_ieee1394"
+    FILES=" /etc/udev/udev.conf"
     SCRIPT="udev"
     add_file /lib/initcpio/udev/udevd /sbin/udevd
     add_file /lib/initcpio/udev/udevtrigger /sbin/udevtrigger

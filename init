@@ -12,6 +12,8 @@ read CMDLINE </proc/cmdline
 export CMDLINE
 
 # Used so hooks can override params to kinit
+export root=""
+export rootdelay="0"
 export kinit_params=""
 echo "/bin/modprobe" > /proc/sys/kernel/modprobe
 
@@ -65,6 +67,7 @@ fi
 
 if [ "${break}" = "y" ]; then
     echo ":: Break requested, type 'exit' to resume operation"
+    echo "   NOTE: klibc contains no 'ls' binary, used 'echo *' instead"
     PS1="ramfs$ " /bin/sh -i
 fi
 
@@ -79,4 +82,4 @@ fi
 msg ":: Initramfs Completed - control passing to kinit"
 
 echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
-exec /bin/kinit "root=${root}" ${kinit_params} < /dev/console > /dev/console
+exec /bin/kinit "root=${root}" "rootdelay=${rootdelay}" ${kinit_params} < /dev/console > /dev/null 2>&1
