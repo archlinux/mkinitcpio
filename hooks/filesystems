@@ -1,18 +1,6 @@
 # vim: set ft=sh:
 run_hook ()
 {
-    isnumeric ()
-    {
-        i=0;
-        while [ $i -lt ${#1} ]; do
-            case ${1:$i:1} in
-                [0-9A-Fa-f]) i=$(($i+1)); continue;;
-                *) return 1;;
-            esac
-        done
-        return 0
-    }
-
     msg -n ":: Loading root filesystem module..."
     if [ "x${rootfstype}" != "x" ]; then
         FSTYPE="${rootfstype}"
@@ -27,15 +15,13 @@ run_hook ()
                 export rootdelay=0
             fi
 
-            dev_t=$( /bin/parseblock "${root}" )
-            if isnumeric "${root}"; then
-                export root="/dev/root"
-            fi
-            if [ "x${dev_t}" != "x" ]; then
-                /bin/mknod "${root}" b ${dev_t} >/dev/null 2>&1
-            else
+            eval $( /bin/parseblock "${root}")
+            if [ "${BLOCKNAME}" = "unknown" -o "x{BLOCKDEVICE}" = "x"]; then
                 FSTYPE="unknown"
                 echo "ERROR: Failed to parse block device '${root}'"
+            else
+                export root="${BLOCKNAME}"
+                /bin/mknod "${BLOCKNAME}" b ${BLOCKDEVICE} >/dev/null 2>&1
             fi
         fi
 
@@ -45,11 +31,11 @@ run_hook ()
             FSTYPE="unknown"
         fi
 
-        if [ "${FSTYPE}" = "unknown" ]; then
-            echo "ERROR: root fs cannot be detected. Try using the rootfstype= kernel parameter."
-        fi
     fi
     msg "   ${FSTYPE}"
-    kinit_params="${kinit_params} rootfstype=${FSTYPE}"
-    /bin/modprobe -q "${FSTYPE}" >/dev/null 2>&1
+    if [ "${FSTYPE}" = "unknown" ]; then
+        echo "ERROR: root fs cannot be detected. Try using the rootfstype= kernel parameter."
+    else
+        /bin/modprobe -q "${FSTYPE}" >/dev/null 2>&1
+    fi
 }
