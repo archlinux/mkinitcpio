@@ -95,6 +95,9 @@ add_file ()
             dest="${2}"
         else
             dest="${fil##$BASEDIR}"
+            if [ "${dest:0:1}" != "/" ]; then
+                dest="/${dest}"
+            fi
         fi
 
         add_dir $(dirname "${dest}")
