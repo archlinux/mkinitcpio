@@ -1,0 +1,8 @@
+# vim: set ft=sh:
+run_hook ()
+{
+    msg -n ":: Loading net..."
+    ipconfig ${ip}
+    nfsmount ${nfsroot} /root
+    msg "done."
+}

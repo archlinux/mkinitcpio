@@ -19,11 +19,11 @@ install ()
     fi
     . ${KEYMAP_FILE}
     add_file ${KEYMAP_FILE} /keymap
-    [ "$CONSOLEFONT" != "" ] && add_file /usr/share/kbd/consolefonts/$(grep "CONSOLEFONT=" /etc/rc.conf | awk -FCONSOLEFONT= '{print $2}')*
-    [ "$CONSOLEMAP" != "" ] && add_file /usr/share/kbd/unimaps/$(grep "CONSOLEMAP=" /etc/rc.conf | awk -FCONSOLEMAP= '{print $2}')*
+    [ "$CONSOLEFONT" != "" ] && add_file /usr/share/kbd/consolefonts/$(grep "CONSOLEFONT=" /etc/rc.conf | awk -FCONSOLEFONT= '{print $2}' | sed -e "s@[\"']*@@g")*.map.gz")*
+    [ "$CONSOLEMAP" != "" ] && add_file /usr/share/kbd/unimaps/$(grep "CONSOLEMAP=" /etc/rc.conf | awk -FCONSOLEMAP= '{print $2}' | sed -e "s@[\"']*@@g")*.map.gz")*
     if [ "$KEYMAP" != "" ]; then
         for i in $(find /usr/share/kbd/ -name "$(grep "KEYMAP=" /etc/rc.conf |\
-            awk -FKEYMAP= '{print $2}' | awk -F- '{print $1}')*.map.gz"); do
+            awk -FKEYMAP= '{print $2}' | awk -F- '{print $1}' | sed -e "s@[\"']*@@g")*.map.gz" )*.map.gz"); do
             add_file $i
         done
         for i in $(echo /usr/share/kbd/keymaps/include/*); do
