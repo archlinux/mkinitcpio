@@ -144,7 +144,6 @@ if [ "${HAS_MODULES}" == "y" ]; then
     add_file /tmp${MODULEDIR}/modules.dep ${MODULEDIR}/modules.dep
     add_file /tmp${MODULEDIR}/modules.alias ${MODULEDIR}/modules.alias
     add_file /tmp${MODULEDIR}/modules.symbols ${MODULEDIR}/modules.symbols
-    rm -rf /tmp${MODULEDIR}/
 fi
 
 if [ "x$GENIMG" != "x" ]; then
@@ -162,4 +161,5 @@ else
     echo ":: Dry run complete, use -g IMAGE to generate a real image"
 fi
 [ -e "${MODULE_FILE}" ] && rm "${MODULE_FILE}"
+[ -e "/tmp${MODULEDIR}/" ] && rm -rf /tmp${MODULEDIR}/
 #vim:set ft=sh ts=4 sw=4 noet:
