@@ -138,12 +138,12 @@ done
 
 if [ "${HAS_MODULES}" == "y" ]; then
     echo ":: Generating module dependancies"
-    [ -e /tmp${MODULEDIR}/ ] && rm -rf /tmp${MODULEDIR}/
-    cp --parents $(grep "file /lib/modules" ${FILELIST} | awk '{print $2}') /tmp/
+    [ -e /tmp/lib/modules/${KERNELVERSION}/ ] && rm -r /tmp/lib/modules/${KERNELVERSION}/
+    cp -r --parents $(grep "file /lib/modules" ${FILELIST} | awk '{print $2}') /tmp/
     depmod -b /tmp ${KERNELVERSION}
-    add_file /tmp${MODULEDIR}/modules.dep ${MODULEDIR}/modules.dep
-    add_file /tmp${MODULEDIR}/modules.alias ${MODULEDIR}/modules.alias
-    add_file /tmp${MODULEDIR}/modules.symbols ${MODULEDIR}/modules.symbols
+    add_file /tmp/lib/modules/${KERNELVERSION}/modules.dep ${MODULEDIR}/modules.dep
+    add_file /tmp/lib/modules/${KERNELVERSION}/modules.alias ${MODULEDIR}/modules.alias
+    add_file /tmp/lib/modules/${KERNELVERSION}/modules.symbols ${MODULEDIR}/modules.symbols
 fi
 
 if [ "x$GENIMG" != "x" ]; then
