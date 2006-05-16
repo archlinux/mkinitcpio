@@ -6,7 +6,7 @@ install ()
 
     BINARIES=""
     FILES=""
-    SCRIPT="net"
+    SCRIPT=""
 }
 
 help ()
@@ -66,15 +66,16 @@ cat<<HELPEOF
   Examples:
   ip=127.0.0.1:::::lo:none  --> Enable the loopback interface.
   ip=192.168.1.1:::::eth2:none --> Enable static eth2 interface.
+  ip=:::::eth0:dhcp --> Enable dhcp protcol for eth0 configuration.
 
   nfsroot=[<server-ip>:]<root-dir>[,<nfs-options>]
 
-  If the `nfsroot' parameter is NOT given on the command line, the default
+  If the 'nfsroot' parameter is NOT given on the command line, the default
   "/tftpboot/%s" will be used.
 
   <server-ip>   Specifies the IP address of the NFS server. If this field
                 is not given, the default address as determined by the
-                `ip' variable (see below) is used. One use of this
+                'ip' variable (see below) is used. One use of this
                 parameter is for example to allow using different servers
                 for RARP and NFS. Usually you can leave this blank.
 
@@ -96,5 +97,10 @@ cat<<HELPEOF
                         acdirmin        = 30
                         acdirmax        = 60
                         flags           = hard, nointr, noposix, cto, ac
+  
+  root=/dev/nfs
+  
+  If you don't use nfsroot= parameter you need to set root=/dev/nfs 
+  to boot from a nfs root by autoconfiguration.
 HELPEOF
 }
