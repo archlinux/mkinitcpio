@@ -139,7 +139,6 @@ done
 if [ "${HAS_MODULES}" == "y" ]; then
     echo ":: Generating module dependancies"
     for mod in $(grep "file.*/lib/modules/${KERNELVERSION}" ${FILELIST} | cut -d' ' -f2); do
-        echo "wtf: $mod"
         mkdir -p "$(dirname "${mod}")"
         cp --parents "${mod}" /tmp
     done
