@@ -138,14 +138,16 @@ done
 
 if [ "${HAS_MODULES}" == "y" ]; then
     echo ":: Generating module dependancies"
-    for mod in $(grep "file.*/lib/modules/${KERNELVERSION}" ${FILELIST} | cut -d' ' -f2); do
-        mkdir -p "$(dirname "${mod}")"
-        cp --parents "${mod}" /tmp
+    for mod in $(grep "file /lib/modules/${KERNELVERSION}" ${FILELIST} | cut -d' ' -f2); do
+        echo "mod=$mod"
+        dir=$(dirname "${mod}")
+        mkdir -p "/tmp/${dir}"
+        cp "${BASEDIR}${mod}" "/tmp/${dir}/"
     done
-    depmod -b "/tmp/${BASEDIR}" ${KERNELVERSION}
-    add_file /tmp/${MODULEDIR}/modules.dep ${MODULEDIR}/modules.dep
-    add_file /tmp/${MODULEDIR}/modules.alias ${MODULEDIR}/modules.alias
-    add_file /tmp/${MODULEDIR}/modules.symbols ${MODULEDIR}/modules.symbols
+    depmod -b /tmp ${KERNELVERSION}
+    add_file "/tmp/lib/modules/${KERNELVERSION}/modules.dep"     "/lib/modules/${KERNELVERSION}/modules.dep"
+    add_file "/tmp/lib/modules/${KERNELVERSION}/modules.alias"   "/lib/modules/${KERNELVERSION}/modules.alias"
+    add_file "/tmp/lib/modules/${KERNELVERSION}/modules.symbols" "/lib/modules/${KERNELVERSION}/modules.symbols"
 fi
 
 if [ "x$GENIMG" != "x" ]; then
