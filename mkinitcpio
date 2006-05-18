@@ -138,12 +138,15 @@ done
 
 if [ "${HAS_MODULES}" == "y" ]; then
     echo ":: Generating module dependancies"
-    [ -e /tmp/lib/modules/${KERNELVERSION}/ ] && rm -r /tmp/lib/modules/${KERNELVERSION}/
-    cp -r --parents $(grep "file /lib/modules" ${FILELIST} | awk '{print $2}') /tmp/
-    depmod -b /tmp ${KERNELVERSION}
-    add_file /tmp/lib/modules/${KERNELVERSION}/modules.dep ${MODULEDIR}/modules.dep
-    add_file /tmp/lib/modules/${KERNELVERSION}/modules.alias ${MODULEDIR}/modules.alias
-    add_file /tmp/lib/modules/${KERNELVERSION}/modules.symbols ${MODULEDIR}/modules.symbols
+    for mod in $(grep "file.*/lib/modules/${KERNELVERSION}" ${FILELIST} | cut -d' ' -f2); do
+        echo "wtf: $mod"
+        mkdir -p "$(dirname "${mod}")"
+        cp --parents "${mod}" /tmp
+    done
+    depmod -b "/tmp/${BASEDIR}" ${KERNELVERSION}
+    add_file /tmp/${MODULEDIR}/modules.dep ${MODULEDIR}/modules.dep
+    add_file /tmp/${MODULEDIR}/modules.alias ${MODULEDIR}/modules.alias
+    add_file /tmp/${MODULEDIR}/modules.symbols ${MODULEDIR}/modules.symbols
 fi
 
 if [ "x$GENIMG" != "x" ]; then
@@ -161,5 +164,5 @@ else
     echo ":: Dry run complete, use -g IMAGE to generate a real image"
 fi
 [ -e "${MODULE_FILE}" ] && rm "${MODULE_FILE}"
-[ -e "/tmp${MODULEDIR}/" ] && rm -rf /tmp${MODULEDIR}/
+[ -e "/tmp/${MODULEDIR}/" ] && rm -rf /tmp/${MODULEDIR}/
 #vim:set ft=sh ts=4 sw=4 noet:
