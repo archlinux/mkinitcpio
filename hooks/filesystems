@@ -17,7 +17,7 @@ run_hook ()
             fi
 
             eval $( /bin/parseblock "${root}")
-            if [ "${BLOCKNAME}" = "unknown" -o "x{BLOCKDEVICE}" = "x"]; then
+            if [ "${BLOCKNAME}" = "unknown" -o "x{BLOCKDEVICE}" = "x" ]; then
                 FSTYPE="unknown"
                 echo "ERROR: Failed to parse block device '${root}'"
             else
