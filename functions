@@ -155,10 +155,10 @@ add_binary ()
         case "${type}" in
             *script*)
             msg "   adding '${type}' script, ensure proper interp exists..."
-            add_file "${bin}"
+            add_file "${bin}" "${2}"
             ;;
             *executable*)
-            add_file "${bin}"
+            add_file "${bin}" "${2}"
             #note, this will also handle 'not a dynamic executable' spit out by
             # static binaries... the deps will produce nothing
             for lib in $(ldd ${bin} 2>/dev/null | sed "s|.*=>\(.*\)|\1|"); do
