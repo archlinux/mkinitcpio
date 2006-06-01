@@ -139,10 +139,15 @@ _finish_modules ()
 
 add_binary ()
 {
-    local bin type lib
+    local bin dest type lib
     bin=$(which "${1}")
     if [ $? -ne 0 ]; then
         bin="${1}"
+    fi
+
+    dest=""
+    if [ $# -eq 2 ]; then
+        dest=$2
     fi
 
     if [ ! -f "${bin}" ]; then
@@ -155,10 +160,10 @@ add_binary ()
         case "${type}" in
             *script*)
             msg "   adding '${type}' script, ensure proper interp exists..."
-            add_file "${bin}" "${2}"
+            add_file "${bin}" ${dest}
             ;;
             *executable*)
-            add_file "${bin}" "${2}"
+            add_file "${bin}" ${dest}
             #note, this will also handle 'not a dynamic executable' spit out by
             # static binaries... the deps will produce nothing
             for lib in $(ldd ${bin} 2>/dev/null | sed "s|.*=>\(.*\)|\1|"); do
