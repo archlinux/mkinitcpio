@@ -6,7 +6,7 @@ run_hook ()
         FSTYPE="${rootfstype}"
     else
         if [ ! -e "${root}" ]; then
-            msg "Attempting to create root device '${root}'"
+            msg -e "\nAttempting to create root device '${root}'"
 
             if [ "x${rootdelay}" != "x" ]; then
                 msg -n "Waiting for devices to settle..."
@@ -22,7 +22,7 @@ run_hook ()
                 echo "ERROR: Failed to parse block device '${root}'"
             else
                 export root="${BLOCKNAME}"
-                /bin/mknod "${BLOCKNAME}" b ${BLOCKDEVICE} >/dev/null 2>&1
+                /bin/mknod "${BLOCKNAME}" b ${BLOCKDEVICE} >/dev/null
             fi
         fi
 

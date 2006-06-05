@@ -40,7 +40,6 @@ die () { echo "FATAL: ${@}" >&2; exit 1; }
 add_dir ()
 {
     if [ "x${1}" != "x" -a "${1}" != "/" ]; then
-
         if ! grep "dir ${1} " "${FILELIST}" 2>&1 > /dev/null; then
             add_dir $(dirname "${1}")
             msg "  adding  dir ${1}"
@@ -120,6 +119,7 @@ add_module ()
     #cleanup - remove .ko, replace - and _ with [-_] to match either
     fil=$(basename "${1}" | sed -e "s|[-_]|\[-_\]|g" -e "s|\.ko$||g")
 
+    found=0
     for path in $(find "${MODULEDIR}" -type f -name "${fil}.ko"); do
         for mod in $(modinfo -F depends "${path}" | tr ',' ' '); do
             if [ "x${mod}" != "x" ]; then
@@ -127,14 +127,11 @@ add_module ()
                 HAS_MODULES="y"
             fi
         done
-        add_file "${path}"
+        add_file "${path}" && found=1
     done
-}
-
-_finish_modules ()
-{
-    echo "wtf!"
-
+    if [ $found -eq 0 ]; then
+        die "module '$fil' not found, aborting..."
+    fi
 }
 
 add_binary ()
