@@ -2,7 +2,7 @@
 
 install ()
 {
-    MODULES=" $(checked_modules "scsi/.*ata") $(checked_modules "block/sx8") \ 
+    MODULES=" $(checked_modules "scsi/.*ata") $(checked_modules "block/sx8") 
               $(checked_modules "scsi/ahci") $(checked_modules "scsi/pdc_adma")"
 
     MODULES=$(echo ${MODULES}) #trim whitespace

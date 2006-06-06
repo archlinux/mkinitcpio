@@ -14,7 +14,7 @@ install ()
     grep "KEYMAP=" /etc/rc.conf >> ${KEYMAP_FILE}
     grep "CONSOLEFONT=" /etc/rc.conf >> ${KEYMAP_FILE}
     grep "CONSOLEMAP=" /etc/rc.conf >> ${KEYMAP_FILE}
-    if [ "`echo $LOCALE | /bin/grep -i utf`" ]; then
+    if [ "$(echo $LOCALE | /bin/grep -i utf)" != "" ]; then
         echo UTF8="yes" >> ${KEYMAP_FILE}
     fi
     . ${KEYMAP_FILE}

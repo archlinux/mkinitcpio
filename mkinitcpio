@@ -10,13 +10,14 @@
 #   use "x${var}" = "x" to test for nulls/empty strings
 #   incase of embedded spaces, quote all path names and string comarpisons
 #
+#TODO trap and remove FILELIST
 
 
 # Settings
 BASEDIR=""
 FILELIST="$(mktemp /tmp/.tmpfilelist.XXXX)"
 KERNELVERSION="$(uname -r)"
-FUNCTIONS="functions" #/lib/initramfs/functions
+FUNCTIONS="functions"
 CONFIG="mkinitcpio.conf"
 HOOKDIR="hooks"
 INSTDIR="install"
@@ -133,6 +134,8 @@ for hook in $HOOKS; do
         echo ":: Parsing hook [${hook}]"
         install
         parse_hook
+    else
+        die "Hook '${hook}' can not be found."
     fi
 done
 
