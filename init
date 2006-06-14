@@ -2,7 +2,6 @@
 
 msg () { [ "${quiet}" != "y" ] && echo $@; }
 err () { echo "ERROR: $@"; }
-kparams () { echo -n "$@" >> /arch.cmd; }
 
 msg ":: Loading Initramfs"
 
@@ -13,12 +12,13 @@ read CMDLINE </proc/cmdline
 export CMDLINE
 
 # Used so hooks can override params to kinit
+export kinit_params=""
 export root=""
 echo "/bin/modprobe" > /proc/sys/kernel/modprobe
 
 for cmd in $CMDLINE; do
     case "$cmd" in
-        [0123456Ss]) continue ;;
+        [0123456Ss]) export runlevel="$cmd" ;;
         *=*) export "${cmd}" ;;
         *) export "${cmd}=y" ;;
     esac
@@ -81,4 +81,4 @@ fi
 msg ":: Initramfs Completed - control passing to kinit"
 
 echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
-exec /bin/kinit "root=${root}" "${CMDLINE}"
+exec /bin/kinit -- "root=${root}" ${kinit_params} "${runlevel}" > /dev/null 2>&1

@@ -13,7 +13,7 @@ run_hook ()
                 /bin/sleep "${rootdelay}"
                 msg "done."
                 export rootdelay=0
-                kparams "rootdelay=0"
+                kinit_params="${kinit_params} rootdelay=0"
             fi
 
             eval $(/bin/parseblock "${root}")
@@ -41,7 +41,7 @@ run_hook ()
     if [ "${FSTYPE}" = "unknown" ]; then
         echo "ERROR: root fs cannot be detected. Try using the rootfstype= kernel parameter."
     else
-        kparams "rootfstype=${FSTYPE}"
+        kinit_params="${kinit_params} rootfstype=${FSTYPE}"
         /bin/modprobe -q "${FSTYPE}" >/dev/null 2>&1
     fi
 }

@@ -4,6 +4,7 @@ install ()
 {
     MODULES=" dm-crypt $(all_modules "/crypto/" | grep -v "aes.ko" ) "
     BINARIES=""
+    add_dir "/dev/mapper"
     add_file "/sbin/cryptsetup.static" "/bin/cryptsetup"
     FILES=""
     SCRIPT="encrypt"
