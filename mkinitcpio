@@ -47,7 +47,12 @@ usage ()
     exit 1
 }
 
-while getopts 'c:k:s:b:g:a:vH:LMh' arg; do
+while getopts ':c:k:s:b:g:a:vH:LMh' arg; do
+    if [ "${OPTARG:0:1}" = "-" ]; then
+        echo "error: optional argument to '-$arg' begins with a '-'"
+        echo "  you probably don't want this....aborting."
+        usage
+    fi
     case "$arg" in
         c) CONFIG="$OPTARG" ;;
         k) KERNELVERSION="$OPTARG" ;;
@@ -67,6 +72,7 @@ while getopts 'c:k:s:b:g:a:vH:LMh' arg; do
            exit 0 ;;
         M) SHOW_AUTOMODS="y" ;;
         h|?) usage ;;
+        :) echo "${OPTARG} requires a value..."; usage ;;
         *) echo "invalid argument '$arg'"; usage ;;
     esac
 done
