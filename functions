@@ -37,6 +37,19 @@ msg () { [ "${QUIET}" = "n" ] && echo "${@}"; }
 err () { echo "ERROR: ${@}" >&2; }
 die () { echo "FATAL: ${@}" >&2; exit 1; }
 
+add_full_dir ()
+{
+    if [ "x${1}" != "x" ]; then
+        for f in ${1}/*; do
+            if [ -d "${f}" ]; then
+                add_full_dir "${f}"
+            else
+                add_file "${f}"
+            fi
+        done
+    fi
+}
+
 add_dir ()
 {
     if [ "x${1}" != "x" -a "${1}" != "/" ]; then
