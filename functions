@@ -87,7 +87,7 @@ add_symlink ()
         add_dir $(dirname "${dest}")
         if ! grep "slink ${dest} " "${FILELIST}" 2>&1 > /dev/null; then
             msg "  adding link ${fil} -> ${dest}"
-            echo "slink ${dest} ${fil} $(stat -c '%a' ${fil}) 0 0" >> "${FILELIST}"
+            echo "slink ${fil} ${dest} $(stat -c '%a' ${fil}) 0 0" >> "${FILELIST}"
         fi
     fi
     #fail quietly
