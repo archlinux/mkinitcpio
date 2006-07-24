@@ -29,7 +29,7 @@ install ()
             *cramfs*) echo "zlib_inflate" >> "${MODULE_FILE}" ;;
             *isofs*) echo "zlib_inflate" >> "${MODULE_FILE}" ;;
             *msdos*) echo "fat" >> "${MODULE_FILE}" ;;
-            *vfat*)echo "fat" >> "${MODULE_FILE}" ;;
+            *vfat*)echo -e "fat\nnls_cp437" >> "${MODULE_FILE}" ;;
             *ocfs2*) echo -e "ocfs2_dlm\njbd\nocfs2_nodemanager\nconfigfs" >> "${MODULE_FILE}" ;;
         esac
         echo "${modname}" >> "${MODULE_FILE}"

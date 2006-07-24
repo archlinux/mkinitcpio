@@ -2,7 +2,7 @@
 
 install ()
 {
-    MODULES=" $(checked_modules '/kernel/fs' | grep -v "nls") "
+    MODULES=" $(checked_modules '/kernel/fs' | grep -v "nls") $(checked_modules '/kernel/fs/nls/nls_cp437')"
     BINARIES=""
     FILES=""
     SCRIPT="filesystems"
