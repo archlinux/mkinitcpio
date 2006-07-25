@@ -3,12 +3,21 @@
 run_hook ()
 {
     fmtdevice () { echo "${1}:${2}"; }
+
+    # Try resuming with swsusp
     if [ -e "/sys/power/resume" -a -e "${resume}" ]; then
         dev_t=$( /bin/parseblock "${resume}" )
         fmtdevice ${dev_t} > /sys/power/resume
     fi
-    if [ -e "/proc/suspend2" -a "x${resume2}" != "x" ]; then
-        echo ${resume2} > /proc/suspend2/resume2
-        echo "" > /proc/suspend2/do_resume
+
+    # Try resuming with suspend2
+    if [ -d "/sys/power/suspend2" ]; then
+         suspend2root="/sys/power/suspend2"
+    else
+         suspend2root="/proc/suspend2"
+    fi
+    if [ -d "${suspend2root}" -a "x${resume2}" != "x" ]; then
+        echo ${resume2} > ${resume2root}/resume2
+        echo "" > ${resume2root}/do_resume
     fi
 }
