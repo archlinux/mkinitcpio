@@ -10,7 +10,7 @@ install ()
 help ()
 {
 cat<<HELPEOF
-  This hook initializes support for resuming from Disk
-  and/or Memory.  Supports suspend2 if found.
+  This hook initializes support for resuming from Disk.
+  Supports swsusp and suspend2.
 HELPEOF
 }
