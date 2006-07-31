@@ -17,7 +17,7 @@ run_hook ()
          suspend2root="/proc/suspend2"
     fi
     if [ -d "${suspend2root}" -a "x${resume2}" != "x" ]; then
-        echo ${resume2} > ${resume2root}/resume2
-        echo "" > ${resume2root}/do_resume
+        echo ${resume2} > ${suspend2root}/resume2
+        echo > ${suspend2root}/do_resume
     fi
 }
