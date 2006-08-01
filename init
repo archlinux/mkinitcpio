@@ -19,6 +19,7 @@ echo "/bin/modprobe" > /proc/sys/kernel/modprobe
 for cmd in $CMDLINE; do
     case "$cmd" in
         [0123456Ss]) export runlevel="$cmd" ;;
+        single) export runlevel="S" ;; #some people use 'single'
         *=*) export "${cmd}" ;;
         *) export "${cmd}=y" ;;
     esac
@@ -43,7 +44,7 @@ IFS=$OLDIFS
 
 for m in $MODULES; do
     TST=""
-    eval "TST=\$mod_${h}"
+    eval "TST=\$mod_${m}"
     if [ "${TST}" != "disabled" ]; then
         /bin/modprobe -q $m > /dev/null 2>&1
     fi
@@ -70,14 +71,13 @@ if [ "${break}" = "y" ]; then
     PS1="ramfs$ " /bin/sh -i
 fi
 
-#Special handling is udev is running
+#Special handling if udev is running
 udevpid=$(/bin/minips -C udevd -o pid=)
 if [ "x${udevpid}" != "x" ]; then
     /bin/kill -9 $udevpid
     /bin/sleep 0.01
 fi
 
-# Optimize fs type loop for mounting rootfs
 msg ":: Initramfs Completed - control passing to kinit"
 
 echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
