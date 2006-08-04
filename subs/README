@@ -1,0 +1,11 @@
+The subs tool has been created to solve the IFS ignorance of dash.
+Instead of doing
+
+OLDIFS=$IFS
+IFS=$char
+func $arglist
+IFS=$OLDIFS
+
+now do
+
+func $(subs -n $char $arglist)

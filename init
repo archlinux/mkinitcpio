@@ -25,20 +25,17 @@ for cmd in $CMDLINE; do
     esac
 done
 
-OLDIFS=$IFS
-IFS=,
 if [ "x${disablehooks}" != "x" ]; then
-    for d in ${disablehooks}; do
+    for d in $(subs -n ',' ${disablehooks}); do
         export "hook_${d}=disabled"
     done
 fi
 
 if [ "x${disablemodules}" != "x" ]; then
-    for d in ${disablemodules}; do
+    for d in $(subs -n ',' ${disablemodules}); do
         export "mod_${d}=disabled"
     done
 fi
-IFS=$OLDIFS
 
 . /config
 
