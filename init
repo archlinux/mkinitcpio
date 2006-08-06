@@ -26,7 +26,7 @@ for cmd in $CMDLINE; do
 done
 
 if [ "x${disablehooks}" != "x" ]; then
-    for d in $(subs -n ',' ${disablehooks}); do
+    for d in $(split ${disablehooks} ','); do
         export "hook_${d}=disabled"
     done
 fi

@@ -16,8 +16,3 @@ install -D -m755 init ${1}/lib/initcpio/init
 install -D -m644 functions ${1}/lib/initcpio/functions
 cp -r hooks/ ${1}/lib/initcpio/
 cp -r install/ ${1}/lib/initcpio/
-
-# install subs tool to solve IFS issues
-cd subs
-make
-install -D -m755 subs ${1}/usr/lib/klibc/bin/subs
