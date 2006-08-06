@@ -32,7 +32,7 @@ if [ "x${disablehooks}" != "x" ]; then
 fi
 
 if [ "x${disablemodules}" != "x" ]; then
-    for d in $(subs -n ',' ${disablemodules}); do
+    for d in $(split ${disablemodules} ','); do
         export "mod_${d}=disabled"
     done
 fi
