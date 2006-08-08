@@ -20,6 +20,7 @@ for cmd in $CMDLINE; do
     case "$cmd" in
         [0123456Ss]) export runlevel="$cmd" ;;
         single) export runlevel="S" ;; #some people use 'single'
+        *.*) ;; #do nothing if it contains a dot
         *=*) export "${cmd}" ;;
         *) export "${cmd}=y" ;;
     esac
