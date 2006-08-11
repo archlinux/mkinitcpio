@@ -27,13 +27,15 @@ for cmd in $CMDLINE; do
 done
 
 if [ "x${disablehooks}" != "x" ]; then
-    for d in $(replace -q ${disablehooks} ','); do
+    k="$(replace -q "${disablehooks}" '-' '_')"
+    for d in $(replace "${k}" ','); do
         export "hook_${d}=disabled"
     done
 fi
 
 if [ "x${disablemodules}" != "x" ]; then
-    for d in $(replace -q ${disablemodules} ','); do
+    k="$(replace "${disablemodules}" '-' '_')"
+    for d in $(replace "${k}" ','); do
         export "mod_${d}=disabled"
     done
 fi
