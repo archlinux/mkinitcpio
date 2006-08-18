@@ -20,22 +20,26 @@ for cmd in $CMDLINE; do
     case "$cmd" in
         [0123456Ss]) export runlevel="$cmd" ;;
         single) export runlevel="S" ;; #some people use 'single'
-        *.*) ;; #do nothing if it contains a dot
-        *=*) export "${cmd}" ;;
-        *) export "${cmd}=y" ;;
+        # only export stuff that does work with dash :)
+        *=*) cmd="$(replace "${cmd}" '.' '_')"
+             cmd="$(replace "${cmd}" '-' '_')"
+             export "${cmd}"
+             ;;
+        *)   cmd="$(replace "${cmd}" '.' '_')"
+             cmd="$(replace "${cmd}" '-' '_')"
+             export "${cmd}=y" 
+           ;;
     esac
 done
 
 if [ "x${disablehooks}" != "x" ]; then
-    k="$(replace -q "${disablehooks}" '-' '_')"
-    for d in $(replace "${k}" ','); do
+    for d in $(replace "${disablehooks}" ','); do
         export "hook_${d}=disabled"
     done
 fi
 
 if [ "x${disablemodules}" != "x" ]; then
-    k="$(replace "${disablemodules}" '-' '_')"
-    for d in $(replace "${k}" ','); do
+    for d in $(replace "${disablemodules}" ','); do
         export "mod_${d}=disabled"
     done
 fi
