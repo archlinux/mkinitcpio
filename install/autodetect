@@ -12,7 +12,7 @@ install ()
     #Filesystem detection, use sysfs instead of /proc
     findfs () {
       BDEV=/dev/mkinitcpio_dev
-      for blkdev in $(find /sys/block -name dev | grep -v loop | grep -v ram | grep -v fd); do
+      for blkdev in $(find /sys/block -name dev | grep -v -e loop -e ram -e fd); do
         unset FSTYPE
         rm -f $BDEV
         mknod $BDEV b $(/usr/lib/klibc/bin/replace "$(cat ${blkdev})" ':')
