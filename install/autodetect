@@ -8,16 +8,29 @@ install ()
                     -e '/usb/' -e '/ide/' -e '/ieee1394/' -e '/cdrom' \
                     -e '/net/' -e '/pcmcia')"
 
+    
     #Filesystem detection, use sysfs instead of /proc
-    BLOCKDEVICES="$([ "$(echo /sys/block/*/*/dev)" != "/sys/block/*/*/dev" ] && ls /sys/block/*/*/dev | cut -d/ -f5) $([ "$(echo /sys/block/md*/dev)" != "/sys/block/md*/dev" ] && ls /sys/block/md*/dev | cut -d/ -f4) $([ "$(echo /sys/block/dm*/dev)" != "/sys/block/dm*/dev" ] && ls /sys/block/dm*/dev)"
-    for blk in ${BLOCKDEVICES}; do
-        eval $(/usr/lib/klibc/bin/fstype < /dev/${blk})
-        for mod in $(find "${MODULEDIR}" -type f -name "${FSTYPE}.ko"); do
-            if [ "x${mod}" != "x" ]; then
-                AUTODETECT="${AUTODETECT} ${mod}"
-            fi
-        done
-    done
+    findfs () {
+      BDEV=/dev/mkinitcpio_dev
+      for blkdev in $(find /sys/block -name dev | grep -v loop | grep -v ram | grep -v fd); do
+        unset FSTYPE
+        rm -f $BDEV
+        mknod $BDEV b $(/usr/lib/klibc/bin/replace "$(cat ${blkdev})" ':')
+        eval $(/usr/lib/klibc/bin/fstype 2>/dev/null < $BDEV)
+        if [ -n "$FSTYPE" -a "$FSTYPE" != "swap" -a "$FSTYPE" != "unknown" -a "$FSTYPE" != "luks" -a "$FSTYPE" != "lvm2" ]; then
+          echo $FSTYPE
+        fi
+      done
+      rm -f $BDEV
+    }
+ 
+    for fs in $(findfs | sort | uniq); do
+      for mod in $(find "${MODULEDIR}" -type f -name "${fs}.ko"); do
+        if [ "x${mod}" != "x" ]; then
+          AUTODETECT="${AUTODETECT} ${mod}"
+        fi
+      done
+    done  
 
     if [ -e /sbin/mdadm ]; then
         if [ $UID -eq 0 -o "$(groups | grep disk)" != "" ]; then
