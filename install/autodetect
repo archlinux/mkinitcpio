@@ -9,7 +9,8 @@ install ()
                     -e '/net/' -e '/pcmcia')"
 
     #Filesystem detection, use sysfs instead of /proc
-    for blk in $(ls /sys/block/*/*/dev | cut -d/ -f5); do
+    BLOCKDEVICES="$([ "$(echo /sys/block/*/*/dev)" != "/sys/block/*/*/dev" ] && ls /sys/block/*/*/dev | cut -d/ -f5) $([ "$(echo /sys/block/md*/dev)" != "/sys/block/md*/dev" ] && ls /sys/block/md*/dev | cut -d/ -f4) $([ "$(echo /sys/block/dm*/dev)" != "/sys/block/dm*/dev" ] && ls /sys/block/dm*/dev)"
+    for blk in ${BLOCKDEVICES}; do
         eval $(/usr/lib/klibc/bin/fstype < /dev/${blk})
         for mod in $(find "${MODULEDIR}" -type f -name "${FSTYPE}.ko"); do
             if [ "x${mod}" != "x" ]; then
