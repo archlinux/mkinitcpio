@@ -21,8 +21,10 @@ for cmd in $CMDLINE; do
         [0123456Ss]) export runlevel="$cmd" ;;
         single) export runlevel="S" ;; #some people use 'single'
         # only export stuff that does work with dash :)
-        *=*) cmd="$(replace "${cmd}" '.' '_')"
-             cmd="$(replace "${cmd}" '-' '_')"
+        *=*) # These should only be applied to the lefthand side of the expression
+             # Disable them until a fix is available, as they break things
+             #cmd="$(replace "${cmd}" '.' '_')"
+             #cmd="$(replace "${cmd}" '-' '_')"
              export "${cmd}"
              ;;
         *)   cmd="$(replace "${cmd}" '.' '_')"
