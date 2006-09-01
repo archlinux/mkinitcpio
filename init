@@ -20,11 +20,19 @@ for cmd in $CMDLINE; do
     case "$cmd" in
         [0123456Ss]) export runlevel="$cmd" ;;
         single) export runlevel="S" ;; #some people use 'single'
+        # replace can cause problems for the following entries
+        # These should only be applied to the lefthand side of the expression
+        # until we find a fix hardcode the stuff here.
+        root=*) export "${cmd}";;
+        md=*) export "${cmd}" ;;
+        crypto=*) export "${cmd}" ;;
+        resume2=*) export "${cmd}" ;;
+        ip=*) export "${cmd}" ;;
+        nfsaddrs=*) export "${cmd}" ;;
+        nfsroot=*) export "${cmd}" ;;
         # only export stuff that does work with dash :)
-        *=*) # These should only be applied to the lefthand side of the expression
-             # Disable them until a fix is available, as they break things
-             #cmd="$(replace "${cmd}" '.' '_')"
-             #cmd="$(replace "${cmd}" '-' '_')"
+        *=*) cmd="$(replace "${cmd}" '.' '_')"
+             cmd="$(replace "${cmd}" '-' '_')"
              export "${cmd}"
              ;;
         *)   cmd="$(replace "${cmd}" '.' '_')"
