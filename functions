@@ -52,7 +52,8 @@ add_full_dir ()
 
 add_dir ()
 {
-    if [ "x${1}" != "x" -a "${1}" != "/" ]; then
+    #skip root directory and "." for relative directories... i.e. /foo/bar/./blah
+    if [ "x${1}" != "x" -a "${1}" != "/" -a "${1}" != "." ]; then
         if ! grep "dir ${1} " "${FILELIST}" 2>&1 > /dev/null; then
             add_dir $(dirname "${1}")
             msg "  adding  dir ${1}"
@@ -82,13 +83,13 @@ add_symlink ()
 {
     local fil dest dir
     if [ -L ${1} ]; then
-        fil="${1}"
+        fil="${1##$BASEDIR}"
         dest="${2##$BASEDIR}"
         add_dir $(dirname "${dest}")
         add_dir $(dirname "${fil}")
         if ! grep "slink ${dest} " "${FILELIST}" 2>&1 > /dev/null; then
             msg "  adding link ${fil} -> ${dest}"
-            echo "slink ${fil} ${dest} $(stat -c '%a' ${fil}) 0 0" >> "${FILELIST}"
+            echo "slink ${fil} ${dest} $(stat -c '%a' ${1}) 0 0" >> "${FILELIST}"
         fi
     fi
     #fail quietly
