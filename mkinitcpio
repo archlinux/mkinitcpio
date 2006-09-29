@@ -175,7 +175,14 @@ if [ "x$GENIMG" != "x" ]; then
 else
     echo ":: Dry run complete, use -g IMAGE to generate a real image"
 fi
+
+#cleanup - we should probably trap this...
+isempty () { [ $(ls -1 "${1}" | wc -l) -eq 0 ]; }
 [ -e "${MODULE_FILE}" ] && rm "${MODULE_FILE}"
-[ -e "/tmp/${MODULEDIR}/" ] && rm -rf /tmp/${MODULEDIR}/
+if [ -d /tmp/lib/modules/${KERNELVERSION} ]; then
+    rm -rf /tmp/lib/modules/${KERNELVERSION}
+    isempty /tmp/lib/modules && rm -rf /tmp/lib/modules
+    isempty /tmp/lib && rm -rf /tmp/lib
+fi
 exit $status
 #vim:set ft=sh ts=4 sw=4 noet:
