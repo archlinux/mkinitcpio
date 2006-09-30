@@ -10,27 +10,24 @@ install ()
 
     
     #Filesystem detection, use sysfs instead of /proc
-    findfs () {
-      BDEV=/dev/mkinitcpio_dev
-      for blkdev in $(find /sys/block -name dev | grep -v -e loop -e ram -e fd); do
-        unset FSTYPE
-        rm -f $BDEV
-        mknod $BDEV b $(/usr/lib/klibc/bin/replace "$(cat ${blkdev})" ':')
-        eval $(/usr/lib/klibc/bin/fstype 2>/dev/null < $BDEV)
-        if [ -n "$FSTYPE" -a "$FSTYPE" != "swap" -a "$FSTYPE" != "unknown" -a "$FSTYPE" != "luks" -a "$FSTYPE" != "lvm2" ]; then
-          echo $FSTYPE
-        fi
-      done
-      rm -f $BDEV
+    findfs ()
+    {
+        for blkdev in $(find /dev -type b | grep -v -e loop -e ram -e fd); do
+            eval $(/usr/lib/klibc/bin/fstype 2>/dev/null < $blkdev)
+            if [ -n "$FSTYPE" -a "$FSTYPE" != "swap" -a "$FSTYPE" != "unknown" -a "$FSTYPE" != "luks" -a "$FSTYPE" != "lvm2" ]; then
+                echo $FSTYPE
+            fi
+        done
     }
  
     for fs in $(findfs | sort | uniq); do
-      for mod in $(find "${MODULEDIR}" -type f -name "${fs}.ko"); do
-        if [ "x${mod}" != "x" ]; then
-          AUTODETECT="${AUTODETECT} ${mod}"
-        fi
-      done
-    done  
+        for mod in $(find "${MODULEDIR}" -type f -name "${fs}.ko"); do
+            if [ "x${mod}" != "x" ]; then
+                AUTODETECT="${AUTODETECT} ${mod}"
+            fi
+        done
+    done
+    
 
     if [ -e /sbin/mdadm ]; then
         if [ $UID -eq 0 -o "$(groups | grep disk)" != "" ]; then
