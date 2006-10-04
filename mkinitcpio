@@ -87,8 +87,7 @@ MODULEDIR="${BASEDIR}/lib/modules/${KERNELVERSION}"
 
 if [ "x${BASEDIR}" != "x" ]; then
     if [ "${BASEDIR:0:1}" != "/" ]; then
-        echo "base directory '${BASEDIR}' must be an absolute path"
-        exit 1
+        BASEDIR="$(pwd)/${BASEDIR}"
     elif [ ! -d "${BASEDIR}" ]; then
         echo "base directory '${BASEDIR}' does not exist or is not a directory"
         exit 1
@@ -115,6 +114,9 @@ elif [ -f "${DESTIMG}" ]; then
 else
     touch "${FILELIST}"
 fi
+
+BASEDIR=$(echo ${BASEDIR} | tr -s /)
+MODULEDIR=$(echo ${MODULEDIR} | tr -s /)
 
 source "${FUNCTIONS}"
 
