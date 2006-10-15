@@ -137,6 +137,20 @@ for hook in $HOOKS; do
     unset BINARIES
     unset FILES
     install () { msg "${hook}: no install function..."; }
+    # Deprecation check
+    # A hook is considered deprecated if it is a symlink
+    # within $INSTDIR.
+    if [ -L "${INSTDIR}/${hook}" ]; then
+        newhook="$(readlink -ne "${INSTDIR}/${hook}")"
+        if [ -n "${newhook}" -a "${INSTDIR}/$(basename ${newhook})" -ef "${newhook}" ]; then
+            newhook="$(basename ${newhook})"
+            echo "   -------------------------------------------------------------------"
+            echo "   WARNING: Hook \"${hook}\" is deprecated."
+            echo "            Replace it with \"${newhook}\" in your configuration file."
+            echo "   -------------------------------------------------------------------"
+            hook="${newhook}"
+        fi
+    fi
     if grep "install" "${INSTDIR}/${hook}" >/dev/null 2>&1; then
         source "${INSTDIR}/${hook}"
         echo ":: Parsing hook [${hook}]"

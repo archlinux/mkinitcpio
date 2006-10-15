@@ -1,0 +1,25 @@
+# vim: set ft=sh:
+
+install ()
+{
+    MODULES=" $(checked_modules "ata/*")" 
+
+    MODULES=$(echo ${MODULES}) #trim whitespace
+    if [ "x${MODULES}" != "x" ]; then
+        MODULES="${MODULES} sd_mod sr_mod"
+    fi
+
+    BINARIES=""
+    FILES=""
+    SCRIPT=""
+}
+
+help ()
+{
+cat<<HELPEOF
+  This hook loads the necessary modules for sata or pata root device
+  with the new ata subsystem on kernels >=2.6.19.
+  Detection will take place at runtime. To minimize the modules
+  in the image, add the autodetect hook too.
+HELPEOF
+}
