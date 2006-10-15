@@ -20,22 +20,22 @@ install ()
         done
     }
  
-    if [ -e /sbin/mdadm ]; then
-        if [ $UID -eq 0 -o "$(groups | grep disk)" != "" ]; then
-            for fs in $(findfs | sort | uniq); do
-                for mod in $(find "${MODULEDIR}" -type f -name "${fs}.ko"); do
-                    if [ "x${mod}" != "x" ]; then
-                        AUTODETECT="${AUTODETECT} ${mod}"
-                    fi
-                done
+    if [ $UID -eq 0 -o "$(groups | grep disk)" != "" ]; then
+        for fs in $(findfs | sort | uniq); do
+            for mod in $(find "${MODULEDIR}" -type f -name "${fs}.ko"); do
+                if [ "x${mod}" != "x" ]; then
+                    AUTODETECT="${AUTODETECT} ${mod}"
+                fi
             done
+        done
 
+        if [ -e /sbin/mdadm ]; then
             AUTODETECT="$AUTODETECT
                       $(mdadm -E -s /dev/hd* /dev/sd* /dev/rd/* /dev/ida/* /dev/cciss/* /dev/ataraid/* \
                         | awk -Flevel= '{print $2}' | awk '{print $1}')"
-        else
-            err "User does not have proper permissions to read superblocks, raid and filesystem modules are not detected"
         fi
+    else
+        err "User does not have proper permissions to read superblocks, raid and filesystem modules are not detected"
     fi
 
     for m in $AUTODETECT; do
