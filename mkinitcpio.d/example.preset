@@ -1,0 +1,13 @@
+# Example mkinitcpio preset file
+
+PRESET_N=2
+
+PRESET_NAME[0]="default"
+PRESET_KVER[0]="2.6.18-ARCH"
+PRESET_CONFIG[0]="/etc/mkinitcpio.conf"
+PRESET_IMAGE[0]="/tmp/kernel26.img"
+
+PRESET_NAME[1]="fallback"
+PRESET_KVER[1]="2.6.18-ARCH"
+PRESET_CONFIG[1]="/boot/mkinitcpio-kernel26.conf"
+PRESET_IMAGE[1]="/tmp/kernel26-fallback.img"

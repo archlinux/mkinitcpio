@@ -8,6 +8,7 @@ sed -e 's|CONFIG="mkinitcpio.conf"|CONFIG="/etc/mkinitcpio.conf"|g' \
     -e 's|FUNCTIONS="functions"|FUNCTIONS="/lib/initcpio/functions"|g' \
     -e 's|HOOKDIR="hooks"|HOOKDIR="/lib/initcpio/hooks"|g' \
     -e 's|INSTDIR="install"|INSTDIR="/lib/initcpio/install"|g' \
+    -e 's|PRESETDIR="mkinitcpio.d"|PRESETDIR="/etc/mkinitcpio.d"|g' \
     < mkinitcpio > ${1}/sbin/mkinitcpio
 chmod 755 ${1}/sbin/mkinitcpio
 
