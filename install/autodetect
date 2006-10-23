@@ -40,7 +40,7 @@ install ()
 
     for m in $AUTODETECT; do
         modname="$(basename ${m%%\.ko})"
-        grep "${modname}" "${MODULE_FILE}" >/dev/null 2>&1 && continue
+        grep "^${modname}$" "${MODULE_FILE}" >/dev/null 2>&1 && continue
         case "${m}" in 
             #*/ieee1394/*) echo -e "sbp2\nsd_mod\nsr_mod" >> "${MODULE_FILE}";;
             *ext3*) echo "jbd" >> "${MODULE_FILE}" ;;

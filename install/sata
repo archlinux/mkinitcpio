@@ -3,7 +3,9 @@
 install ()
 {
     MODULES=" $(checked_modules "scsi/.*ata") $(checked_modules "block/sx8") 
-              $(checked_modules "scsi/ahci") $(checked_modules "scsi/pdc_adma")"
+              $(checked_modules "scsi/ahci") $(checked_modules "scsi/pdc_adma") 
+              $(checked_modules "ata/sata_*") $(checked_modules "ata/ahci") 
+              $(checked_modules "ata/pdc_adma") $(checked_modules "ata/ata_piix")"
 
     MODULES=$(echo ${MODULES}) #trim whitespace
     if [ "x${MODULES}" != "x" ]; then

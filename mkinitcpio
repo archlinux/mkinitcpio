@@ -83,25 +83,30 @@ done
 shift $(($OPTIND - 1))
 
 # use preset $PRESET
-if [ -n "${PRESET}" -a -f "${PRESETDIR}/${PRESET}.preset" ]; then
-    # Use -b and -v options specified earlier
-    PRESET_MKOPTS=""
-    [ -n "${BASEDIR}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -b ${BASEDIR}"
-    [ "${QUIET}" = "n" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -v"
-    # Build all images
-    source ${PRESETDIR}/${PRESET}.preset
-    for ((i=0; i<${PRESET_N}; ++i)); do
-        [ -z "${PRESET_NAME[${i}]}" -o -z "${PRESET_KVER[${i}]}" -o -z "${PRESET_CONFIG[${i}]}" -o -z "${PRESET_IMAGE[${i}]}" ] && continue
-        echo "==> Building image \"${PRESET_NAME[${i}]}\""
-        PRESET_CMD="${0} -c ${PRESET_CONFIG[${i}]} -k ${PRESET_KVER[${i}]} -g ${PRESET_IMAGE[${i}]} ${PRESET_MKOPTS}"
-        echo "==> Running command: ${PRESET_CMD}"
-        if ${PRESET_CMD}; then
-            echo "==> SUCCESS"
-        else
-            echo "==> FAIL"
-        fi
-    done
-    exit 0
+if [ -n "${PRESET}" ]; then
+    if [ -f "${PRESETDIR}/${PRESET}.preset" ]; then
+        # Use -b and -v options specified earlier
+        PRESET_MKOPTS=""
+        [ -n "${BASEDIR}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -b ${BASEDIR}"
+        [ "${QUIET}" = "n" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -v"
+        # Build all images
+        source ${PRESETDIR}/${PRESET}.preset
+        for ((i=0; i<${PRESET_N}; ++i)); do
+            [ -z "${PRESET_NAME[${i}]}" -o -z "${PRESET_KVER[${i}]}" -o -z "${PRESET_CONFIG[${i}]}" -o -z "${PRESET_IMAGE[${i}]}" ] && continue
+            echo "==> Building image \"${PRESET_NAME[${i}]}\""
+            PRESET_CMD="${0} -c ${PRESET_CONFIG[${i}]} -k ${PRESET_KVER[${i}]} -g ${PRESET_IMAGE[${i}]} ${PRESET_MKOPTS}"
+            echo "==> Running command: ${PRESET_CMD}"
+            if ${PRESET_CMD}; then
+                echo "==> SUCCESS"
+            else
+                echo "==> FAIL"
+            fi
+        done
+        exit 0
+    else
+        echo "Preset ${PRESET} does not exist. Exiting."
+        exit 1
+    fi
 fi
 
 # append a trailing / if needed
