@@ -139,9 +139,6 @@ if [ -f "${FILELIST}" -a "x${APPEND}" == "x" ]; then
         echo "destination file list '${FILELIST}' exists - remove before running"
         exit 1
     fi
-elif [ -f "${DESTIMG}" ]; then
-    echo "destination image '${DESTIMG}' exists - remove before running"
-    exit 1
 else
     touch "${FILELIST}"
 fi
