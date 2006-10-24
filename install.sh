@@ -3,6 +3,7 @@
 [ $# -ne 1 ] && echo "install.sh <root install path>" && exit 1
 mkdir -p ${1}/sbin
 mkdir -p ${1}/lib/initcpio
+mkdir -p ${1}/etc
 
 sed -e 's|CONFIG="mkinitcpio.conf"|CONFIG="/etc/mkinitcpio.conf"|g' \
     -e 's|FUNCTIONS="functions"|FUNCTIONS="/lib/initcpio/functions"|g' \
@@ -17,3 +18,4 @@ install -D -m755 init ${1}/lib/initcpio/init
 install -D -m644 functions ${1}/lib/initcpio/functions
 cp -r hooks/ ${1}/lib/initcpio/
 cp -r install/ ${1}/lib/initcpio/
+cp -r mkinitcpio.d/ ${1}/etc/mkinitcpio.d
