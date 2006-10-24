@@ -3,6 +3,12 @@
 install ()
 {
     MODULES=" $(checked_modules "/ide/" | grep -v "legacy") ";
+
+    MODULES=$(echo ${MODULES}) #trim whitespace
+    if [ "x${MODULES}" != "x" ]; then
+        MODULES="${MODULES} ide-disk ide-cd"
+    fi
+
     BINARIES=""
     FILES=""
     SCRIPT=""
