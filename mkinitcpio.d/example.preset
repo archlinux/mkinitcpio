@@ -1,13 +1,22 @@
 # Example mkinitcpio preset file
 
-PRESET_N=2
+# preset names
+PRESETS=('default' 'fallback')
 
-PRESET_NAME[0]="default"
-PRESET_KVER[0]="2.6.18-ARCH"
-PRESET_CONFIG[0]="/etc/mkinitcpio.conf"
-PRESET_IMAGE[0]="/tmp/kernel26.img"
+# ALL_kver is used if presetname_kver is not set
+# note for distribution kernels: this should be in a separate file
+# and read like this:
+# source /etc/mkinitcpio.d/exmaple.kver
+ALL_kver='2.6.18-ARCH'
 
-PRESET_NAME[1]="fallback"
-PRESET_KVER[1]="2.6.18-ARCH"
-PRESET_CONFIG[1]="/boot/mkinitcpio-kernel26.conf"
-PRESET_IMAGE[1]="/tmp/kernel26-fallback.img"
+# presetname_kver specifies the kernel version (omit if ALL_kver should be used)
+# presetname_config specifies the configuration file
+# presetname_image specifies the image to be generated
+
+#default_kver="2.6.18-ARCH"
+default_config="/etc/mkinitcpio.conf"
+default_image="/tmp/kernel26.img"
+
+#fallback_kver="2.6.18-ARCH"
+fallback_config="/etc/mkinitcpio.d/mkinitcpio-kernel26-fallback.conf"
+fallback_image="/tmp/kernel26-fallback.img"

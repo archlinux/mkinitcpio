@@ -86,15 +86,37 @@ shift $(($OPTIND - 1))
 if [ -n "${PRESET}" ]; then
     if [ -f "${PRESETDIR}/${PRESET}.preset" ]; then
         # Use -b and -v options specified earlier
-        PRESET_MKOPTS=""
+        PRESET_MKOPTS="${0}"
         [ -n "${BASEDIR}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -b ${BASEDIR}"
         [ "${QUIET}" = "n" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -v"
         # Build all images
         source ${PRESETDIR}/${PRESET}.preset
-        for ((i=0; i<${PRESET_N}; ++i)); do
-            [ -z "${PRESET_NAME[${i}]}" -o -z "${PRESET_KVER[${i}]}" -o -z "${PRESET_CONFIG[${i}]}" -o -z "${PRESET_IMAGE[${i}]}" ] && continue
-            echo "==> Building image \"${PRESET_NAME[${i}]}\""
-            PRESET_CMD="${0} -c ${PRESET_CONFIG[${i}]} -k ${PRESET_KVER[${i}]} -g ${PRESET_IMAGE[${i}]} ${PRESET_MKOPTS}"
+        for p in ${PRESETS[@]}; do
+            echo "==> Building image \"${p}\""
+            PRESET_CMD="${PRESET_MKOPTS}"
+            eval "PRESET_KVER=\"\${${p}_kver}\""
+            eval "PRESET_CONFIG=\"\${${p}_config}\""
+            eval "PRESET_IMAGE=\"\${${p}_image}\""
+            if [ -n "${PRESET_KVER}" ]; then
+                PRESET_CMD="${PRESET_CMD} -k ${PRESET_KVER}"
+            elif [ -n "${ALL_kver}" ]; then
+                PRESET_CMD="${PRESET_CMD} -k ${ALL_kver}"
+            else
+                echo "==> No kernel version specified. Skipping image \"${p}\"."
+                continue
+            fi
+            if [ -n "${PRESET_CONFIG}" ]; then
+                PRESET_CMD="${PRESET_CMD} -c ${PRESET_CONFIG}"
+            else
+                echo "==> No configuration file specified. Skipping image \"${p}\"."
+                continue
+            fi
+            if [ -n "${PRESET_IMAGE}" ]; then
+                PRESET_CMD="${PRESET_CMD} -g ${PRESET_IMAGE}"
+            else
+                echo "==> No image file specified. Skipping image \"${p}\"."
+                continue
+            fi
             echo "==> Running command: ${PRESET_CMD}"
             if ${PRESET_CMD}; then
                 echo "==> SUCCESS"
@@ -190,7 +212,7 @@ for hook in $HOOKS; do
 done
 
 if [ "${HAS_MODULES}" == "y" ]; then
-    echo ":: Generating module dependancies"
+    echo ":: Generating module dependencies"
     for mod in $(grep "file /lib/modules/${KERNELVERSION}" ${FILELIST} | cut -d' ' -f2); do
         dir=$(dirname "${mod}")
         mkdir -p "/tmp/${dir}"

@@ -18,6 +18,7 @@ echo "/bin/modprobe" > /proc/sys/kernel/modprobe
 
 for cmd in $CMDLINE; do
     case "$cmd" in
+        \#*) break ;; # ignore everything after a # in the commandline
         [0123456Ss]) export runlevel="$cmd" ;;
         single) export runlevel="S" ;; #some people use 'single'
         # replace can cause problems for the following entries
