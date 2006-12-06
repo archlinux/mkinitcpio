@@ -55,6 +55,12 @@ if [ "x${disablemodules}" != "x" ]; then
     done
 fi
 
+if [ "x${earlymodules}" != "x" ]; then
+    for m in $(replace "${earlymodules}" ','); do
+        /bin/modprobe -q $m > /dev/null 2>&1
+    done
+fi
+
 . /config
 
 for m in $MODULES; do
@@ -94,6 +100,9 @@ if [ "x${udevpid}" != "x" ]; then
 fi
 
 msg ":: Initramfs Completed - control passing to kinit"
+if [ -f "/message" ]; then
+    msg "$(cat /message)"
+fi
 
 echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
 exec /bin/kinit -- "root=${root}" ${kinit_params} "${runlevel}" > /dev/null 2>&1

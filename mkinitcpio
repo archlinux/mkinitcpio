@@ -16,6 +16,7 @@
 # Settings
 BASEDIR=""
 FILELIST="$(mktemp /tmp/.tmpfilelist.XXXX)"
+MESSAGEFILE="$(mktemp /tmp/.message.XXXX)"
 KERNELVERSION="$(uname -r)"
 FUNCTIONS="functions"
 CONFIG="mkinitcpio.conf"
@@ -26,6 +27,7 @@ SAVELIST=""
 GENIMG=""
 APPEND=""
 PRESET=""
+MESSAGE=""
 PRESETDIR="mkinitcpio.d"
 QUIET="y"
 SHOW_AUTOMODS="n"
@@ -42,6 +44,7 @@ usage ()
     echo "  -g IMAGE         Generate a cpio image as IMAGE. default: no"
     echo "  -a NAME          Append to an existing filelist. default: no"
     echo "  -p PRESET        Build specified preset."
+    echo "  -m MESSAGE       Print MESSAGE before passing control to kinit."
     echo "  -v               Verbose output. Default: no"
     echo "  -M               Display modules found via autodetection." 
     echo "  -L               List all available hooks." 
@@ -50,7 +53,7 @@ usage ()
     exit 1
 }
 
-while getopts ':c:k:s:b:g:a:p:vH:LMh' arg; do
+while getopts ':c:k:s:b:g:a:p:m:vH:LMh' arg; do
     if [ "${OPTARG:0:1}" = "-" ]; then
         echo "error: optional argument to '-$arg' begins with a '-'"
         echo "  you probably don't want this....aborting."
@@ -64,6 +67,7 @@ while getopts ':c:k:s:b:g:a:p:vH:LMh' arg; do
         g) GENIMG="$OPTARG" ;;
         a) APPEND="y"; SAVELIST="y"; FILELIST="$OPTARG" ;;
         p) PRESET="$OPTARG" ;;
+        m) MESSAGE="$OPTARG" ;;
         v) QUIET="n" ;;
         H) source "${INSTDIR}/${OPTARG}";
            echo "Help for hook '${OPTARG}':"
@@ -85,9 +89,10 @@ shift $(($OPTIND - 1))
 # use preset $PRESET
 if [ -n "${PRESET}" ]; then
     if [ -f "${PRESETDIR}/${PRESET}.preset" ]; then
-        # Use -b and -v options specified earlier
+        # Use -b, -m and -v options specified earlier
         PRESET_MKOPTS="${0}"
         [ -n "${BASEDIR}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -b ${BASEDIR}"
+        [ -n "${MESSAGE}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -m ${MESSAGE}"
         [ "${QUIET}" = "n" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -v"
         # Build all images
         source ${PRESETDIR}/${PRESET}.preset
@@ -238,6 +243,7 @@ if [ "x$GENIMG" != "x" ]; then
     if [ "x${SAVELIST}" == "x" ]; then
         rm ${FILELIST}
     fi
+    rm ${MESSAGEFILE}
 else
     echo ":: Dry run complete, use -g IMAGE to generate a real image"
 fi

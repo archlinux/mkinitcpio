@@ -20,6 +20,10 @@ install ()
 
     add_file "/lib/initcpio/init" "/init"
     add_file "${CONFIG}" "/config"
+    if [ "x${MESSAGE}" != "x" ]; then
+        echo -e "${MESSAGE}" > ${MESSAGEFILE}
+        add_file "${MESSAGEFILE}" "/message"
+    fi
     SCRIPT=""
 }
 
