@@ -92,7 +92,7 @@ if [ -n "${PRESET}" ]; then
         # Use -b, -m and -v options specified earlier
         PRESET_MKOPTS="${0}"
         [ -n "${BASEDIR}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -b ${BASEDIR}"
-        [ -n "${MESSAGE}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -m ${MESSAGE}"
+        [ -n "${MESSAGE}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -m \"${MESSAGE}\""
         [ "${QUIET}" = "n" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -v"
         # Build all images
         source ${PRESETDIR}/${PRESET}.preset
@@ -123,7 +123,7 @@ if [ -n "${PRESET}" ]; then
                 continue
             fi
             echo "==> Running command: ${PRESET_CMD}"
-            if ${PRESET_CMD}; then
+            if eval ${PRESET_CMD}; then
                 echo "==> SUCCESS"
             else
                 echo "==> FAIL"

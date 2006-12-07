@@ -7,7 +7,7 @@ install ()
 
     MODULES=$(echo ${MODULES}) #trim whitespace
     if [ "x${MODULES}" != "x" ]; then
-        MODULES="${MODULES} libata sd_mod sr_mod"
+        MODULES="${MODULES} sd_mod sr_mod"
     fi
 
     BINARIES=""
