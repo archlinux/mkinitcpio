@@ -145,7 +145,7 @@ add_module ()
         add_file "${path}" && found=1
     done
     if [ $found -eq 0 ]; then
-        die "module '$fil' not found, aborting..."
+        err "module '$fil' not found"
     fi
 }
 
