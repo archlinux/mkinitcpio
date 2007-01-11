@@ -8,7 +8,7 @@ install ()
                     -e '/usb/' -e '/ide/' -e '/ieee1394/' -e '/cdrom' \
                     -e '/net/' -e '/pcmcia' -e '/ata')"
 
-    
+
     #Filesystem detection, use sysfs instead of /proc
     findfs ()
     {
@@ -19,7 +19,7 @@ install ()
             fi
         done
     }
- 
+
     if [ $UID -eq 0 -o "$(groups | grep disk)" != "" ]; then
         for fs in $(findfs | sort | uniq); do
             for mod in $(find "${MODULEDIR}" -type f -name "${fs}.ko"); do
@@ -30,9 +30,15 @@ install ()
         done
 
         if [ -e /sbin/mdadm ]; then
-            AUTODETECT="$AUTODETECT
-                      $(mdadm -E -s /dev/hd* /dev/sd* /dev/rd/* /dev/ida/* /dev/cciss/* /dev/ataraid/* \
-                        | awk -Flevel= '{print $2}' | awk '{print $1}')"
+            for raidmod in $(mdadm -E -s /dev/hd* /dev/sd* /dev/rd/* /dev/ida/* /dev/cciss/* /dev/ataraid/* \
+                        | awk -Flevel= '{print $2}' | awk '{print $1}'); do
+                case "${raidmod}" in
+                    raid4|raid5|raid6)
+                        AUTODETECT="${AUTODETECT} raid456" ;;
+                    *)
+                        AUTODETECT="${AUTODETECT} ${raidmod}" ;;
+                esac
+            done
         fi
     else
         err "User does not have proper permissions to read superblocks, raid and filesystem modules are not detected"
