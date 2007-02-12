@@ -39,7 +39,7 @@ die () { echo "FATAL: ${@}" >&2; exit 1; }
 
 add_full_dir ()
 {
-    if [ "x${1}" != "x" ]; then
+    if [ -d "${1}" -a "x${1}" != "x" ]; then
         for f in ${1}/*; do
             if [ -d "${f}" ]; then
                 add_full_dir "${f}"
@@ -53,7 +53,7 @@ add_full_dir ()
 add_dir ()
 {
     #skip root directory and "." for relative directories... i.e. /foo/bar/./blah
-    if [ "x${1}" != "x" -a "${1}" != "/" -a "${1}" != "." ]; then
+    if [ -d "${1}" -a "x${1}" != "x" -a "${1}" != "/" -a "${1}" != "." ]; then
         if ! grep "dir ${1} " "${FILELIST}" 2>&1 > /dev/null; then
             add_dir $(dirname "${1}")
             msg "  adding  dir ${1}"
@@ -98,7 +98,7 @@ add_symlink ()
 add_file ()
 {
     local fil lnk dir dest
-    if [ -e "${1}" ]; then
+    if [ -f "${1}" ]; then
         fil="${1}"
         lnk=$(readlink -f "${fil}")
         if [ -n "${lnk}" ]; then
