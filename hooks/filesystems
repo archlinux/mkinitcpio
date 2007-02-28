@@ -6,7 +6,7 @@ run_hook ()
         FSTYPE="${rootfstype}"
     else
         if [ ! -e "${root}" ]; then
-            msg -e "\nAttempting to create root device '${root}'"
+            msg "\nAttempting to create root device '${root}'"
 
             if [ "x${rootdelay}" != "x" ]; then
                 msg -n "Waiting for devices to settle..."

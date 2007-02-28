@@ -1,6 +1,6 @@
 #!/bin/sh
 
-msg () { [ "${quiet}" != "y" ] && echo "$@"; }
+msg () { [ "${quiet}" != "y" ] && echo $@; }
 err () { echo "ERROR: $@"; }
 
 msg ":: Loading Initramfs"
