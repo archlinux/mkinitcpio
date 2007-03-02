@@ -2,7 +2,7 @@
 auto_modules ()
 {
     aliases=$(find /sys/devices/ -name modalias -exec cat {} \;)
-    mods=$(modprobe --set-version ${KERNELVERSION} --show-depends -a \
+    mods=$(/sbin/modprobe --set-version ${KERNELVERSION} --show-depends -a \
         $aliases 2>/dev/null | sed 's|insmod \(.*\)|\1|' | grep ${@} | sort -u)
 
     echo "${mods}"
@@ -136,7 +136,7 @@ add_module ()
 
     found=0
     for path in $(find "${MODULEDIR}" -type f -name "${fil}.ko"); do
-        for mod in $(modinfo -F depends "${path}" | tr ',' ' '); do
+        for mod in $(/sbin/modinfo -F depends "${path}" | tr ',' ' '); do
             if [ "x${mod}" != "x" ]; then
                 add_module "${mod}"
                 HAS_MODULES="y"
