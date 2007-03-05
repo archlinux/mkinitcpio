@@ -104,5 +104,9 @@ if [ -f "/message" ]; then
     msg "$(cat /message)"
 fi
 
+if [ "$rootdelay" != "0" ]; then
+    kinit_params="${kinit_params} rootdelay=${rootdelay}"
+fi
+
 echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
 exec /bin/kinit -- "root=${root}" ${kinit_params} "${runlevel}" > /dev/null 2>&1
