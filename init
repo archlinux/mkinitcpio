@@ -86,6 +86,13 @@ if [ -e "/hooks" ]; then
     done
 fi
 
+if [ "${rootdelay}" != "0" ]; then
+    msg -n "Waiting for devices to settle..."
+    /bin/sleep "${rootdelay}"
+    export rootdelay=0
+    msg "done."
+fi
+
 if [ "${break}" = "y" ]; then
     echo ":: Break requested, type 'exit' to resume operation"
     echo "   NOTE: klibc contains no 'ls' binary, used 'echo *' instead"
@@ -99,14 +106,19 @@ if [ "x${udevpid}" != "x" ]; then
     /bin/sleep 0.01
 fi
 
-msg ":: Initramfs Completed - control passing to kinit"
-if [ -f "/message" ]; then
-    msg "$(cat /message)"
-fi
-
-if [ "$rootdelay" != "0" ]; then
-    kinit_params="${kinit_params} rootdelay=${rootdelay}"
+if [ ! -e "${root}" ]; then
+    err "Unable to create/detect root device '${root}'"
+    msg "Dropping to a recovery shell... type 'exit' to reboot"
+    PS1="ramfs$ " /bin/sh -i
+    msg "Rebooting..."
+    /bin/reboot
+else
+    msg ":: Initramfs Completed - control passing to kinit"
+    if [ -f "/message" ]; then
+        msg "$(cat /message)"
+    fi
 fi
 
 echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
+
 exec /bin/kinit -- "root=${root}" ${kinit_params} "${runlevel}" > /dev/null 2>&1

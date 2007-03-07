@@ -13,7 +13,6 @@ run_hook ()
                 /bin/sleep "${rootdelay}"
                 msg "done."
                 export rootdelay=0
-                kinit_params="${kinit_params} rootdelay=0"
             fi
 
             eval $(/bin/parseblock "${root}")
