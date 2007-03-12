@@ -90,6 +90,7 @@ if [ "${rootdelay}" != "0" ]; then
     msg -n "Waiting for devices to settle..."
     /bin/sleep "${rootdelay}"
     export rootdelay=0
+    export kinit_params="$kinit_params rootdelay=0"
     msg "done."
 fi
 
