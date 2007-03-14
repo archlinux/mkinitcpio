@@ -53,7 +53,7 @@ add_full_dir ()
 add_dir ()
 {
     #skip root directory and "." for relative directories... i.e. /foo/bar/./blah
-    if [ -d "${1}" -a "x${1}" != "x" -a "${1}" != "/" -a "${1}" != "." ]; then
+    if [ "${1}" -a "x${1}" != "x" -a "${1}" != "/" -a "${1}" != "." ]; then
         if ! grep "dir ${1} " "${FILELIST}" 2>&1 > /dev/null; then
             add_dir $(dirname "${1}")
             msg "  adding  dir ${1}"
