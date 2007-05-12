@@ -100,16 +100,33 @@ if [ "${break}" = "y" ]; then
     PS1="ramfs$ " /bin/sh -i
 fi
 
-if [ ! -e "${root}" ]; then
-    err "Unable to create/detect root device '${root}'"
-    echo "Dropping to a recovery shell... type 'exit' to reboot"
-    echo "NOTE: klibc contains no 'ls' binary, use 'echo *' instead"
-    echo ""
-    echo "If the device '${root}' gets created while you are here,"
-    echo "try adding 'rootdelay=8' or higher to the kernel command-line"
-    PS1="ramfs$ " /bin/sh -i
-    msg "Rebooting..."
-    /bin/reboot
+if [ ! -b "${root}" ]; then
+    # This duplicates code from the filesystem hook
+    # without this, mkinitcpio would fail for users who use
+    # neither the udev hook, nor the filesystem hook
+    msg "\nRoot device '${root}' doesn't exist, attempting to create it"
+
+    eval $(/bin/parseblock "${root}")
+    if [ "${BLOCKNAME}" = "unknown" ]; then
+        echo "ERROR: Failed to parse block device name for '${root}'"
+    elif [ "x${BLOCKDEVICE}" = "x" ]; then
+        echo "ERROR: Failed to parse block device ids for '${root}'"
+    else
+        export root="${BLOCKNAME}"
+        echo "/bin/mknod \"${BLOCKNAME}\" b ${BLOCKDEVICE}"
+        /bin/mknod "${BLOCKNAME}" b ${BLOCKDEVICE} >/dev/null
+    fi
+    if [ ! -b "${root}" ]; then
+        err "Unable to create/detect root device '${root}'"
+        echo "Dropping to a recovery shell... type 'exit' to reboot"
+        echo "NOTE: klibc contains no 'ls' binary, use 'echo *' instead"
+        echo ""
+        echo "If the device '${root}' gets created while you are here,"
+        echo "try adding 'rootdelay=8' or higher to the kernel command-line"
+        PS1="ramfs$ " /bin/sh -i
+        msg "Rebooting..."
+        /bin/reboot
+        fi
 fi
 
 msg ":: Initramfs Completed - control passing to kinit"
