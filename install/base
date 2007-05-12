@@ -15,7 +15,12 @@ install ()
     done
 
     for f in /usr/lib/klibc/bin/*; do
-        add_file $f /bin/$(basename $f)
+        if [ "$(basename $f)" = "modprobe" ]; then
+            # force putting modprobe in /sbin
+            add_file $f /sbin/$(basename $f)
+        else
+            add_file $f /bin/$(basename $f)
+        fi
     done
 
     add_file "/lib/initcpio/init" "/init"

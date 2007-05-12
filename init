@@ -14,7 +14,7 @@ export CMDLINE
 # Used so hooks can override params to kinit
 export kinit_params=""
 export root=""
-echo "/bin/modprobe" > /proc/sys/kernel/modprobe
+echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
 
 for cmd in $CMDLINE; do
     case "$cmd" in
@@ -110,11 +110,11 @@ if [ ! -e "${root}" ]; then
     PS1="ramfs$ " /bin/sh -i
     msg "Rebooting..."
     /bin/reboot
-else
-    msg ":: Initramfs Completed - control passing to kinit"
-    if [ -f "/message" ]; then
-        msg "$(cat /message)"
-    fi
+fi
+
+msg ":: Initramfs Completed - control passing to kinit"
+if [ -f "/message" ]; then
+    msg "$(cat /message)"
 fi
 
 #Special handling if udev is running
@@ -124,7 +124,5 @@ if [ "x${udevpid}" != "x" ]; then
     /bin/sleep 0.01
 fi
 
-
-echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
 
 exec /bin/kinit -- "root=${root}" ${kinit_params} "${runlevel}" > /dev/null 2>&1
