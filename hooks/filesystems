@@ -41,6 +41,6 @@ run_hook ()
         echo "ERROR: root fs cannot be detected. Try using the rootfstype= kernel parameter."
     else
         kinit_params="${kinit_params} rootfstype=${FSTYPE}"
-        /bin/modprobe -q "${FSTYPE}" >/dev/null 2>&1
+        /sbin/modprobe -q "${FSTYPE}" >/dev/null 2>&1
     fi
 }

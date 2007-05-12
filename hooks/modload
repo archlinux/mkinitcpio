@@ -4,13 +4,13 @@ run_hook ()
     msg ":: Begin manual module load"
     if [ -e "/sys/bus/pci/" ]; then
         msg -n "Loading pci bus modules..."
-        /bin/modprobe -a -q $(/bin/cat /sys/bus/pci/devices/*/modalias) >/dev/null 2>&1
+        /sbin/modprobe -a -q $(/bin/cat /sys/bus/pci/devices/*/modalias) >/dev/null 2>&1
         msg "done."
     fi
 
     if [ -e "/sys/bus/ide/devices/" ]; then
         msg -n "Loading ide modules..."
-        /bin/modprobe -q -a $(/bin/cat /sys/bus/ide/devices/*/modalias) >/dev/null 2>&1 
+        /sbin/modprobe -q -a $(/bin/cat /sys/bus/ide/devices/*/modalias) >/dev/null 2>&1 
         msg "done"
     fi
 
@@ -20,25 +20,25 @@ run_hook ()
             if [ -e "${d}/type" ]; then
                 read m < "${d}/type"
                 case "$m" in
-                    0)   /bin/modprobe -q sd_mod 2>&1 >/dev/null ;;
+                    0)   /sbin/modprobe -q sd_mod 2>&1 >/dev/null ;;
                     # this below is take from the Arch udev rules
                     1)   read vendor < "${d}/vendor"
                          if [ "${vendor}" = "Onstream" ]; then
                              read model < "${d}/model"
                              case "$model" in
-                                 ADR*) /bin/modprobe -q st >/dev/null 2>&1;;
-                                 *) /bin/modprobe -q osst >/dev/null 2>&1;;
+                                 ADR*) /sbin/modprobe -q st >/dev/null 2>&1;;
+                                 *) /sbin/modprobe -q osst >/dev/null 2>&1;;
                              esac
                          else
-                             /bin/modprobe -q st >/dev/null 2>&1
+                             /sbin/modprobe -q st >/dev/null 2>&1
                          fi
                          ;;
-                    2|3) /bin/modprobe -q sg     >/dev/null 2>&1;;
-                    4|5) /bin/modprobe -q sr_mod >/dev/null 2>&1;;
-                    6)   /bin/modprobe -q sg     >/dev/null 2>&1;;
-                    7)   /bin/modprobe -q sd_mod >/dev/null 2>&1;;
-                    8|9) /bin/modprobe -q sg     >/dev/null 2>&1;;
-                    14)  /bin/modprobe -q sd_mod >/dev/null 2>&1;;
+                    2|3) /sbin/modprobe -q sg     >/dev/null 2>&1;;
+                    4|5) /sbin/modprobe -q sr_mod >/dev/null 2>&1;;
+                    6)   /sbin/modprobe -q sg     >/dev/null 2>&1;;
+                    7)   /sbin/modprobe -q sd_mod >/dev/null 2>&1;;
+                    8|9) /sbin/modprobe -q sg     >/dev/null 2>&1;;
+                    14)  /sbin/modprobe -q sd_mod >/dev/null 2>&1;;
                 esac
             fi
         done

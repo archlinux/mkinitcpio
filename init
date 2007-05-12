@@ -57,7 +57,7 @@ fi
 
 if [ "x${earlymodules}" != "x" ]; then
     for m in $(replace "${earlymodules}" ','); do
-        /bin/modprobe -q $m > /dev/null 2>&1
+        /sbin/modprobe -q $m > /dev/null 2>&1
     done
 fi
 
@@ -67,7 +67,7 @@ for m in $MODULES; do
     TST=""
     eval "TST=\$mod_${m}"
     if [ "${TST}" != "disabled" ]; then
-        /bin/modprobe -q $m > /dev/null 2>&1
+        /sbin/modprobe -q $m > /dev/null 2>&1
     fi
 done
 

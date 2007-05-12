@@ -79,6 +79,7 @@ add_device ()
     fi
 }
 
+# what the hell does this do?
 add_symlink ()
 {
     local fil dest dir
@@ -93,6 +94,16 @@ add_symlink ()
         fi
     fi
     #fail quietly
+}
+
+add_symlink2 ()
+{
+    add_dir $(dirname ${1})
+    add_dir $(dirname ${2})
+    if ! grep -q "slink ${1} " "${FILELIST}" 2>&1 >/dev/null; then
+         msg "  adding link ${1} -> ${2}"
+         echo "slink ${1} ${2} 777 0 0" >> "${FILELIST}"
+    fi
 }
 
 add_file ()

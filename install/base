@@ -17,7 +17,9 @@ install ()
     for f in /usr/lib/klibc/bin/*; do
         if [ "$(basename $f)" = "modprobe" ]; then
             # force putting modprobe in /sbin
+            # add symlink for compatibility
             add_file $f /sbin/$(basename $f)
+            add_symlink2 /bin/modprobe /sbin/modprobe
         else
             add_file $f /bin/$(basename $f)
         fi
