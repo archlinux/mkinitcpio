@@ -2,11 +2,11 @@
 
 install ()
 {
-    MODULES=" $(checked_modules "/ieee1394/") "
+    MODULES=" $(checked_modules "/firewire/") $(checked_modules "/ieee1394/") "
 
     MODULES=$(echo ${MODULES}) #trim whitespace
     if [ "x${MODULES}" != "x" ]; then
-        MODULES="${MODULES} sbp2 sd_mod sr_mod"
+        MODULES="${MODULES} firewire-sbp2 sbp2 sd_mod sr_mod"
     fi
     BINARIES=""
     FILES=""
