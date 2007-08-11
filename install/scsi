@@ -7,7 +7,7 @@ install ()
               $(checked_modules "/fusion/")"
 
     MODULES=$(echo ${MODULES}) #trim whitespace
-    if [ "x${MODULES}" != "x" ]; then
+    if [ -n "${MODULES}" ]; then
         MODULES="${MODULES} sd_mod sr_mod"
     fi
     BINARIES=""

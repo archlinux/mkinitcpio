@@ -43,19 +43,19 @@ for cmd in $CMDLINE; do
     esac
 done
 
-if [ "x${disablehooks}" != "x" ]; then
+if [ -n "${disablehooks}" ]; then
     for d in $(replace "${disablehooks}" ','); do
         export "hook_${d}=disabled"
     done
 fi
 
-if [ "x${disablemodules}" != "x" ]; then
+if [ -n "${disablemodules}" ]; then
     for d in $(replace "${disablemodules}" ','); do
         export "mod_${d}=disabled"
     done
 fi
 
-if [ "x${earlymodules}" != "x" ]; then
+if [ -n "${earlymodules}" ]; then
     for m in $(replace "${earlymodules}" ','); do
         /sbin/modprobe -q $m > /dev/null 2>&1
     done
@@ -109,7 +109,7 @@ if [ ! -b "${root}" ]; then
     eval $(/bin/parseblock "${root}")
     if [ "${BLOCKNAME}" = "unknown" ]; then
         echo "ERROR: Failed to parse block device name for '${root}'"
-    elif [ "x${BLOCKDEVICE}" = "x" ]; then
+    elif [ -z "${BLOCKDEVICE}" ]; then
         echo "ERROR: Failed to parse block device ids for '${root}'"
     else
         export root="${BLOCKNAME}"
@@ -136,7 +136,7 @@ fi
 
 #Special handling if udev is running
 udevpid=$(/bin/minips -C udevd -o pid=)
-if [ "x${udevpid}" != "x" ]; then
+if [ -n "${udevpid}" ]; then
     /bin/kill -9 $udevpid
     /bin/sleep 0.01
 fi

@@ -6,7 +6,7 @@ auto_modules ()
         $aliases 2>/dev/null | sed 's|insmod \(.*\)|\1|' | grep ${@} | sort -u)
 
     echo "${mods}"
-    [ "x${mods}" = "x" ] && return 1
+    [ -z "${mods}" ] && return 1
     return 0
 }
 
@@ -15,7 +15,7 @@ all_modules ()
     mods=$(find ${MODULEDIR} -name *.ko 2>/dev/null | grep ${@} | sort -u)
 
     echo "${mods}"
-    [ "x${mods}" = "x" ] && return 1
+    [ -z "${mods}" ] && return 1
     return 0
 }
 
@@ -39,7 +39,7 @@ die () { echo "FATAL: ${@}" >&2; exit 1; }
 
 add_full_dir ()
 {
-    if [ "x${1}" != "x" -a -d "${1}" ]; then
+    if [ -n "${1}" -a -d "${1}" ]; then
         for f in ${1}/*; do
             if [ -d "${f}" ]; then
                 add_full_dir "${f}"
@@ -53,7 +53,7 @@ add_full_dir ()
 add_dir ()
 {
     #skip root directory and "." for relative directories... i.e. /foo/bar/./blah
-    if [ "x${1}" != "x" -a "${1}" != "/" -a "${1}" != "." ]; then
+    if [ -n "${1}" -a "${1}" != "/" -a "${1}" != "." ]; then
         if ! grep "dir ${1} " "${FILELIST}" 2>&1 > /dev/null; then
             add_dir $(dirname "${1}")
             msg "  adding  dir ${1}"
@@ -148,7 +148,7 @@ add_module ()
     found=0
     for path in $(find "${MODULEDIR}" -type f -name "${fil}.ko"); do
         for mod in $(/sbin/modinfo -F depends "${path}" | tr ',' ' '); do
-            if [ "x${mod}" != "x" ]; then
+            if [ -n "${mod}" ]; then
                 add_module "${mod}"
                 HAS_MODULES="y"
             fi
@@ -190,7 +190,7 @@ add_binary ()
             #note, this will also handle 'not a dynamic executable' spit out by
             # static binaries... the deps will produce nothing
             for lib in $(ldd ${bin} 2>/dev/null | sed "s|.*=>\(.*\)|\1|"); do
-                if [ "x${lib}" != "x" ]; then
+                if [ -n "${lib}" ]; then
                     #remove TLS libraries
                     notls=$(echo ${lib} | sed 's|/lib/tls.*/\(lib.*\)|/lib/\1|')
                     [ -e "${notls}" ] && lib="${notls}"
@@ -210,24 +210,24 @@ parse_hook ()
 {
     local mod bin fil
     for mod in $MODULES; do
-        if [ "x${mod}" != "x" ]; then
+        if [ -n "${mod}" ]; then
             add_module "${mod}"
         fi
     done
 
     for bin in $BINARIES; do
-        if [ "x${bin}" != "x" ]; then
+        if [ -n "${bin}" ]; then
             add_binary "${bin}"
         fi
     done
 
     for fil in $FILES; do
-        if [ "x${fil}" != "x" ]; then
+        if [ -n "${fil}" ]; then
             add_file "${fil}"
         fi
     done
 
-    if [ "x${SCRIPT}" != "x" ]; then
+    if [ -n "${SCRIPT}" ]; then
         add_file "${HOOKDIR}/${SCRIPT}" "/hooks/${SCRIPT}"
     fi
 }

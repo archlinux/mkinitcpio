@@ -5,7 +5,7 @@ install ()
     MODULES=" $(checked_modules "/usb/host" | grep -ve "_cs" -e "sl1811-hcd" -e "isp116x-hcd") "
 
     MODULES=$(echo ${MODULES}) #trim whitespace
-    if [ "x${MODULES}" != "x" ]; then
+    if [ -n "${MODULES}" ]; then
         MODULES="${MODULES} usbhid"
     fi
     BINARIES=""

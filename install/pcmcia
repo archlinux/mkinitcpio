@@ -4,7 +4,7 @@ install ()
 {
     MODULES=" $(checked_modules '/pcmcia/' | grep -ve 'sound' -e 'net') $(checked_modules '/ide/legacy')"
     MODULES=$(echo ${MODULES}) #trim whitespace
-    if [ "x${MODULES}" != "x" ]; then
+    if [ -n "${MODULES}" ]; then
         MODULES="${MODULES} sd_mod sr_mod ide-disk ide-cd"
     fi
     BINARIES="/sbin/pcmcia-socket-startup.static /sbin/pcmcia-check-broken-cis.static"

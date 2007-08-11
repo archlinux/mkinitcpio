@@ -23,7 +23,7 @@ install ()
     if [ $UID -eq 0 -o "$(groups | grep disk)" != "" ]; then
         for fs in $(findfs | sort | uniq); do
             for mod in $(find "${MODULEDIR}" -type f -name "${fs}.ko"); do
-                if [ "x${mod}" != "x" ]; then
+                if [ -n "${mod}" ]; then
                     AUTODETECT="${AUTODETECT} ${mod}"
                 fi
             done

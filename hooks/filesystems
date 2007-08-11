@@ -2,13 +2,13 @@
 run_hook ()
 {
     msg -n ":: Loading root filesystem module..."
-    if [ "x${rootfstype}" != "x" ]; then
+    if [ -n "${rootfstype}" ]; then
         FSTYPE="${rootfstype}"
     else
         if [ ! -e "${root}" ]; then
             msg "\nAttempting to create root device '${root}'"
 
-            if [ "x${rootdelay}" != "x" ]; then
+            if [ -n "${rootdelay}" ]; then
                 msg -n "Waiting for devices to settle..."
                 /bin/sleep "${rootdelay}"
                 msg "done."
@@ -19,7 +19,7 @@ run_hook ()
             if [ "${BLOCKNAME}" = "unknown" ]; then
                 FSTYPE="unknown"
                 echo "ERROR: Failed to parse block device name for '${root}'"
-            elif [ "x${BLOCKDEVICE}" = "x" ]; then
+            elif [ -z "${BLOCKDEVICE}" ]; then
                 FSTYPE="unknown"
                 echo "ERROR: Failed to parse block device ids for '${root}'"
             else

@@ -7,7 +7,7 @@
 # following constraints should be enforced:
 #   variables should be quoted and bracketed "${SOMEVAR}"
 #   inline execution should be done with $() instead of backticks
-#   use "x${var}" = "x" to test for nulls/empty strings
+#   use -z "${var}" to test for nulls/empty strings
 #   incase of embedded spaces, quote all path names and string comarpisons
 #
 #TODO trap and remove FILELIST
@@ -143,7 +143,7 @@ fi
 
 MODULEDIR="${BASEDIR}/lib/modules/${KERNELVERSION}"
 
-if [ "x${BASEDIR}" != "x" ]; then
+if [ -n "${BASEDIR}" ]; then
     if [ "${BASEDIR:0:1}" != "/" ]; then
         BASEDIR="$(pwd)/${BASEDIR}"
     elif [ ! -d "${BASEDIR}" ]; then
@@ -158,8 +158,8 @@ if [ ! -f "${CONFIG}" ]; then
 fi
 source "${CONFIG}"
 
-if [ -f "${FILELIST}" -a "x${APPEND}" == "x" ]; then
-    if [ "x${SAVELIST}" == "x" ]; then
+if [ -f "${FILELIST}" -a -z "${APPEND}" ]; then
+    if [ -z "${SAVELIST}" ]; then
         rm ${FILELIST}
         touch "${FILELIST}"
     else
@@ -230,7 +230,7 @@ if [ "${HAS_MODULES}" == "y" ]; then
 fi
 
 status=0
-if [ "x$GENIMG" != "x" ]; then
+if [ -n "$GENIMG" ]; then
     echo -n ":: Generating image '${GENIMG}'..."
     if ! gen_init_cpio ${FILELIST} | gzip -9 > "${GENIMG}"; then
         echo "FAILED"
@@ -240,7 +240,7 @@ if [ "x$GENIMG" != "x" ]; then
         status=0
     fi
 
-    if [ "x${SAVELIST}" == "x" ]; then
+    if [ -z "${SAVELIST}" ]; then
         rm ${FILELIST}
     fi
     rm ${MESSAGEFILE}
