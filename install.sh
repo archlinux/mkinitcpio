@@ -19,3 +19,5 @@ install -D -m644 functions ${1}/lib/initcpio/functions
 cp -r hooks/ ${1}/lib/initcpio/
 cp -r install/ ${1}/lib/initcpio/
 cp -r mkinitcpio.d/ ${1}/etc/mkinitcpio.d
+
+install -D -m644 mkinitcpio.5.gz /usr/man/man5/mkinitcpio.5.gz
