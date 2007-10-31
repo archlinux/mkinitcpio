@@ -32,6 +32,10 @@ PRESETDIR="mkinitcpio.d"
 QUIET="y"
 SHOW_AUTOMODS="n"
 
+# Add /{,usr}/sbin to path
+# works around undetected problems like in #8448
+PATH="${PATH}:/sbin:/usr/sbin"
+
 APPNAME=$(basename "${0}")
 
 usage ()
@@ -223,7 +227,7 @@ if [ "${HAS_MODULES}" == "y" ]; then
         mkdir -p "/tmp/${dir}"
         cp "${BASEDIR}${mod}" "/tmp/${dir}/"
     done
-    depmod -b /tmp ${KERNELVERSION}
+    /sbin/depmod -b /tmp ${KERNELVERSION}
     add_file "/tmp/lib/modules/${KERNELVERSION}/modules.dep"     "/lib/modules/${KERNELVERSION}/modules.dep"
     add_file "/tmp/lib/modules/${KERNELVERSION}/modules.alias"   "/lib/modules/${KERNELVERSION}/modules.alias"
     add_file "/tmp/lib/modules/${KERNELVERSION}/modules.symbols" "/lib/modules/${KERNELVERSION}/modules.symbols"
@@ -232,7 +236,7 @@ fi
 status=0
 if [ -n "$GENIMG" ]; then
     echo -n ":: Generating image '${GENIMG}'..."
-    if ! gen_init_cpio ${FILELIST} | gzip -9 > "${GENIMG}"; then
+    if ! /sbin/gen_init_cpio ${FILELIST} | gzip -9 > "${GENIMG}"; then
         echo "FAILED"
         status=1
     else

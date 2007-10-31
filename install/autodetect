@@ -30,7 +30,7 @@ install ()
         done
 
         if [ -e /sbin/mdadm ]; then
-            for raidmod in $(mdadm -E -s /dev/hd* /dev/sd* /dev/rd/* /dev/ida/* /dev/cciss/* /dev/ataraid/* \
+            for raidmod in $(/sbin/mdadm -E -s /dev/hd* /dev/sd* /dev/rd/* /dev/ida/* /dev/cciss/* /dev/ataraid/* \
                         | awk -Flevel= '{print $2}' | awk '{print $1}'); do
                 case "${raidmod}" in
                     raid4|raid5|raid6)
