@@ -150,9 +150,9 @@ add_module ()
         for mod in $(/sbin/modinfo -F depends "${path}" | tr ',' ' '); do
             if [ -n "${mod}" ]; then
                 add_module "${mod}"
-                HAS_MODULES="y"
             fi
         done
+        HAS_MODULES="y"
         add_file "${path}" && found=1
     done
     if [ $found -eq 0 ]; then
