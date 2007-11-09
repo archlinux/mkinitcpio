@@ -1,0 +1,118 @@
+mkinitcpio(5)
+=============
+
+Name
+----
+mkinitcpio - Create an initial ramdisk environment
+	
+Synopsis
+--------
+mkinitcpio ['OPTIONS']
+	
+Description
+-----------
+Creates an initial ramdisk environment for booting the linux kernel. The initial ramdisk is in essence a very small environment (early userspace) which loads various kernel modules and sets up necessary things before handing over control to init. This makes it possible to have, for example, encrypted root filesystems and root filesystems on a software RAID array. mkinitcpio allows for easy extension with custom hooks, has autodetection at runtime, and many other features.
+	
+Options
+-------
+*-c* 'config'::
+	Use 'config' file to generate the ramdisk. Default: /etc/mkinitcpio.conf
+		
+*-k* 'kernelversion'::
+	Use 'kernelversion'. Default is the current running kernel.
+			
+*-s* 'filelist'::
+	Saves a list of all the files in the initial ramdisk in 'filelist'. Default: no; This means the filelist will not be retained if this option isn't specified. Useful for debugging purposes.
+			
+*-b* 'basedir'::
+	Use 'basedir' as a starting point for gathering information about the currently running system. Default: /.
+			
+*-g* 'filename'::
+	Generate a CPIO image as 'filename'. Default: no; this means nothing will be written to the filesystem unless this option is specified.
+			
+*-a* 'filelist'::
+	Append to an existing 'filelist'. Default no.
+			
+*-p* 'preset'::
+	Build initial ramdisk according to specified 'preset'. Presets are found in /etc/mkinitcpio.d
+			
+*-m* 'message'::
+	Print 'message' before passing control to kinit.
+		
+*-v*::
+	Verbose output. Outputs more information about what's happening during creation of the ramdisk.
+		
+*-M*::
+	Display modules found via autodetection. mkinitcpio will automatically try to determine which kernel modules are needed to start your computer. This option lists which modules were detected.
+	
+*-L*::
+	List all available hooks.
+		
+*-H* 'hookname'::
+	Output help for hookname 'hookname'
+	
+*-h*::
+	Output a short overview of available command-line switches.
+		
+About Hooks
+-----------
+A hook is a script that executes in the initial ramdisk. The order and which scripts are executed is found in the
+*HOOKS*=() array in the mkinitcpio configuration file. A hook will, for example, set up the udev device	filesystem, load IDE modules, etc...
+
+About Presets
+-------------
+A preset is a pre-defined definition on how to create an initial ramdisk. Instead of specifying the configuration file and which output file, every time you generate a new intial ramdisk, you define a preset and use the	-p switch to generate an initial ramdisk according to your preset. Presets	are located in /etc/mkinitcpio.d
+
+Files
+-----
+'/etc/mkinitcpio.conf'::
+	Default configuration file for mkinitcpio.
+		
+'/etc/mkinitcpio.d'::
+	Folder containing mkinitcpio presets.
+		
+'/lib/initcpio'::
+	Files related to creating an initial ramdisk.
+		
+Examples
+--------
+*mkinitcpio*::
+	Perform a 'dry-run'. This will generate an initial ramdisk but will not
+	write anything. Use -g to create the real image.
+		
+*mkinitcpio -p kernel26*::
+	Create an initial ramdisk based on the 'kernel26' preset.
+
+Tips
+----
+Don't let the bed bugs bite!
+	
+See also
+--------
+A more thorough article on configuring mkinitcpio: <http://wiki.archlinux.org/index.php/Configuring_mkinitcpio>
+	
+initrd(4)
+	
+Bugs
+----
+Upon writing this manpage, there were no noticeable bugs present. Please visit <http://bugs.archlinux.org/> for an up to date list.
+	
+Authors
+-------
+mkinitcpio created by the Arch Linux Developer community.
+	
+Manpage written by:::
+* Glenn 'RedShift' Matthys <glenn@opengate.be>
+
+Manpage contributions by:::
+* Jens 'byte' Adam <j_adam@web.de>
+* Geir 'gejr' Vaagland
+* Joerie 'Thralas' de Gram <j.de.gram@gmail.com>
+
+Version Information
+-------------------
+Manpage written for mkinitcpio 0.5.17
+	
+Copyright
+---------
+Copyright (c) Arch Linux
