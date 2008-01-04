@@ -74,14 +74,14 @@ while getopts ':c:k:s:b:g:a:p:m:vH:LMh' arg; do
         m) MESSAGE="$OPTARG" ;;
         v) QUIET="n" ;;
         H) source "${INSTDIR}/${OPTARG}";
-           echo "Help for hook '${OPTARG}':"
-           help
-           exit 0 ;;
+        echo "Help for hook '${OPTARG}':"
+        help
+        exit 0 ;;
         L) echo "Available hooks: " 
-           for h in ${INSTDIR}/*; do
-               echo "   $(basename ${h})"
-           done
-           exit 0 ;;
+        for h in ${INSTDIR}/*; do
+            echo "   $(basename ${h})"
+        done
+        exit 0 ;;
         M) SHOW_AUTOMODS="y" ;;
         h|?) usage ;;
         :) echo "${OPTARG} requires a value..."; usage ;;
@@ -157,7 +157,7 @@ if [ -n "${BASEDIR}" ]; then
 fi
 
 if [ ! -f "${CONFIG}" ]; then
-	echo "config file '${CONFIG}' cannot be found, aborting..."
+    echo "config file '${CONFIG}' cannot be found, aborting..."
     exit 1
 fi
 source "${CONFIG}"

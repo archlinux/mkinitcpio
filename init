@@ -21,6 +21,8 @@ for cmd in $CMDLINE; do
         \#*) break ;; # ignore everything after a # in the commandline
         [0123456Ss]) export runlevel="$cmd" ;;
         single) export runlevel="S" ;; #some people use 'single'
+        #Allow "init=X" to pass-through
+        init=*) kinit_params="${kinit_params} ${cmd}" ;;
         # replace can cause problems for the following entries
         # These should only be applied to the lefthand side of the expression
         # until we find a fix hardcode the stuff here.
