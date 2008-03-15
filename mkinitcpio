@@ -15,8 +15,8 @@
 # Settings
 TMPDIR="$(mktemp -d /tmp/mkinitcpio.XXXXXX)"
 BASEDIR=""
-FILELIST="$(${TMPDIR}/filelist)"
-MESSAGEFILE="$(${TMPDIR}/message)"
+FILELIST="${TMPDIR}/filelist"
+MESSAGEFILE="${TMPDIR}/message"
 KERNELVERSION="$(uname -r)"
 FUNCTIONS="functions"
 CONFIG="mkinitcpio.conf"
