@@ -10,13 +10,13 @@
 #   use -z "${var}" to test for nulls/empty strings
 #   incase of embedded spaces, quote all path names and string comarpisons
 #
-#TODO trap and remove FILELIST
 
 
 # Settings
+TMPDIR="$(mktemp -d /tmp/mkinitcpio.XXXXXX)"
 BASEDIR=""
-FILELIST="$(mktemp /tmp/.tmpfilelist.XXXX)"
-MESSAGEFILE="$(mktemp /tmp/.message.XXXX)"
+FILELIST="$(${TMPDIR}/filelist)"
+MESSAGEFILE="$(${TMPDIR}/message)"
 KERNELVERSION="$(uname -r)"
 FUNCTIONS="functions"
 CONFIG="mkinitcpio.conf"
@@ -58,6 +58,19 @@ usage ()
     echo "  -h               This message."
     exit 1
 }
+
+cleanup ()
+{
+    [ -n "${TMPDIR}" -a -d "${TMPDIR}" ] && rm -rf ${TMPDIR}
+}
+
+sighandler() {
+    cleanup
+    exit 1
+}
+
+trap SIGTERM sighandler
+trap SIGINT  sighandler
 
 while getopts ':c:k:s:b:g:a:p:m:vH:LMhS:' arg; do
     if [ "${OPTARG:0:1}" = "-" ]; then
@@ -228,13 +241,13 @@ if [ "${HAS_MODULES}" == "y" ]; then
     echo ":: Generating module dependencies"
     for mod in $(grep "file /lib/modules/${KERNELVERSION}" ${FILELIST} | cut -d' ' -f2); do
         dir=$(dirname "${mod}")
-        mkdir -p "/tmp/${dir}"
-        cp "${BASEDIR}${mod}" "/tmp/${dir}/"
+        mkdir -p "${TMPDIR}/${dir}"
+        cp "${BASEDIR}${mod}" "${TMPDIR}/${dir}/"
     done
-    /sbin/depmod -b /tmp ${KERNELVERSION}
-    add_file "/tmp/lib/modules/${KERNELVERSION}/modules.dep"     "/lib/modules/${KERNELVERSION}/modules.dep"
-    add_file "/tmp/lib/modules/${KERNELVERSION}/modules.alias"   "/lib/modules/${KERNELVERSION}/modules.alias"
-    add_file "/tmp/lib/modules/${KERNELVERSION}/modules.symbols" "/lib/modules/${KERNELVERSION}/modules.symbols"
+    /sbin/depmod -b ${TMPDIR} ${KERNELVERSION}
+    add_file "${TMPDIR}/lib/modules/${KERNELVERSION}/modules.dep"     "/lib/modules/${KERNELVERSION}/modules.dep"
+    add_file "${TMPDIR}/lib/modules/${KERNELVERSION}/modules.alias"   "/lib/modules/${KERNELVERSION}/modules.alias"
+    add_file "${TMPDIR}/lib/modules/${KERNELVERSION}/modules.symbols" "/lib/modules/${KERNELVERSION}/modules.symbols"
 fi
 
 status=0
@@ -256,13 +269,7 @@ else
     echo ":: Dry run complete, use -g IMAGE to generate a real image"
 fi
 
-#cleanup - we should probably trap this...
-isempty () { [ $(ls -1 "${1}" | wc -l) -eq 0 ]; }
-[ -e "${MODULE_FILE}" ] && rm "${MODULE_FILE}"
-if [ -d /tmp/lib/modules/${KERNELVERSION} ]; then
-    rm -rf /tmp/lib/modules/${KERNELVERSION}
-    isempty /tmp/lib/modules && rm -rf /tmp/lib/modules
-    isempty /tmp/lib && rm -rf /tmp/lib
-fi
+cleanup
+
 exit $status
 #vim:set ft=sh ts=4 sw=4 noet:

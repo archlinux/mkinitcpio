@@ -2,7 +2,7 @@
 
 install ()
 {
-    MODULE_FILE="$(mktemp /tmp/initcpio_modules.XXXXXX)"
+    MODULE_FILE="$(${TMPDIR}/autodetect_modules)"
     #blegh, we'll let /tmp clean itself up
     AUTODETECT="$(auto_modules -e '/scsi/' -e '/block' -e '/fusion/' \
                     -e '/usb/' -e '/ide/' -e '/ieee1394/' -e '/cdrom' \
@@ -50,11 +50,11 @@ install ()
         case "${m}" in 
             #*/ieee1394/*) echo -e "sbp2\nsd_mod\nsr_mod" >> "${MODULE_FILE}";;
             *ext3*) echo "jbd" >> "${MODULE_FILE}" ;;
-            *afs*)echo "rxrpc" >> "${MODULE_FILE}" ;;
+            *afs*) echo "rxrpc" >> "${MODULE_FILE}" ;;
             *cramfs*) echo "zlib_inflate" >> "${MODULE_FILE}" ;;
             *isofs*) echo "zlib_inflate" >> "${MODULE_FILE}" ;;
             *msdos*) echo "fat" >> "${MODULE_FILE}" ;;
-            *vfat*)echo -e "fat\nnls_cp437" >> "${MODULE_FILE}" ;;
+            *vfat*) echo -e "fat\nnls_cp437" >> "${MODULE_FILE}" ;;
             *ocfs2*) echo -e "ocfs2_dlm\njbd\nocfs2_nodemanager\nconfigfs" >> "${MODULE_FILE}" ;;
         esac
         echo "${modname}" >> "${MODULE_FILE}"
