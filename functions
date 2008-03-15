@@ -35,7 +35,7 @@ checked_modules ()
 
 msg () { [ "${QUIET}" = "n" ] && echo ${@}; }
 err () { echo "ERROR: ${@}" >&2; }
-die () { echo "FATAL: ${@}" >&2; exit 1; }
+die () { echo "FATAL: ${@}" >&2; cleanup; exit 1; }
 
 add_full_dir ()
 {

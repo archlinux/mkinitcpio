@@ -56,6 +56,7 @@ usage ()
     echo "  -L               List all available hooks." 
     echo "  -H HOOKNAME      Output help for hook 'HOOKNAME'."
     echo "  -h               This message."
+    cleanup
     exit 1
 }
 
@@ -69,8 +70,7 @@ sighandler() {
     exit 1
 }
 
-trap SIGTERM sighandler
-trap SIGINT  sighandler
+trap sighandler TERM INT
 
 while getopts ':c:k:s:b:g:a:p:m:vH:LMhS:' arg; do
     if [ "${OPTARG:0:1}" = "-" ]; then
@@ -92,11 +92,13 @@ while getopts ':c:k:s:b:g:a:p:m:vH:LMhS:' arg; do
         H) source "${INSTDIR}/${OPTARG}";
            echo "Help for hook '${OPTARG}':"
            help
+           cleanup
            exit 0 ;;
         L) echo "Available hooks: " 
            for h in ${INSTDIR}/*; do
                echo "   $(basename ${h})"
            done
+           cleanup
            exit 0 ;;
         M) SHOW_AUTOMODS="y" ;;
         h|?) usage ;;
@@ -159,9 +161,11 @@ if [ -n "${PRESET}" ]; then
                 echo "==> FAIL"
             fi
         done
+        cleanup
         exit 0
     else
         echo "Preset ${PRESET} does not exist. Exiting."
+        cleanup
         exit 1
     fi
 fi
@@ -178,12 +182,14 @@ if [ -n "${BASEDIR}" ]; then
         BASEDIR="$(pwd)/${BASEDIR}"
     elif [ ! -d "${BASEDIR}" ]; then
         echo "base directory '${BASEDIR}' does not exist or is not a directory"
+        cleanup
         exit 1
     fi
 fi
 
 if [ ! -f "${CONFIG}" ]; then
     echo "config file '${CONFIG}' cannot be found, aborting..."
+    cleanup
     exit 1
 fi
 source "${CONFIG}"
@@ -194,6 +200,7 @@ if [ -f "${FILELIST}" -a -z "${APPEND}" ]; then
         touch "${FILELIST}"
     else
         echo "destination file list '${FILELIST}' exists - remove before running"
+        cleanup
         exit 1
     fi
 else
@@ -210,6 +217,7 @@ if [ "${SHOW_AUTOMODS}" = "y" ]; then
     source "${INSTDIR}/autodetect"
     install
     cat "${MODULE_FILE}"
+    cleanup
     exit 0
 fi
 
