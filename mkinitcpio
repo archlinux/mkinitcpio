@@ -28,6 +28,7 @@ GENIMG=""
 APPEND=""
 PRESET=""
 MESSAGE=""
+SKIPHOOKS=""
 PRESETDIR="mkinitcpio.d"
 QUIET="y"
 SHOW_AUTOMODS="n"
@@ -49,6 +50,7 @@ usage ()
     echo "  -a NAME          Append to an existing filelist. default: no"
     echo "  -p PRESET        Build specified preset."
     echo "  -m MESSAGE       Print MESSAGE before passing control to kinit."
+    echo "  -S SKIPHOOKS     Skip SKIPHOOKS (comma-separated) when building the image."
     echo "  -v               Verbose output. Default: no"
     echo "  -M               Display modules found via autodetection." 
     echo "  -L               List all available hooks." 
@@ -57,7 +59,7 @@ usage ()
     exit 1
 }
 
-while getopts ':c:k:s:b:g:a:p:m:vH:LMh' arg; do
+while getopts ':c:k:s:b:g:a:p:m:vH:LMhS:' arg; do
     if [ "${OPTARG:0:1}" = "-" ]; then
         echo "error: optional argument to '-$arg' begins with a '-'"
         echo "  you probably don't want this....aborting."
@@ -73,15 +75,16 @@ while getopts ':c:k:s:b:g:a:p:m:vH:LMh' arg; do
         p) PRESET="$OPTARG" ;;
         m) MESSAGE="$OPTARG" ;;
         v) QUIET="n" ;;
+        S) SKIPHOOKS="${OPTARG}" ;;
         H) source "${INSTDIR}/${OPTARG}";
-        echo "Help for hook '${OPTARG}':"
-        help
-        exit 0 ;;
+           echo "Help for hook '${OPTARG}':"
+           help
+           exit 0 ;;
         L) echo "Available hooks: " 
-        for h in ${INSTDIR}/*; do
-            echo "   $(basename ${h})"
-        done
-        exit 0 ;;
+           for h in ${INSTDIR}/*; do
+               echo "   $(basename ${h})"
+           done
+           exit 0 ;;
         M) SHOW_AUTOMODS="y" ;;
         h|?) usage ;;
         :) echo "${OPTARG} requires a value..."; usage ;;
@@ -192,6 +195,7 @@ echo ":: Begin build"
 parse_hook
 
 for hook in $HOOKS; do
+    echo "${SKIPHOOKS}" | grep -qw ${hook} && continue
     unset MODULES
     unset BINARIES
     unset FILES
