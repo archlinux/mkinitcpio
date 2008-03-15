@@ -119,29 +119,39 @@ if [ -n "${PRESET}" ]; then
         for p in ${PRESETS[@]}; do
             echo "==> Building image \"${p}\""
             PRESET_CMD="${PRESET_MKOPTS}"
+
             eval "PRESET_KVER=\"\${${p}_kver}\""
+            [ -z "${PRESET_KVER}" ] && PRESET_KVER="${ALL_kver}"
             eval "PRESET_CONFIG=\"\${${p}_config}\""
+            [ -z "${PRESET_CONFIG}" ] && PRESET_CONFIG="${ALL_config}"
             eval "PRESET_IMAGE=\"\${${p}_image}\""
+            eval "PRESET_OPTIONS=\"\${${p}_options}\""
+
             if [ -n "${PRESET_KVER}" ]; then
                 PRESET_CMD="${PRESET_CMD} -k ${PRESET_KVER}"
-            elif [ -n "${ALL_kver}" ]; then
-                PRESET_CMD="${PRESET_CMD} -k ${ALL_kver}"
             else
                 echo "==> No kernel version specified. Skipping image \"${p}\"."
                 continue
             fi
+
             if [ -n "${PRESET_CONFIG}" ]; then
                 PRESET_CMD="${PRESET_CMD} -c ${PRESET_CONFIG}"
             else
                 echo "==> No configuration file specified. Skipping image \"${p}\"."
                 continue
             fi
+
             if [ -n "${PRESET_IMAGE}" ]; then
                 PRESET_CMD="${PRESET_CMD} -g ${PRESET_IMAGE}"
             else
                 echo "==> No image file specified. Skipping image \"${p}\"."
                 continue
             fi
+
+            if [ -n "${PRESET_OPTIONS}" ]; then
+                PRESET_CMD="${PRESET_CMD} ${PRESET_OPTIONS}"
+            fi
+
             echo "==> Running command: ${PRESET_CMD}"
             if eval ${PRESET_CMD}; then
                 echo "==> SUCCESS"

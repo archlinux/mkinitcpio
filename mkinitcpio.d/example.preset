@@ -7,16 +7,20 @@ PRESETS=('default' 'fallback')
 # note for distribution kernels: this should be in a separate file
 # and read like this:
 # source /etc/mkinitcpio.d/exmaple.kver
-ALL_kver='2.6.18-ARCH'
+ALL_kver='2.6.24-ARCH'
+ALL_config='/etc/mkinitcpio.conf'
 
-# presetname_kver specifies the kernel version (omit if ALL_kver should be used)
-# presetname_config specifies the configuration file
-# presetname_image specifies the image to be generated
+# presetname_kver    - the kernel version (omit if ALL_kver should be used)
+# presetname_config  - the configuration file (omit if ALL_config should be used)
+# presetname_image   - the filename of generated image
+# presetname_options - any extra options
 
 #default_kver="2.6.18-ARCH"
-default_config="/etc/mkinitcpio.conf"
+#default_config="/etc/mkinitcpio.conf"
 default_image="/tmp/kernel26.img"
+default_options=""
 
 #fallback_kver="2.6.18-ARCH"
-fallback_config="/etc/mkinitcpio.d/mkinitcpio-kernel26-fallback.conf"
+#fallback_config="/etc/mkinitcpio.conf"
 fallback_image="/tmp/kernel26-fallback.img"
+fallback_options="-S autodetect"
