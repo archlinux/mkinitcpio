@@ -284,7 +284,6 @@ if [ -n "$GENIMG" ]; then
     if [ -z "${SAVELIST}" ]; then
         rm ${FILELIST}
     fi
-    rm ${MESSAGEFILE}
 else
     echo ":: Dry run complete, use -g IMAGE to generate a real image"
 fi
