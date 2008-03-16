@@ -1,11 +1,11 @@
 .\"     Title: mkinitcpio
 .\"    Author: 
-.\" Generator: DocBook XSL Stylesheets v1.73.1 <http://docbook.sf.net/>
-.\"      Date: 11/14/2007
+.\" Generator: DocBook XSL Stylesheets v1.73.2 <http://docbook.sf.net/>
+.\"      Date: 03/16/2008
 .\"    Manual: 
 .\"    Source: 
 .\"
-.TH "MKINITCPIO" "5" "11/14/2007" "" ""
+.TH "MKINITCPIO" "5" "03/16/2008" "" ""
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -71,6 +71,13 @@ Print
 before passing control to kinit\.
 .RE
 .PP
+\fB\-S\fR \fIhooks\fR
+.RS 4
+Skip
+\fIhooks\fR
+when generating the image\. Several hooks should be comma\-separated\.
+.RE
+.PP
 \fB\-v\fR
 .RS 4
 Verbose output\. Outputs more information about what\'s happening during creation of the ramdisk\.
@@ -132,9 +139,6 @@ Create an initial ramdisk based on the
 \fIkernel26\fR
 preset\.
 .RE
-.SH "TIPS"
-Don\'t let the bed bugs bite!
-.sp
 .SH "SEE ALSO"
 A more thorough article on configuring mkinitcpio: <http://wiki\.archlinux\.org/index\.php/Configuring_mkinitcpio>
 .sp

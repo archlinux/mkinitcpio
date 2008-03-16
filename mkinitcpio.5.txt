@@ -39,6 +39,9 @@ Options
 *-m* 'message'::
 	Print 'message' before passing control to kinit.
 		
+*-S* 'hooks'::
+	Skip 'hooks' when generating the image. Several hooks should be comma-separated.
+		
 *-v*::
 	Verbose output. Outputs more information about what's happening during creation of the ramdisk.
 		
@@ -83,10 +86,6 @@ Examples
 *mkinitcpio -p kernel26*::
 	Create an initial ramdisk based on the 'kernel26' preset.
 
-Tips
-----
-Don't let the bed bugs bite!
-	
 See also
 --------
 A more thorough article on configuring mkinitcpio: <http://wiki.archlinux.org/index.php/Configuring_mkinitcpio>
