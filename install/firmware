@@ -6,12 +6,10 @@ install ()
     BINARIES=""
     FILES=""
     SCRIPT=""
-   if [ -e /lib/firmware ]; then
-       for i in /lib/firmware/*; do 
-           add_file $i
-       done
+   if [ -d /lib/firmware ]; then
+       add_full_dir /lib/firmware
     else
-            err "No firmware files found!"
+       err "No firmware files found!"
     fi
 }
 

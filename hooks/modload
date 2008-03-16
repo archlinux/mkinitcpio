@@ -19,13 +19,13 @@ run_hook ()
         for d in /sys/bus/scsi/devices/*; do
             if [ -e "${d}/type" ]; then
                 read m < "${d}/type"
-                case "$m" in
+                case "${m}" in
                     0)   /sbin/modprobe -q sd_mod 2>&1 >/dev/null ;;
                     # this below is take from the Arch udev rules
                     1)   read vendor < "${d}/vendor"
                          if [ "${vendor}" = "Onstream" ]; then
                              read model < "${d}/model"
-                             case "$model" in
+                             case "${model}" in
                                  ADR*) /sbin/modprobe -q st >/dev/null 2>&1;;
                                  *) /sbin/modprobe -q osst >/dev/null 2>&1;;
                              esac

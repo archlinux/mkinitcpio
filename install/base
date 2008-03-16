@@ -12,14 +12,14 @@ install ()
     add_device "/dev/mem"     c 1 1
 
     for f in $(find /lib -name klibc-*.so); do
-        add_file $f
+        add_file ${f}
     done
 
     for f in /usr/lib/klibc/bin/*; do
-        add_file $f /bin/$(basename $f)
+        add_file ${f} /bin/$(basename ${f})
     done
     for f in /usr/lib/klibc/sbin/*; do
-        add_file $f /sbin/$(basename $f)
+        add_file ${f} /sbin/$(basename ${f})
     done
     # add symlink for compatibility
     add_symlink2 /bin/modprobe /sbin/modprobe

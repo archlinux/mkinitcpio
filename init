@@ -16,10 +16,10 @@ export kinit_params=""
 export root=""
 echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
 
-for cmd in $CMDLINE; do
-    case "$cmd" in
+for cmd in ${CMDLINE}; do
+    case "${cmd}" in
         \#*) break ;; # ignore everything after a # in the commandline
-        [0123456Ss]) export runlevel="$cmd" ;;
+        [0123456Ss]) export runlevel="${cmd}" ;;
         single) export runlevel="S" ;; #some people use 'single'
         #Allow "init=X" to pass-through
         init=*) kinit_params="${kinit_params} ${cmd}" ;;
@@ -49,28 +49,28 @@ fi
 
 if [ -n "${earlymodules}" ]; then
     for m in $(replace "${earlymodules}" ','); do
-        /sbin/modprobe -q $m > /dev/null 2>&1
+        /sbin/modprobe -q ${m} > /dev/null 2>&1
     done
 fi
 
 . /config
 
-for m in $MODULES; do
+for m in ${MODULES}; do
     TST=""
     eval "TST=\$mod_${m}"
     if [ "${TST}" != "disabled" ]; then
-        /sbin/modprobe -q $m > /dev/null 2>&1
+        /sbin/modprobe -q ${m} > /dev/null 2>&1
     fi
 done
 
 if [ -e "/hooks" ]; then
-    for h in $HOOKS; do
+    for h in ${HOOKS}; do
         TST=""
         eval "TST=\$hook_${h}"
         if [ "${TST}" != "disabled" ]; then
-            run_hook () { msg "$h: no run function defined"; }
-            if [ -e "/hooks/$h" ]; then
-               . /hooks/$h
+            run_hook () { msg "${h}: no run function defined"; }
+            if [ -e "/hooks/${h}" ]; then
+               . /hooks/${h}
                msg ":: Running Hook [${h}]"
                run_hook
             fi
@@ -129,7 +129,7 @@ fi
 #Special handling if udev is running
 udevpid=$(/bin/minips -C udevd -o pid=)
 if [ -n "${udevpid}" ]; then
-    /bin/kill -9 $udevpid
+    /bin/kill -9 ${udevpid}
     /bin/sleep 0.01
 fi
 

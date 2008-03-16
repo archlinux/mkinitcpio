@@ -74,19 +74,19 @@ trap sighandler TERM INT
 
 while getopts ':c:k:s:b:g:a:p:m:vH:LMhS:' arg; do
     if [ "${OPTARG:0:1}" = "-" ]; then
-        echo "error: optional argument to '-$arg' begins with a '-'"
+        echo "error: optional argument to '-${arg}' begins with a '-'"
         echo "  you probably don't want this....aborting."
         usage
     fi
-    case "$arg" in
-        c) CONFIG="$OPTARG" ;;
-        k) KERNELVERSION="$OPTARG" ;;
-        s) SAVELIST="y"; FILELIST="$OPTARG" ;;
-        b) BASEDIR="$OPTARG" ;;
-        g) GENIMG="$OPTARG" ;;
-        a) APPEND="y"; SAVELIST="y"; FILELIST="$OPTARG" ;;
-        p) PRESET="$OPTARG" ;;
-        m) MESSAGE="$OPTARG" ;;
+    case "${arg}" in
+        c) CONFIG="${OPTARG}" ;;
+        k) KERNELVERSION="${OPTARG}" ;;
+        s) SAVELIST="y"; FILELIST="${OPTARG}" ;;
+        b) BASEDIR="${OPTARG}" ;;
+        g) GENIMG="${OPTARG}" ;;
+        a) APPEND="y"; SAVELIST="y"; FILELIST="${OPTARG}" ;;
+        p) PRESET="${OPTARG}" ;;
+        m) MESSAGE="${OPTARG}" ;;
         v) QUIET="n" ;;
         S) SKIPHOOKS="${OPTARG}" ;;
         H) source "${INSTDIR}/${OPTARG}";
@@ -103,10 +103,10 @@ while getopts ':c:k:s:b:g:a:p:m:vH:LMhS:' arg; do
         M) SHOW_AUTOMODS="y" ;;
         h|?) usage ;;
         :) echo "${OPTARG} requires a value..."; usage ;;
-        *) echo "invalid argument '$arg'"; usage ;;
+        *) echo "invalid argument '${arg}'"; usage ;;
     esac
 done
-shift $(($OPTIND - 1))
+shift $((${OPTIND} - 1))
 
 # use preset $PRESET
 if [ -n "${PRESET}" ]; then
@@ -225,7 +225,7 @@ echo ":: Begin build"
 #parse 'global' hook, as defined in ${CONFIG}
 parse_hook
 
-for hook in $HOOKS; do
+for hook in ${HOOKS}; do
     echo "${SKIPHOOKS}" | grep -qw ${hook} && continue
     unset MODULES
     unset BINARIES
@@ -269,7 +269,7 @@ if [ "${HAS_MODULES}" == "y" ]; then
 fi
 
 status=0
-if [ -n "$GENIMG" ]; then
+if [ -n "${GENIMG}" ]; then
     echo -n ":: Generating image '${GENIMG}'..."
     sort -u ${FILELIST} > ${FILELIST}.sorted
     mv ${FILELIST}.sorted ${FILELIST}
@@ -290,5 +290,5 @@ fi
 
 cleanup
 
-exit $status
+exit ${status}
 #vim:set ft=sh ts=4 sw=4 noet:

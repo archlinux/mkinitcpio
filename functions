@@ -3,7 +3,7 @@ auto_modules ()
 {
     aliases=$(find /sys/devices/ -name modalias -exec cat {} \;)
     mods=$(/sbin/modprobe --set-version ${KERNELVERSION} --show-depends -a \
-        $aliases 2>/dev/null | sed 's|insmod \(.*\)|\1|' | grep ${@} | sort -u)
+        ${aliases} 2>/dev/null | sed 's|insmod \(.*\)|\1|' | grep $@ | sort -u)
 
     echo "${mods}"
     [ -z "${mods}" ] && return 1
@@ -12,7 +12,7 @@ auto_modules ()
 
 all_modules ()
 {
-    mods=$(find ${MODULEDIR} -name *.ko 2>/dev/null | grep ${@} | sort -u)
+    mods=$(find ${MODULEDIR} -name *.ko 2>/dev/null | grep $@ | sort -u)
 
     echo "${mods}"
     [ -z "${mods}" ] && return 1
@@ -22,7 +22,7 @@ all_modules ()
 checked_modules ()
 {
     if [ -e "${MODULE_FILE}" ]; then
-        for mod in $(all_modules ${@}); do
+        for mod in $(all_modules $@); do
             if grep "^$(basename ${mod%%\.ko})$" "${MODULE_FILE}" >/dev/null 2>&1; then
                 echo ${mod}
             fi
@@ -33,9 +33,9 @@ checked_modules ()
     fi
 }
 
-msg () { [ "${QUIET}" = "n" ] && echo ${@}; }
-err () { echo "ERROR: ${@}" >&2; }
-die () { echo "FATAL: ${@}" >&2; cleanup; exit 1; }
+msg () { [ "${QUIET}" = "n" ] && echo $}; }
+err () { echo "ERROR: $@" >&2; }
+die () { echo "FATAL: $@" >&2; cleanup; exit 1; }
 
 add_full_dir ()
 {
@@ -155,7 +155,7 @@ add_module ()
         HAS_MODULES="y"
         add_file "${path}" && found=1
     done
-    if [ $found -eq 0 ]; then
+    if [ ${found} -eq 0 ]; then
         err "module '$fil' not found"
     fi
 }
@@ -170,7 +170,7 @@ add_binary ()
 
     dest=""
     if [ $# -eq 2 ]; then
-        dest=$2
+        dest=${2}
     fi
 
     if [ ! -f "${bin}" ]; then
@@ -209,19 +209,19 @@ add_binary ()
 parse_hook ()
 {
     local mod bin fil
-    for mod in $MODULES; do
+    for mod in ${MODULES}; do
         if [ -n "${mod}" ]; then
             add_module "${mod}"
         fi
     done
 
-    for bin in $BINARIES; do
+    for bin in ${BINARIES}; do
         if [ -n "${bin}" ]; then
             add_binary "${bin}"
         fi
     done
 
-    for fil in $FILES; do
+    for fil in ${FILES}; do
         if [ -n "${fil}" ]; then
             add_file "${fil}"
         fi
