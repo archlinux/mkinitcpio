@@ -12,7 +12,7 @@ auto_modules ()
 
 all_modules ()
 {
-    mods=$(find ${MODULEDIR} -name *.ko 2>/dev/null | grep $@ | sort -u)
+    mods=$(find ${MODULEDIR} -name '*.ko' 2>/dev/null | grep $@ | sort -u)
 
     echo "${mods}"
     [ -z "${mods}" ] && return 1
