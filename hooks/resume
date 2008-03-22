@@ -1,23 +1,18 @@
 # vim:set ft=sh:
-# TODO encrypted swap partition if resume2 begins with 'swap:'
 run_hook ()
 {
     fmtdevice () { echo "${1}:${2}"; }
 
-    # Try resuming with swsusp
-    if [ -e "/sys/power/resume" -a -e "${resume}" ]; then
-        dev_t=$( /bin/parseblock "${resume}" )
-        fmtdevice ${dev_t} > /sys/power/resume
+    # Try resuming with tuxonice
+    tuxoniceroot="/sys/power/tuxonice"
+    if [ -d "${tuxoniceroot}" -a -n "${resume}" ]; then
+        echo ${resume} > ${tuxoniceroot}/resume
+        echo > ${tuxoniceroot}/do_resume
     fi
 
-    # Try resuming with suspend2
-    if [ -d "/sys/power/suspend2" ]; then
-         suspend2root="/sys/power/suspend2"
-    else
-         suspend2root="/proc/suspend2"
-    fi
-    if [ -d "${suspend2root}" -a -n "${resume2}" ]; then
-        echo ${resume2} > ${suspend2root}/resume2
-        echo > ${suspend2root}/do_resume
+    # Try resuming with vanilla hibernation
+    if [ -e "/sys/power/resume" -a -n "${resume}" ]; then
+        eval $(/bin/parseblock "${resume}")
+        fmtdevice ${BLOCKDEVICE} > /sys/power/resume
     fi
 }
