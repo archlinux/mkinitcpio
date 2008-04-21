@@ -6,7 +6,7 @@ install ()
 
     MODULES=$(echo ${MODULES}) #trim whitespace
     if [ -n "${MODULES}" ]; then
-        MODULES="${MODULES} ide-disk ide-cd"
+        MODULES="${MODULES} ide-disk"
     fi
 
     BINARIES=""

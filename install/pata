@@ -7,7 +7,7 @@ install ()
 
     MODULES=$(echo ${MODULES}) #trim whitespace
     if [ -n "${MODULES}" ]; then
-        MODULES="${MODULES} sd_mod sr_mod"
+        MODULES="${MODULES} sd_mod"
     fi
 
     BINARIES=""
