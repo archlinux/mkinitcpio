@@ -6,7 +6,7 @@ install ()
     BINARIES=""
     FILES=""
     SCRIPT=""
-    add_file "/lib/initcpio/custom.dsdt" "/DSDT.aml"
+    add_file "/lib/initcpio/custom.dsdt" "DSDT.aml"
 }
 
 help ()
