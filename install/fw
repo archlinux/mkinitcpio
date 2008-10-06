@@ -6,7 +6,7 @@ install ()
 
     MODULES=$(echo ${MODULES}) #trim whitespace
     if [ -n "${MODULES}" ]; then
-        MODULES="${MODULES} firewire-sbp2 sbp2 sd_mod sr_mod"
+        MODULES="${MODULES} sbp2 sd_mod sr_mod"
     fi
     BINARIES=""
     FILES=""
