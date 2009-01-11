@@ -30,6 +30,7 @@ install ()
         echo -e "${MESSAGE}" > ${MESSAGEFILE}
         add_file "${MESSAGEFILE}" "/message"
     fi
+    add_file "/etc/modprobe.d/usb-load-ehci-first"
     SCRIPT=""
 }
 
