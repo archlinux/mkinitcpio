@@ -171,11 +171,6 @@ add_binary ()
         bin="${1}"
     fi
 
-    dest=""
-    if [ $# -eq 2 ]; then
-        dest=${2}
-    fi
-
     if [ ! -f "${bin}" ]; then
         err "'${bin}' is not a file"
         return 1
@@ -186,7 +181,7 @@ add_binary ()
         case "${type}" in
             *script*)
             msg "   adding '${type}' script, ensure proper interp exists..."
-            add_file "${bin}" ${dest}
+            add_file "${bin}"
             ;;
             *executable*|*shared\ object*)
             add_file "${bin}" ${dest}
