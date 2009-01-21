@@ -2,8 +2,11 @@
 auto_modules ()
 {
     aliases=$(find /sys/devices/ -name modalias -exec cat {} \;)
-    mods=$(/sbin/modprobe --set-version ${KERNELVERSION} --show-depends -a \
-        ${aliases} 2>/dev/null | sed 's|insmod \(.*\)|\1|' | grep $@ | sort -u)
+    mods=""
+    for a in $aliases; do
+        m="$(resolve-modalias "/lib/modules/${KERNELVERSION}/modules.alias" "$a")"
+        [ -n "$m" ] && mods="$mods $m"
+    done
 
     echo "${mods}"
     [ -z "${mods}" ] && return 1
