@@ -21,5 +21,5 @@ cp -r install/ ${1}/lib/initcpio/
 cp -r mkinitcpio.d/ ${1}/etc/mkinitcpio.d
 
 #a2x -d manpage -f manpage mkinitcpio.5.txt
-gzip --best mkinitcpio.5
+gzip -c --best mkinitcpio.5 > mkinitcpio.5.gz
 install -D -m644 mkinitcpio.5.gz ${1}/usr/man/man5/mkinitcpio.5.gz
