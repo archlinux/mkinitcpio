@@ -192,7 +192,7 @@ add_binary ()
                     #remove TLS libraries
                     notls=$(echo ${lib} | sed 's|/lib/tls.*/\(lib.*\)|/lib/\1|')
                     [ -e "${notls}" ] && lib="${notls}"
-                    [ -f "${lib}" ] && add_file "${lib}"
+                    [ -f "${lib}" ] && add_file "${BASEDIR}${lib}"
                 fi
             done
             ;;
@@ -215,7 +215,7 @@ parse_hook ()
 
     for bin in ${BINARIES}; do
         if [ -n "${bin}" ]; then
-            add_binary "${bin}"
+            add_binary "${BASEDIR}${bin}"
         fi
     done
 
