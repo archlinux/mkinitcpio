@@ -221,7 +221,11 @@ if [ "${SHOW_AUTOMODS}" = "y" ]; then
     exit 0
 fi
 
-echo ":: Begin build"
+if [ -n "${GENIMG}" ]; then
+    echo ":: Begin dry run"
+else
+    echo ":: Begin build"
+fi
 #parse 'global' hook, as defined in ${CONFIG}
 parse_hook
 
