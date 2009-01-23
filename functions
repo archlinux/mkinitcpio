@@ -8,7 +8,7 @@ auto_modules ()
         [ -n "$m" ] && mods="$mods $m"
     done
 
-    echo "${mods}"
+    echo "${mods}" | sed 's|-|_|g'
     [ -z "${mods}" ] && return 1
     return 0
 }
@@ -26,8 +26,9 @@ checked_modules ()
 {
     if [ -e "${MODULE_FILE}" ]; then
         for mod in $(all_modules $@); do
-            if grep "^$(basename ${mod%%\.ko})$" "${MODULE_FILE}" >/dev/null 2>&1; then
-                echo ${mod}
+            modname="$(basename ${mod%%\.ko} | sed 's|-|_|g')"
+            if grep "^${modname}$" "${MODULE_FILE}" >/dev/null 2>&1; then
+                echo ${modname}
             fi
         done
         return 1
