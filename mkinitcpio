@@ -221,7 +221,7 @@ if [ "${SHOW_AUTOMODS}" = "y" ]; then
     exit 0
 fi
 
-if [ -n "${GENIMG}" ]; then
+if [ -z "${GENIMG}" ]; then
     echo ":: Begin dry run"
 else
     echo ":: Begin build"
