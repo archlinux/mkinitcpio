@@ -172,6 +172,11 @@ add_binary ()
         bin="${1}"
     fi
 
+    dest=""
+    if [ $# -eq 2 ]; then
+        dest=${2}
+    fi
+
     if [ ! -f "${bin}" ]; then
         err "'${bin}' is not a file"
         return 1
@@ -182,7 +187,7 @@ add_binary ()
         case "${type}" in
             *script*)
             msg "   adding '${type}' script, ensure proper interp exists..."
-            add_file "${bin}"
+            add_file "${bin}" ${dest}
             ;;
             *executable*|*shared\ object*)
             add_file "${bin}" ${dest}
@@ -193,7 +198,7 @@ add_binary ()
                     #remove TLS libraries
                     notls=$(echo ${lib} | sed 's|/lib/tls.*/\(lib.*\)|/lib/\1|')
                     [ -e "${notls}" ] && lib="${notls}"
-                    [ -f "${lib}" ] && add_file "${BASEDIR}${lib}"
+                    [ -f "${lib}" ] && add_file "${lib}"
                 fi
             done
             ;;
@@ -216,7 +221,7 @@ parse_hook ()
 
     for bin in ${BINARIES}; do
         if [ -n "${bin}" ]; then
-            add_binary "${BASEDIR}${bin}"
+            add_binary "${bin}"
         fi
     done
 
