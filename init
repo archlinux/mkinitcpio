@@ -129,7 +129,7 @@ fi
 #Special handling if udev is running
 udevpid=$(/bin/minips -C udevd -o pid=)
 if [ -n "${udevpid}" ]; then
-    /bin/kill -9 ${udevpid}
+    /bin/kill -9 ${udevpid} > /dev/null 2>&1
     /bin/sleep 0.01
 fi
 
