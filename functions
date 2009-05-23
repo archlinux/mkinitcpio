@@ -189,7 +189,7 @@ add_binary ()
             msg "   adding '${type}' script, ensure proper interp exists..."
             add_file "${bin}" ${dest}
             ;;
-            *executable*|*shared\ object*)
+            *executable*|*shared\ object*|*symbolic\ link*)
             add_file "${bin}" ${dest}
             #note, this will also handle 'not a dynamic executable' spit out by
             # static binaries... the deps will produce nothing
