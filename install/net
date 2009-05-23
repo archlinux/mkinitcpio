@@ -35,7 +35,7 @@ cat<<HELPEOF
                 empty only replies from the specified server are
                 accepted. To use different RARP and NFS server,
                 specify your RARP server here (or leave it blank), and
-                specify your NFS server in the `nfsroot' parameter
+                specify your NFS server in the 'nfsroot' parameter
                 (see above). If this entry is blank the address of the
                 server is used which answered the RARP/BOOTP/DHCP
                 request.
