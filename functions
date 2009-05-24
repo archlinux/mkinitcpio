@@ -145,12 +145,17 @@ HAS_MODULES="n"
 #modules are handled specially in order to enable autodetection
 add_module ()
 {
-    local fil path mod deps
+    local fil path fw mod deps
     #cleanup - remove .ko, replace - and _ with [-_] to match either
     fil=$(basename "${1}" | sed -e "s|[-_]|\[-_\]|g" -e "s|\.ko$||g")
 
     found=0
     for path in $(find "${MODULEDIR}" -type f -name "${fil}.ko"); do
+        #get needed firmware files
+        for fw in $(/sbin/modinfo -F firmware "${path}"); do
+            [ -f "/lib/firmware/$fw" ] && add_file "/lib/firmware/$fw"
+        done
+        #get module depends
         for mod in $(/sbin/modinfo -F depends "${path}" | tr ',' ' '); do
             if [ -n "${mod}" ]; then
                 add_module "${mod}"
