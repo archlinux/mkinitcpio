@@ -15,9 +15,9 @@ poll_device() {
         seconds=5
     fi
     echo "Waiting ${seconds} seconds for device ${device} ..."
-    while [ ! -b "${device}" -a ${seconds} -gt 0 ]; do
+    while [ ! -b "${device}" -a ! -L "${device}" -a ${seconds} -gt 0 ]; do
         sleep 1
         seconds=$((${seconds}-1))
     done
-    [ -b "${device}" ]
+    [ -b "${device}" -o -L "${device}" ]
 }
