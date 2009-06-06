@@ -24,6 +24,7 @@ install ()
     # add symlink for compatibility
     add_symlink2 /bin/modprobe /sbin/modprobe
 
+    add_file "/lib/initcpio/init_functions" "/init_functions"
     add_file "/lib/initcpio/init" "/init"
     add_file "${CONFIG}" "/config"
     if [ -n "${MESSAGE}" ]; then

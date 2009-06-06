@@ -1,0 +1,8 @@
+# This file contains common functions used in init and in hooks
+
+msg () {
+    [ "${quiet}" != "y" ] && echo $@
+}
+err () {
+    echo "ERROR: $@"
+}

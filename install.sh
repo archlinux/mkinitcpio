@@ -15,6 +15,7 @@ chmod 755 ${1}/sbin/mkinitcpio
 
 install -D -m644 mkinitcpio.conf ${1}/etc/mkinitcpio.conf
 install -D -m755 init ${1}/lib/initcpio/init
+install -D -m755 init_functions ${1}/lib/initcpio/init_functions
 install -D -m644 functions ${1}/lib/initcpio/functions
 cp -r hooks/ ${1}/lib/initcpio/
 cp -r install/ ${1}/lib/initcpio/
