@@ -1,8 +1,0 @@
-# vim: set ft=sh:
-run_hook ()
-{
-    #if we have to root delay, default to 5 seconds
-    #  this will be handled by kinit and/or the
-    #  filesystems hook
-    export rootdelay=${rootdelay:-6}
-}

@@ -10,7 +10,7 @@ install ()
     fi
     BINARIES=""
     FILES=""
-    SCRIPT="fw"
+    SCRIPT=""
 }
 
 help ()
