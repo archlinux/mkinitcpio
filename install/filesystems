@@ -5,14 +5,13 @@ install ()
     MODULES=" $(checked_modules '/kernel/fs' | grep -v "nls") $(checked_modules '/kernel/fs/nls/nls_cp437')"
     BINARIES=""
     FILES=""
-    SCRIPT="filesystems"
+    SCRIPT=""
 }
 
 help ()
 {
 cat<<HELPEOF
-  This hook is responsible for loading filesystems for the root device.
-  Detection will be done at runtime.  If you would like to minimize the
-  modules installed in the image, add the autodetect hook too.
+  This hook adds filesystems modules to the image. If you would like to
+  minimize the modules installed in the image, add the autodetect hook too.
 HELPEOF
 }
