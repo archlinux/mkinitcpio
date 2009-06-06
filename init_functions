@@ -6,3 +6,18 @@ msg () {
 err () {
     echo "ERROR: $@"
 }
+
+poll_device() {
+    device="$1"
+    if [ "$2" -gt 0 ]; then
+        seconds="$2"
+    else
+        seconds=5
+    fi
+    echo "Waiting ${seconds} seconds for device ${device} ..."
+    while [ ! -b "${device}" -a ${seconds} -gt 0 ]; do
+        sleep 1
+        seconds=$((${seconds}-1))
+    done
+    [ -b "${device}" ]
+}
