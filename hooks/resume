@@ -3,16 +3,18 @@ run_hook ()
 {
     fmtdevice () { echo "${1}:${2}"; }
 
-    # Try resuming with tuxonice
-    tuxoniceroot="/sys/power/tuxonice"
-    if [ -d "${tuxoniceroot}" -a -n "${resume}" ]; then
-        echo ${resume} > ${tuxoniceroot}/resume
-        echo > ${tuxoniceroot}/do_resume
-    fi
+    if [ -n "${resume}" ] && poll_device "${resume}"; then
+        # Try resuming with tuxonice
+        tuxoniceroot="/sys/power/tuxonice"
+        if [ -d "${tuxoniceroot}" ]; then
+            echo ${resume} > ${tuxoniceroot}/resume
+            echo > ${tuxoniceroot}/do_resume
+        fi
 
-    # Try resuming with vanilla hibernation
-    if [ -e "/sys/power/resume" -a -n "${resume}" ]; then
-        eval $(/bin/parseblock "${resume}")
-        fmtdevice ${BLOCKDEVICE} > /sys/power/resume
+        # Try resuming with vanilla hibernation
+        if [ -e "/sys/power/resume" ]; then
+            eval $(/bin/parseblock "${resume}")
+            fmtdevice ${BLOCKDEVICE} > /sys/power/resume
+        fi
     fi
 }
