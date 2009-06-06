@@ -97,7 +97,7 @@ if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
         msg "\nRoot device '${root}' doesn't exist, attempting to create it"
 
         eval $(/bin/parseblock "${root}")
-        elif [ -z "${BLOCKDEVICE}" ]; then
+        if [ -z "${BLOCKDEVICE}" ]; then
             echo "ERROR: Failed to parse block device ids for '${root}'"
         else
             echo "/bin/mknod /dev/root b ${BLOCKDEVICE}"
