@@ -32,6 +32,7 @@ SKIPHOOKS=""
 PRESETDIR="mkinitcpio.d"
 QUIET="y"
 SHOW_AUTOMODS="n"
+COMPRESSION="gzip"
 
 # Add /{,usr}/sbin to path
 # works around undetected problems like in #8448
@@ -275,7 +276,7 @@ fi
 status=0
 if [ -n "${GENIMG}" ]; then
     echo -n ":: Generating image '${GENIMG}'..."
-    if ! /sbin/gen_init_cpio ${FILELIST} | gzip -9 > "${GENIMG}"; then
+    if ! /sbin/gen_init_cpio ${FILELIST} | ${COMPRESSION} -9 > "${GENIMG}"; then
         echo "FAILED"
         status=1
     else
