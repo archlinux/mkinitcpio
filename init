@@ -18,8 +18,9 @@ echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
 for cmd in ${CMDLINE}; do
     case "${cmd}" in
         \#*) break ;; # ignore everything after a # in the commandline
-        [0123456Ss]) export runlevel="${cmd}" ;;
-        single) export runlevel="S" ;; #some people use 'single'
+        # The kernel passes those to the kernel on its own
+        [0123456Ss]) ;;
+        single) ;;
         #Allow "init=X" to pass-through
         init=*) kinit_params="${kinit_params} ${cmd}" ;;
         # only export stuff that does work with dash :)
@@ -131,4 +132,4 @@ if [ -n "${udevpid}" ]; then
     /bin/sleep 0.01
 fi
 
-exec /bin/kinit -- "root=${root}" ${kinit_params} "${runlevel}" > /dev/null 2>&1
+exec /bin/kinit "$@" -- "root=${root}" ${kinit_params} > /dev/null 2>&1
