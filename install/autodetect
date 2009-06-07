@@ -13,7 +13,7 @@ install ()
     #Filesystem detection, use sysfs instead of /proc
     findfs ()
     {
-        for blkdev in $(find /dev -type b | grep -v -e loop -e ram -e fd); do
+        for blkdev in $(find /dev -type b | grep -v -e /dev/loop -e /dev/ram -e /dev/fd); do
             eval $(/usr/lib/klibc/bin/fstype 2>/dev/null < ${blkdev})
             if [ -n "${FSTYPE}" -a "${FSTYPE}" != "swap" -a "${FSTYPE}" != "unknown" -a "${FSTYPE}" != "luks" -a "${FSTYPE}" != "lvm2" ]; then
                 echo ${FSTYPE}
