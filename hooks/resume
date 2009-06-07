@@ -3,7 +3,7 @@ run_hook ()
 {
     fmtdevice () { echo "${1}:${2}"; }
 
-    if [ -n "${resume}" ] && poll_device "${resume}"; then
+    if [ -n "${resume}" ] && poll_device "${resume}" ${rootdelay}; then
         # Try resuming with tuxonice
         tuxoniceroot="/sys/power/tuxonice"
         if [ -d "${tuxoniceroot}" ]; then

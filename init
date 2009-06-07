@@ -63,6 +63,13 @@ for m in ${MODULES}; do
     fi
 done
 
+# If rootdelay is empty or not a non-negative integer, set it to 10
+if [ -z "${rootdelay}" -o ! "${rootdelay}" -ge 0 ]; then
+    export rootdelay=10
+fi
+# We'll wait for the root device, so make sure klibc doesn't
+export kinit_params="${kinit_params} rootdelay=0"
+
 if [ -e "/hooks" ]; then
     for h in ${HOOKS}; do
         TST=""
@@ -82,13 +89,6 @@ if [ "${break}" = "y" ]; then
     echo ":: Break requested, type 'exit' to resume operation"
     echo "   NOTE: klibc contains no 'ls' binary, use 'echo *' instead"
     PS1="ramfs$ " /bin/sh -i
-fi
-
-# If rootdelay is empty or not a non-negative integer, set it to 10
-if [ -z "${rootdelay}" -o ! "${rootdelay}" -ge 0 ]; then
-    export rootdelay=10
-    # We'll wait for the root device, so make sure klibc doesn't
-    export kinit_params="$kinit_params rootdelay=0"
 fi
 
 # If we boot from NFS, don't check for a block device in /dev
