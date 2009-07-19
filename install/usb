@@ -7,6 +7,7 @@ install ()
     MODULES=$(echo ${MODULES}) #trim whitespace
     if [ -n "${MODULES}" ]; then
         MODULES="${MODULES} usb_storage sd_mod sr_mod"
+        MODULES="${MODULES} $(checked_modules "drivers/usb/storage/ums-*")"
     fi
     BINARIES=""
     FILES=""
