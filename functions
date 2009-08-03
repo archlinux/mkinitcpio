@@ -87,7 +87,7 @@ add_device ()
 add_symlink ()
 {
     local fil dest dir
-    if [ -L ${1} ]; then
+    if [ -h ${1} ]; then
         fil="${1##$BASEDIR}"
         dest="${2##$BASEDIR}"
         add_dir $(dirname "${dest}")

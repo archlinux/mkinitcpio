@@ -243,7 +243,7 @@ for hook in ${HOOKS}; do
     # Deprecation check
     # A hook is considered deprecated if it is a symlink
     # within $INSTDIR.
-    if [ -L "${INSTDIR}/${hook}" ]; then
+    if [ -h "${INSTDIR}/${hook}" ]; then
         newhook="$(readlink -ne "${INSTDIR}/${hook}")"
         if [ -n "${newhook}" -a "${INSTDIR}/$(basename ${newhook})" -ef "${newhook}" ]; then
             newhook="$(basename ${newhook})"

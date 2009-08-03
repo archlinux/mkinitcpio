@@ -105,7 +105,7 @@ if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
             /bin/mknod /dev/root b ${BLOCKDEVICE} >/dev/null
             export root="/dev/root"
         fi
-        if [ ! -b "${root}" -a ! -L "${root}" ]; then
+        if [ ! -b "${root}" -a ! -h "${root}" ]; then
             err "Unable to detect or create root device '${root}'"
             echo "You are being dropped to a recovery shell"
             echo "    Type 'reboot' to reboot"
