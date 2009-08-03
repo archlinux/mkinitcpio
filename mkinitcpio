@@ -78,7 +78,7 @@ sighandler() {
 trap sighandler TERM INT
 
 while getopts ':c:k:s:b:g:a:p:m:vH:LMhS:' arg; do
-    if [ "${OPTARG:0:1}" = "-" ]; then
+    if [ "${OPTARG#-}" != "${OPTARG}" ]; then
         echo "error: optional argument to '-${arg}' begins with a '-'"
         echo "  you probably don't want this....aborting."
         usage
@@ -176,14 +176,14 @@ if [ -n "${PRESET}" ]; then
 fi
 
 # append a trailing / if needed
-if [ "${BASEDIR:${#BASEDIR}}" == "/" ]; then
-    BASEDIR="${BASEDIR:0:${#BASEDIR}-1}"
+if [ "${BASEDIR}" = "${BASEDIR%/}" ]; then
+    BASEDIR="${BASEDIR}/"
 fi
 
 MODULEDIR="${BASEDIR}/lib/modules/${KERNELVERSION}"
 
 if [ -n "${BASEDIR}" ]; then
-    if [ "${BASEDIR:0:1}" != "/" ]; then
+    if [ "${BASEDIR}" = "${BASEDIR#/}" ]; then
         BASEDIR="$(pwd)/${BASEDIR}"
     elif [ ! -d "${BASEDIR}" ]; then
         echo "base directory '${BASEDIR}' does not exist or is not a directory"
@@ -264,7 +264,7 @@ for hook in ${HOOKS}; do
     fi
 done
 
-if [ "${HAS_MODULES}" == "y" ]; then
+if [ "${HAS_MODULES}" = "y" ]; then
     echo ":: Generating module dependencies"
     for mod in $(grep "file /lib/modules/${KERNELVERSION}" ${FILELIST} | cut -d' ' -f2); do
         dir=$(dirname "${mod}")
