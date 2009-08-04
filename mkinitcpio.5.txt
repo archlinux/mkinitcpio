@@ -59,8 +59,10 @@ Options
 		
 About Hooks
 -----------
-A hook is a script that executes in the initial ramdisk. The order and which scripts are executed is found in the
-*HOOKS*=() array in the mkinitcpio configuration file. A hook will, for example, set up the udev device	filesystem, load IDE modules, etc...
+A hook is a script that executes in the initial ramdisk. Scripts are
+listed in order of execution as a space separated string in the *HOOKS*
+variable in the mkinitcpio configuration file. Hooks can, for example,
+set up the udev device filesystem, load IDE modules, etc.
 
 About Presets
 -------------
