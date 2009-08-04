@@ -34,6 +34,10 @@ QUIET="y"
 SHOW_AUTOMODS="n"
 COMPRESSION="gzip"
 
+if [ ! $UID ]; then
+    UID=$(id -u)
+fi
+
 # Add /{,usr}/sbin to path
 # works around undetected problems like in #8448
 PATH="${PATH}:/sbin:/usr/sbin"
