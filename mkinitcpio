@@ -116,14 +116,23 @@ shift $((${OPTIND} - 1))
 # use preset $PRESET
 if [ -n "${PRESET}" ]; then
     if [ -f "${PRESETDIR}/${PRESET}.preset" ]; then
+        echo "   -------------------------------------------------------------------"
+        echo "   WARNING: Defining PRESETS as a bash array is no longer supported."
+        echo "            PRESETS should be defined as a string in all mkinitcpio"
+        echo "            preset files for compatibility with dash."
+        echo "   -------------------------------------------------------------------"
+
         # Use -b, -m and -v options specified earlier
         PRESET_MKOPTS="${0}"
         [ -n "${BASEDIR}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -b ${BASEDIR}"
         [ -n "${MESSAGE}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -m \"${MESSAGE}\""
         [ "${QUIET}" = "n" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -v"
+
         # Build all images
+        echo "==> Using ${PRESETDIR}/${PRESET}.preset"
         . ${PRESETDIR}/${PRESET}.preset
-        for p in ${PRESETS[@]}; do
+
+        for p in ${PRESETS}; do
             echo "==> Building image \"${p}\""
             PRESET_CMD="${PRESET_MKOPTS}"
 

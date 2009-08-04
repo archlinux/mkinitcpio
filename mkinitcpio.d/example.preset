@@ -1,7 +1,7 @@
 # Example mkinitcpio preset file
 
 # preset names
-PRESETS=('default' 'fallback')
+PRESETS="default fallback"
 
 # ALL_kver is used if presetname_kver is not set
 # note for distribution kernels: this should be in a separate file
