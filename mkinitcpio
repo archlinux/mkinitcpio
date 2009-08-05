@@ -94,7 +94,7 @@ while getopts ':c:k:s:b:g:a:p:m:vH:LMhS:' arg; do
         m) MESSAGE="${OPTARG}" ;;
         v) QUIET="n" ;;
         S) SKIPHOOKS="${OPTARG}" ;;
-        H) source "${INSTDIR}/${OPTARG}";
+        H) . "${INSTDIR}/${OPTARG}";
            echo "Help for hook '${OPTARG}':"
            help
            cleanup
@@ -122,7 +122,7 @@ if [ -n "${PRESET}" ]; then
         [ -n "${MESSAGE}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -m \"${MESSAGE}\""
         [ "${QUIET}" = "n" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -v"
         # Build all images
-        source ${PRESETDIR}/${PRESET}.preset
+        . ${PRESETDIR}/${PRESET}.preset
         for p in ${PRESETS[@]}; do
             echo "==> Building image \"${p}\""
             PRESET_CMD="${PRESET_MKOPTS}"
@@ -197,7 +197,7 @@ if [ ! -f "${CONFIG}" ]; then
     cleanup
     exit 1
 fi
-source "${CONFIG}"
+. "${CONFIG}"
 
 if [ -f "${FILELIST}" -a -z "${APPEND}" ]; then
     if [ -z "${SAVELIST}" ]; then
@@ -215,11 +215,11 @@ fi
 BASEDIR=$(echo ${BASEDIR} | tr -s /)
 MODULEDIR=$(echo ${MODULEDIR} | tr -s /)
 
-source "${FUNCTIONS}"
+. "${FUNCTIONS}"
 
 if [ "${SHOW_AUTOMODS}" = "y" ]; then
     echo "Modules autodetected:"
-    source "${INSTDIR}/autodetect"
+    . "${INSTDIR}/autodetect"
     install
     cat "${MODULE_FILE}"
     cleanup
@@ -255,7 +255,7 @@ for hook in ${HOOKS}; do
         fi
     fi
     if grep "install" "${INSTDIR}/${hook}" >/dev/null 2>&1; then
-        source "${INSTDIR}/${hook}"
+        . "${INSTDIR}/${hook}"
         echo ":: Parsing hook [${hook}]"
         install
         parse_hook

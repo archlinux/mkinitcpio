@@ -6,7 +6,7 @@ PRESETS=('default' 'fallback')
 # ALL_kver is used if presetname_kver is not set
 # note for distribution kernels: this should be in a separate file
 # and read like this:
-# source /etc/mkinitcpio.d/exmaple.kver
+# . /etc/mkinitcpio.d/exmaple.kver
 ALL_kver='2.6.24-ARCH'
 ALL_config='/etc/mkinitcpio.conf'
 
