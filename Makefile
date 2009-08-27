@@ -1,5 +1,7 @@
 # Makefile for mkinitcpio
 
+VERSION = 0.6.0a
+
 all: doc
 
 install: all
@@ -38,7 +40,29 @@ mkinitcpio.5.gz: mkinitcpio.5.txt
 	gzip -c --best mkinitcpio.5 > mkinitcpio.5.gz
 
 clean:
+	rm -rf build
+	rm -f mkinitcpio-${VERSION}.tar.gz
 	rm -f mkinitcpio.5
-	rm -f mkinitcpio.5.gz
 	rm -f mkinitcpio.5.xml
+	rm -f mkinitcpio.5.gz
+
+TARBALL_FILES = \
+	Makefile \
+	LICENSE \
+	README \
+	hooks \
+	functions \
+	init \
+	init_functions \
+	install \
+	mkinitcpio \
+	mkinitcpio.conf \
+	mkinitcpio.d \
+	mkinitcpio.5.txt \
+	mkinitcpio.5.gz
+
+tarball: mkinitcpio.5.gz
+	mkdir -p build/mkinitcpio-${VERSION}
+	cp -a --backup=none ${TARBALL_FILES} build/mkinitcpio-${VERSION}
+	tar cvvzf mkinitcpio-${VERSION}.tar.gz -C build mkinitcpio-${VERSION}
 
