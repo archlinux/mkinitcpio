@@ -113,6 +113,8 @@ while getopts ':c:k:s:b:g:a:p:m:vH:LMhS:' arg; do
 done
 shift $((${OPTIND} - 1))
 
+. "${FUNCTIONS}"
+
 # use preset $PRESET
 if [ -n "${PRESET}" ]; then
     if [ -f "${PRESETDIR}/${PRESET}.preset" ]; then
@@ -130,6 +132,10 @@ if [ -n "${PRESET}" ]; then
 
         # Build all images
         echo "==> Using ${PRESETDIR}/${PRESET}.preset"
+        if grep -q "PRESETS=(" ${PRESETDIR}/${PRESET}.preset; then
+            die "Invalid definition of PRESETS."
+        fi
+
         . ${PRESETDIR}/${PRESET}.preset
 
         for p in ${PRESETS}; do
@@ -223,8 +229,6 @@ fi
 
 BASEDIR=$(echo ${BASEDIR} | tr -s /)
 MODULEDIR=$(echo ${MODULEDIR} | tr -s /)
-
-. "${FUNCTIONS}"
 
 if [ "${SHOW_AUTOMODS}" = "y" ]; then
     echo "Modules autodetected:"
