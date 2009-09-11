@@ -36,7 +36,7 @@ install: all
 doc: mkinitcpio.5.gz
 
 mkinitcpio.5.gz: mkinitcpio.5.txt
-	a2x -d manpage -f manpage mkinitcpio.5.txt
+	a2x -d manpage -f manpage -a mansource=mkinitcpio -a manversion=${VERSION} -a manmanual=mkinitcpio mkinitcpio.5.txt
 	gzip -c --best mkinitcpio.5 > mkinitcpio.5.gz
 
 clean:

@@ -110,10 +110,6 @@ Manpage contributions by:::
 * Geir 'gejr' Vaagland
 * Joerie 'Thralas' de Gram <j.de.gram@gmail.com>
 
-Version Information
--------------------
-Manpage written for mkinitcpio 0.5.17
-
 Copyright
 ---------
 Copyright (c) Arch Linux
