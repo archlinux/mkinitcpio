@@ -20,6 +20,7 @@ for cmd in ${CMDLINE}; do
         \#*) break ;; # ignore everything after a # in the commandline
         # The kernel passes those to the kernel on its own
         [0123456Ss]) ;;
+        [0-9]*) ;;
         single) ;;
         #Allow "init=X" to pass-through
         init=*) kinit_params="${kinit_params} ${cmd}" ;;
