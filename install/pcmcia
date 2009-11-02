@@ -7,9 +7,12 @@ install ()
     if [ -n "${MODULES}" ]; then
         MODULES="${MODULES} sd_mod sr_mod ide-gd_mod ide-cd_mod"
     fi
-    BINARIES="/sbin/pcmcia-socket-startup.static /sbin/pcmcia-check-broken-cis.static"
+    BINARIES=""
     FILES="/etc/pcmcia/config.opts"
     SCRIPT=""
+    add_file "/lib/udev/pcmcia-socket-startup.static" "/lib/udev/pcmcia-socket-startup"
+    add_file "/lib/udev/pcmcia-check-broken-cis.static" "/lib/udev/pcmcia-check-broken-cis"
+    add_file "/lib/udev/rules.d/60-pcmcia.rules"
 }
 
 help ()
