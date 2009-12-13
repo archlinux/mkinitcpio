@@ -20,6 +20,7 @@ if [ -x /sbin/udevd ]; then
     msg ":: Starting udevd..."
     echo > /proc/sys/kernel/hotplug
     /sbin/udevd --daemon
+    msg "done."
 fi
 
 for cmd in ${CMDLINE}; do
