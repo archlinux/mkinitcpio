@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # mkinitcpio - modular tool for building an init ramfs cpio image
 #
 # IMPORTANT: We need to keep a common base syntax here
@@ -113,32 +113,17 @@ while getopts ':c:k:s:b:g:a:p:m:vH:LMhS:' arg; do
 done
 shift $((${OPTIND} - 1))
 
-. "${FUNCTIONS}"
-
 # use preset $PRESET
 if [ -n "${PRESET}" ]; then
     if [ -f "${PRESETDIR}/${PRESET}.preset" ]; then
-        echo "   -------------------------------------------------------------------"
-        echo "   WARNING: Defining PRESETS as a bash array is no longer supported."
-        echo "            PRESETS should be defined as a string in all mkinitcpio"
-        echo "            preset files for compatibility with dash."
-        echo "   -------------------------------------------------------------------"
-
         # Use -b, -m and -v options specified earlier
         PRESET_MKOPTS="${0}"
         [ -n "${BASEDIR}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -b ${BASEDIR}"
         [ -n "${MESSAGE}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -m \"${MESSAGE}\""
         [ "${QUIET}" = "n" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -v"
-
         # Build all images
-        echo "==> Using ${PRESETDIR}/${PRESET}.preset"
-        if grep -q "PRESETS=(" ${PRESETDIR}/${PRESET}.preset; then
-            die "Invalid definition of PRESETS."
-        fi
-
         . ${PRESETDIR}/${PRESET}.preset
-
-        for p in ${PRESETS}; do
+        for p in ${PRESETS[@]}; do
             echo "==> Building image \"${p}\""
             PRESET_CMD="${PRESET_MKOPTS}"
 
@@ -229,6 +214,8 @@ fi
 
 BASEDIR=$(echo ${BASEDIR} | tr -s /)
 MODULEDIR=$(echo ${MODULEDIR} | tr -s /)
+
+. "${FUNCTIONS}"
 
 if [ "${SHOW_AUTOMODS}" = "y" ]; then
     echo "Modules autodetected:"
