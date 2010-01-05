@@ -1,11 +1,13 @@
-#!/bin/sh
+#!/bin/busybox ash
+# Mount /proc so busybox can access /proc/self/exe
+/bin/busybox mount -t proc proc /proc
+# Install busybox's applets as symlinks
+/bin/busybox --install -s
 
 . /init_functions
 
 msg ":: Loading Initramfs"
-
 /bin/mount -t sysfs none /sys
-/bin/mount -t proc  none /proc
 
 read CMDLINE </proc/cmdline
 export CMDLINE
@@ -96,7 +98,6 @@ fi
 
 if [ "${break}" = "y" ]; then
     echo ":: Break requested, type 'exit' to resume operation"
-    echo "   NOTE: klibc contains no 'ls' binary, use 'echo *' instead"
     PS1="ramfs$ " /bin/sh -i
 fi
 
@@ -119,7 +120,6 @@ if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
             echo "You are being dropped to a recovery shell"
             echo "    Type 'reboot' to reboot"
             echo "    Type 'exit' to try and continue booting"
-            echo "NOTE: klibc contains no 'ls' binary, use 'echo *' instead"
             echo ""
             echo "If the device '${root}' gets created while you are here,"
             echo "try adding 'rootdelay=10' or higher to the kernel command-line"

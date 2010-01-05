@@ -5,24 +5,21 @@ install ()
     add_dir "/proc"
     add_dir "/sys"
     add_dir "/dev"
+    add_dir "/bin"
+    add_dir "/sbin"
+    add_dir "/lib"
+    add_dir "/usr"
+    add_dir "/usr/bin"
+    add_dir "/usr/lib"
+    add_dir "/usr/sbin"
 
     add_device "/dev/null"    c 1 3
     add_device "/dev/zero"    c 1 5
     add_device "/dev/console" c 5 1
     add_device "/dev/mem"     c 1 1
 
-    for f in $(find /lib -name klibc-*.so); do
-        add_file ${f}
-    done
-
-    for f in /usr/lib/klibc/bin/*; do
-        add_file ${f} /bin/$(basename ${f})
-    done
-    for f in /usr/lib/klibc/sbin/*; do
-        add_file ${f} /sbin/$(basename ${f})
-    done
-    # add symlink for compatibility
-    add_symlink2 /bin/modprobe /sbin/modprobe
+    add_binary /lib/initcpio/busybox /bin/busybox
+    add_binary /sbin/modprobe
 
     add_file "/lib/initcpio/init_functions" "/init_functions"
     add_file "/lib/initcpio/init" "/init"
