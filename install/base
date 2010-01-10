@@ -37,7 +37,7 @@ help ()
 {
 cat <<HELPEOF
   This hook sets up all initial directories and installs base
-  klibc utilities and libraries.  DO NOT remove this one unless
-  you know what you're doing.
+  utilities. DO NOT remove this one unless you know what you're
+  doing.
 HELPEOF
 }
