@@ -1,13 +1,12 @@
 #!/bin/busybox ash
-# Mount /proc so busybox can access /proc/self/exe
-/bin/busybox mount -t proc proc /proc
 # Install busybox's applets as symlinks
 /bin/busybox --install -s
 
 . /init_functions
 
 msg ":: Loading Initramfs"
-/bin/mount -t sysfs none /sys
+/bin/mount -t proc proc /proc
+/bin/mount -t sysfs sys /sys
 
 read CMDLINE </proc/cmdline
 export CMDLINE
