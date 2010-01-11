@@ -175,10 +175,8 @@ if [ -n "${PRESET}" ]; then
     fi
 fi
 
-# append a trailing / if needed
-if [ "${BASEDIR}" = "${BASEDIR%/}" ]; then
-    BASEDIR="${BASEDIR}/"
-fi
+# remove trailing / from BASEDIR
+BASEDIR="${BASEDIR%/}"
 
 MODULEDIR="${BASEDIR}/lib/modules/${KERNELVERSION}"
 
