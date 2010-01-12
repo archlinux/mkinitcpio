@@ -30,32 +30,33 @@ for cmd in ${CMDLINE}; do
         [0123456Ss]) ;;
         [0-9]*) ;;
         single) ;;
-        # only export stuff that does work with dash :)
-        *=*) cmd="$(replace -s= "${cmd}" '.' '_')"
-             cmd="$(replace -s= "${cmd}" '-' '_')"
-             export "${cmd}"
+        # only export stuff that does work with ash :)
+        *=*) rhs="$(echo "${cmd}" | cut -d= -f2-)"
+             cmd="$(echo "${cmd}" | cut -d= -f1 | sed 's|.|_|g')"
+             cmd="$(echo "${cmd}" | sed 's|-|_|g')=${rhs}"
+             (echo "${cmd}" | grep -qe '^[0-9]') || export "${cmd}"
              ;;
-        *)   cmd="$(replace "${cmd}" '.' '_')"
-             cmd="$(replace "${cmd}" '-' '_')"
-             export "${cmd}=y" 
-           ;;
+        *)   cmd="$(echo "${cmd}" | sed 's|.|_|g')"
+             cmd="$(echo "${cmd}" | sed 's|-|_|g')"
+             (echo "${cmd}" | grep -qe '^[0-9]') || export "${cmd}=y"
+             ;;
     esac
 done
 
 if [ -n "${disablehooks}" ]; then
-    for d in $(replace "${disablehooks}" ','); do
+    for d in $(echo "${disablehooks}" | sed 's|,| |g'); do
         export "hook_${d}=disabled"
     done
 fi
 
 if [ -n "${disablemodules}" ]; then
-    for d in $(replace "${disablemodules}" ','); do
+    for d in $(echo "${disablemodules}" | sed 's|,| |g'); do
         export "mod_${d}=disabled"
     done
 fi
 
 if [ -n "${earlymodules}" ]; then
-    for m in $(replace "${earlymodules}" ','); do
+    for m in $(echo "${earlymodules}" | sed 's|,| |g'); do
         /sbin/modprobe -q ${m} > /dev/null 2>&1
     done
 fi

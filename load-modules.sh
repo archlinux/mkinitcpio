@@ -7,7 +7,7 @@
 MODPROBE="/sbin/modprobe"
 RESOLVEALIAS="/bin/resolve-modalias"
 USEBLACKLIST="--use-blacklist"
-REPLACE="/bin/replace"
+SED="/bin/sed"
 MODDEPS="/bin/moddeps"
 
 if [ -f /proc/cmdline ]; then
@@ -19,12 +19,12 @@ if [ -f /proc/cmdline ]; then
   done
   #parse cmdline entries of the form "disablemodules=x,y,z"
   if [ -n "${disablemodules}" ]; then
-    BLACKLIST="$(${REPLACE} ${disablemodules} ',')"
+    BLACKLIST="$(echo "${disablemodules}" | ${SED} 's|,| |g')"
   fi
 fi
 
 # sanitize the module names
-BLACKLIST="$(${REPLACE} "${BLACKLIST}" '-' '_')"
+BLACKLIST="$(echo "${BLACKLIST}" | ${SED} 's|-|_|g')"
 
 if [ -n "${BLACKLIST}" ] ; then
   # Try to find all modules for the alias
