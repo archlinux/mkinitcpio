@@ -101,7 +101,7 @@ if [ -f "/message" ]; then
 fi
 
 #Special handling if udev is running
-udevpid=$(/bin/minips -C udevd -o pid=)
+udevpid=$(/bin/pidof udevd)
 if [ -n "${udevpid}" ]; then
     /bin/kill -9 ${udevpid} > /dev/null 2>&1
     /bin/sleep 0.01
