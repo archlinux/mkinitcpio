@@ -10,10 +10,10 @@ install ()
     UTF8_FILE="$(mktemp ${TMPDIR}/keymap.XXXXXX)"
     eval "$(grep -e "^LOCALE=" -e "^KEYMAP=" -e "^CONSOLEFONT=" -e "^CONSOLEMAP=" /etc/rc.conf)"
     if [ -n "$(echo ${LOCALE} | grep -i utf)" ]; then
-        echo "UTF8='yes'" >> ${KEYMAP_FILE}
+        echo "UTF8='yes'" > ${UTF8_FILE}
         /bin/loadkeys -q -u $KEYMAP -b > ${KEYMAP_FILE}
     else
-        echo "UTF8='no'" >> ${KEYMAP_FILE}
+        echo "UTF8='no'" > ${UTF8_FILE}
         /bin/loadkeys -q $KEYMAP -b > ${KEYMAP_FILE}
     fi
     add_file ${KEYMAP_FILE} /keymap.bin
