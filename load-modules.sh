@@ -1,14 +1,13 @@
 #! /bin/sh
 # Implement blacklisting for udev-loaded modules
 #   Includes module checking
-# - Aaron Griffin & Tobias Powalowski for Archlinux
+# - Aaron Griffin, Tobias Powalowski & Thomas Bächler for Arch Linux
 [ $# -ne 1 ] && exit 1
 
 MODPROBE="/sbin/modprobe"
-RESOLVEALIAS="/bin/resolve-modalias"
+RESOLVEALIAS="${MODPROBE} --resolve-alias"
 USEBLACKLIST="--use-blacklist"
 SED="/bin/sed"
-MODDEPS="/bin/moddeps"
 
 if [ -f /proc/cmdline ]; then
   for cmd in $(cat /proc/cmdline); do
@@ -34,8 +33,14 @@ if [ -n "${BLACKLIST}" ] ; then
   [ -z "${mods}" ] && $MODPROBE -qni $1 && mods="$1" && USEBLACKLIST=""
   [ -z "${mods}" ] && exit
   for mod in ${mods}; do
-    deps="$(${MODDEPS} ${mod})"
+    # Find the module and all its dependencies
+    deps="$($MODPROBE -i --show-depends ${mod})"
     [ $? -ne 0 ] && continue
+
+    #sanitize the module names
+    deps="$(echo "$deps" | ${SED} \
+            -e "s#^insmod /lib.*/\(.*\)\.ko.*#\1#g" \
+            -e 's|-|_|g')"
     # If the module or any of its dependencies is blacklisted, don't load it
     for dep in $deps; do
       for blackmod in ${BLACKLIST}; do
