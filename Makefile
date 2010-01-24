@@ -56,6 +56,7 @@ TARBALL_FILES = \
 	init \
 	init_functions \
 	install \
+	load-modules.sh \
 	mkinitcpio \
 	mkinitcpio.conf \
 	mkinitcpio.d \
