@@ -4,7 +4,7 @@ auto_modules ()
     aliases="$(find /sys/devices/ -name modalias -exec cat {} +)"
     mods=""
     for a in $aliases; do
-        m="$(resolve-modalias "/lib/modules/${KERNELVERSION}/modules.alias" "$a")"
+        m="$(modprobe --set-version ${KERNELVERSION} --resolve-alias "$a")"
         [ -n "$m" ] && mods="$mods $m"
     done
 
