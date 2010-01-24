@@ -11,7 +11,7 @@ install ()
     for rules in 50-firmware.rules 50-udev-default.rules 60-persistent-storage.rules 80-drivers.rules; do
         add_file /lib/udev/rules.d/${rules}
     done
-    for tool in firmware.sh; do
+    for tool in firmware; do
         add_file /lib/udev/${tool}
     done
     add_file /lib/initcpio/udev/load-modules.sh /lib/udev/load-modules.sh
