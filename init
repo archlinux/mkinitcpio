@@ -151,7 +151,11 @@ if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
   fi
   # We didn't build filesystem support into busybox,
   # instead we use util-linux-ng's blkid for best compatibility
-  fstype=$(eval $(/sbin/blkid -o udev -p "${root}"); echo $ID_FS_TYPE)
+  if [ -n "${rootfstype}" ]; then
+    fstype="${rootfstype}"
+  else
+    fstype=$(eval $(/sbin/blkid -o udev -p "${root}"); echo $ID_FS_TYPE)
+  fi
   mount ${fstype:+-t ${fstype}} -o ro "${root}" /new_root
 else
   # TODO: Actually implement this
