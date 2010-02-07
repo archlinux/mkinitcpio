@@ -1,0 +1,9 @@
+# vim: set ft=sh:
+run_hook ()
+{
+    #TODO scan for these somehow...
+    /sbin/modprobe -aq linear multipath raid0 raid1 raid456 raid10 >/dev/null 2>&1
+    # md= can be specified multiple times.  The simplistic commandline
+    #  parsing does not handle this, so we will let mdassemble parse it
+    /bin/mdassemble ${CMDLINE}
+}
