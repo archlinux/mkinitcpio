@@ -19,7 +19,7 @@ echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
 if [ -x /sbin/udevd ]; then
     msg ":: Starting udevd..."
     echo > /proc/sys/kernel/hotplug
-    /sbin/udevd --daemon
+    /sbin/udevd --daemon --resolve-names=never
     msg "done."
 fi
 
