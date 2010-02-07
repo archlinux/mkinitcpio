@@ -158,7 +158,7 @@ if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
   else
     fstype=$(eval $(/sbin/blkid -o udev -p "${root}"); echo $ID_FS_TYPE)
   fi
-  mount ${fstype:+-t ${fstype}} -o ro "${root}" /new_root
+  mount ${fstype:+-t ${fstype}} -o ro${rootflags:+,${rootflags}} "${root}" /new_root
 else
   # TODO: Actually implement this
   err "Mounting NFS root is not implemented yet."
