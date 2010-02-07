@@ -103,6 +103,8 @@ fi
 #Special handling if udev is running
 udevpid=$(/bin/pidof udevd)
 if [ -n "${udevpid}" ]; then
+    # Settle pending uevents, then kill udev
+    /sbin/udevadm settle
     /bin/kill -9 ${udevpid} > /dev/null 2>&1
     /bin/sleep 0.01
 fi
