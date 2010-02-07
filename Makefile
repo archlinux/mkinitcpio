@@ -1,6 +1,6 @@
 # Makefile for mkinitcpio
 
-VERSION = 0.6.0a
+VERSION = 0.5.99.3
 
 all: doc
 
