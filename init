@@ -160,8 +160,15 @@ if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
   fi
   mount ${fstype:+-t ${fstype}} -o ro${rootflags:+,${rootflags}} "${root}" /new_root
 else
-  # TODO: Actually implement this
-  err "Mounting NFS root is not implemented yet."
+  if [ -z "$nfs_server" -o -z "$nfs_path" ]; then
+      err "Unable to mount root filesystem over NFS: wrong parameters."
+      echo "You are being dropped to a recovery shell"
+      echo "    Type 'reboot' to reboot"
+      echo "    Type 'exit' to try and continue booting"
+      launch_interactive_shell
+      msg "Trying to continue (this will most likely fail) ..."
+  fi
+  nfsmount ${nfs_option:+-o ${nfs_option}} "${nfs_server}:${nfs_path}" /new_root
 fi
 umount /proc
 umount /sys
