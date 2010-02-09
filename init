@@ -30,6 +30,8 @@ for cmd in ${CMDLINE}; do
         [0123456Ss]) ;;
         [0-9]*) ;;
         single) ;;
+        rw) readwrite="yes" ;;
+        ro) readwrite="no" ;;
         # only export stuff that does work with ash :)
         *=*) rhs="$(echo "${cmd}" | cut -d= -f2-)"
              cmd="$(echo "${cmd}" | cut -d= -f1 | sed 's|\.|_|g')"
@@ -157,7 +159,12 @@ if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
   else
     fstype=$(eval $(/sbin/blkid -o udev -p "${root}"); echo $ID_FS_TYPE)
   fi
-  mount ${fstype:+-t ${fstype}} -o ro${rootflags:+,${rootflags}} "${root}" /new_root
+  if [ "${readwrite}" = "yes" ]; then
+    rwopt="rw"
+  else
+    rwopt="ro"
+  fi
+  mount ${fstype:+-t ${fstype}} -o ${rwopt}${rootflags:+,${rootflags}} "${root}" /new_root
 else
   if [ -z "$nfs_server" -o -z "$nfs_path" ]; then
       err "Unable to mount root filesystem over NFS: wrong parameters."
