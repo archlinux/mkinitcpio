@@ -145,7 +145,6 @@ if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
     else
       err "Unable to determine major/minor number of root device '${root}'."
       echo "You are being dropped to a recovery shell"
-      echo "    Type 'reboot' to reboot"
       echo "    Type 'exit' to try and continue booting"
       launch_interactive_shell
       msg "Trying to continue (this will most likely fail) ..."
@@ -163,7 +162,6 @@ else
   if [ -z "$nfs_server" -o -z "$nfs_path" ]; then
       err "Unable to mount root filesystem over NFS: wrong parameters."
       echo "You are being dropped to a recovery shell"
-      echo "    Type 'reboot' to reboot"
       echo "    Type 'exit' to try and continue booting"
       launch_interactive_shell
       msg "Trying to continue (this will most likely fail) ..."
