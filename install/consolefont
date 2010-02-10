@@ -13,8 +13,8 @@ install ()
 	  zcat ${CONSOLEFONT_FILE_GZ} > ${CONSOLEFONT_FILE}
 	  add_file ${CONSOLEFONT_FILE} /consolefont.psfu
 	else
-	  echo "consolefont hook: Console font file must end with .psfu.gz"
-	  echo "consolefont hook: Only unicode fonts are supported at the moment."
+	  echo "consolefont: Font file does not exist or does not end with .psfu.gz"
+	  echo "consolefont: Only unicode fonts are supported at the moment."
         fi
     fi
 }
