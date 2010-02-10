@@ -37,7 +37,7 @@ Options
 	Build initial ramdisk according to specified 'preset'. Presets are found in /etc/mkinitcpio.d
 
 *-m* 'message'::
-	Print 'message' before passing control to kinit.
+	Print 'message' before passing control to init.
 
 *-S* 'hooks'::
 	Skip 'hooks' when generating the image. Several hooks should be comma-separated.

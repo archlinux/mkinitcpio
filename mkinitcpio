@@ -1,10 +1,9 @@
 #!/bin/bash
 # mkinitcpio - modular tool for building an init ramfs cpio image
 #
-# IMPORTANT: We need to keep a common base syntax here
-# because some of these hooks/scripts need to run under
-# the klibc shell or even busybox's ash - therefore, the
-# following constraints should be enforced:
+# IMPORTANT: We need to keep a common base syntax here because
+# some of these hooks/scripts need to run under busybox's ash -
+# therefore, the following constraints should be enforced:
 #   variables should be quoted and bracketed "${SOMEVAR}"
 #   inline execution should be done with $() instead of backticks
 #   use -z "${var}" to test for nulls/empty strings
@@ -54,7 +53,7 @@ usage ()
     echo "  -g IMAGE         Generate a cpio image as IMAGE. default: no"
     echo "  -a NAME          Append to an existing filelist. default: no"
     echo "  -p PRESET        Build specified preset."
-    echo "  -m MESSAGE       Print MESSAGE before passing control to kinit."
+    echo "  -m MESSAGE       Print MESSAGE before passing control to init."
     echo "  -S SKIPHOOKS     Skip SKIPHOOKS (comma-separated) when building the image."
     echo "  -v               Verbose output. Default: no"
     echo "  -M               Display modules found via autodetection." 
