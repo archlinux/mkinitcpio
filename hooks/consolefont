@@ -3,8 +3,8 @@
 run_hook ()
 {
     if [ -e /consolefont.psfu ]; then
-	msg -n ":: Loading console font..."
-	/usr/sbin/setfont -C /dev/console /consolefont.psfu
-	msg "done."
+        msg -n ":: Loading console font..."
+        /usr/sbin/setfont -C /dev/console /consolefont.psfu
+        msg "done."
     fi
 }
