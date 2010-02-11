@@ -1,6 +1,6 @@
 # Makefile for mkinitcpio
 
-VERSION = 0.5.30
+VERSION = 0.5.99.5
 
 all: doc
 
@@ -22,6 +22,7 @@ install: all
 	install -D -m755 init ${DESTDIR}/lib/initcpio/init
 	install -D -m755 init_functions ${DESTDIR}/lib/initcpio/init_functions
 	install -D -m644 functions ${DESTDIR}/lib/initcpio/functions
+	install -D -m755 load-modules.sh ${DESTDIR}/lib/initcpio/udev/load-modules.sh
 
 	install -d ${DESTDIR}/lib/initcpio/hooks
 	install -d ${DESTDIR}/lib/initcpio/install
@@ -55,6 +56,7 @@ TARBALL_FILES = \
 	init \
 	init_functions \
 	install \
+	load-modules.sh \
 	mkinitcpio \
 	mkinitcpio.conf \
 	mkinitcpio.d \

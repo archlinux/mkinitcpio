@@ -6,7 +6,10 @@ install ()
 
     BINARIES=""
     FILES=""
-    SCRIPT=""
+    SCRIPT="net"
+
+    add_binary "/lib/initcpio/ipconfig" "/bin/ipconfig"
+    add_binary "/lib/initcpio/nfsmount" "/bin/nfsmount"
 }
 
 help ()
@@ -97,10 +100,10 @@ cat<<HELPEOF
                         acdirmin        = 30
                         acdirmax        = 60
                         flags           = hard, nointr, noposix, cto, ac
-  
+
   root=/dev/nfs
-  
-  If you don't use nfsroot= parameter you need to set root=/dev/nfs 
+
+  If you don't use nfsroot= parameter you need to set root=/dev/nfs
   to boot from a nfs root by autoconfiguration.
 HELPEOF
 }

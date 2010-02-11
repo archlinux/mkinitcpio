@@ -21,3 +21,7 @@ poll_device() {
     done
     [ -b "${device}" -o -h "${device}" ]
 }
+
+launch_interactive_shell() {
+    PS1='[ramfs \W]\$ ' /bin/sh -i
+}

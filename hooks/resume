@@ -3,18 +3,28 @@ run_hook ()
 {
     fmtdevice () { echo "${1}:${2}"; }
 
-    if [ -n "${resume}" ] && poll_device "${resume}" ${rootdelay}; then
-        # Try resuming with tuxonice
-        tuxoniceroot="/sys/power/tuxonice"
-        if [ -d "${tuxoniceroot}" ]; then
-            echo ${resume} > ${tuxoniceroot}/resume
-            echo > ${tuxoniceroot}/do_resume
+    if [ -n "${resume}" ]; then
+        if echo ${resume} | grep -q ':'; then
+            # Tux-on-ice syntax: swap:/dev/sda2 or file:/dev/sda2:0xdeadbeef
+            resumedev="$(echo ${resume} | cut -d: -f2)"
+        else
+            # Classical syntax: just a device
+            resumedev="${resume}"
         fi
-
-        # Try resuming with vanilla hibernation
-        if [ -e "/sys/power/resume" ]; then
-            eval $(/bin/parseblock "${resume}")
-            fmtdevice ${BLOCKDEVICE} > /sys/power/resume
+        if poll_device "${resumedev}" ${rootdelay}; then
+            if echo ${resume} | grep -q ':'; then
+                # Try resuming with tuxonice
+                tuxoniceroot="/sys/power/tuxonice"
+                if [ -d "${tuxoniceroot}" ]; then
+                    echo ${resume} > ${tuxoniceroot}/resume
+                    echo > ${tuxoniceroot}/do_resume
+                fi
+            else
+                # Try resuming with vanilla hibernation
+                if [ -e "/sys/power/resume" ]; then
+                    printf "%d:%d" $(stat -Lc "0x%t 0x%T" ${resume}) > /sys/power/resume
+                fi
+            fi
         fi
     fi
 }

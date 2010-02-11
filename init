@@ -1,25 +1,25 @@
-#!/bin/sh
+#!/bin/busybox ash
+# Install busybox's applets as symlinks
+/bin/busybox --install -s
 
 . /init_functions
 
 msg ":: Loading Initramfs"
-
-/bin/mount -t sysfs none /sys
-/bin/mount -t proc  none /proc
+/bin/mount -t proc proc /proc
+/bin/mount -t sysfs sys /sys
 
 read CMDLINE </proc/cmdline
 export CMDLINE
 
-# Used so hooks can override params to kinit
-export kinit_params=""
 export root=""
+export init=""
 echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
 
 # if available, start udevd at this stage
 if [ -x /sbin/udevd ]; then
     msg ":: Starting udevd..."
     echo > /proc/sys/kernel/hotplug
-    /sbin/udevd --daemon
+    /sbin/udevd --daemon --resolve-names=never
     msg "done."
 fi
 
@@ -30,34 +30,35 @@ for cmd in ${CMDLINE}; do
         [0123456Ss]) ;;
         [0-9]*) ;;
         single) ;;
-        #Allow "init=X" to pass-through
-        init=*) kinit_params="${kinit_params} ${cmd}" ;;
-        # only export stuff that does work with dash :)
-        *=*) cmd="$(replace -s= "${cmd}" '.' '_')"
-             cmd="$(replace -s= "${cmd}" '-' '_')"
-             export "${cmd}"
+        rw) readwrite="yes" ;;
+        ro) readwrite="no" ;;
+        # only export stuff that does work with ash :)
+        *=*) rhs="$(echo "${cmd}" | cut -d= -f2-)"
+             cmd="$(echo "${cmd}" | cut -d= -f1 | sed 's|\.|_|g')"
+             cmd="$(echo "${cmd}" | sed 's|-|_|g')=${rhs}"
+             (echo "${cmd}" | grep -qe '^[0-9]') || export "${cmd}"
              ;;
-        *)   cmd="$(replace "${cmd}" '.' '_')"
-             cmd="$(replace "${cmd}" '-' '_')"
-             export "${cmd}=y" 
-           ;;
+        *)   cmd="$(echo "${cmd}" | sed 's|\.|_|g')"
+             cmd="$(echo "${cmd}" | sed 's|-|_|g')"
+             (echo "${cmd}" | grep -qe '^[0-9]') || export "${cmd}=y"
+             ;;
     esac
 done
 
 if [ -n "${disablehooks}" ]; then
-    for d in $(replace "${disablehooks}" ','); do
+    for d in $(echo "${disablehooks}" | sed 's|,| |g'); do
         export "hook_${d}=disabled"
     done
 fi
 
 if [ -n "${disablemodules}" ]; then
-    for d in $(replace "${disablemodules}" ','); do
+    for d in $(echo "${disablemodules}" | sed 's|,| |g'); do
         export "mod_${d}=disabled"
     done
 fi
 
 if [ -n "${earlymodules}" ]; then
-    for m in $(replace "${earlymodules}" ','); do
+    for m in $(echo "${earlymodules}" | sed 's|,| |g'); do
         /sbin/modprobe -q ${m} > /dev/null 2>&1
     done
 fi
@@ -76,8 +77,6 @@ done
 if [ -z "${rootdelay}" ] || ! [ "${rootdelay}" -ge 0 ]; then
     export rootdelay=10
 fi
-# We'll wait for the root device, so make sure klibc doesn't
-export kinit_params="${kinit_params} rootdelay=0"
 
 if [ -e "/hooks" ]; then
     for h in ${HOOKS}; do
@@ -96,49 +95,87 @@ fi
 
 if [ "${break}" = "y" ]; then
     echo ":: Break requested, type 'exit' to resume operation"
-    echo "   NOTE: klibc contains no 'ls' binary, use 'echo *' instead"
-    PS1="ramfs$ " /bin/sh -i
-fi
-
-# If we boot from NFS, don't check for a block device in /dev
-# Let kinit do it all
-if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
-    if ! poll_device "${root}" ${rootdelay}; then
-        msg "\nRoot device '${root}' doesn't exist, attempting to create it"
-
-        eval $(/bin/parseblock "${root}")
-        if [ -z "${BLOCKDEVICE}" ]; then
-            echo "ERROR: Failed to parse block device ids for '${root}'"
-        else
-            echo "/bin/mknod /dev/root b ${BLOCKDEVICE}"
-            /bin/mknod /dev/root b ${BLOCKDEVICE} >/dev/null
-            export root="/dev/root"
-        fi
-        if [ ! -b "${root}" -a ! -h "${root}" ]; then
-            err "Unable to detect or create root device '${root}'"
-            echo "You are being dropped to a recovery shell"
-            echo "    Type 'reboot' to reboot"
-            echo "    Type 'exit' to try and continue booting"
-            echo "NOTE: klibc contains no 'ls' binary, use 'echo *' instead"
-            echo ""
-            echo "If the device '${root}' gets created while you are here,"
-            echo "try adding 'rootdelay=10' or higher to the kernel command-line"
-            PS1="ramfs$ " /bin/sh -i
-            msg "Trying to continue (this will most likely fail)..."
-        fi
-    fi
+    launch_interactive_shell
 fi
 
 if [ -f "/message" ]; then
     msg "$(cat /message)"
 fi
-msg ":: Initramfs Completed - control passing to kinit"
 
 #Special handling if udev is running
-udevpid=$(/bin/minips -C udevd -o pid=)
+udevpid=$(/bin/pidof udevd)
 if [ -n "${udevpid}" ]; then
+    # Settle pending uevents, then kill udev
+    /sbin/udevadm settle
     /bin/kill -9 ${udevpid} > /dev/null 2>&1
     /bin/sleep 0.01
 fi
 
-exec /bin/kinit "$@" -- "root=${root}" ${kinit_params} > /dev/null 2>&1
+mkdir -p /new_root
+if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
+  if [ ${root:0:5} != "/dev/" ] || ! poll_device "${root}" ${rootdelay}; then
+    msg "\nRoot device '${root}' doesn't exist. Attempting to create it."
+    rootdev=""
+    if [ ${root:0:5} = "/dev/" ]; then
+      # It might be a block device (/dev/sda)
+      if [ -f /sys/block/${root:5}/dev ]; then
+        rootdev="$(cat /sys/block/${root:5}/dev | sed 's|:| |')"
+      # It might be a partition on any block device (/dev/sda1)
+      else
+        for dir in /sys/block/*; do
+          if [ -f ${dir}/${root:5}/dev ]; then
+            rootdev="$(cat ${dir}/${root:5}/dev | sed 's|:| |')"
+            break
+          fi
+        done
+      fi
+    # It might be a major/minor pair (8:1)
+    elif echo ${root} | grep -q :; then
+      rootdev="$(echo ${root} | sed 's|:| |')"
+      root="/dev/root"
+    # It might be major/minor encoded as a single hex-number (lilo-style) (801)
+    elif [ ${#root} -le 4 -a ${#root} -gt 2 ] && echo "${root}" | grep -qe '^[A-Fa-f0-9]*$'; then
+      str_offset=$((${#root}-2))
+      major=$(printf "%d" 0x${root:0:${str_offset}})
+      minor=$(printf "%d" 0x${root:${str_offset}})
+      rootdev="${major} ${minor}"
+      root="/dev/root"
+    fi
+    if [ -n "${rootdev}" ]; then
+      msg "Creating root device ${root} with major $(echo "${rootdev}" | cut -d\   -f1) and minor $(echo "${rootdev}" | cut -d\   -f2)."
+      mknod ${root} b ${rootdev}
+    else
+      err "Unable to determine major/minor number of root device '${root}'."
+      echo "You are being dropped to a recovery shell"
+      echo "    Type 'exit' to try and continue booting"
+      launch_interactive_shell
+      msg "Trying to continue (this will most likely fail) ..."
+    fi
+  fi
+  # We didn't build filesystem support into busybox,
+  # instead we use util-linux-ng's blkid for best compatibility
+  if [ -n "${rootfstype}" ]; then
+    fstype="${rootfstype}"
+  else
+    fstype=$(eval $(/sbin/blkid -o udev -p "${root}"); echo $ID_FS_TYPE)
+  fi
+  if [ "${readwrite}" = "yes" ]; then
+    rwopt="rw"
+  else
+    rwopt="ro"
+  fi
+  mount ${fstype:+-t ${fstype}} -o ${rwopt}${rootflags:+,${rootflags}} "${root}" /new_root
+else
+  if [ -z "$nfs_server" -o -z "$nfs_path" ]; then
+      err "Unable to mount root filesystem over NFS: wrong parameters."
+      echo "You are being dropped to a recovery shell"
+      echo "    Type 'exit' to try and continue booting"
+      launch_interactive_shell
+      msg "Trying to continue (this will most likely fail) ..."
+  fi
+  nfsmount ${nfs_option:+-o ${nfs_option}} "${nfs_server}:${nfs_path}" /new_root
+fi
+umount /proc
+umount /sys
+[ -z "${init}" ] && init="/sbin/init"
+exec /sbin/switch_root -c /dev/console /new_root ${init} "$@"

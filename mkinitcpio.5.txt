@@ -37,7 +37,7 @@ Options
 	Build initial ramdisk according to specified 'preset'. Presets are found in /etc/mkinitcpio.d
 
 *-m* 'message'::
-	Print 'message' before passing control to kinit.
+	Print 'message' before passing control to init.
 
 *-S* 'hooks'::
 	Skip 'hooks' when generating the image. Several hooks should be comma-separated.
@@ -66,7 +66,7 @@ set up the udev device filesystem, load IDE modules, etc.
 
 About Presets
 -------------
-A preset is a pre-defined definition on how to create an initial ramdisk. Instead of specifying the configuration file and which output file, every time you generate a new intial ramdisk, you define a preset and use the	-p switch to generate an initial ramdisk according to your preset. Presets	are located in /etc/mkinitcpio.d
+A preset is a pre-defined definition on how to create an initial ramdisk. Instead of specifying the configuration file and which output file, every time you generate a new initial ramdisk, you define a preset and use the -p switch to generate an initial ramdisk according to your preset. Presets are located in /etc/mkinitcpio.d
 
 Files
 -----

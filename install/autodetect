@@ -20,10 +20,13 @@ install ()
 
     if [ ${UID} -eq 0 -o "$(groups | grep disk)" != "" ]; then
         for fs in $(findfs | sort | uniq); do
-            for mod in $(find "${MODULEDIR}" -type f -name "${fs}.ko"); do
-                if [ -n "${mod}" ]; then
-                    AUTODETECT="${AUTODETECT} ${mod}"
-                fi
+            allfs="${fs} $(modprobe --set-version ${KERNELVERSION} --resolve-alias ${fs})"
+            for mod in ${allfs}; do
+                for modfile in $(find "${MODULEDIR}" -type f -name "${mod}.ko"); do
+                    if [ -n "${modfile}" ]; then
+                        AUTODETECT="${AUTODETECT} ${modfile}"
+                    fi
+                done
             done
         done
 

@@ -1,0 +1,72 @@
+# vim: set ft=sh:
+run_hook ()
+{
+    local line i address rootserver rootpath
+
+    : > /ip_opts
+
+    if [ -n "${ip}" ]; then
+        # setup network and save some values
+        ipconfig "${ip}" | while read line; do
+            # echo ":: ${line}"
+            if [ "${line#"IP-Config:"}" != "${line}" ]; then
+                continue
+            fi
+            line="$(echo ${line} | sed -e 's/ :/:/g;s/: /=/g')"
+            for i in ${line}; do
+                case "${i}" in
+                    address=*)
+                        echo "${i}" >> /ip_opts
+                        ;;
+                    netmask=*)
+                        echo "${i}" >> /ip_opts
+                        ;;
+                    gateway=*)
+                        echo "${i}" >> /ip_opts
+                        ;;
+                    dns0=*)
+                        echo "${i}" >> /ip_opts
+                        ;;
+                    dns1=*)
+                        echo "${i}" >> /ip_opts
+                        ;;
+                    rootserver=*)
+                        echo "${i}" >> /ip_opts
+                        ;;
+                    rootpath=*)
+                        echo "${i}" >> /ip_opts
+                        ;;
+                esac
+            done
+        done
+
+        . /ip_opts
+
+        echo "IP-Config: ${address}/${netmask}"
+        echo "IP-Config: gw: ${gateway}    dns0: ${dns0}    dns1: ${dns1}"
+
+        # calculate nfs_server, nfs_path and nfs_option for later nfs mount
+        if [ "${root}" = "/dev/nfs" -o "${nfsroot}" != "" ]; then
+            # default rootpath
+            if [ "${rootpath}" = "" ]; then
+                rootpath="/tftpboot/${address}"
+            fi
+
+            # parse nfsroot
+            line="${nfsroot}"
+            nfs_server="${line%%:*}"
+            [ "${nfs_server}" = "${line}" ] && nfs_server="${rootserver}"
+            line="${line#*:}"
+            nfs_path="${line%%,*}"
+            line="${line#"${nfs_path}"}"
+            [ "${nfs_path}" = "" ] && nfs_path="${rootpath}"
+            nfs_option="${line#","}"
+
+            # ensure root and filesystem type are set proper for nfs boot
+            root="/dev/nfs"
+            rootfstype="nfs"
+
+            echo "NFS-root: ${nfs_server}:${nfs_path}"
+        fi
+    fi
+}

@@ -1,0 +1,31 @@
+# vim: set ft=sh:
+
+install ()
+{
+    MODULES=""
+    BINARIES=""
+    FILES=""
+    SCRIPT="keymap"
+    eval "$(grep -e "^LOCALE=" -e "^KEYMAP=" /etc/rc.conf)"
+    if [ -n "$KEYMAP" ]; then
+        KEYMAP_FILE="$(mktemp ${TMPDIR}/keymap.XXXXXX)"
+        UTF8_FILE="$(mktemp ${TMPDIR}/keymap.XXXXXX)"
+        if [ -n "$(echo ${LOCALE} | grep -i utf)" ]; then
+            echo "UTF8='yes'" > ${UTF8_FILE}
+            /bin/loadkeys -q -u $KEYMAP -b > ${KEYMAP_FILE}
+        else
+            echo "UTF8='no'" > ${UTF8_FILE}
+            /bin/loadkeys -q $KEYMAP -b > ${KEYMAP_FILE}
+        fi
+        add_file ${KEYMAP_FILE} /keymap.bin
+        add_file ${UTF8_FILE} /keymap.utf8
+    fi
+}
+
+help ()
+{
+cat<<HELPEOF
+  This hook loads keymap(s) specified in rc.conf
+  during early userspace.
+HELPEOF
+}
