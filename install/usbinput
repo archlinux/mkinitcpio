@@ -2,7 +2,7 @@
 
 install ()
 {
-    MODULES=" $(checked_modules "/usb/host" | grep -ve "_cs" -e "sl1811-hcd" -e "isp116x-hcd") "
+    MODULES=" $(checked_modules "/usb/host" | grep -ve "_cs" -e "sl811-hcd" -e "isp116x-hcd") "
     MODULES=" $(echo ${MODULES}) $(all_modules "/hid/hid-") "
 
     MODULES=$(echo ${MODULES}) #trim whitespace
