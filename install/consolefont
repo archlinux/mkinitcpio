@@ -6,6 +6,7 @@ install ()
     BINARIES=""
     FILES=""
     SCRIPT="consolefont"
+    eval "$(grep -e "^CONSOLEFONT=" /etc/rc.conf)"
     if [ -n "$CONSOLEFONT" ]; then
         CONSOLEFONT_FILE_GZ="/usr/share/kbd/consolefonts/$CONSOLEFONT.psfu.gz"
         if [ -e ${CONSOLEFONT_FILE_GZ} ]; then
@@ -22,10 +23,6 @@ install ()
 help ()
 {
 cat<<HELPEOF
-  This hook loads consolefont specified in mkinitcpio.conf
-  during early userspace.
-  You should add CONSOLEFONT="font" (same syntax as in rc.conf) to your
-  mkinitcpio.conf. You may also remove the CONSOLEFONT from rc.conf
-  to prevent the font from being set twice and speed up your boot proccess.
+  This hook loads consolefont specified in rc.conf during early userspace.
 HELPEOF
 }
