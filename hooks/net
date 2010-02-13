@@ -1,7 +1,7 @@
 # vim: set ft=sh:
 run_hook ()
 {
-    local line i address rootserver rootpath
+    local line i address netmask gateway dns0 dns1 rootserver rootpath defaultrootpath defaultserver
 
     : > /ip_opts
 
@@ -47,20 +47,33 @@ run_hook ()
 
         # calculate nfs_server, nfs_path and nfs_option for later nfs mount
         if [ "${root}" = "/dev/nfs" -o "${nfsroot}" != "" ]; then
-            # default rootpath
-            if [ "${rootpath}" = "" ]; then
-                rootpath="/tftpboot/${address}"
+            # parse rootpath if defined by dhcp server
+            if [ -n "${rootpath}" ]; then
+                line="${rootpath}"
+                nfs_server="${line%%:*}"
+                [ "${nfs_server}" = "${line}" ] && nfs_server="${rootserver}"
+                defaultserver="${nfs_server}"
+                line="${line#*:}"
+                nfs_path="${line}"
+                defaultrootpath="${nfs_path}"
+            else
+                # define a default rootpath
+                if [ "${rootpath}" = "" ]; then
+                    defaultrootpath="/tftpboot/${address}"
+                fi
             fi
 
-            # parse nfsroot
-            line="${nfsroot}"
-            nfs_server="${line%%:*}"
-            [ "${nfs_server}" = "${line}" ] && nfs_server="${rootserver}"
-            line="${line#*:}"
-            nfs_path="${line%%,*}"
-            line="${line#"${nfs_path}"}"
-            [ "${nfs_path}" = "" ] && nfs_path="${rootpath}"
-            nfs_option="${line#","}"
+            # parse nfsroot if present (overrides rootpath)
+            if [ -n "${nfsroot}" ]; then
+                line="${nfsroot}"
+                nfs_server="${line%%:*}"
+                [ -z "${nfs_server}" ] && nfs_server="${defaultserver}"
+                line="${line#*:}"
+                nfs_path="${line%%,*}"
+                line="${line#"${nfs_path}"}"
+                [ -z "${nfs_path}" ] && nfs_path="${defaultrootpath}"
+                nfs_option="${line#","}"
+            fi
 
             # ensure root and filesystem type are set proper for nfs boot
             root="/dev/nfs"
