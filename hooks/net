@@ -79,7 +79,7 @@ run_hook ()
             root="/dev/nfs"
             rootfstype="nfs"
 
-            echo "NFS-root: ${nfs_server}:${nfs_path}"
+            echo "NFS-Mount: ${nfs_server}:${nfs_path}"
         fi
     fi
 }
