@@ -166,8 +166,8 @@ if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
       echo "Try adding"
       echo "    rootfstype=your_filesystem_type"
       echo "to the kernel command line."
-      echo "You are now being dropped into an emergency shell."
       echo
+      echo "You are now being dropped into an emergency shell."
       launch_interactive_shell
       msg "Trying to continue (this will most likely fail) ..."
     fi
