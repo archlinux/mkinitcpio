@@ -102,15 +102,6 @@ if [ -f "/message" ]; then
     msg "$(cat /message)"
 fi
 
-#Special handling if udev is running
-udevpid=$(/bin/pidof udevd)
-if [ -n "${udevpid}" ]; then
-    # Settle pending uevents, then kill udev
-    /sbin/udevadm settle
-    /bin/kill -9 ${udevpid} > /dev/null 2>&1
-    /bin/sleep 0.01
-fi
-
 mkdir -p /new_root
 if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
   if [ ${root:0:5} != "/dev/" ] || ! poll_device "${root}" ${rootdelay}; then
@@ -188,6 +179,16 @@ else
   fi
   nfsmount ${nfs_option:+-o ${nfs_option}} "${nfs_server}:${nfs_path}" /new_root
 fi
+
+#Special handling if udev is running
+udevpid=$(/bin/pidof udevd)
+if [ -n "${udevpid}" ]; then
+    # Settle pending uevents, then kill udev
+    /sbin/udevadm settle
+    /bin/kill -9 ${udevpid} > /dev/null 2>&1
+    /bin/sleep 0.01
+fi
+
 umount /proc
 umount /sys
 [ -z "${init}" ] && init="/sbin/init"
