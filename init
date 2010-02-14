@@ -158,6 +158,19 @@ if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
     fstype="${rootfstype}"
   else
     fstype=$(eval $(/sbin/blkid -o udev -p "${root}"); echo $ID_FS_TYPE)
+    if [ -z "${fstype}" ]; then
+      err "Unable to determine the file system type of ${root}:"
+      echo "Either it contains no filesystem, an unknown filesystem,"
+      echo "or more than one valid file system signature was found."
+      echo
+      echo "Try adding"
+      echo "    rootfstype=your_filesystem_type"
+      echo "to the kernel command line."
+      echo "You are now being dropped into an emergency shell."
+      echo
+      launch_interactive_shell
+      msg "Trying to continue (this will most likely fail) ..."
+    fi
   fi
   if [ "${readwrite}" = "yes" ]; then
     rwopt="rw"
