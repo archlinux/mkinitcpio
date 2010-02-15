@@ -15,6 +15,9 @@ export root=""
 export init=""
 echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
 
+# set default mount handler
+mount_handler="default"
+
 # if available, start udevd at this stage
 if [ -x /sbin/udevd ]; then
     msg ":: Starting udevd..."
@@ -103,7 +106,7 @@ if [ -f "/message" ]; then
 fi
 
 mkdir -p /new_root
-if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
+if [ -z "${mount_handler}" -o "${mount_handler}" = "default" ]; then
   if [ ${root:0:5} != "/dev/" ] || ! poll_device "${root}" ${rootdelay}; then
     msg "\nRoot device '${root}' doesn't exist. Attempting to create it."
     rootdev=""
@@ -170,14 +173,7 @@ if [ -z "${nfsroot}" -a "${root}" != "/dev/nfs" ]; then
   fi
   mount ${fstype:+-t ${fstype}} -o ${rwopt}${rootflags:+,${rootflags}} "${root}" /new_root
 else
-  if [ -z "$nfs_server" -o -z "$nfs_path" ]; then
-      err "Unable to mount root filesystem over NFS: wrong parameters."
-      echo "You are being dropped to a recovery shell"
-      echo "    Type 'exit' to try and continue booting"
-      launch_interactive_shell
-      msg "Trying to continue (this will most likely fail) ..."
-  fi
-  nfsmount ${nfs_option:+-o ${nfs_option}} "${nfs_server}:${nfs_path}" /new_root
+  ${mount_handler} /new_root
 fi
 
 [ -z "${init}" ] && init="/sbin/init"
