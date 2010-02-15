@@ -27,3 +27,71 @@ launch_interactive_shell() {
     [ "$1" = "--exec" ] && exec /bin/sh -i
     /bin/sh -i
 }
+
+default_mount_handler() {
+    if [ ${root:0:5} != "/dev/" ] || ! poll_device "${root}" ${rootdelay}; then
+        msg "\nRoot device '${root}' doesn't exist. Attempting to create it."
+        rootdev=""
+        if [ ${root:0:5} = "/dev/" ]; then
+            # It might be a block device (/dev/sda)
+            if [ -f /sys/block/${root:5}/dev ]; then
+                rootdev="$(cat /sys/block/${root:5}/dev | sed 's|:| |')"
+            # It might be a partition on any block device (/dev/sda1)
+            else
+                for dir in /sys/block/*; do
+                    if [ -f ${dir}/${root:5}/dev ]; then
+                        rootdev="$(cat ${dir}/${root:5}/dev | sed 's|:| |')"
+                        break
+                    fi
+                done
+            fi
+        # It might be a major/minor pair (8:1)
+        elif echo ${root} | grep -q :; then
+            rootdev="$(echo ${root} | sed 's|:| |')"
+            root="/dev/root"
+        # It might be major/minor encoded as a single hex-number (lilo-style) (801)
+        elif [ ${#root} -le 4 -a ${#root} -gt 2 ] && echo "${root}" | grep -qe '^[A-Fa-f0-9]*$'; then
+            str_offset=$((${#root}-2))
+            major=$(printf "%d" 0x${root:0:${str_offset}})
+            minor=$(printf "%d" 0x${root:${str_offset}})
+            rootdev="${major} ${minor}"
+            root="/dev/root"
+        fi
+        if [ -n "${rootdev}" ]; then
+            msg "Creating root device ${root} with major $(echo "${rootdev}" | cut -d\   -f1) and minor $(echo "${rootdev}" | cut -d\   -f2)."
+            mknod ${root} b ${rootdev}
+        else
+            err "Unable to determine major/minor number of root device '${root}'."
+            echo "You are being dropped to a recovery shell"
+            echo "    Type 'exit' to try and continue booting"
+            launch_interactive_shell
+            msg "Trying to continue (this will most likely fail) ..."
+        fi
+    fi
+    # We didn't build filesystem support into busybox,
+    # instead we use util-linux-ng's blkid for best compatibility
+    if [ -n "${rootfstype}" ]; then
+        fstype="${rootfstype}"
+    else
+        fstype=$(eval $(/sbin/blkid -o udev -p "${root}"); echo $ID_FS_TYPE)
+        if [ -z "${fstype}" ]; then
+            err "Unable to determine the file system type of ${root}:"
+            echo "Either it contains no filesystem, an unknown filesystem,"
+            echo "or more than one valid file system signature was found."
+            echo
+            echo "Try adding"
+            echo "    rootfstype=your_filesystem_type"
+            echo "to the kernel command line."
+            echo
+            echo "You are now being dropped into an emergency shell."
+            launch_interactive_shell
+            msg "Trying to continue (this will most likely fail) ..."
+        fi
+    fi
+    if [ "${readwrite}" = "yes" ]; then
+        rwopt="rw"
+    else
+        rwopt="ro"
+    fi
+    mount ${fstype:+-t ${fstype}} -o ${rwopt}${rootflags:+,${rootflags}} "${root}" "$1"
+}
