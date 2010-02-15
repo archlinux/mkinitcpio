@@ -2,7 +2,7 @@
 
 install ()
 {
-    MODULES=" $(checked_modules "/drivers/net/") "
+    MODULES="nfs $(checked_modules "/drivers/net/") "
 
     BINARIES=""
     FILES=""
