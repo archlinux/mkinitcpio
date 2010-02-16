@@ -111,20 +111,20 @@ ${mount_handler} /new_root
 
 [ -z "${init}" ] && init="/sbin/init"
 if [ "$(stat -f -c %i /)" = "$(stat -f -c %i /new_root)" ]; then
-  # Nothing got mounted on /new_root. This is the end, we don't know what to do anymore
-  # We fall back into a shell, but the shell has now PID 1
-  # This way, manual recovery is still possible.
-  err "Failed to mount the real root device."
-  echo "Bailing out, you are on your own. Good luck."
-  echo
-  launch_interactive_shell --exec
+    # Nothing got mounted on /new_root. This is the end, we don't know what to do anymore
+    # We fall back into a shell, but the shell has now PID 1
+    # This way, manual recovery is still possible.
+    err "Failed to mount the real root device."
+    echo "Bailing out, you are on your own. Good luck."
+    echo
+    launch_interactive_shell --exec
 elif [ ! -f "/new_root${init}" ]; then
-  # Successfully mounted /new_root, but ${init} is missing
-  # The same logic as above applies
-  err "Root device mounted successfully, but ${init} does not exist."
-  echo "Bailing out, you are on your own. Good luck."
-  echo
-  launch_interactive_shell --exec
+    # Successfully mounted /new_root, but ${init} is missing
+    # The same logic as above applies
+    err "Root device mounted successfully, but ${init} does not exist."
+    echo "Bailing out, you are on your own. Good luck."
+    echo
+    launch_interactive_shell --exec
 fi
 
 #Special handling if udev is running
