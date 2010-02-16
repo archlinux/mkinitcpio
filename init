@@ -110,7 +110,7 @@ mkdir -p /new_root
 ${mount_handler} /new_root
 
 [ -z "${init}" ] && init="/sbin/init"
-if [ "$(stat -f -c %i /)" = "$(stat -f -c %i /new_root)" ]; then
+if [ "$(stat -c %D /)" = "$(stat -c %D /new_root)" ]; then
     # Nothing got mounted on /new_root. This is the end, we don't know what to do anymore
     # We fall back into a shell, but the shell has now PID 1
     # This way, manual recovery is still possible.
