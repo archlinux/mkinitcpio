@@ -118,7 +118,7 @@ if [ "$(stat -c %D /)" = "$(stat -c %D /new_root)" ]; then
     echo "Bailing out, you are on your own. Good luck."
     echo
     launch_interactive_shell --exec
-elif [ ! -f "/new_root${init}" ]; then
+elif [ ! -x "/new_root${init}" ]; then
     # Successfully mounted /new_root, but ${init} is missing
     # The same logic as above applies
     err "Root device mounted successfully, but ${init} does not exist."
