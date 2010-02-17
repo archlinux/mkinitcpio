@@ -33,18 +33,14 @@ default_mount_handler() {
         msg "\nRoot device '${root}' doesn't exist. Attempting to create it."
         rootdev=""
         if [ ${root:0:5} = "/dev/" ]; then
-            # It might be a block device (/dev/sda)
-            if [ -f /sys/block/${root:5}/dev ]; then
-                rootdev="$(cat /sys/block/${root:5}/dev | sed 's|:| |')"
-            # It might be a partition on any block device (/dev/sda1)
-            else
-                for dir in /sys/block/*; do
-                    if [ -f ${dir}/${root:5}/dev ]; then
-                        rootdev="$(cat ${dir}/${root:5}/dev | sed 's|:| |')"
-                        break
-                    fi
-                done
-            fi
+            # It might be a block device (/dev/sda) -> /sys/block/sda/dev
+            # or a partition (/dev/sda1) -> /sys/block/sda/sda1/dev
+            for dir in /sys/block /sys/block/*; do
+                if [ -f ${dir}/${root:5}/dev ]; then
+                    rootdev="$(cat ${dir}/${root:5}/dev | sed 's|:| |')"
+                    break
+                fi
+            done
         # It might be a major/minor pair (8:1)
         elif echo ${root} | grep -q :; then
             rootdev="$(echo ${root} | sed 's|:| |')"
