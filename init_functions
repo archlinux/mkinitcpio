@@ -48,8 +48,8 @@ default_mount_handler() {
         # It might be major/minor encoded as a single hex-number (lilo-style) (801)
         elif [ ${#root} -le 4 -a ${#root} -gt 2 ] && echo "${root}" | grep -qe '^[A-Fa-f0-9]*$'; then
             str_offset=$((${#root}-2))
-            major=$(printf "%d" 0x${root:0:${str_offset}})
-            minor=$(printf "%d" 0x${root:${str_offset}})
+            major=$((0x${root:0:${str_offset}}))
+            minor=$((0x${root:${str_offset}}))
             rootdev="${major} ${minor}"
             root="/dev/root"
         fi
