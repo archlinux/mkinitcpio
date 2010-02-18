@@ -5,9 +5,13 @@ run_hook ()
 
     : > /ip_opts
 
+    if [ -z "${ip}" -a -n "${nfsaddrs}" ]; the
+        export ip="${nfsaddrs}"
+    fi
+
     if [ -n "${ip}" ]; then
         # setup network and save some values
-        ipconfig "${ip}" | while read line; do
+        ipconfig "ip=${ip}" | while read line; do
             # echo ":: ${line}"
             if [ "${line#"IP-Config:"}" != "${line}" ]; then
                 continue
