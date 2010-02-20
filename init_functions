@@ -31,31 +31,33 @@ launch_interactive_shell() {
 default_mount_handler() {
     if [ ${root:0:5} != "/dev/" ] || ! poll_device "${root}" ${rootdelay}; then
         msg "Root device '${root}' doesn't exist. Attempting to create it."
-        rootdev=""
+        major=""
+        minor=""
         if [ ${root:0:5} = "/dev/" ]; then
             # It might be a block device (/dev/sda) -> /sys/block/sda/dev
             # or a partition (/dev/sda1) -> /sys/block/sda/sda1/dev
             for dir in /sys/block /sys/block/*; do
                 if [ -f ${dir}/${root:5}/dev ]; then
-                    rootdev="$(cat ${dir}/${root:5}/dev | sed 's|:| |')"
+                    major="$(cat ${dir}/${root:5}/dev | cut -d: -f1)"
+                    minor="$(cat ${dir}/${root:5}/dev | cut -d: -f2)"
                     break
                 fi
             done
         # It might be a major/minor pair (8:1)
         elif echo ${root} | grep -q :; then
-            rootdev="$(echo ${root} | sed 's|:| |')"
+            major="$(echo ${root} | cut -d: -f1)"
+            minor="$(echo ${root} | cut -d: -f2)"
             root="/dev/root"
         # It might be major/minor encoded as a single hex-number (lilo-style) (801)
         elif [ ${#root} -le 4 -a ${#root} -gt 2 ] && echo "${root}" | grep -qe '^[A-Fa-f0-9]*$'; then
             str_offset=$((${#root}-2))
             major=$((0x${root:0:${str_offset}}))
             minor=$((0x${root:${str_offset}}))
-            rootdev="${major} ${minor}"
             root="/dev/root"
         fi
-        if [ -n "${rootdev}" ]; then
-            msg "Creating root device ${root} with major $(echo "${rootdev}" | cut -d\   -f1) and minor $(echo "${rootdev}" | cut -d\   -f2)."
-            mknod ${root} b ${rootdev}
+        if [ -n "${major}" -a -n "${minor}" ]; then
+            msg "Creating root device ${root} with major ${major} and minor ${minor}."
+            mknod ${root} b ${major} ${minor}
         else
             err "Unable to determine major/minor number of root device '${root}'."
             echo "You are being dropped to a recovery shell"
