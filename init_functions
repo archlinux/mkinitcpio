@@ -30,7 +30,7 @@ launch_interactive_shell() {
 
 default_mount_handler() {
     if [ ${root:0:5} != "/dev/" ] || ! poll_device "${root}" ${rootdelay}; then
-        msg "\nRoot device '${root}' doesn't exist. Attempting to create it."
+        msg "Root device '${root}' doesn't exist. Attempting to create it."
         rootdev=""
         if [ ${root:0:5} = "/dev/" ]; then
             # It might be a block device (/dev/sda) -> /sys/block/sda/dev
