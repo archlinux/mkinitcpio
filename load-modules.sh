@@ -50,7 +50,7 @@ if [ -n "${BLACKLIST}" ] ; then
     $MODPROBE $USEBLACKLIST ${mod}
   done
 else
-  $MODPROBE $1
+  $MODPROBE $USEBLACKLIST $1
 fi
 
 # vim: set et ts=4:
