@@ -14,11 +14,13 @@ poll_device() {
     else
         seconds=5
     fi
-    echo "Waiting ${seconds} seconds for device ${device} ..."
-    while [ ! -b "${device}" -a ! -h "${device}" -a ${seconds} -gt 0 ]; do
-        sleep 1
-        seconds=$((${seconds}-1))
-    done
+    if [ "${udevd_running}" -eq 1 ]; then
+        echo "Waiting ${seconds} seconds for device ${device} ..."
+        while [ ! -b "${device}" -a ! -h "${device}" -a ${seconds} -gt 0 ]; do
+            sleep 1
+            seconds=$((${seconds}-1))
+        done
+    fi
     [ -b "${device}" -o -h "${device}" ]
 }
 

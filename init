@@ -23,7 +23,10 @@ if [ -x /sbin/udevd ]; then
     msg ":: Starting udevd..."
     echo > /proc/sys/kernel/hotplug
     /sbin/udevd --daemon --resolve-names=never
+    export udevd_running=1
     msg "done."
+else
+    export udevd_running=0
 fi
 
 for cmd in ${CMDLINE}; do
