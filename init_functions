@@ -9,7 +9,7 @@ err () {
 
 poll_device() {
     device="$1"
-    if [ "$2" -gt 0 ]; then
+    if [ "$2" -ge 0 ]; then
         seconds="$2"
     else
         seconds=5
