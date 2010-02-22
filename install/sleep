@@ -1,0 +1,19 @@
+# vim:set ft=sh:
+
+install ()
+{
+    MODULES=""
+    BINARIES=""
+    FILES=""
+    SCRIPT="sleep"
+}
+
+help ()
+{
+cat <<HELPEOF
+  This hook causes the init process to interrupt
+  for a fixed time interval. The time in seconds
+  can be specified in the sleeptime= command line
+  parameter. The default is 5 seconds.
+HELPEOF
+}
