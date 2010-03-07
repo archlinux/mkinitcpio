@@ -14,7 +14,7 @@ install ()
     findfs ()
     {
         for blkdev in $(find /dev -type b | grep -v -e /dev/loop -e /dev/ram -e /dev/fd); do
-            (eval $(/sbin/blkid -o udev -p "${blkdev}"); [ "${ID_FS_USAGE}" = "filesystem" ] && echo $ID_FS_TYPE)
+            /sbin/blkid -u filesystem -o value -s TYPE -p "${blkdev}" 2> /dev/null
         done
     }
 
