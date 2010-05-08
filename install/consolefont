@@ -8,14 +8,18 @@ install ()
     SCRIPT="consolefont"
     eval "$(grep -e "^CONSOLEFONT=" /etc/rc.conf)"
     if [ -n "$CONSOLEFONT" ]; then
-        CONSOLEFONT_FILE_GZ="/usr/share/kbd/consolefonts/$CONSOLEFONT.psfu.gz"
-        if [ -e ${CONSOLEFONT_FILE_GZ} ]; then
+        if [ -e /usr/share/kbd/consolefonts/$CONSOLEFONT.psfu.gz ]; then
+            CONSOLEFONT_FILE_GZ="/usr/share/kbd/consolefonts/$CONSOLEFONT.psfu.gz"
             CONSOLEFONT_FILE="$(mktemp ${TMPDIR}/consolefont.psfu.XXXXXX)"
             zcat ${CONSOLEFONT_FILE_GZ} > ${CONSOLEFONT_FILE}
             add_file ${CONSOLEFONT_FILE} /consolefont.psfu
+        elif [ -e /usr/share/kbd/consolefonts/$CONSOLEFONT.psf.gz ]; then
+            CONSOLEFONT_FILE_GZ="/usr/share/kbd/consolefonts/$CONSOLEFONT.psf.gz"
+            CONSOLEFONT_FILE="$(mktemp ${TMPDIR}/consolefont.psf.XXXXXX)"
+            zcat ${CONSOLEFONT_FILE_GZ} > ${CONSOLEFONT_FILE}
+            add_file ${CONSOLEFONT_FILE} /consolefont.psf
         else
-            echo "consolefont: Font file does not exist or does not end with .psfu.gz"
-            echo "consolefont: Only unicode fonts are supported at the moment."
+            echo "consolefont: Font file does not exist or does not end with .psf.gz or .psfu.gz."
         fi
     fi
 }
