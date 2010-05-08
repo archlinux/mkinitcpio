@@ -1,0 +1,5 @@
+# vim: set ft=sh:
+run_hook ()
+{
+    dmesg -n 3
+}

@@ -1,0 +1,18 @@
+# vim: set ft=sh:
+install ()
+{
+    MODULES=""
+    BINARIES=""
+    FILES=""
+    SCRIPT="dmesg"
+}
+
+help ()
+{
+cat<<HELPEOF
+  This hook lowers the console log level to 3.
+  It is useful when the user has to interact
+  with the boot process during early userspace
+  (like when entering a passphrase).
+HELPEOF
+}
