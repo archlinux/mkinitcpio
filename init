@@ -141,6 +141,6 @@ if [ -n "${udevpid}" ]; then
     done
 fi
 
-umount /proc
-umount /sys
+mount --move /proc /new_root/proc
+mount --move /sys /new_root/sys
 exec /sbin/switch_root -c /dev/console /new_root ${init} "$@"
