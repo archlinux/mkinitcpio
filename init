@@ -7,6 +7,11 @@
 msg ":: Loading Initramfs"
 /bin/mount -t proc proc /proc
 /bin/mount -t sysfs sys /sys
+if grep -q devtmpfs /proc/filesystems 2>/dev/null; then
+  /bin/mount -n -t devtmpfs udev /dev -o mode=0755,size=10M,nosuid
+else
+  /bin/mount -n -t tmpfs udev /dev -o mode=0755,size=10M,nosuid
+fi
 
 read CMDLINE </proc/cmdline
 export CMDLINE
@@ -143,4 +148,5 @@ fi
 
 mount --move /proc /new_root/proc
 mount --move /sys /new_root/sys
+mount --move /dev /new_root/dev
 exec /sbin/switch_root -c /dev/console /new_root ${init} "$@"
