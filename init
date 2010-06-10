@@ -11,6 +11,12 @@ if grep -q devtmpfs /proc/filesystems 2>/dev/null; then
   /bin/mount -n -t devtmpfs udev /dev -o mode=0755,size=10M,nosuid
 else
   /bin/mount -n -t tmpfs udev /dev -o mode=0755,size=10M,nosuid
+  # We don't have devtmpfs, so add the most important standard devices
+  /bin/mknod /dev/null c 1 3
+  /bin/mknod /dev/zero c 1 5
+  /bin/mknod /dev/console c 5 1
+  # /dev/mem is needed if we want to load uvesafb before triggering uevents
+  /bin/mknod /dev/mem c 1 1
 fi
 
 read CMDLINE </proc/cmdline
