@@ -4,10 +4,8 @@ install ()
 {
     MODULE_FILE="${TMPDIR}/autodetect_modules"
     #blegh, we'll let /tmp clean itself up
-    AUTODETECT="$(auto_modules -e '/scsi/' -e '/block' -e '/fusion/' \
-                    -e '/usb/' -e '/ide/' -e '/ieee1394/' -e '/cdrom' \
-                    -e '/net/' -e '/pcmcia' -e '/ata' \
-                  | grep -v -e 'ata_generic.ko' -e 'ide-generic.ko')"
+    AUTODETECT="$(auto_modules | \
+                  sed -e 's/ata_generic//g' -e 's/ide_generic//g')"
 
 
     #Filesystem detection, use sysfs instead of /proc
@@ -45,8 +43,7 @@ install ()
         err "User does not have proper permissions to read superblocks, raid and filesystem modules are not detected"
     fi
 
-    for m in ${AUTODETECT}; do
-        modname="$(basename ${m%%\.ko})"
+    for modname in ${AUTODETECT}; do
         grep "^${modname}$" "${MODULE_FILE}" >/dev/null 2>&1 && continue
         case "${m}" in 
             #*/ieee1394/*) echo -e "sbp2\nsd_mod\nsr_mod" >> "${MODULE_FILE}";;
