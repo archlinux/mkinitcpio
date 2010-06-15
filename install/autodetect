@@ -43,19 +43,8 @@ install ()
         err "User does not have proper permissions to read superblocks, raid and filesystem modules are not detected"
     fi
 
-    for modname in ${AUTODETECT}; do
-        grep "^${modname}$" "${MODULE_FILE}" >/dev/null 2>&1 && continue
-        case "${m}" in 
-            #*/ieee1394/*) echo -e "sbp2\nsd_mod\nsr_mod" >> "${MODULE_FILE}";;
-            *ext3*) echo "jbd" >> "${MODULE_FILE}" ;;
-            *ext4*) echo -e "jbd2\nmbcache\ncrc16" >> "${MODULE_FILE}" ;;
-            *afs*) echo "rxrpc" >> "${MODULE_FILE}" ;;
-            *cramfs*) echo "zlib_inflate" >> "${MODULE_FILE}" ;;
-            *isofs*) echo "zlib_inflate" >> "${MODULE_FILE}" ;;
-            *msdos*) echo "fat" >> "${MODULE_FILE}" ;;
-            *vfat*) echo -e "fat\nnls_cp437" >> "${MODULE_FILE}" ;;
-            *ocfs2*) echo -e "ocfs2_dlm\njbd\nocfs2_nodemanager\nconfigfs" >> "${MODULE_FILE}" ;;
-        esac
+    for m in ${AUTODETECT}; do
+        modname="$(basename ${m%.ko})"
         echo "${modname}" >> "${MODULE_FILE}"
     done
 
