@@ -8,7 +8,7 @@ auto_modules ()
         [ -n "$m" ] && mods="$mods $m"
     done
 
-    echo "${mods}" | sed 's|-|_|g'
+    echo "${mods}" | tr '-' '_'
     [ -z "${mods}" ] && return 1
     return 0
 }
@@ -26,7 +26,7 @@ checked_modules ()
 {
     if [ -e "${MODULE_FILE}" ]; then
         for mod in $(all_modules $@); do
-            modname="$(basename ${mod%%\.ko} | sed 's|-|_|g')"
+            modname="$(basename ${mod%.ko} | tr '-' '_')"
             if grep "^${modname}$" "${MODULE_FILE}" >/dev/null 2>&1; then
                 echo ${modname}
             fi
@@ -147,9 +147,9 @@ add_module ()
 {
     local m fil path fw mod deps
     #cleanup - remove .ko, replace - with _
-    m=$(basename "${1}" | sed -e 's|-|_|g' -e 's|\.ko$||g')
+    m=$(basename "${1%.ko}" | tr '-' '_')
     #find pattern - replace _ with [-_] to match either
-    fil=$(echo "$m" | sed -e 's|_|\[-_\]|g')
+    fil=$(echo "$m" | sed 's|_|\[-_\]|g')
 
     found=0
     for path in $(find "${MODULEDIR}" -type f -name "${fil}.ko"); do
