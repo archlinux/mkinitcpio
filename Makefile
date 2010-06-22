@@ -23,6 +23,7 @@ install: all
 	install -D -m755 init_functions ${DESTDIR}/lib/initcpio/init_functions
 	install -D -m644 functions ${DESTDIR}/lib/initcpio/functions
 	install -D -m755 load-modules.sh ${DESTDIR}/lib/initcpio/udev/load-modules.sh
+	install -D -m644 01-memdisk.rules ${DESTDIR}/lib/initcpio/udev/01-memdisk.rules
 
 	install -d ${DESTDIR}/lib/initcpio/hooks
 	install -d ${DESTDIR}/lib/initcpio/install
