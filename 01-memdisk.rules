@@ -1,1 +1,11 @@
-ACTION=="add|change", SUBSYSTEM=="block", KERNEL=="mtdblock*", ATTRS{name}=="memdisk", ATTRS{type}=="ram", SYMLINK+="memdisk"
+ACTION=="add|change", SUBSYSTEM=="block", KERNEL=="mtdblock*", ATTRS{name}=="memdisk", ATTRS{type}=="ram", GOTO="memdisk_start"
+GOTO="memdisk_end"
+
+LABEL="memdisk_start"
+
+SYMLINK+="memdisk"
+IMPORT{program}="/sbin/blkid -o udev -p $tempnode"
+ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{ID_FS_UUID_ENC}=="?*", SYMLINK+="disk/by-uuid/$env{ID_FS_UUID_ENC}"
+ENV{ID_FS_USAGE}=="filesystem|other", ENV{ID_FS_LABEL_ENC}=="?*", SYMLINK+="disk/by-label/$env{ID_FS_LABEL_ENC}"
+
+LABEL="memdisk_end"
