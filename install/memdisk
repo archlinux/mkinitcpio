@@ -1,0 +1,19 @@
+# vim:set ft=sh:
+
+install ()
+{
+    MODULES="phram mtdblock"
+    BINARIES="/usr/bin/memdiskfind"
+    FILES=""
+    SCRIPT="memdisk"
+}
+
+help ()
+{
+cat <<HELPEOF
+  This hook detects a virtual disk created by the memdisk
+  tool (http://syslinux.zytor.com/wiki/index.php/MEMDISK).
+
+  It requires memdiskfind from syslinux 4.00 or newer.
+HELPEOF
+}

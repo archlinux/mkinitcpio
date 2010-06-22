@@ -1,0 +1,11 @@
+# vim:set ft=sh:
+run_hook ()
+{
+    MEMDISK=$(/usr/bin/memdiskfind)
+    if [ $? -eq 0 ]; then
+        # We found a memdisk, set up phram
+        /sbin/modprobe phram phram=memdisk,${MEMDISK}
+        # Load mtdblock, the memdisk will be /dev/mtdblock0
+        /sbin/modprobe mtdblock
+    fi
+}
