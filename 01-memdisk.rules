@@ -1,0 +1,1 @@
+ACTION=="add|change", SUBSYSTEM=="block", KERNEL=="mtdblock*", ATTRS{name}=="memdisk", ATTRS{type}=="ram", SYMLINK+="memdisk"

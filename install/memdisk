@@ -6,6 +6,7 @@ install ()
     BINARIES="/usr/bin/memdiskfind"
     FILES=""
     SCRIPT="memdisk"
+    add_file /lib/initcpio/01-memdisk.rules /lib/udev/rules.d/01-memdisk.rules
 }
 
 help ()
