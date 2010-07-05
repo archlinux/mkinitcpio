@@ -8,7 +8,7 @@ auto_modules ()
         [ -n "$m" ] && mods="$mods $m"
     done
 
-    echo "${mods}" | sed 's|-|_|g'
+    echo "${mods}" | tr '-' '_'
     [ -z "${mods}" ] && return 1
     return 0
 }
@@ -26,7 +26,7 @@ checked_modules ()
 {
     if [ -e "${MODULE_FILE}" ]; then
         for mod in $(all_modules $@); do
-            modname="$(basename ${mod%%\.ko} | sed 's|-|_|g')"
+            modname="$(basename ${mod%.ko} | tr '-' '_')"
             if grep "^${modname}$" "${MODULE_FILE}" >/dev/null 2>&1; then
                 echo ${modname}
             fi
@@ -145,9 +145,11 @@ HAS_MODULES="n"
 #modules are handled specially in order to enable autodetection
 add_module ()
 {
-    local fil path fw mod deps
-    #cleanup - remove .ko, replace - and _ with [-_] to match either
-    fil=$(basename "${1}" | sed -e "s|[-_]|\[-_\]|g" -e "s|\.ko$||g")
+    local m fil path fw mod deps
+    #cleanup - remove .ko, replace - with _
+    m=$(basename "${1%.ko}" | tr '-' '_')
+    #find pattern - replace _ with [-_] to match either
+    fil=$(echo "$m" | sed 's|_|\[-_\]|g')
 
     found=0
     for path in $(find "${MODULEDIR}" -type f -name "${fil}.ko"); do
@@ -164,8 +166,15 @@ add_module ()
         HAS_MODULES="y"
         add_file "${path}" && found=1
     done
-    if [ ${found} -eq 0 ]; then
-        err "module '$fil' not found"
+    if [ ${found} -eq 1 ]; then
+        #explicit module depends
+        case "$m" in 
+            fat) add_module "nls_cp437" ;;
+            ocfs2) add_module "configfs" ;;
+            libcrc32c) add_module "crc32c"; add_module "crc32c_intel" ;;
+        esac
+    else
+        err "module '$m' not found"
     fi
 }
 

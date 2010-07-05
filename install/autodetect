@@ -4,10 +4,8 @@ install ()
 {
     MODULE_FILE="${TMPDIR}/autodetect_modules"
     #blegh, we'll let /tmp clean itself up
-    AUTODETECT="$(auto_modules -e '/scsi/' -e '/block' -e '/fusion/' \
-                    -e '/usb/' -e '/ide/' -e '/ieee1394/' -e '/cdrom' \
-                    -e '/net/' -e '/pcmcia' -e '/ata' \
-                  | grep -v -e 'ata_generic.ko' -e 'ide-generic.ko')"
+    AUTODETECT="$(auto_modules | \
+                  sed -e 's/ata_generic//g' -e 's/ide_generic//g')"
 
 
     #Filesystem detection, use sysfs instead of /proc
@@ -46,19 +44,7 @@ install ()
     fi
 
     for m in ${AUTODETECT}; do
-        modname="$(basename ${m%%\.ko})"
-        grep "^${modname}$" "${MODULE_FILE}" >/dev/null 2>&1 && continue
-        case "${m}" in 
-            #*/ieee1394/*) echo -e "sbp2\nsd_mod\nsr_mod" >> "${MODULE_FILE}";;
-            *ext3*) echo "jbd" >> "${MODULE_FILE}" ;;
-            *ext4*) echo -e "jbd2\nmbcache\ncrc16" >> "${MODULE_FILE}" ;;
-            *afs*) echo "rxrpc" >> "${MODULE_FILE}" ;;
-            *cramfs*) echo "zlib_inflate" >> "${MODULE_FILE}" ;;
-            *isofs*) echo "zlib_inflate" >> "${MODULE_FILE}" ;;
-            *msdos*) echo "fat" >> "${MODULE_FILE}" ;;
-            *vfat*) echo -e "fat\nnls_cp437" >> "${MODULE_FILE}" ;;
-            *ocfs2*) echo -e "ocfs2_dlm\njbd\nocfs2_nodemanager\nconfigfs" >> "${MODULE_FILE}" ;;
-        esac
+        modname="$(basename ${m%.ko})"
         echo "${modname}" >> "${MODULE_FILE}"
     done
 
