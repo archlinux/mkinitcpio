@@ -1,6 +1,6 @@
 # Makefile for mkinitcpio
 
-VERSION = 0.6.6
+VERSION = 0.6.7
 
 all: doc
 
@@ -58,6 +58,7 @@ TARBALL_FILES = \
 	init_functions \
 	install \
 	load-modules.sh \
+	01-memdisk.rules \
 	mkinitcpio \
 	mkinitcpio.conf \
 	mkinitcpio.d \
