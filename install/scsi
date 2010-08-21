@@ -3,7 +3,7 @@
 install ()
 {
     MODULES=" $(checked_modules "/scsi/" | grep -ve "imm" -e "pdc_adma" -e "ahci" -e "ata" -e "pcmcia" -e "ide") 
-              $(checked_modules "/block/" | grep -v "sx8")
+              $(checked_modules "/block/" | grep -e "cciss" -e "cpqarray")
               $(checked_modules "/fusion/")"
 
     MODULES=$(echo ${MODULES}) #trim whitespace
