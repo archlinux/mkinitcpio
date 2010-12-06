@@ -5,8 +5,8 @@
 . /init_functions
 
 msg ":: Loading Initramfs"
-/bin/mount -t proc proc /proc
-/bin/mount -t sysfs sys /sys
+/bin/mount -t proc proc /proc -o nosuid,noexec,nodev
+/bin/mount -t sysfs sys /sys -o nosuid,noexec,nodev
 if grep -q devtmpfs /proc/filesystems 2>/dev/null; then
   /bin/mount -n -t devtmpfs udev /dev -o mode=0755,size=10M,nosuid
 else
