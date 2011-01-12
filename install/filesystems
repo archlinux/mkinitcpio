@@ -2,7 +2,11 @@
 
 install ()
 {
-    MODULES=" $(checked_modules '/kernel/fs' | grep -v "nls")"
+    if [ "${autodetect_fs_detection_failed}" = "1" ]; then
+        MODULES=" $(all_modules '/kernel/fs' | grep -v "nls")"
+    else
+        MODULES=" $(checked_modules '/kernel/fs' | grep -v "nls")"
+    fi
     BINARIES=""
     FILES=""
     SCRIPT=""
