@@ -8,12 +8,15 @@ install ()
                   sed -e 's/ata_generic//g' -e 's/ide_generic//g')"
 
 
-    #Filesystem detection, use sysfs instead of /proc
+    #Filesystem detection, only probe the device for /
     findfs ()
     {
-        for blkdev in $(find /dev -type b | grep -v -e /dev/loop -e /dev/ram -e /dev/fd); do
-            /sbin/blkid -u filesystem -o value -s TYPE -p "${blkdev}" 2> /dev/null
-        done
+        local rootdev
+
+        if [ -f /proc/self/mountinfo -a -x /bin/findmnt ]; then
+            rootdev=$(/bin/findmnt -n -u -o source /)
+            /sbin/blkid -u filesystem -o value -s TYPE -p "${rootdev}" 2>/dev/null
+        fi
     }
 
     if [ ${UID} -eq 0 -o "$(groups | grep disk)" != "" ]; then
