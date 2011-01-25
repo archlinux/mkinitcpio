@@ -15,7 +15,7 @@ auto_modules ()
 
 all_modules ()
 {
-    mods=$(find ${MODULEDIR} -name '*.ko' 2>/dev/null | grep $@ | sort -u)
+    mods=$(find ${MODULEDIR} -name '*.ko' -or -name '*.ko.gz' 2>/dev/null | grep $@ | sort -u)
 
     echo "${mods}"
     [ -z "${mods}" ] && return 1
@@ -26,7 +26,8 @@ checked_modules ()
 {
     if [ -e "${MODULE_FILE}" ]; then
         for mod in $(all_modules $@); do
-            modname="$(basename ${mod%.ko} | tr '-' '_')"
+            modname=${mod%.gz}
+            modname="$(basename ${modname%.ko} | tr '-' '_')"
             if grep "^${modname}$" "${MODULE_FILE}" >/dev/null 2>&1; then
                 echo ${modname}
             fi
@@ -147,12 +148,13 @@ add_module ()
 {
     local m fil path fw mod deps
     #cleanup - remove .ko, replace - with _
-    m=$(basename "${1%.ko}" | tr '-' '_')
+    m=${1%.gz}
+    m=$(basename "${m%.ko}" | tr '-' '_')
     #find pattern - replace _ with [-_] to match either
     fil=$(echo "$m" | sed 's|_|\[-_\]|g')
 
     found=0
-    for path in $(find "${MODULEDIR}" -type f -name "${fil}.ko"); do
+    for path in $(find "${MODULEDIR}" -type f -name "${fil}.ko" -or -name "${fil}.ko.gz"); do
         #get needed firmware files
         for fw in $(/sbin/modinfo -F firmware "${path}"); do
             [ -f "/lib/firmware/$fw" ] && add_file "/lib/firmware/$fw"

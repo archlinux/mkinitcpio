@@ -28,7 +28,7 @@ install ()
         for fs in ${fss}; do
             allfs="${fs} $(modprobe --set-version ${KERNELVERSION} --resolve-alias ${fs})"
             for mod in ${allfs}; do
-                for modfile in $(find "${MODULEDIR}" -type f -name "${mod}.ko"); do
+                for modfile in $(find "${MODULEDIR}" -type f -name "${mod}.ko" -or -name "${mod}.ko.gz"); do
                     if [ -n "${modfile}" ]; then
                         AUTODETECT="${AUTODETECT} ${modfile}"
                     fi
@@ -54,7 +54,8 @@ install ()
     fi
 
     for m in ${AUTODETECT}; do
-        modname="$(basename ${m%.ko})"
+        modname="${m%.gz}"
+        modname="$(basename ${modname%.ko})"
         echo "${modname}" >> "${MODULE_FILE}"
     done
 
