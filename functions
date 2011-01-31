@@ -24,6 +24,21 @@ get_module_name ()
     echo "$modname"
 }
 
+##
+#  usage : in_array( $needle, $haystack )
+# return : 0 - found
+#          1 - not found
+##
+in_array() {
+    local needle=$1; shift
+    [[ -z $1 ]] && return 1 # Not Found
+    local item
+    for item in "$@"; do
+        [[ $item = $needle ]] && return 0 # Found
+    done
+    return 1 # Not Found
+}
+
 auto_modules ()
 {
     aliases="$(find /sys/devices/ -name modalias -exec cat {} +)"
