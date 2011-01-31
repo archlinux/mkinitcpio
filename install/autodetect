@@ -54,8 +54,7 @@ install ()
     fi
 
     for m in ${AUTODETECT}; do
-        modname="${m%.gz}"
-        modname="$(basename ${modname%.ko})"
+        modname="$(get_module_name "${m}")"
         echo "${modname}" >> "${MODULE_FILE}"
     done
 

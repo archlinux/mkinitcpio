@@ -79,8 +79,8 @@ add_dir ()
 {
     #skip root directory and "." for relative directories... i.e. /foo/bar/./blah
     if [ -n "${1}" -a "${1}" != "/" -a "${1}" != "." ]; then
-        if ! grep "dir ${1} " "${FILELIST}" 2>&1 > /dev/null; then
-            add_dir $(dirname "${1}")
+        if ! grep -q "dir ${1} " "${FILELIST}"; then
+            add_dir $(get_dirname "${1}")
             msg "  adding  dir ${1}"
             echo "dir ${1} 755 0 0" >> "${FILELIST}"
         fi
@@ -93,8 +93,8 @@ add_device ()
     if [ $# -ge 4 ]; then
         local perms
         perms="${5:-644}"
-        if ! grep "nod ${1}" "${FILELIST}" 2>&1 > /dev/null; then
-            add_dir $(dirname "${1}")
+        if ! grep -q "nod ${1}" "${FILELIST}"; then
+            add_dir $(get_dirname "${1}")
             msg "  adding node ${1}"
             echo "nod ${1} ${perms} 0 0 ${2} ${3} ${4}" >> "${FILELIST}"
         fi
@@ -111,9 +111,9 @@ add_symlink ()
     if [ -h ${1} ]; then
         fil="${1##$BASEDIR}"
         dest="${2##$BASEDIR}"
-        add_dir $(dirname "${dest}")
-        add_dir $(dirname "${fil}")
-        if ! grep "slink ${fil} " "${FILELIST}" 2>&1 > /dev/null; then
+        add_dir $(get_dirname "${dest}")
+        add_dir $(get_dirname "${fil}")
+        if ! grep -q "slink ${fil} " "${FILELIST}"; then
             msg "  adding link ${fil} -> ${dest}"
             echo "slink ${fil} ${dest} $(stat -c '%a' ${1}) 0 0" >> "${FILELIST}"
         fi
@@ -123,9 +123,9 @@ add_symlink ()
 
 add_symlink2 ()
 {
-    add_dir $(dirname ${1})
-    add_dir $(dirname ${2})
-    if ! grep -q "slink ${1} " "${FILELIST}" 2>&1 >/dev/null; then
+    add_dir $(get_dirname ${1})
+    add_dir $(get_dirname ${2})
+    if ! grep -q "slink ${1} " "${FILELIST}"; then
          msg "  adding link ${1} -> ${2}"
          echo "slink ${1} ${2} 777 0 0" >> "${FILELIST}"
     fi
@@ -150,9 +150,9 @@ add_file ()
             fi
         fi
 
-        add_dir $(dirname "${dest}")
+        add_dir $(get_dirname "${dest}")
 
-        if ! grep "file ${dest} " "${FILELIST}" 2>&1 > /dev/null; then
+        if ! grep -q "file ${dest} " "${FILELIST}"; then
             msg "  adding file ${dest}"
             echo "file ${dest} ${fil} $(stat -c '%a' ${fil}) 0 0" >> "${FILELIST}"
         fi
@@ -171,6 +171,7 @@ add_module ()
     #find pattern - replace _ with [-_] to match either
     fil="${m//_/[-_]}"
 
+    msg "  adding module ${fil}"
     found=0
     for path in $(find "${MODULEDIR}" -type f -name "${fil}.ko" -or -name "${fil}.ko.gz"); do
         #get needed firmware files
@@ -178,7 +179,8 @@ add_module ()
             [ -f "/lib/firmware/$fw" ] && add_file "/lib/firmware/$fw"
         done
         #get module depends
-        for mod in $(/sbin/modinfo -F depends "${path}" | tr ',' ' '); do
+        deps="$(/sbin/modinfo -F depends "${path}")"
+        for mod in ${deps//,/ }; do
             if [ -n "${mod}" ]; then
                 add_module "${mod}"
             fi

@@ -242,8 +242,8 @@ for hook in ${HOOKS}; do
     # within $INSTDIR.
     if [ -h "${INSTDIR}/${hook}" ]; then
         newhook="$(readlink -ne "${INSTDIR}/${hook}")"
-        if [ -n "${newhook}" -a "${INSTDIR}/$(basename ${newhook})" -ef "${newhook}" ]; then
-            newhook="$(basename ${newhook})"
+        if [ -n "${newhook}" -a "${INSTDIR}/$(get_basename ${newhook})" -ef "${newhook}" ]; then
+            newhook="$(get_basename ${newhook})"
             echo "   -------------------------------------------------------------------"
             echo "   WARNING: Hook \"${hook}\" is deprecated."
             echo "            Replace it with \"${newhook}\" in your configuration file."
@@ -251,7 +251,7 @@ for hook in ${HOOKS}; do
             hook="${newhook}"
         fi
     fi
-    if grep "install" "${INSTDIR}/${hook}" >/dev/null 2>&1; then
+    if grep -q "install" "${INSTDIR}/${hook}"; then
         . "${INSTDIR}/${hook}"
         echo ":: Parsing hook [${hook}]"
         install
@@ -264,7 +264,7 @@ done
 if [ "${HAS_MODULES}" = "y" ]; then
     echo ":: Generating module dependencies"
     for mod in $(grep "file /lib/modules/${KERNELVERSION}" ${FILELIST} | cut -d' ' -f2); do
-        dir=$(dirname "${mod}")
+        dir=$(get_dirname "${mod}")
         mkdir -p "${TMPDIR}/${dir}"
         cp "${BASEDIR}${mod}" "${TMPDIR}/${dir}/"
     done
