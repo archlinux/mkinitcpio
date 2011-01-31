@@ -178,6 +178,7 @@ add_file ()
 }
 
 HAS_MODULES="n"
+declare -a ADDED_MODULES
 #modules are handled specially in order to enable autodetection
 add_module ()
 {
@@ -186,13 +187,14 @@ add_module ()
     #find pattern - replace _ with [-_] to match either
     fil="${m//_/[-_]}"
 
+    #skip expensive stuff if this module has already been added
+    if in_array $m ${ADDED_MODULES[@]}; then
+        msg "module $m was already added"
+        return
+    fi
+
     found=0
     for path in $(find "${MODULEDIR}" -type f -name "${fil}.ko" -or -name "${fil}.ko.gz"); do
-        #skip expensive stuff if this module has already been added
-        if grep -q "file ${path} " "${FILELIST}"; then
-            found=1
-            continue
-        fi
         #get needed firmware files
         for fw in $(/sbin/modinfo -F firmware "${path}"); do
             [ -f "/lib/firmware/$fw" ] && add_file "/lib/firmware/$fw"
@@ -205,6 +207,7 @@ add_module ()
             fi
         done
         HAS_MODULES="y"
+        ADDED_MODULES[${#ADDED_MODULES[*]}]="$m"
         msg "  adding module ${fil}"
         add_file "${path}" && found=1
     done
