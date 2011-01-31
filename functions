@@ -1,3 +1,6 @@
+msg () { [ "${QUIET}" = "n" ] && echo $@; }
+err () { echo "ERROR: $@" >&2; }
+die () { echo "FATAL: $@" >&2; cleanup; exit 1; }
 
 auto_modules ()
 {
@@ -37,10 +40,6 @@ checked_modules ()
         all_modules ${@}
     fi
 }
-
-msg () { [ "${QUIET}" = "n" ] && echo $@; }
-err () { echo "ERROR: $@" >&2; }
-die () { echo "FATAL: $@" >&2; cleanup; exit 1; }
 
 add_full_dir ()
 {
