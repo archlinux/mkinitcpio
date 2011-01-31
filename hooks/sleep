@@ -4,6 +4,10 @@ run_hook ()
     if [ -z "${sleeptime}" ] || ! [ "${sleeptime}" -gt 0 ]; then
         sleeptime=5
     fi
-    msg "Sleeping for ${sleeptime} seconds."
-    sleep ${sleeptime}
+    if [ -n "${sleepdevice}" ]; then
+        poll_device "${sleepdevice}" ${sleeptime}
+    else
+        msg "Sleeping for ${sleeptime} seconds."
+        sleep ${sleeptime}
+    fi
 }

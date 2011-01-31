@@ -15,5 +15,8 @@ cat <<HELPEOF
   for a fixed time interval. The time in seconds
   can be specified in the sleeptime= command line
   parameter. The default is 5 seconds.
+  If a sleepdevice= parameter is specified, sleep
+  until the given device node is available, polling
+  at one second intervals until sleeptime is reached.
 HELPEOF
 }
