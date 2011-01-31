@@ -171,9 +171,13 @@ add_module ()
     #find pattern - replace _ with [-_] to match either
     fil="${m//_/[-_]}"
 
-    msg "  adding module ${fil}"
     found=0
     for path in $(find "${MODULEDIR}" -type f -name "${fil}.ko" -or -name "${fil}.ko.gz"); do
+        #skip expensive stuff if this module has already been added
+        if grep -q "file ${path} " "${FILELIST}"; then
+            found=1
+            continue
+        fi
         #get needed firmware files
         for fw in $(/sbin/modinfo -F firmware "${path}"); do
             [ -f "/lib/firmware/$fw" ] && add_file "/lib/firmware/$fw"
@@ -186,6 +190,7 @@ add_module ()
             fi
         done
         HAS_MODULES="y"
+        msg "  adding module ${fil}"
         add_file "${path}" && found=1
     done
     if [ ${found} -eq 1 ]; then
