@@ -51,9 +51,8 @@ checked_modules ()
 {
     if [ -e "${MODULE_FILE}" ]; then
         for mod in $(all_modules $@); do
-            modname=${mod%.gz}
-            modname="$(basename ${modname%.ko} | tr '-' '_')"
-            if grep "^${modname}$" "${MODULE_FILE}" >/dev/null 2>&1; then
+            modname=$(get_module_name "${mod}")
+            if grep -q "^${modname}$" "${MODULE_FILE}"; then
                 echo ${modname}
             fi
         done
@@ -168,11 +167,9 @@ HAS_MODULES="n"
 add_module ()
 {
     local m fil path fw mod deps
-    #cleanup - remove .ko, replace - with _
-    m=${1%.gz}
-    m=$(basename "${m%.ko}" | tr '-' '_')
+    m=$(get_module_name "${1}")
     #find pattern - replace _ with [-_] to match either
-    fil=$(echo "$m" | sed 's|_|\[-_\]|g')
+    fil="${m//_/[-_]}"
 
     found=0
     for path in $(find "${MODULEDIR}" -type f -name "${fil}.ko" -or -name "${fil}.ko.gz"); do
