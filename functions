@@ -2,6 +2,28 @@ msg () { [ "${QUIET}" = "n" ] && echo $@; }
 err () { echo "ERROR: $@" >&2; }
 die () { echo "FATAL: $@" >&2; cleanup; exit 1; }
 
+get_dirname ()
+{
+    # strip any trailing slash first...
+    local dir="${1%/}"
+    # then get the directory portion
+    echo "${dir%/*}"
+}
+
+get_basename ()
+{
+    echo "${1##*/}"
+}
+
+get_module_name ()
+{
+    #cleanup - remove .ko, replace - with _
+    local modname="${1%.gz}"
+    modname=$(get_basename "${modname%.ko}")
+    modname="${modname//-/_}"
+    echo "$modname"
+}
+
 auto_modules ()
 {
     aliases="$(find /sys/devices/ -name modalias -exec cat {} +)"
