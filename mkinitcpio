@@ -263,10 +263,10 @@ done
 
 if [ "${HAS_MODULES}" = "y" ]; then
     echo ":: Generating module dependencies"
+    # unfortuate name collision between a function and utility program
+    unset install
     for mod in $(grep "file /lib/modules/${KERNELVERSION}" ${FILELIST} | cut -d' ' -f2); do
-        dir=$(get_dirname "${mod}")
-        mkdir -p "${TMPDIR}/${dir}"
-        cp "${BASEDIR}${mod}" "${TMPDIR}/${dir}/"
+        install -m 644 -D "${BASEDIR}${mod}" "${TMPDIR}${mod}"
     done
     /sbin/depmod -b ${TMPDIR} ${KERNELVERSION}
     add_file "${TMPDIR}/lib/modules/${KERNELVERSION}/modules.dep"     "/lib/modules/${KERNELVERSION}/modules.dep"
