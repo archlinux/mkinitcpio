@@ -277,6 +277,7 @@ fi
 status=0
 if [ -n "${GENIMG}" ]; then
     echo -n ":: Generating image '${GENIMG}'..."
+    shopt -s -o pipefail
     if ! /sbin/gen_init_cpio ${FILELIST} | ${COMPRESSION} -9 > "${GENIMG}"; then
         echo "FAILED"
         status=1
