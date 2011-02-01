@@ -20,10 +20,9 @@ else
 fi
 
 read CMDLINE </proc/cmdline
-export CMDLINE
 
-export root=""
-export init=""
+root=""
+init=""
 echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
 
 # set default mount handler
@@ -34,10 +33,10 @@ if [ -x /sbin/udevd ]; then
     msg ":: Starting udevd..."
     echo > /proc/sys/kernel/hotplug
     /sbin/udevd --daemon --resolve-names=never
-    export udevd_running=1
+    udevd_running=1
     msg "done."
 else
-    export udevd_running=0
+    udevd_running=0
 fi
 
 for cmd in ${CMDLINE}; do
@@ -53,24 +52,24 @@ for cmd in ${CMDLINE}; do
         *=*) rhs="$(echo "${cmd}" | cut -d= -f2-)"
              cmd="$(echo "${cmd}" | cut -d= -f1 | sed 's|\.|_|g')"
              cmd="$(echo "${cmd}" | sed 's|-|_|g')=${rhs}"
-             (echo "${cmd}" | grep -qe '^[0-9]') || export "${cmd}"
+             (echo "${cmd}" | grep -qe '^[0-9]') || eval "${cmd}"
              ;;
         *)   cmd="$(echo "${cmd}" | sed 's|\.|_|g')"
              cmd="$(echo "${cmd}" | sed 's|-|_|g')"
-             (echo "${cmd}" | grep -qe '^[0-9]') || export "${cmd}=y"
+             (echo "${cmd}" | grep -qe '^[0-9]') || eval "${cmd}=y"
              ;;
     esac
 done
 
 if [ -n "${disablehooks}" ]; then
     for d in $(echo "${disablehooks}" | sed 's|,| |g'); do
-        export "hook_${d}=disabled"
+        eval "hook_${d}=disabled"
     done
 fi
 
 if [ -n "${disablemodules}" ]; then
     for d in $(echo "${disablemodules}" | sed 's|,| |g'); do
-        export "mod_${d}=disabled"
+        eval "mod_${d}=disabled"
     done
 fi
 
@@ -92,7 +91,7 @@ done
 
 # If rootdelay is empty or not a non-negative integer, set it to 10
 if [ -z "${rootdelay}" ] || ! [ "${rootdelay}" -ge 0 ]; then
-    export rootdelay=10
+    rootdelay=10
 fi
 
 if [ -e "/hooks" ]; then

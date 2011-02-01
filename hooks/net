@@ -6,7 +6,7 @@ run_hook ()
     : > /ip_opts
 
     if [ -z "${ip}" -a -n "${nfsaddrs}" ]; then
-        export ip="${nfsaddrs}"
+        ip="${nfsaddrs}"
     fi
 
     if [ -n "${ip}" ]; then
