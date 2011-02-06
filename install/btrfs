@@ -2,7 +2,7 @@
 
 install()
 {
-    MODULES="$(all_modules btrfs) loop"
+    MODULES="$(all_modules btrfs)"
     BINARIES="/sbin/btrfs"
     SCRIPT="btrfs"
 }
