@@ -93,8 +93,5 @@ default_mount_handler() {
     else
         rwopt="ro"
     fi
-    if [ -L "${root}" ]; then
-      root=$(readlink -f "${root}")
-    fi
     mount ${fstype:+-t ${fstype}} -o ${rwopt}${rootflags:+,${rootflags}} "${root}" "$1"
 }
