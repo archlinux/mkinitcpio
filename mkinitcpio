@@ -27,7 +27,7 @@ GENIMG=""
 APPEND=""
 PRESET=""
 MESSAGE=""
-SKIPHOOKS=""
+SKIPHOOKS=()
 PRESETDIR="mkinitcpio.d"
 QUIET="y"
 SHOW_AUTOMODS="n"
@@ -92,7 +92,12 @@ while getopts ':c:k:s:b:g:a:p:m:vH:LMhS:' arg; do
         p) PRESET="${OPTARG}" ;;
         m) MESSAGE="${OPTARG}" ;;
         v) QUIET="n" ;;
-        S) SKIPHOOKS="${OPTARG}" ;;
+        S) OLDIFS=${IFS}
+           IFS=,
+           SKIPHOOKS=(${OPTARG})
+           IFS=${OLDIFS}
+           unset OLDIFS
+           ;;
         H) . "${INSTDIR}/${OPTARG}";
            echo "Help for hook '${OPTARG}':"
            help
@@ -232,7 +237,7 @@ fi
 parse_hook
 
 for hook in ${HOOKS}; do
-    echo "${SKIPHOOKS}" | grep -qw ${hook} && continue
+    in_array ${hook} ${SKIPHOOKS[@]} && continue
     unset MODULES
     unset BINARIES
     unset FILES
