@@ -14,8 +14,7 @@ install ()
         local rootdev
 
         if [ -f /proc/self/mountinfo -a -x /bin/findmnt ]; then
-            rootdev=$(/bin/findmnt -n -u -o source /)
-            /sbin/blkid -u filesystem -o value -s TYPE -p "${rootdev}" 2>/dev/null
+            /bin/findmnt -n -u -o fstype / 2>/dev/null
         fi
     }
 
