@@ -32,6 +32,7 @@ PRESETDIR="mkinitcpio.d"
 QUIET="y"
 SHOW_AUTOMODS="n"
 COMPRESSION="gzip"
+COMPRESSION_OPTIONS=""
 
 if [ ! $UID ]; then
     UID=$(id -u)
@@ -283,7 +284,8 @@ status=0
 if [ -n "${GENIMG}" ]; then
     echo -n ":: Generating image '${GENIMG}'..."
     shopt -s -o pipefail
-    if ! /sbin/gen_init_cpio ${FILELIST} | ${COMPRESSION} -9 > "${GENIMG}"; then
+    [ ${COMPRESSION} = "xz" ] && COMPRESSION_OPTIONS="${COMPRESSION_OPTIONS} --check=crc32"
+    if ! /sbin/gen_init_cpio ${FILELIST} | ${COMPRESSION} ${COMPRESSION_OPTIONS} > "${GENIMG}"; then
         echo "FAILED"
         status=1
     else
