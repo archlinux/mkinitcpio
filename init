@@ -51,7 +51,7 @@ for cmd in ${CMDLINE}; do
         # only export stuff that does work with ash :)
         *=*) rhs="$(echo "${cmd}" | cut -d= -f2-)"
              cmd="$(echo "${cmd}" | cut -d= -f1 | sed 's|\.|_|g')"
-             cmd="$(echo "${cmd}" | sed 's|-|_|g')=${rhs}"
+             cmd="$(echo "${cmd}" | sed 's|-|_|g')=\"${rhs}\""
              (echo "${cmd}" | grep -qe '^[0-9]') || eval "${cmd}"
              ;;
         *)   cmd="$(echo "${cmd}" | sed 's|\.|_|g')"
