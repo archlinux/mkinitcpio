@@ -151,7 +151,11 @@ if [ -n "${udevpid}" ]; then
     done
 fi
 
-mount --move /proc /new_root/proc
-mount --move /sys /new_root/sys
-mount --move /dev /new_root/dev
+for d in proc sys dev; do
+    if [ -d /new_root/${d} ]; then
+        /bin/mount --move /${d} /new_root/${d}
+    else
+        /bin/umount /${d}
+    fi
+done
 exec /sbin/switch_root -c /dev/console /new_root ${init} "$@"
