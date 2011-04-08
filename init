@@ -18,6 +18,7 @@ else
   # /dev/mem is needed if we want to load uvesafb before triggering uevents
   /bin/mknod /dev/mem c 1 1
 fi
+/bin/mount -t tmpfs run /run -o nosuid,noexec,nodev,mode=1777,size=10M
 
 read CMDLINE </proc/cmdline
 
@@ -151,7 +152,7 @@ if [ -n "${udevpid}" ]; then
     done
 fi
 
-for d in proc sys dev; do
+for d in proc sys dev run; do
     if [ -d /new_root/${d} ]; then
         /bin/mount --move /${d} /new_root/${d}
     else
