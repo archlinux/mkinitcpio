@@ -30,6 +30,31 @@ launch_interactive_shell() {
     /bin/sh -i
 }
 
+parse_cmdline() {
+    eval set -- $(cat /proc/cmdline)
+    for cmd in "$@"; do
+        case "${cmd}" in
+            \#*) break ;; # ignore everything after a # in the commandline
+            # The kernel passes those to the kernel on its own
+            [0123456Ss]) ;;
+            [0-9]*) ;;
+            single) ;;
+            rw) readwrite="yes" ;;
+            ro) readwrite="no" ;;
+            # only export stuff that does work with ash :)
+            *=*) rhs="$(echo "${cmd}" | cut -d= -f2-)"
+                cmd="$(echo "${cmd}" | cut -d= -f1 | sed 's|\.|_|g')"
+                cmd="$(echo "${cmd}" | sed 's|-|_|g')=\"${rhs}\""
+                (echo "${cmd}" | grep -qe '^[0-9]') || eval "${cmd}"
+                ;;
+            *)  cmd="$(echo "${cmd}" | sed 's|\.|_|g')"
+                cmd="$(echo "${cmd}" | sed 's|-|_|g')"
+                (echo "${cmd}" | grep -qe '^[0-9]') || eval "${cmd}=y"
+                ;;
+        esac
+    done
+}
+
 default_mount_handler() {
     if [ ${root:0:5} != "/dev/" ] || ! poll_device "${root}" ${rootdelay}; then
         msg "Root device '${root}' doesn't exist. Attempting to create it."

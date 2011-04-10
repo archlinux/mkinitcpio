@@ -19,8 +19,6 @@ else
 fi
 /bin/mount -t tmpfs run /run -o nosuid,noexec,nodev,mode=1777,size=10M
 
-read CMDLINE </proc/cmdline
-
 root=""
 init=""
 echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
@@ -28,27 +26,8 @@ echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
 # set default mount handler
 mount_handler="default_mount_handler"
 
-for cmd in ${CMDLINE}; do
-    case "${cmd}" in
-        \#*) break ;; # ignore everything after a # in the commandline
-        # The kernel passes those to the kernel on its own
-        [0123456Ss]) ;;
-        [0-9]*) ;;
-        single) ;;
-        rw) readwrite="yes" ;;
-        ro) readwrite="no" ;;
-        # only export stuff that does work with ash :)
-        *=*) rhs="$(echo "${cmd}" | cut -d= -f2-)"
-             cmd="$(echo "${cmd}" | cut -d= -f1 | sed 's|\.|_|g')"
-             cmd="$(echo "${cmd}" | sed 's|-|_|g')=\"${rhs}\""
-             (echo "${cmd}" | grep -qe '^[0-9]') || eval "${cmd}"
-             ;;
-        *)   cmd="$(echo "${cmd}" | sed 's|\.|_|g')"
-             cmd="$(echo "${cmd}" | sed 's|-|_|g')"
-             (echo "${cmd}" | grep -qe '^[0-9]') || eval "${cmd}=y"
-             ;;
-    esac
-done
+# parse the kernel command line
+parse_cmdline
 
 # if available, start udevd at this stage
 if [ -x /sbin/udevd ]; then
