@@ -31,27 +31,44 @@ launch_interactive_shell() {
 }
 
 parse_cmdline() {
-    eval set -- $(cat /proc/cmdline)
-    for cmd in "$@"; do
-        case "${cmd}" in
-            \#*) break ;; # ignore everything after a # in the commandline
-            # The kernel passes those to the kernel on its own
-            [0123456Ss]) ;;
-            [0-9]*) ;;
-            single) ;;
-            rw) readwrite="yes" ;;
-            ro) readwrite="no" ;;
-            # only export stuff that does work with ash :)
-            *=*) rhs="$(echo "${cmd}" | cut -d= -f2-)"
-                cmd="$(echo "${cmd}" | cut -d= -f1 | sed 's|\.|_|g')"
-                cmd="$(echo "${cmd}" | sed 's|-|_|g')=\"${rhs}\""
-                (echo "${cmd}" | grep -qe '^[0-9]') || eval "${cmd}"
-                ;;
-            *)  cmd="$(echo "${cmd}" | sed 's|\.|_|g')"
-                cmd="$(echo "${cmd}" | sed 's|-|_|g')"
-                (echo "${cmd}" | grep -qe '^[0-9]') || eval "${cmd}=y"
-                ;;
-        esac
+    local w in_quotes lhs rhs
+    in_quotes=0
+    for w in $(cat /proc/cmdline); do
+        if [ ${in_quotes} -eq 0 ]; then
+            case "${w}" in
+                \#*) break ;; # ignore everything after a # in the commandline
+                # The kernel passes those to init on its own
+                [0123456Ss]) ;;
+                single) ;;
+                rw) readwrite="yes" ;;
+                ro) readwrite="no" ;;
+                # only export stuff that does work with ash :)
+                *=*) rhs="$(echo "${w}" | cut -d= -f2-)"
+                    lhs="$(echo "${w}" | cut -d= -f1 | sed 's|\.|_|g;s|-|_|g;')"
+                    if [ "${rhs:0:1}" = "\"" ]; then
+                        if [ "${rhs:$((${#rhs}-1))}" = "\"" ]; then
+                            rhs="${rhs:1:$((${#rhs}-2))}"
+                        else
+                            rhs="${rhs:1}"
+                            in_quotes=1
+                            continue
+                        fi
+                    fi
+                    (echo "${lhs}" | grep -qe '^[0-9]' -e '[^a-zA-Z0-9_]') || eval ${lhs}=\${rhs}
+                    ;;
+                *)  lhs="$(echo "${w}" | sed 's|\.|_|g;s|-|_|g;')"
+                    (echo "${lhs}" | grep -qe '^[0-9]' -e '[^a-zA-Z0-9_]') || eval ${lhs}=y
+                    ;;
+            esac
+        else
+            if [ "${w:$((${#w}-1))}" = "\"" ]; then
+                rhs="${rhs} ${w:0:$((${#w}-1))}"
+                in_quotes=0
+                (echo "${lhs}" | grep -qe '^[0-9]' -e '[^a-zA-Z0-9_]') || eval ${lhs}=\${rhs}
+            else
+                rhs="${rhs} ${w}"
+            fi
+        fi
     done
 }
 
