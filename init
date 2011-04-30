@@ -32,7 +32,6 @@ parse_cmdline
 # if available, start udevd at this stage
 if [ -x /sbin/udevd ]; then
     msg ":: Starting udevd..."
-    echo > /proc/sys/kernel/hotplug
     /sbin/udevd --daemon --resolve-names=never
     udevd_running=1
     msg "done."
