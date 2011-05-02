@@ -118,15 +118,10 @@ elif [ ! -x "/new_root${init}" ]; then
     launch_interactive_shell --exec
 fi
 
-#Special handling if udev is running
-udevpid=$(/bin/pidof udevd)
-if [ -n "${udevpid}" ]; then
-    # Settle pending uevents, then kill udev
-    /sbin/udevadm settle
-    /bin/kill ${udevpid} > /dev/null 2>&1
-    while /bin/pidof udevd >/dev/null; do
-        sleep 0.1
-    done
+# Stop udevd if is running
+if [ "${udevd_running}" -eq 1 ]; then
+    /sbin/udevadm control --exit
+    /sbin/udevadm info --cleanup-db
 fi
 
 for d in proc sys dev run; do
