@@ -282,14 +282,14 @@ fi
 
 status=0
 if [ -n "${GENIMG}" ]; then
-    echo -n ":: Generating image '${GENIMG}'..."
+    echo ":: Generating image '${GENIMG}'"
     shopt -s -o pipefail
     [ ${COMPRESSION} = "xz" ] && COMPRESSION_OPTIONS="${COMPRESSION_OPTIONS} --check=crc32"
     if ! /sbin/gen_init_cpio ${FILELIST} | ${COMPRESSION} ${COMPRESSION_OPTIONS} > "${GENIMG}"; then
-        echo "FAILED"
+        echo ":: Image generation FAILED"
         status=1
     else
-        echo "SUCCESS"
+        echo ":: Image generation successful"
         status=0
     fi
 
