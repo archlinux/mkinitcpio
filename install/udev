@@ -14,7 +14,6 @@ install ()
     for tool in firmware ata_id path_id scsi_id usb_id; do
         add_file /lib/udev/${tool}
     done
-    add_file /lib/initcpio/udev/load-modules.sh /lib/udev/load-modules.sh
 }
 
 help ()
