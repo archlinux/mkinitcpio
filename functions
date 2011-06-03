@@ -41,16 +41,13 @@ in_array() {
 
 auto_modules ()
 {
-    aliases="$(find /sys/devices/ -name modalias -exec cat {} +)"
-    mods=""
-    for a in $aliases; do
-        m="$(modprobe --set-version ${KERNELVERSION} --resolve-alias "$a")"
-        [ -n "$m" ] && mods="$mods $m"
-    done
+    IFS=$'\n' read -rd '' -a mods < \
+        <(find /sys/devices -name modalias -exec sort -zu {} + |
+        xargs -0 modprobe -aRS "$KERNELVERSION" |
+        sort -u)
 
-    echo "${mods}" | tr '-' '_'
-    [ -z "${mods}" ] && return 1
-    return 0
+    printf "%s\n" "${mods[@]//-/_}"
+    (( ${#mods[*]} ))
 }
 
 all_modules ()
