@@ -65,16 +65,11 @@ all_modules ()
 
 checked_modules ()
 {
-    if [ -e "${MODULE_FILE}" ]; then
-        for mod in $(all_modules $@); do
-            modname=$(get_module_name "${mod}")
-            if grep -q "^${modname}$" "${MODULE_FILE}"; then
-                echo ${modname}
-            fi
-        done
+    if [[ -s "$MODULE_FILE" ]]; then
+        grep -xFf "$MODULE_FILE" <(all_modules "$@")
         return 1
     else
-        all_modules ${@}
+        all_modules "$@"
     fi
 }
 
