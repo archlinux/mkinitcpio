@@ -275,9 +275,9 @@ if [ "${HAS_MODULES}" = "y" ]; then
         install -m 644 -D "${BASEDIR}${mod}" "${TMPDIR}${mod}"
     done
     /sbin/depmod -b ${TMPDIR} ${KERNELVERSION}
-    add_file "${TMPDIR}/lib/modules/${KERNELVERSION}/modules.dep"     "/lib/modules/${KERNELVERSION}/modules.dep"
-    add_file "${TMPDIR}/lib/modules/${KERNELVERSION}/modules.alias"   "/lib/modules/${KERNELVERSION}/modules.alias"
-    add_file "${TMPDIR}/lib/modules/${KERNELVERSION}/modules.symbols" "/lib/modules/${KERNELVERSION}/modules.symbols"
+    for dmfile in modules.{dep,alias,symbols}.bin; do
+        add_file "${TMPDIR}/lib/modules/${KERNELVERSION}/$dmfile" "/lib/modules/${KERNELVERSION}/$dmfile"
+    done
 fi
 
 status=0
