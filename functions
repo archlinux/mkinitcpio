@@ -52,11 +52,15 @@ auto_modules ()
 
 all_modules ()
 {
-    mods=$(find ${MODULEDIR} -name '*.ko' -or -name '*.ko.gz' 2>/dev/null | grep $@ | sort -u)
+    local -i count=0
+    while read -r -d '' mod; do
+        (( ++count ))
+        mod=${mod##*/}
+        mod="${mod%.ko.*}"
+        printf '%s\n' "${mod//-/_}"
+    done < <(find "$MODULEDIR" -name '*.ko*' -print0 2>/dev/null | grep -Zz "$@")
 
-    echo "${mods}"
-    [ -z "${mods}" ] && return 1
-    return 0
+    (( count ))
 }
 
 checked_modules ()
