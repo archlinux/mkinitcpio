@@ -87,15 +87,11 @@ default_mount_handler() {
         major=""
         minor=""
         if [ ${root:0:5} = "/dev/" ]; then
-            # It might be a block device (/dev/sda) -> /sys/block/sda/dev
-            # or a partition (/dev/sda1) -> /sys/block/sda/sda1/dev
-            for dir in /sys/block /sys/block/*; do
-                if [ -f ${dir}/${root:5}/dev ]; then
-                    major="$(cat ${dir}/${root:5}/dev | cut -d: -f1)"
-                    minor="$(cat ${dir}/${root:5}/dev | cut -d: -f2)"
-                    break
-                fi
-            done
+            # It might be a block device (/dev/sda) -> /sys/class/block/sda/dev
+            if [ -e /sys/class/block/${root:5}/dev ]; then
+                IFS=':' read major minor < "/sys/class/block/${root:5}/dev"
+                break
+            fi
         # It might be a major/minor pair (8:1)
         elif echo ${root} | grep -q :; then
             major="$(echo ${root} | cut -d: -f1)"
