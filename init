@@ -46,9 +46,7 @@ if [ -n "${disablehooks}" ]; then
 fi
 
 if [ -n "${earlymodules}" ]; then
-    for m in $(echo "${earlymodules}" | sed 's|,| |g'); do
-        /sbin/modprobe -q ${m} > /dev/null 2>&1
-    done
+    /sbin/modprobe -qab ${earlymodules//,/ }
 fi
 
 . /config
