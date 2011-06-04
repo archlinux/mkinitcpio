@@ -45,12 +45,6 @@ if [ -n "${disablehooks}" ]; then
     done
 fi
 
-if [ -n "${disablemodules}" ]; then
-    for d in $(echo "${disablemodules}" | sed 's|,| |g'); do
-        eval "mod_${d}=disabled"
-    done
-fi
-
 if [ -n "${earlymodules}" ]; then
     for m in $(echo "${earlymodules}" | sed 's|,| |g'); do
         /sbin/modprobe -q ${m} > /dev/null 2>&1
@@ -59,13 +53,7 @@ fi
 
 . /config
 
-for m in ${MODULES}; do
-    TST=""
-    eval "TST=\$mod_${m}"
-    if [ "${TST}" != "disabled" ]; then
-        /sbin/modprobe -q ${m} > /dev/null 2>&1
-    fi
-done
+/sbin/modprobe -qab $MODULES
 
 # If rootdelay is empty or not a non-negative integer, set it to 10
 if [ -z "${rootdelay}" ] || ! [ "${rootdelay}" -ge 0 ]; then
