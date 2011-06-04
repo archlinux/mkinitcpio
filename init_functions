@@ -73,6 +73,15 @@ parse_cmdline() {
 }
 
 default_mount_handler() {
+    # resolve tag name to block device
+    if [ "${root:0:5}" = 'UUID=' ] || [ "${root:0:6}" = 'LABEL=' ]; then
+        device=$(blkid -t "$root" -o device)
+        if [ -n "$device" ]; then
+            root=$device
+        fi
+        unset device
+    fi
+
     if [ ${root:0:5} != "/dev/" ] || ! poll_device "${root}" ${rootdelay}; then
         msg "Root device '${root}' doesn't exist. Attempting to create it."
         major=""
