@@ -117,4 +117,4 @@ for d in proc sys dev run; do
         /bin/umount /${d}
     fi
 done
-exec /sbin/switch_root -c /dev/console /new_root ${init} "$@"
+exec env -i TERM=$TERM /sbin/switch_root -c /dev/console /new_root ${init} "$@"
