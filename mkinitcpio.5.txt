@@ -21,17 +21,14 @@ Options
 *-k* 'kernelversion'::
 	Use 'kernelversion'. Default is the current running kernel.
 
-*-s* 'filelist'::
-	Saves a list of all the files in the initial ramdisk in 'filelist'. Default: no; This means the filelist will not be retained if this option isn't specified. Useful for debugging purposes.
+*-s*::
+	Saves the build directory for the initial ramdisk. Default: no; This means the directory will not be retained if this option isn't specified. Useful for debugging purposes.
 
 *-b* 'basedir'::
 	Use 'basedir' as a starting point for gathering information about the currently running system. Default: /.
 
 *-g* 'filename'::
 	Generate a CPIO image as 'filename'. Default: no; this means nothing will be written to the filesystem unless this option is specified.
-
-*-a* 'filelist'::
-	Append to an existing 'filelist'. Default no.
 
 *-p* 'preset'::
 	Build initial ramdisk according to specified 'preset'. Presets are found in /etc/mkinitcpio.d

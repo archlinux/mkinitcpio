@@ -10,11 +10,11 @@
 #   in case of embedded spaces, quote all path names and string comparisons
 #
 
+shopt -s extglob
 
 # Settings
 TMPDIR="$(mktemp -d /tmp/mkinitcpio.XXXXXX)"
 BASEDIR=""
-FILELIST="${TMPDIR}/filelist"
 MESSAGEFILE="${TMPDIR}/message"
 KERNELVERSION="$(uname -r)"
 FUNCTIONS="functions"
@@ -24,7 +24,6 @@ INSTDIR="install"
 MODULE_FILE=""
 SAVELIST=""
 GENIMG=""
-APPEND=""
 PRESET=""
 MESSAGE=""
 SKIPHOOKS=()
@@ -52,10 +51,9 @@ usage ()
     echo "${APPNAME}: usage"
     echo "  -c CONFIG        Use CONFIG file. default: /etc/mkinitcpio.conf"
     echo "  -k KERNELVERSION Use KERNELVERSION. default: $(uname -r)"
-    echo "  -s NAME          Save filelist. default: no"
+    echo "  -s               Save build directory. default: no"
     echo "  -b BASEDIR       Use BASEDIR. default: /"
     echo "  -g IMAGE         Generate a cpio image as IMAGE. default: no"
-    echo "  -a NAME          Append to an existing filelist. default: no"
     echo "  -p PRESET        Build specified preset."
     echo "  -m MESSAGE       Print MESSAGE before passing control to init."
     echo "  -S SKIPHOOKS     Skip SKIPHOOKS (comma-separated) when building the image."
@@ -70,7 +68,11 @@ usage ()
 
 cleanup ()
 {
-    [ -n "${TMPDIR}" -a -d "${TMPDIR}" ] && rm -rf ${TMPDIR}
+    if [[ $SAVELIST ]]; then
+        echo ":: build directory saved in $TMPDIR"
+    else
+        rm -rf ${TMPDIR}
+    fi
 }
 
 sighandler() {
@@ -80,7 +82,7 @@ sighandler() {
 
 trap sighandler TERM INT
 
-while getopts ':c:k:s:b:g:a:p:m:vH:LMhS:' arg; do
+while getopts ':c:k:sb:g:p:m:vH:LMhS:' arg; do
     if [ "${OPTARG#-}" != "${OPTARG}" ]; then
         echo "error: optional argument to '-${arg}' begins with a '-'"
         echo "  you probably don't want this....aborting."
@@ -89,10 +91,9 @@ while getopts ':c:k:s:b:g:a:p:m:vH:LMhS:' arg; do
     case "${arg}" in
         c) CONFIG="${OPTARG}" ;;
         k) KERNELVERSION="${OPTARG}" ;;
-        s) SAVELIST="y"; FILELIST="${OPTARG}" ;;
+        s) SAVELIST="y"; ;;
         b) BASEDIR="${OPTARG}" ;;
         g) GENIMG="${OPTARG}" ;;
-        a) APPEND="y"; SAVELIST="y"; FILELIST="${OPTARG}" ;;
         p) PRESET="${OPTARG}" ;;
         m) MESSAGE="${OPTARG}" ;;
         v) QUIET="n" ;;
@@ -188,6 +189,15 @@ BASEDIR="${BASEDIR%/}"
 
 MODULEDIR="${BASEDIR}/lib/modules/${KERNELVERSION}"
 
+if [[ $GENIMG ]]; then
+  IMGPATH=$(readlink -f "$GENIMG")
+  if [[ -z $IMGPATH || ! -w ${IMGPATH%/*} ]]; then
+    echo "error: unable to write to path: '$GENIMG'"
+    cleanup
+    exit 1
+  fi
+fi
+
 if [ -n "${BASEDIR}" ]; then
     if [ "${BASEDIR}" = "${BASEDIR#/}" ]; then
         BASEDIR="$(pwd)/${BASEDIR}"
@@ -204,19 +214,6 @@ if [ ! -f "${CONFIG}" ]; then
     exit 1
 fi
 . "${CONFIG}"
-
-if [ -f "${FILELIST}" -a -z "${APPEND}" ]; then
-    if [ -z "${SAVELIST}" ]; then
-        rm ${FILELIST}
-        touch "${FILELIST}"
-    else
-        echo "destination file list '${FILELIST}' exists - remove before running"
-        cleanup
-        exit 1
-    fi
-else
-    touch "${FILELIST}"
-fi
 
 BASEDIR=$(echo ${BASEDIR} | tr -s /)
 MODULEDIR=$(echo ${MODULEDIR} | tr -s /)
@@ -279,31 +276,36 @@ done
 
 if (( ${#ADDED_MODULES[*]} )); then
     echo ":: Generating module dependencies"
-    for mod in $(grep "file /lib/modules/${KERNELVERSION}" ${FILELIST} | cut -d' ' -f2); do
-        install -m 644 -D "${BASEDIR}${mod}" "${TMPDIR}${mod}"
-    done
-    /sbin/depmod -b ${TMPDIR} ${KERNELVERSION}
-    for dmfile in modules.{dep,alias,symbols}.bin; do
-        add_file "${TMPDIR}/lib/modules/${KERNELVERSION}/$dmfile" "/lib/modules/${KERNELVERSION}/$dmfile"
-    done
+    /sbin/depmod -b "${TMPDIR}/root" "${KERNELVERSION}"
+    rm "$TMPDIR/root/lib/modules/$KERNELVERSION"/modules.!(dep.bin|alias.bin|symbols.bin)
 fi
 
-status=0
+declare -i status=0
+declare -a pipesave
 if [ -n "${GENIMG}" ]; then
     echo ":: Generating image '${GENIMG}'"
-    shopt -s -o pipefail
     [ ${COMPRESSION} = "xz" ] && COMPRESSION_OPTIONS="${COMPRESSION_OPTIONS} --check=crc32"
-    if ! /sbin/gen_init_cpio ${FILELIST} | ${COMPRESSION} ${COMPRESSION_OPTIONS} > "${GENIMG}"; then
-        echo ":: Image generation FAILED"
+
+    pushd "$TMPDIR/root" >/dev/null
+    find . -print0 | bsdcpio -0oH newc | $COMPRESSION $COMPRESSION_OPTIONS > "$IMGPATH"
+    pipesave=("${PIPESTATUS[@]}") # save immediately
+    popd >/dev/null
+
+    if (( pipesave[0] )); then
+        errmsg="find reported an error"
+    elif (( pipesave[1] )); then
+        errmsg="bsdcpio reported an error"
+    elif (( pipesave[2] )); then
+        errmsg="$COMPRESSION reported an error"
+    fi
+
+    if [[ $errmsg ]]; then
+        echo ":: Image generation FAILED ($errmsg)"
         status=1
     else
         echo ":: Image generation successful"
-        status=0
     fi
 
-    if [ -z "${SAVELIST}" ]; then
-        rm ${FILELIST}
-    fi
 else
     echo ":: Dry run complete, use -g IMAGE to generate a real image"
 fi

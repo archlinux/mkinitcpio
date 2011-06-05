@@ -79,12 +79,12 @@ checked_modules ()
 
 add_full_dir ()
 {
-    if [ -n "${1}" -a -d "${1}" ]; then
-        for f in ${1}/*; do
-            if [ -d "${f}" ]; then
-                add_full_dir "${f}"
+    if [[ -n $1 && -d $1 ]]; then
+        for f in "$1"/*; do
+            if [[ -d "$f" ]]; then
+                add_full_dir "$f"
             else
-                add_file "${f}"
+                add_file "$f"
             fi
         done
     fi
@@ -92,28 +92,23 @@ add_full_dir ()
 
 add_dir ()
 {
-    #skip root directory and "." for relative directories... i.e. /foo/bar/./blah
-    if [ -n "${1}" -a "${1}" != "/" -a "${1}" != "." ]; then
-        if ! grep -q "dir ${1} " "${FILELIST}"; then
-            add_dir $(get_dirname "${1}")
-            msg "  adding  dir ${1}"
-            echo "dir ${1} 755 0 0" >> "${FILELIST}"
-        fi
+    if [[ ! -e "$TMPDIR/root/$1" ]]; then
+        msg "  adding  dir ${1}"
+        command install -dm755 "$TMPDIR/root/$1"
     fi
 }
 
-# what the hell does this do?
 add_symlink ()
 {
     local fil dest dir
-    if [ -h ${1} ]; then
+    if [[ -h $1 ]]; then
         fil="${1##$BASEDIR}"
         dest="${2##$BASEDIR}"
         add_dir $(get_dirname "${dest}")
         add_dir $(get_dirname "${fil}")
-        if ! grep -q "slink ${fil} " "${FILELIST}"; then
+        if [[ ! -e "$TMPDIR/root/$dest" ]]; then
             msg "  adding link ${fil} -> ${dest}"
-            echo "slink ${fil} ${dest} $(stat -c '%a' ${1}) 0 0" >> "${FILELIST}"
+            ln -s "$dest" "$TMPDIR/root/$fil"
         fi
     fi
     #fail quietly
@@ -122,27 +117,27 @@ add_symlink ()
 add_file ()
 {
     local fil lnk dir dest
-    if [ -f "${1}" ]; then
-        fil="${1}"
+    if [[ -f "$1" ]]; then
+        fil=$1
         lnk=$(readlink -f "${fil}")
-        if [ -n "${lnk}" ]; then
+        if [[ ${lnk} ]]; then
             add_symlink "${fil}" "${lnk}"
             fil="${lnk}"
         fi
         if [[ $2 ]]; then
-            dest="${2}"
+            dest=$2
         else
             dest="${fil##$BASEDIR}"
-            if [ "${dest}" = "${dest#/}" ]; then
+            if [[ "${dest}" = "${dest#/}" ]]; then
                 dest="/${dest}"
             fi
         fi
 
         add_dir $(get_dirname "${dest}")
 
-        if ! grep -q "file ${dest} " "${FILELIST}"; then
+        if [[ ! -e $TMPDIR/root/$dest ]]; then
             msg "  adding file ${dest}"
-            echo "file ${dest} ${fil} $(stat -c '%a' ${fil}) 0 0" >> "${FILELIST}"
+            command install -Dm$(stat -c '%a' "$fil") "$fil" "$TMPDIR/root/$dest"
         fi
     else
         err "file '${1}' does not exist"
