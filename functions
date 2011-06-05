@@ -152,7 +152,7 @@ add_file ()
             add_symlink "${fil}" "${lnk}"
             fil="${lnk}"
         fi
-        if [ $# -eq 2 ]; then
+        if [[ $2 ]]; then
             dest="${2}"
         else
             dest="${fil##$BASEDIR}"
@@ -221,48 +221,34 @@ add_module ()
 
 add_binary ()
 {
-    local bin dest type lib
-    bin=$(which "${1}")
-    if [ $? -ne 0 ]; then
-        bin="${1}"
-    fi
+    local bin dest lib
 
-    dest=""
-    if [ $# -eq 2 ]; then
-        dest=${2}
-    fi
+    bin=$(type -P "$1")
+    dest=$2
 
-    if [ ! -f "${bin}" ]; then
-        err "'${bin}' is not a file"
+    if [[ ! -f "$bin" ]]; then
+        err "'$1' is not a file"
         return 1
     fi
 
-    if [ $? -eq 0 ]; then
-        type=$(file -b "${bin}")
-        case "${type}" in
-            *script*)
+    case "$(file -b "$bin")" in
+        *script*)
             msg "   adding '${type}' script, ensure proper interp exists..."
-            add_file "${bin}" ${dest}
+            add_file "$bin" ${dest+"$dest"}
             ;;
-            *executable*|*shared\ object*|*symbolic\ link*)
-            add_file "${bin}" ${dest}
-            #note, this will also handle 'not a dynamic executable' spit out by
-            # static binaries... the deps will produce nothing
-            for lib in $(ldd ${bin} 2>/dev/null | sed "s|.*=>\(.*\)|\1|"); do
-                if [ -n "${lib}" ]; then
-                    #remove TLS libraries
-                    notls=$(echo ${lib} | sed 's|/lib/tls.*/\(lib.*\)|/lib/\1|')
-                    [ -e "${notls}" ] && lib="${notls}"
-                    [ -f "${lib}" ] && add_file "${lib}"
-                fi
-            done
+        *executable*|*shared\ object*|*symbolic\ link*)
+            add_file "$bin" ${dest+"$dest"}
+            # note, this will also handle 'not a dynamic executable' spit out
+            # by static binaries... the deps will produce nothing
+            while read -r lib; do
+                [[ -f "$lib" ]] && add_file "$lib"
+            done < <(ldd "$bin" 2>/dev/null | sed '1d;s|.*=>\(.*\)|\1|;s/(0x[0-9a-f]\+)//')
             ;;
-            *)
-            err "unknown type '${type}' for binary '${bin}'"
+        *)
+            err "unknown type '$type' for binary '$bin'"
             return 1
             ;;
-        esac
-    fi
+    esac
 }
 
 parse_hook ()
