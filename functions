@@ -39,6 +39,10 @@ in_array() {
     return 1 # Not Found
 }
 
+kmodinfo() {
+    modinfo -b "$BASEDIR" -k "$KERNELVERSION" "$@" 2>/dev/null
+}
+
 auto_modules ()
 {
     IFS=$'\n' read -rd '' -a mods < \
@@ -173,50 +177,48 @@ add_file ()
     fi
 }
 
-HAS_MODULES="n"
 declare -a ADDED_MODULES
 #modules are handled specially in order to enable autodetection
 add_module ()
 {
-    local m fil path fw mod deps
-    m=$(get_module_name "${1}")
-    #find pattern - replace _ with [-_] to match either
-    fil="${m//_/[-_]}"
+    local module path fw dep deps
+    module=${1%.ko*}
 
     #skip expensive stuff if this module has already been added
-    if in_array $m ${ADDED_MODULES[@]}; then
-        msg "module $m was already added"
+    if in_array $module ${ADDED_MODULES[@]}; then
+        msg "module $module was already added"
         return
     fi
 
-    found=0
-    for path in $(find "${MODULEDIR}" -type f -name "${fil}.ko" -or -name "${fil}.ko.gz"); do
-        #get needed firmware files
-        for fw in $(/sbin/modinfo -F firmware "${path}"); do
-            [ -f "/lib/firmware/$fw" ] && add_file "/lib/firmware/$fw"
-        done
-        #get module depends
-        deps="$(/sbin/modinfo -F depends "${path}")"
-        for mod in ${deps//,/ }; do
-            if [ -n "${mod}" ]; then
-                add_module "${mod}"
+    path=$(kmodinfo -0F filename "$module")
+    if [[ $path ]]; then
+        # get module firmware
+        while read -r -d '' fw; do
+            if [[ -e "$BASEDIR/lib/firmware/$fw" ]]; then
+                add_file "$BASEDIR/lib/firmware/$fw"
             fi
+        done < <(kmodinfo -0F firmware "$module")
+
+        # get module depends
+        IFS=',' read -r -d '' -a deps < <(kmodinfo -0F depends "$module")
+        for dep in "${deps[@]}"; do
+            add_module "$dep"
         done
-        HAS_MODULES="y"
-        ADDED_MODULES[${#ADDED_MODULES[*]}]="$m"
-        msg "  adding module ${fil}"
-        add_file "${path}" && found=1
-    done
-    if [ ${found} -eq 1 ]; then
-        #explicit module depends
-        case "$m" in 
-            fat) add_module "nls_cp437" ;;
-            ocfs2) add_module "configfs" ;;
-            libcrc32c) add_module "crc32c"; add_module "crc32c_intel" ;;
-        esac
+
+        ADDED_MODULES+=("$module")
+        msg "  adding module $module"
+        add_file "$path" || return
     else
-        err "module '$m' not found"
+        err "module '$module' not found"
+        return
     fi
+
+    # explicit module depends
+    case "$module" in
+        fat) add_module "nls_cp437" ;;
+        ocfs2) add_module "configfs" ;;
+        libcrc32c) add_module "crc32c"; add_module "crc32c_intel" ;;
+    esac
 }
 
 add_binary ()

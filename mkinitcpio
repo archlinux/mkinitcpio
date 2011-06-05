@@ -277,7 +277,7 @@ for hook in ${HOOKS}; do
     fi
 done
 
-if [ "${HAS_MODULES}" = "y" ]; then
+if (( ${#ADDED_MODULES[*]} )); then
     echo ":: Generating module dependencies"
     for mod in $(grep "file /lib/modules/${KERNELVERSION}" ${FILELIST} | cut -d' ' -f2); do
         install -m 644 -D "${BASEDIR}${mod}" "${TMPDIR}${mod}"
