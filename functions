@@ -119,16 +119,6 @@ add_symlink ()
     #fail quietly
 }
 
-add_symlink2 ()
-{
-    add_dir $(get_dirname ${1})
-    add_dir $(get_dirname ${2})
-    if ! grep -q "slink ${1} " "${FILELIST}"; then
-         msg "  adding link ${1} -> ${2}"
-         echo "slink ${1} ${2} 777 0 0" >> "${FILELIST}"
-    fi
-}
-
 add_file ()
 {
     local fil lnk dir dest
