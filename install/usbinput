@@ -1,6 +1,6 @@
 # vim: set ft=sh:
 
-install ()
+build()
 {
     MODULES=" $(checked_modules "/usb/host" | grep -ve "_cs" -e "sl811-hcd" -e "isp116x-hcd") "
     MODULES=" $(echo ${MODULES}) $(all_modules "/hid/hid-") "

@@ -226,7 +226,7 @@ MODULEDIR=$(echo ${MODULEDIR} | tr -s /)
 if [ "${SHOW_AUTOMODS}" = "y" ]; then
     echo "Modules autodetected:"
     . "${INSTDIR}/autodetect"
-    install
+    build
     cat "${MODULE_FILE}"
     cleanup
     exit 0
@@ -242,10 +242,8 @@ parse_hook
 
 for hook in ${HOOKS}; do
     in_array ${hook} ${SKIPHOOKS[@]} && continue
-    unset MODULES
-    unset BINARIES
-    unset FILES
-    install () { msg "${hook}: no install function..."; }
+    unset MODULES BINARIES FILES
+    build () { msg "${hook}: no build function..."; }
     # Deprecation check
     # A hook is considered deprecated if it is a symlink
     # within $INSTDIR.
@@ -260,10 +258,19 @@ for hook in ${HOOKS}; do
             hook="${newhook}"
         fi
     fi
-    if grep -q "install" "${INSTDIR}/${hook}"; then
+    if [[ -r "${INSTDIR}/${hook}" ]]; then
         . "${INSTDIR}/${hook}"
         echo ":: Parsing hook [${hook}]"
-        install
+        if [[ $(type -t install) = 'function' ]]; then
+            echo "  -----------------------------------------------------------------------"
+            echo "  WARNING: Hook '$hook' uses a deprecated 'install' function. This "
+            echo "           should be switched to a 'build' function instead."
+            echo "  -----------------------------------------------------------------------"
+            install
+            unset install
+        else
+            build
+        fi
         parse_hook
     else
         die "Hook '${hook}' can not be found."
@@ -272,8 +279,6 @@ done
 
 if [ "${HAS_MODULES}" = "y" ]; then
     echo ":: Generating module dependencies"
-    # unfortuate name collision between a function and utility program
-    unset install
     for mod in $(grep "file /lib/modules/${KERNELVERSION}" ${FILELIST} | cut -d' ' -f2); do
         install -m 644 -D "${BASEDIR}${mod}" "${TMPDIR}${mod}"
     done

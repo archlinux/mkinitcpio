@@ -1,6 +1,6 @@
 # vim:set ft=sh:
 
-install ()
+build()
 {
     add_dir "/proc"
     add_dir "/sys"

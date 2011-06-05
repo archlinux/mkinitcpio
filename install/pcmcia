@@ -1,6 +1,6 @@
 # vim: set ft=sh:
 
-install ()
+build()
 {
     MODULES=" $(checked_modules '/pcmcia/' | grep -ve 'sound' -e 'net') $(checked_modules '/ide/legacy')"
     MODULES=$(echo ${MODULES}) #trim whitespace

@@ -1,6 +1,6 @@
 # vim: set ft=sh:
 
-install ()
+build()
 {
     MODULE_FILE="${TMPDIR}/autodetect_modules"
     #blegh, we'll let /tmp clean itself up

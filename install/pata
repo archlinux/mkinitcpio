@@ -1,6 +1,6 @@
 # vim: set ft=sh:
 
-install ()
+build()
 {
     MODULES=" $(checked_modules "ata/pata_*") $(checked_modules "ata/ata_generic") 
               $(checked_modules "ata/ata_piix")"

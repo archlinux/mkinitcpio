@@ -1,6 +1,6 @@
 # vim: set ft=sh:
 
-install ()
+build()
 {
     MODULES=" $(checked_modules "/scsi/" | grep -ve "imm" -e "pdc_adma" -e "ahci" -e "ata" -e "pcmcia" -e "ide") 
               $(checked_modules "/block/" | grep -e "cciss" -e "cpqarray" -e "DAC960")

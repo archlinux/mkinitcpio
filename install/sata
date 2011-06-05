@@ -1,6 +1,6 @@
 # vim: set ft=sh:
 
-install ()
+build()
 {
     MODULES=" $(checked_modules "scsi/.*ata") $(checked_modules "block/sx8") 
               $(checked_modules "scsi/ahci") $(checked_modules "scsi/pdc_adma") 
