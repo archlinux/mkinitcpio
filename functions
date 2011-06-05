@@ -102,23 +102,6 @@ add_dir ()
     fi
 }
 
-# add_device /dev/foo type major minor [permissions]
-add_device ()
-{
-    if [ $# -ge 4 ]; then
-        local perms
-        perms="${5:-644}"
-        if ! grep -q "nod ${1}" "${FILELIST}"; then
-            add_dir $(get_dirname "${1}")
-            msg "  adding node ${1}"
-            echo "nod ${1} ${perms} 0 0 ${2} ${3} ${4}" >> "${FILELIST}"
-        fi
-    else
-        err "invalid device node format: $@"
-        return 1
-    fi
-}
-
 # what the hell does this do?
 add_symlink ()
 {

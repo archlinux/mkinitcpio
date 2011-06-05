@@ -14,11 +14,6 @@ build()
     add_dir "/usr/sbin"
     add_dir "/run"
 
-    add_device "/dev/null" c 1 3
-    add_device "/dev/zero" c 1 5
-    add_device "/dev/console" c 5 1
-    add_device "/dev/mem" c 1 1
-
     add_binary /lib/initcpio/busybox /bin/busybox
     add_binary /sbin/modprobe
     add_binary /sbin/blkid
