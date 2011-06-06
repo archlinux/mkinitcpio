@@ -150,53 +150,50 @@ if [[ $optkver ]]; then
 fi
 
 # use preset $PRESET
-if [ -n "${PRESET}" ]; then
-    if [ -f "${PRESETDIR}/${PRESET}.preset" ]; then
+if [[ $PRESET ]]; then
+    if [[ -f "$PRESETDIR/$PRESET.preset" ]]; then
         # Use -b, -m and -v options specified earlier
-        PRESET_MKOPTS="${0}"
-        [ -n "${BASEDIR}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -b ${BASEDIR}"
-        [ -n "${MESSAGE}" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -m \"${MESSAGE}\""
-        [ "${QUIET}" = "n" ] && PRESET_MKOPTS="${PRESET_MKOPTS} -v"
+        declare -a preset_mkopts preset_cmd
+        [[ $BASEDIR ]] && preset_mkopts+=(-b "$BASEDIR")
+        [[ $MESSAGE ]] && preset_mkopts+=(-m "$MESSAGE")
+        [[ "$QUIET" = n ]] && preset_mkopts+=(-v)
         # Build all images
-        . ${PRESETDIR}/${PRESET}.preset
-        for p in ${PRESETS[@]}; do
+        . "$PRESETDIR/$PRESET.preset"
+        for p in "${PRESETS[@]}"; do
             echo "==> Building image \"${p}\""
-            PRESET_CMD="${PRESET_MKOPTS}"
+            preset_cmd=("${preset_mkopts[@]}")
 
-            eval "PRESET_KVER=\"\${${p}_kver}\""
-            [ -z "${PRESET_KVER}" ] && PRESET_KVER="${ALL_kver}"
-            eval "PRESET_CONFIG=\"\${${p}_config}\""
-            [ -z "${PRESET_CONFIG}" ] && PRESET_CONFIG="${ALL_config}"
-            eval "PRESET_IMAGE=\"\${${p}_image}\""
-            eval "PRESET_OPTIONS=\"\${${p}_options}\""
-
-            if [ -n "${PRESET_KVER}" ]; then
-                PRESET_CMD="${PRESET_CMD} -k ${PRESET_KVER}"
+            preset_kver=${p}_kver
+            if [[ ${!preset_kver:-$ALL_kver} ]]; then
+                preset_cmd+=(-k "${!preset_kver:-$ALL_kver}")
             else
                 echo "==> No kernel version specified. Skipping image \"${p}\"."
                 continue
             fi
 
-            if [ -n "${PRESET_CONFIG}" ]; then
-                PRESET_CMD="${PRESET_CMD} -c ${PRESET_CONFIG}"
+            preset_config=${p}_config
+            if [[ ${!preset_config:-$ALL_config} ]]; then
+              preset_cmd+=(-c "${!preset_config:-$ALL_config}")
             else
                 echo "==> No configuration file specified. Skipping image \"${p}\"."
                 continue
             fi
 
-            if [ -n "${PRESET_IMAGE}" ]; then
-                PRESET_CMD="${PRESET_CMD} -g ${PRESET_IMAGE}"
+            preset_image=${p}_image
+            if [[ ${!preset_image} ]]; then
+                preset_cmd+=(-g "${!preset_image}")
             else
                 echo "==> No image file specified. Skipping image \"${p}\"."
                 continue
             fi
 
-            if [ -n "${PRESET_OPTIONS}" ]; then
-                PRESET_CMD="${PRESET_CMD} ${PRESET_OPTIONS}"
+            preset_options=${p}_options
+            if [[ ${!preset_options} ]]; then
+                preset_cmd+=(${!preset_options}) # intentional word splitting
             fi
 
-            echo "==> Running command: ${PRESET_CMD}"
-            if eval ${PRESET_CMD}; then
+            echo "==> Running command: $0 ${preset_cmd[@]}"
+            if "$0" "${preset_cmd[@]}"; then
                 echo "==> SUCCESS"
             else
                 echo "==> FAIL"
@@ -205,7 +202,7 @@ if [ -n "${PRESET}" ]; then
         cleanup
         exit 0
     else
-        echo "Preset ${PRESET} does not exist. Exiting."
+        echo "Preset $PRESET does not exist. Exiting."
         cleanup
         exit 1
     fi
@@ -265,8 +262,8 @@ fi
 parse_hook
 
 for hook in ${HOOKS}; do
-    in_array ${hook} ${SKIPHOOKS[@]} && continue
-    unset MODULES BINARIES FILES
+    in_array "$hook" "${SKIPHOOKS[@]}" && continue
+    unset MODULES BINARIES FILES SCRIPT
     build () { msg "${hook}: no build function..."; }
     # Deprecation check
     # A hook is considered deprecated if it is a symlink
