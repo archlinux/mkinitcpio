@@ -158,7 +158,6 @@ add_file() {
     fi
 }
 
-declare -a ADDED_MODULES
 add_module() {
     # Add a kernel module to the initcpio image. Dependencies will be
     # discovered and added.

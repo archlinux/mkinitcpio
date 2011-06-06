@@ -13,33 +13,24 @@
 shopt -s extglob
 
 # Settings
-TMPDIR="$(mktemp -d /tmp/mkinitcpio.XXXXXX)"
-BASEDIR=""
-MESSAGEFILE="${TMPDIR}/message"
-KERNELVERSION="$(uname -r)"
-FUNCTIONS="functions"
-CONFIG="mkinitcpio.conf"
-HOOKDIR="hooks"
-INSTDIR="install"
-MODULE_FILE=""
-SAVELIST=""
-GENIMG=""
-PRESET=""
-MESSAGE=""
-SKIPHOOKS=()
-PRESETDIR="mkinitcpio.d"
-QUIET="y"
-SHOW_AUTOMODS="n"
-COMPRESSION="gzip"
-COMPRESSION_OPTIONS=""
+TMPDIR=$(mktemp -d /tmp/mkinitcpio.XXXXXX)
+MESSAGEFILE=$TMPDIR/message
+KERNELVERSION=$(uname -r)
+FUNCTIONS=functions
+CONFIG=mkinitcpio.conf
+HOOKDIR=hooks
+INSTDIR=install
+PRESETDIR=mkinitcpio.d
+QUIET=y
+SHOW_AUTOMODS=n
+COMPRESSION=gzip
 
-if [ ! $UID ]; then
-    UID=$(id -u)
-fi
+declare BASEDIR MODULE_FILE SAVELIST GENIMG PRESET MESSAGE COMPRESSION_OPTIONS
+declare -a SKIPHOOKS ADDED_MODULES
 
 # Add /{,usr}/sbin to path
 # works around undetected problems like in #8448
-PATH="${PATH}:/sbin:/usr/sbin"
+PATH=$PATH:/sbin:/usr/sbin
 # Sanitize environment further
 # GREP_OPTIONS="--color=always" will break everything
 unset GREP_OPTIONS
