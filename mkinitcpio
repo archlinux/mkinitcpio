@@ -44,7 +44,7 @@ PATH="${PATH}:/sbin:/usr/sbin"
 # GREP_OPTIONS="--color=always" will break everything
 unset GREP_OPTIONS
 
-APPNAME=$(basename "${0}")
+APPNAME=${0##*/}
 
 usage ()
 {
@@ -110,7 +110,7 @@ while getopts ':c:k:sb:g:p:m:vH:LMhS:' arg; do
            exit 0 ;;
         L) echo "Available hooks: " 
            for h in ${INSTDIR}/*; do
-               echo "   $(basename ${h})"
+               echo "   ${h##*/}"
            done
            cleanup
            exit 0 ;;
@@ -215,8 +215,8 @@ if [ ! -f "${CONFIG}" ]; then
 fi
 . "${CONFIG}"
 
-BASEDIR=$(echo ${BASEDIR} | tr -s /)
-MODULEDIR=$(echo ${MODULEDIR} | tr -s /)
+BASEDIR=${BASEDIR//+(\/)//}
+MODULEDIR=${MODULEDIR//+(\/)//}
 
 . "${FUNCTIONS}"
 
