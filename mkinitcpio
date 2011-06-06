@@ -21,11 +21,10 @@ CONFIG=mkinitcpio.conf
 HOOKDIR=hooks
 INSTDIR=install
 PRESETDIR=mkinitcpio.d
-QUIET=y
-SHOW_AUTOMODS=n
 COMPRESSION=gzip
 
-declare BASEDIR MODULE_FILE SAVELIST GENIMG PRESET MESSAGE COMPRESSION_OPTIONS
+declare BASEDIR MODULE_FILE GENIMG PRESET MESSAGE COMPRESSION_OPTIONS
+declare -i QUIET=1 SHOW_AUTOMODS=0 SAVELIST=0
 declare -a SKIPHOOKS ADDED_MODULES
 
 # Add /{,usr}/sbin to path
@@ -59,7 +58,7 @@ usage ()
 
 cleanup ()
 {
-    if [[ $SAVELIST ]]; then
+    if (( SAVELIST )); then
         echo ":: build directory saved in $TMPDIR"
     else
         rm -rf ${TMPDIR}
@@ -101,12 +100,12 @@ while getopts ':c:k:sb:g:p:m:vH:LMhS:' arg; do
     case "${arg}" in
         c) CONFIG="${OPTARG}" ;;
         k) optkver=$OPTARG ;;
-        s) SAVELIST="y"; ;;
+        s) SAVELIST=1; ;;
         b) BASEDIR="${OPTARG}" ;;
         g) GENIMG="${OPTARG}" ;;
         p) PRESET="${OPTARG}" ;;
         m) MESSAGE="${OPTARG}" ;;
-        v) QUIET="n" ;;
+        v) QUIET=0 ;;
         S) OLDIFS=${IFS}
            IFS=,
            SKIPHOOKS=(${OPTARG})
@@ -124,7 +123,7 @@ while getopts ':c:k:sb:g:p:m:vH:LMhS:' arg; do
            done
            cleanup
            exit 0 ;;
-        M) SHOW_AUTOMODS="y" ;;
+        M) SHOW_AUTOMODS=1 ;;
         h|?) usage ;;
         :) echo "${OPTARG} requires a value..."; usage ;;
         *) echo "invalid argument '${arg}'"; usage ;;
@@ -147,7 +146,7 @@ if [[ $PRESET ]]; then
         declare -a preset_mkopts preset_cmd
         [[ $BASEDIR ]] && preset_mkopts+=(-b "$BASEDIR")
         [[ $MESSAGE ]] && preset_mkopts+=(-m "$MESSAGE")
-        [[ "$QUIET" = n ]] && preset_mkopts+=(-v)
+        (( QUIET )) || preset_mkopts+=(-v)
         # Build all images
         . "$PRESETDIR/$PRESET.preset"
         for p in "${PRESETS[@]}"; do
@@ -236,7 +235,7 @@ fi
 
 . "$FUNCTIONS"
 
-if [ "${SHOW_AUTOMODS}" = "y" ]; then
+if (( SHOW_AUTOMODS )); then
     echo "Modules autodetected:"
     . "${INSTDIR}/autodetect"
     build

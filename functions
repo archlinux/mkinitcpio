@@ -1,6 +1,6 @@
 #!/bin/bash
 
-msg () { [ "${QUIET}" = "n" ] && echo $@; }
+msg () { (( QUIET )) || echo $@; }
 err () { echo "ERROR: $@" >&2; }
 die () { echo "FATAL: $@" >&2; cleanup; exit 1; }
 
