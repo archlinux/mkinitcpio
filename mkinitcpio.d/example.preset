@@ -7,7 +7,7 @@ PRESETS=('default' 'fallback')
 # note for distribution kernels: this should be in a separate file
 # and read like this:
 # . /etc/mkinitcpio.d/exmaple.kver
-ALL_kver='2.6.24-ARCH'
+ALL_kver='/boot/vmlinuz26'
 ALL_config='/etc/mkinitcpio.conf'
 
 # presetname_kver    - the kernel version (omit if ALL_kver should be used)

@@ -80,6 +80,25 @@ sighandler() {
     exit 1
 }
 
+get_kernver() {
+    local kernel=$1
+
+    if [[ "${kernel:0:1}" != / ]]; then
+        echo $kernel
+        return 0
+    fi
+
+    [[ -r "$kernel" ]] || return 1
+
+    read _ kernver < <(file -b "$BASEDIR$kernel" | grep -o 'version [^ ]\+')
+    if [[ "$kernver" && -e "$BASEDIR/lib/modules/$kernver" ]]; then
+        echo "$kernver"
+        return 0
+    fi
+
+    return 1
+}
+
 trap sighandler TERM INT
 
 while getopts ':c:k:sb:g:p:m:vH:LMhS:' arg; do
@@ -90,7 +109,7 @@ while getopts ':c:k:sb:g:p:m:vH:LMhS:' arg; do
     fi
     case "${arg}" in
         c) CONFIG="${OPTARG}" ;;
-        k) KERNELVERSION="${OPTARG}" ;;
+        k) optkver=$OPTARG ;;
         s) SAVELIST="y"; ;;
         b) BASEDIR="${OPTARG}" ;;
         g) GENIMG="${OPTARG}" ;;
@@ -121,6 +140,14 @@ while getopts ':c:k:sb:g:p:m:vH:LMhS:' arg; do
     esac
 done
 shift $((${OPTIND} - 1))
+
+if [[ $optkver ]]; then
+    if ! KERNELVERSION=$(get_kernver "$optkver"); then
+         echo "error: '$optkver' is an invalid kernel specifier"
+         cleanup
+         exit 1
+    fi
+fi
 
 # use preset $PRESET
 if [ -n "${PRESET}" ]; then
