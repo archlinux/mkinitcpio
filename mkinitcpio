@@ -23,8 +23,9 @@ INSTDIR=install
 PRESETDIR=mkinitcpio.d
 COMPRESSION=gzip
 
-declare BASEDIR MODULE_FILE GENIMG PRESET MESSAGE COMPRESSION_OPTIONS
-declare -i QUIET=1 SHOW_AUTOMODS=0 SAVELIST=0
+declare BASEDIR MODULE_FILE SAVELIST GENIMG PRESET MESSAGE COMPRESSION_OPTIONS
+declare NC= BOLD= BLUE= GREEN= RED= YELLOW=
+declare -i QUIET=1 SHOW_AUTOMODS=0 SAVELIST=0 COLOR=1
 declare -a SKIPHOOKS ADDED_MODULES
 
 # Add /{,usr}/sbin to path
@@ -46,6 +47,7 @@ usage ()
     echo "  -g IMAGE         Generate a cpio image as IMAGE. default: no"
     echo "  -p PRESET        Build specified preset."
     echo "  -m MESSAGE       Print MESSAGE before passing control to init."
+    echo "  -n               Disable colorized output messages."
     echo "  -S SKIPHOOKS     Skip SKIPHOOKS (comma-separated) when building the image."
     echo "  -v               Verbose output. Default: no"
     echo "  -M               Display modules found via autodetection." 
@@ -59,7 +61,7 @@ usage ()
 cleanup ()
 {
     if (( SAVELIST )); then
-        echo ":: build directory saved in $TMPDIR"
+        msg "build directory saved in %s" "$TMPDIR"
     else
         rm -rf ${TMPDIR}
     fi
@@ -89,9 +91,11 @@ get_kernver() {
     return 1
 }
 
+. "$FUNCTIONS"
+
 trap sighandler TERM INT
 
-while getopts ':c:k:sb:g:p:m:vH:LMhS:' arg; do
+while getopts ':c:k:sb:g:p:m:nvH:LMhS:' arg; do
     case "${arg}" in
         c) CONFIG="${OPTARG}" ;;
         k) optkver=$OPTARG ;;
@@ -100,6 +104,7 @@ while getopts ':c:k:sb:g:p:m:vH:LMhS:' arg; do
         g) GENIMG="${OPTARG}" ;;
         p) PRESET="${OPTARG}" ;;
         m) MESSAGE="${OPTARG}" ;;
+        n) COLOR=0 ;;
         v) QUIET=0 ;;
         S) OLDIFS=${IFS}
            IFS=,
@@ -108,11 +113,11 @@ while getopts ':c:k:sb:g:p:m:vH:LMhS:' arg; do
            unset OLDIFS
            ;;
         H) . "${INSTDIR}/${OPTARG}";
-           echo "Help for hook '${OPTARG}':"
+           msg "Help for hook '${OPTARG}'"
            help
            cleanup
            exit 0 ;;
-        L) echo "Available hooks: " 
+        L) msg "Available hooks"
            for h in ${INSTDIR}/*; do
                echo "   ${h##*/}"
            done
@@ -125,11 +130,29 @@ while getopts ':c:k:sb:g:p:m:vH:LMhS:' arg; do
 done
 shift $((${OPTIND} - 1))
 
+if [[ -t 2 ]] && (( COLOR )); then
+    # prefer terminal safe colored and bold text when tput is supported
+    if tput setaf 0 &>/dev/null; then
+        NC="$(tput sgr0)"
+        BOLD="$(tput bold)"
+        BLUE="$BOLD$(tput setaf 4)"
+        GREEN="$BOLD$(tput setaf 2)"
+        RED="$BOLD$(tput setaf 1)"
+        YELLOW="$BOLD$(tput setaf 3)"
+    else
+        NC="\e[1;0m"
+        BOLD="\e[1;1m"
+        BLUE="$BOLD\e[1;34m"
+        GREEN="$BOLD\e[1;32m"
+        RED="$BOLD\e[1;31m"
+        YELLOW="$BOLD\e[1;33m"
+    fi
+fi
+readonly NC BOLD BLUE GREEN RED YELLOW
+
 if [[ $optkver ]]; then
     if ! KERNELVERSION=$(get_kernver "$optkver"); then
-         echo "error: '$optkver' is an invalid kernel specifier"
-         cleanup
-         exit 1
+         die "'$optkver' is an invalid kernel specifier"
     fi
 fi
 
@@ -144,14 +167,14 @@ if [[ $PRESET ]]; then
         # Build all images
         . "$PRESETDIR/$PRESET.preset"
         for p in "${PRESETS[@]}"; do
-            echo "==> Building image \"${p}\""
+            msg "Building image from preset: '$p'"
             preset_cmd=("${preset_mkopts[@]}")
 
             preset_kver=${p}_kver
             if [[ ${!preset_kver:-$ALL_kver} ]]; then
                 preset_cmd+=(-k "${!preset_kver:-$ALL_kver}")
             else
-                echo "==> No kernel version specified. Skipping image \"${p}\"."
+                warning "No kernel version specified. Skipping image '%s'" "$p"
                 continue
             fi
 
@@ -159,7 +182,7 @@ if [[ $PRESET ]]; then
             if [[ ${!preset_config:-$ALL_config} ]]; then
               preset_cmd+=(-c "${!preset_config:-$ALL_config}")
             else
-                echo "==> No configuration file specified. Skipping image \"${p}\"."
+                warning "No configuration file specified. Skipping image '%s'" "$p"
                 continue
             fi
 
@@ -167,7 +190,7 @@ if [[ $PRESET ]]; then
             if [[ ${!preset_image} ]]; then
                 preset_cmd+=(-g "$BASEDIR${!preset_image}")
             else
-                echo "==> No image file specified. Skipping image \"${p}\"."
+                warning "No image file specified. Skipping image '%s'" "$p"
                 continue
             fi
 
@@ -176,19 +199,13 @@ if [[ $PRESET ]]; then
                 preset_cmd+=(${!preset_options}) # intentional word splitting
             fi
 
-            echo "==> Running command: $0 ${preset_cmd[@]}"
-            if "$0" "${preset_cmd[@]}"; then
-                echo "==> SUCCESS"
-            else
-                echo "==> FAIL"
-            fi
+            msg2 "${preset_cmd[*]}"
+            "$0" "${preset_cmd[@]}"
         done
         cleanup
         exit 0
     else
-        echo "Preset $PRESET does not exist. Exiting."
-        cleanup
-        exit 1
+        die "Preset $PRESET does not exist. Exiting."
     fi
 fi
 
@@ -196,9 +213,7 @@ if [[ $BASEDIR ]]; then
     # resolve the path. it might be a relative path and/or contain symlinks
     abspath=$(readlink -e "$BASEDIR")
     if [[ -z $abspath ]]; then
-        echo "base directory '$BASEDIR' does not exist or is not a directory"
-        cleanup
-        exit 1
+        die "base directory '$BASEDIR' does not exist or is not a directory"
     fi
     BASEDIR=$abspath
     unset abspath
@@ -207,30 +222,22 @@ fi
 if [[ $GENIMG ]]; then
     IMGPATH=$(readlink -f "$GENIMG")
     if [[ -z $IMGPATH || ! -w ${IMGPATH%/*} ]]; then
-      echo "error: unable to write to path: '$GENIMG'"
-      cleanup
-      exit 1
+      die "error: unable to write to path: '$GENIMG'"
     fi
 fi
 
 if [[ ! -f "$CONFIG" ]]; then
-    echo "config file '$CONFIG' cannot be found, aborting..."
-    cleanup
-    exit 1
+    die "config file '$CONFIG' cannot be found, aborting..."
 fi
 . "$CONFIG"
 
 MODULEDIR=$BASEDIR/lib/modules/$KERNELVERSION
 if [[ ! -d $MODULEDIR ]]; then
-    echo "error: '$MODULEDIR' is not a valid kernel module directory"
-    cleanup
-    exit 1
+    die "'$MODULEDIR' is not a valid kernel module directory"
 fi
 
-. "$FUNCTIONS"
-
 if (( SHOW_AUTOMODS )); then
-    echo "Modules autodetected:"
+    msg "Modules autodetected"
     . "${INSTDIR}/autodetect"
     build
     cat "${MODULE_FILE}"
@@ -239,9 +246,9 @@ if (( SHOW_AUTOMODS )); then
 fi
 
 if [ -z "${GENIMG}" ]; then
-    echo ":: Begin dry run"
+    msg "Starting dry run: %s" "$KERNELVERSION"
 else
-    echo ":: Begin build"
+    msg "Starting build: %s" "$KERNELVERSION"
 fi
 #parse 'global' hook, as defined in ${CONFIG}
 parse_hook
@@ -249,7 +256,7 @@ parse_hook
 for hook in ${HOOKS}; do
     in_array "$hook" "${SKIPHOOKS[@]}" && continue
     unset MODULES BINARIES FILES SCRIPT
-    build () { msg "${hook}: no build function..."; }
+    build () { error "$hook: no build function..."; }
     # Deprecation check
     # A hook is considered deprecated if it is a symlink
     # within $INSTDIR.
@@ -257,21 +264,15 @@ for hook in ${HOOKS}; do
         newhook="$(readlink -ne "${INSTDIR}/${hook}")"
         if [ -n "${newhook}" -a "${INSTDIR}/$(get_basename ${newhook})" -ef "${newhook}" ]; then
             newhook="$(get_basename ${newhook})"
-            echo "   -------------------------------------------------------------------"
-            echo "   WARNING: Hook \"${hook}\" is deprecated."
-            echo "            Replace it with \"${newhook}\" in your configuration file."
-            echo "   -------------------------------------------------------------------"
+            warning "Hook '%s' is deprecated. Replace it with '%s' in your config" "$hook" "$newhook"
             hook="${newhook}"
         fi
     fi
     if [[ -r "${INSTDIR}/${hook}" ]]; then
         . "${INSTDIR}/${hook}"
-        echo ":: Parsing hook [${hook}]"
+        msg2 "Parsing hook: [%s]" "$hook"
         if [[ $(type -t install) = 'function' ]]; then
-            echo "  -----------------------------------------------------------------------"
-            echo "  WARNING: Hook '$hook' uses a deprecated 'install' function. This "
-            echo "           should be switched to a 'build' function instead."
-            echo "  -----------------------------------------------------------------------"
+            warning "Hook '%s' uses a deprecated 'install' function. This should be renamed 'build'" "$hook"
             install
             unset install
         else
@@ -279,12 +280,12 @@ for hook in ${HOOKS}; do
         fi
         parse_hook
     else
-        die "Hook '${hook}' can not be found."
+        die "Hook '$hook' can not be found."
     fi
 done
 
 if (( ${#ADDED_MODULES[*]} )); then
-    echo ":: Generating module dependencies"
+    msg "Generating module dependencies"
     /sbin/depmod -b "${TMPDIR}/root" "${KERNELVERSION}"
     rm "$TMPDIR/root/lib/modules/$KERNELVERSION"/modules.!(dep.bin|alias.bin|symbols.bin)
 fi
@@ -292,7 +293,7 @@ fi
 declare -i status=0
 declare -a pipesave
 if [ -n "${GENIMG}" ]; then
-    echo ":: Generating image '${GENIMG}'"
+    msg "Creating $COMPRESSION initcpio image: %s" "$GENIMG"
     [ ${COMPRESSION} = "xz" ] && COMPRESSION_OPTIONS="${COMPRESSION_OPTIONS} --check=crc32"
 
     pushd "$TMPDIR/root" >/dev/null
@@ -309,14 +310,14 @@ if [ -n "${GENIMG}" ]; then
     fi
 
     if [[ $errmsg ]]; then
-        echo ":: Image generation FAILED ($errmsg)"
+        error "Image generation FAILED: %s\n" "$errmsg"
         status=1
     else
-        echo ":: Image generation successful"
+        msg "Image generation successful"
     fi
 
 else
-    echo ":: Dry run complete, use -g IMAGE to generate a real image"
+    msg "Dry run complete, use -g IMAGE to generate a real image"
 fi
 
 cleanup

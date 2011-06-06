@@ -1,8 +1,35 @@
 #!/bin/bash
 
-msg () { (( QUIET )) || echo $@; }
-err () { echo "ERROR: $@" >&2; }
-die () { echo "FATAL: $@" >&2; cleanup; exit 1; }
+plain() {
+    local mesg=$1; shift
+    printf "$BOLD    $mesg$NC\n" "$@" >&1
+}
+
+msg() {
+    local mesg=$1; shift
+    printf "$GREEN==>$NC$BOLD $mesg$NC\n" "$@" >&1
+}
+
+msg2() {
+    local mesg=$1; shift
+    printf "$BLUE  ->$NC$BOLD $mesg$NC\n" "$@" >&1
+}
+
+warning() {
+    local mesg=$1; shift
+    printf "$YELLOW==> WARNING:$NC$BOLD $mesg$NC\n" "$@" >&2
+}
+
+error() {
+    local mesg=$1; shift
+    printf "$RED==> ERROR:$NC$BOLD $mesg$NC\n" "$@" >&2
+}
+
+die() {
+  error "$@"
+  cleanup
+  exit 1
+}
 
 get_dirname() {
     # strip any trailing slash first...
@@ -106,7 +133,7 @@ add_dir() {
     #   $1: absolute path of directory on image
 
     if [[ ! -e "$TMPDIR/root/$1" ]]; then
-        msg "  adding  dir ${1}"
+        (( QUIET )) || plain "adding dir: %s" "$1"
         command install -dm755 "$TMPDIR/root/$1"
     fi
 }
@@ -123,7 +150,7 @@ add_symlink() {
         add_dir $(get_dirname "${dest}")
         add_dir $(get_dirname "${fil}")
         if [[ ! -e "$TMPDIR/root/$dest" ]]; then
-            msg "  adding link ${fil} -> ${dest}"
+            (( QUIET )) || plain "adding symlink: $fil -> $dest"
             ln -s "$dest" "$TMPDIR/root/$fil"
         fi
     fi
@@ -149,11 +176,11 @@ add_file() {
         fi
 
         if [[ ! -e "$TMPDIR/root/$dest" ]]; then
-            msg "  adding file $dest"
+            (( QUIET )) || plain "adding file: %s" "$dest"
             command install -Dm$(stat -c '%a' "$file") "$file" "$TMPDIR/root/$dest"
         fi
     else
-        err "file '$file' does not exist"
+        error "file '$file' does not exist"
         return 1
     fi
 }
@@ -167,10 +194,7 @@ add_module() {
     module=${1%.ko*}
 
     #skip expensive stuff if this module has already been added
-    if in_array $module ${ADDED_MODULES[@]}; then
-        msg "module $module was already added"
-        return
-    fi
+    in_array $module ${ADDED_MODULES[@]} && return
 
     path=$(kmodinfo -0F filename "$module")
     if [[ $path ]]; then
@@ -188,10 +212,9 @@ add_module() {
         done
 
         ADDED_MODULES+=("$module")
-        msg "  adding module $module"
         add_file "$path" || return
     else
-        err "module '$module' not found"
+        error "module '$module' not found"
         return
     fi
 
@@ -215,13 +238,13 @@ add_binary() {
     dest=$2
 
     if [[ ! -f "$bin" ]]; then
-        err "'$1' is not a file"
+        error "'$1' is not a file"
         return 1
     fi
 
     case "$(file -b "$bin")" in
         *script*)
-            msg "   adding '${type}' script, ensure proper interp exists..."
+            plain "adding '$type' script, ensure proper interp exists..."
             add_file "$bin" ${dest+"$dest"}
             ;;
         *executable*|*shared\ object*|*symbolic\ link*)
@@ -233,7 +256,7 @@ add_binary() {
             done < <(ldd "$bin" 2>/dev/null | sed '1d;s|.*=>\(.*\)|\1|;s/(0x[0-9a-f]\+)//')
             ;;
         *)
-            err "unknown type '$type' for binary '$bin'"
+            error "unknown type '$type' for binary '$bin'"
             return 1
             ;;
     esac

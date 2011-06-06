@@ -36,6 +36,9 @@ Options
 *-m* 'message'::
 	Print 'message' before passing control to init.
 
+*-n*::
+	Disable color output.
+
 *-S* 'hooks'::
 	Skip 'hooks' when generating the image. Several hooks should be comma-separated.
 
