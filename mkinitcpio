@@ -92,11 +92,6 @@ get_kernver() {
 trap sighandler TERM INT
 
 while getopts ':c:k:sb:g:p:m:vH:LMhS:' arg; do
-    if [ "${OPTARG#-}" != "${OPTARG}" ]; then
-        echo "error: optional argument to '-${arg}' begins with a '-'"
-        echo "  you probably don't want this....aborting."
-        usage
-    fi
     case "${arg}" in
         c) CONFIG="${OPTARG}" ;;
         k) optkver=$OPTARG ;;
@@ -126,7 +121,6 @@ while getopts ':c:k:sb:g:p:m:vH:LMhS:' arg; do
         M) SHOW_AUTOMODS=1 ;;
         h|?) usage ;;
         :) echo "${OPTARG} requires a value..."; usage ;;
-        *) echo "invalid argument '${arg}'"; usage ;;
     esac
 done
 shift $((${OPTIND} - 1))
