@@ -172,7 +172,7 @@ if [[ $PRESET ]]; then
 
             preset_image=${p}_image
             if [[ ${!preset_image} ]]; then
-                preset_cmd+=(-g "${!preset_image}")
+                preset_cmd+=(-g "$BASEDIR${!preset_image}")
             else
                 echo "==> No image file specified. Skipping image \"${p}\"."
                 continue
@@ -199,41 +199,42 @@ if [[ $PRESET ]]; then
     fi
 fi
 
-# remove trailing / from BASEDIR
-BASEDIR="${BASEDIR%/}"
-
-MODULEDIR="${BASEDIR}/lib/modules/${KERNELVERSION}"
-
-if [[ $GENIMG ]]; then
-  IMGPATH=$(readlink -f "$GENIMG")
-  if [[ -z $IMGPATH || ! -w ${IMGPATH%/*} ]]; then
-    echo "error: unable to write to path: '$GENIMG'"
-    cleanup
-    exit 1
-  fi
-fi
-
-if [ -n "${BASEDIR}" ]; then
-    if [ "${BASEDIR}" = "${BASEDIR#/}" ]; then
-        BASEDIR="$(pwd)/${BASEDIR}"
-    elif [ ! -d "${BASEDIR}" ]; then
-        echo "base directory '${BASEDIR}' does not exist or is not a directory"
+if [[ $BASEDIR ]]; then
+    # resolve the path. it might be a relative path and/or contain symlinks
+    abspath=$(readlink -e "$BASEDIR")
+    if [[ -z $abspath ]]; then
+        echo "base directory '$BASEDIR' does not exist or is not a directory"
         cleanup
         exit 1
     fi
+    BASEDIR=$abspath
+    unset abspath
 fi
 
-if [ ! -f "${CONFIG}" ]; then
-    echo "config file '${CONFIG}' cannot be found, aborting..."
+if [[ $GENIMG ]]; then
+    IMGPATH=$(readlink -f "$GENIMG")
+    if [[ -z $IMGPATH || ! -w ${IMGPATH%/*} ]]; then
+      echo "error: unable to write to path: '$GENIMG'"
+      cleanup
+      exit 1
+    fi
+fi
+
+if [[ ! -f "$CONFIG" ]]; then
+    echo "config file '$CONFIG' cannot be found, aborting..."
     cleanup
     exit 1
 fi
-. "${CONFIG}"
+. "$CONFIG"
 
-BASEDIR=${BASEDIR//+(\/)//}
-MODULEDIR=${MODULEDIR//+(\/)//}
+MODULEDIR=$BASEDIR/lib/modules/$KERNELVERSION
+if [[ ! -d $MODULEDIR ]]; then
+    echo "error: '$MODULEDIR' is not a valid kernel module directory"
+    cleanup
+    exit 1
+fi
 
-. "${FUNCTIONS}"
+. "$FUNCTIONS"
 
 if [ "${SHOW_AUTOMODS}" = "y" ]; then
     echo "Modules autodetected:"
