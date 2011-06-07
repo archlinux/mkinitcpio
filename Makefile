@@ -19,11 +19,11 @@ all: doc
 install: all
 	$(foreach dir,${DIRS},install -dm755 ${DESTDIR}${dir};)
 
-	sed -e 's|CONFIG="mkinitcpio.conf"|CONFIG="/etc/mkinitcpio.conf"|g' \
-	    -e 's|FUNCTIONS="functions"|FUNCTIONS="/lib/initcpio/functions"|g' \
-	    -e 's|HOOKDIR="hooks"|HOOKDIR="/lib/initcpio/hooks"|g' \
-	    -e 's|INSTDIR="install"|INSTDIR="/lib/initcpio/install"|g' \
-	    -e 's|PRESETDIR="mkinitcpio.d"|PRESETDIR="/etc/mkinitcpio.d"|g' \
+	sed -e 's|^CONFIG=.*|CONFIG=/etc/mkinitcpio.conf|' \
+	    -e 's|^FUNCTIONS=.*|FUNCTIONS=/lib/initcpio/functions|' \
+	    -e 's|^HOOKDIR=.*|HOOKDIR=/lib/initcpio/hooks|' \
+	    -e 's|^INSTDIR=.*|INSTDIR=/lib/initcpio/install|' \
+	    -e 's|^PRESETDIR=.*|PRESETDIR=/etc/mkinitcpio.d|' \
 	    < mkinitcpio > ${DESTDIR}/sbin/mkinitcpio
 
 	sed "s|%VERSION%|${VERSION}|g" < lsinitcpio > ${DESTDIR}/bin/lsinitcpio

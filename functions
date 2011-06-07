@@ -188,8 +188,8 @@ add_module() {
     local module path fw dep deps
     module=${1%.ko*}
 
-    #skip expensive stuff if this module has already been added
-    in_array $module ${ADDED_MODULES[@]} && return
+    # skip expensive stuff if this module has already been added
+    in_array "${module//-/_}" "${ADDED_MODULES[@]}" && return
 
     path=$(kmodinfo -0F filename "$module")
     if [[ $path ]]; then
@@ -206,7 +206,7 @@ add_module() {
             add_module "$dep"
         done
 
-        ADDED_MODULES+=("$module")
+        ADDED_MODULES+=("${module//-/_}")
         add_file "$path" || return
     else
         error "module '$module' not found"

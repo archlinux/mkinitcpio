@@ -118,9 +118,8 @@ while getopts ':c:k:sb:g:p:m:nvH:LMhS:' arg; do
            cleanup
            exit 0 ;;
         L) msg "Available hooks"
-           for h in ${INSTDIR}/*; do
-               echo "   ${h##*/}"
-           done
+           cd "$INSTDIR" >/dev/null
+           printf '   %s\n' * | column -c$(tput cols)
            cleanup
            exit 0 ;;
         M) SHOW_AUTOMODS=1 ;;
@@ -128,7 +127,7 @@ while getopts ':c:k:sb:g:p:m:nvH:LMhS:' arg; do
         :) echo "${OPTARG} requires a value..."; usage ;;
     esac
 done
-shift $((${OPTIND} - 1))
+shift $((OPTIND - 1))
 
 if [[ -t 2 ]] && (( COLOR )); then
     # prefer terminal safe colored and bold text when tput is supported
@@ -245,7 +244,7 @@ if (( SHOW_AUTOMODS )); then
     exit 0
 fi
 
-if [ -z "${GENIMG}" ]; then
+if [[ -z $GENIMG ]]; then
     msg "Starting dry run: %s" "$KERNELVERSION"
 else
     msg "Starting build: %s" "$KERNELVERSION"
@@ -260,7 +259,7 @@ for hook in ${HOOKS}; do
     # Deprecation check
     # A hook is considered deprecated if it is a symlink
     # within $INSTDIR.
-    if [ -h "${INSTDIR}/${hook}" ]; then
+    if [[ -h "${INSTDIR}/${hook}" ]]; then
         newhook="$(readlink -ne "${INSTDIR}/${hook}")"
         if [ -n "${newhook}" -a "${INSTDIR}/$(get_basename ${newhook})" -ef "${newhook}" ]; then
             newhook="$(get_basename ${newhook})"
@@ -292,9 +291,9 @@ fi
 
 declare -i status=0
 declare -a pipesave
-if [ -n "${GENIMG}" ]; then
+if [[ "${GENIMG}" ]]; then
     msg "Creating $COMPRESSION initcpio image: %s" "$GENIMG"
-    [ ${COMPRESSION} = "xz" ] && COMPRESSION_OPTIONS="${COMPRESSION_OPTIONS} --check=crc32"
+    [[ "$COMPRESSION" = xz ]] && COMPRESSION_OPTIONS+=" --check=crc32"
 
     pushd "$TMPDIR/root" >/dev/null
     find . -print0 | bsdcpio -0oH newc | $COMPRESSION $COMPRESSION_OPTIONS > "$IMGPATH"
