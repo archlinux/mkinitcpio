@@ -86,7 +86,7 @@ default_mount_handler() {
         msg "Root device '${root}' doesn't exist. Attempting to create it."
         major=""
         minor=""
-        if [ ${root:0:5} = "/dev/" ]; then
+        if [ ${devtmpfs_mounted} -eq 0 -a ${root:0:5} = "/dev/" ]; then
             # It might be a block device (/dev/sda) -> /sys/class/block/sda/dev
             if [ -e /sys/class/block/${root:5}/dev ]; then
                 IFS=':' read major minor < "/sys/class/block/${root:5}/dev"
