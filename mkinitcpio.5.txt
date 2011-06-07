@@ -42,6 +42,9 @@ Options
 *-S* 'hooks'::
 	Skip 'hooks' when generating the image. Several hooks should be comma-separated.
 
+*-t* 'tmpdir'::
+	Use 'tmpdir' as the temporary build directory instead of /tmp. 'tmpdir' must exist.
+
 *-v*::
 	Verbose output. Outputs more information about what's happening during creation of the ramdisk.
 

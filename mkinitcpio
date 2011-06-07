@@ -13,7 +13,6 @@
 shopt -s extglob
 
 # Settings
-TMPDIR=$(mktemp -d /tmp/mkinitcpio.XXXXXX)
 MESSAGEFILE=$TMPDIR/message
 KERNELVERSION=$(uname -r)
 FUNCTIONS=functions
@@ -23,7 +22,7 @@ INSTDIR=install
 PRESETDIR=mkinitcpio.d
 COMPRESSION=gzip
 
-declare BASEDIR MODULE_FILE SAVELIST GENIMG PRESET MESSAGE COMPRESSION_OPTIONS
+declare TMPDIR BASEDIR MODULE_FILE GENIMG PRESET MESSAGE COMPRESSION_OPTIONS BUILDROOT
 declare NC= BOLD= BLUE= GREEN= RED= YELLOW=
 declare -i QUIET=1 SHOW_AUTOMODS=0 SAVELIST=0 COLOR=1
 declare -a SKIPHOOKS ADDED_MODULES
@@ -49,6 +48,7 @@ usage ()
     echo "  -m MESSAGE       Print MESSAGE before passing control to init."
     echo "  -n               Disable colorized output messages."
     echo "  -S SKIPHOOKS     Skip SKIPHOOKS (comma-separated) when building the image."
+    echo "  -t TMPDIR        Use TMPDIR as the temporary build directory."
     echo "  -v               Verbose output. Default: no"
     echo "  -M               Display modules found via autodetection." 
     echo "  -L               List all available hooks." 
@@ -60,10 +60,12 @@ usage ()
 
 cleanup ()
 {
-    if (( SAVELIST )); then
-        msg "build directory saved in %s" "$TMPDIR"
-    else
-        rm -rf ${TMPDIR}
+    if [[ $TMPDIR ]]; then
+        if (( $SAVELIST )); then
+            msg "build directory saved in %s" "$TMPDIR"
+        else
+            rm -rf "$TMPDIR"
+        fi
     fi
 }
 
@@ -95,7 +97,7 @@ get_kernver() {
 
 trap sighandler TERM INT
 
-while getopts ':c:k:sb:g:p:m:nvH:LMhS:' arg; do
+while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:' arg; do
     case "${arg}" in
         c) CONFIG="${OPTARG}" ;;
         k) optkver=$OPTARG ;;
@@ -115,14 +117,13 @@ while getopts ':c:k:sb:g:p:m:nvH:LMhS:' arg; do
         H) . "${INSTDIR}/${OPTARG}";
            msg "Help for hook '${OPTARG}'"
            help
-           cleanup
            exit 0 ;;
         L) msg "Available hooks"
            cd "$INSTDIR" >/dev/null
            printf '   %s\n' * | column -c$(tput cols)
-           cleanup
            exit 0 ;;
         M) SHOW_AUTOMODS=1 ;;
+        t) TMPDIR=$OPTARG ;;
         h|?) usage ;;
         :) echo "${OPTARG} requires a value..."; usage ;;
     esac
@@ -154,6 +155,17 @@ if [[ $optkver ]]; then
          die "'$optkver' is an invalid kernel specifier"
     fi
 fi
+
+if [[ $TMPDIR ]]; then
+    if [[ ! -d $TMPDIR ]]; then
+        error "'$TMPDIR' does not exist or is not a directory"
+        unset TMPDIR
+        cleanup
+        exit 1
+    fi
+fi
+TMPDIR=$(mktemp -d "${TMPDIR:-/tmp}/mkinitcpio.XXXXXX")
+declare BUILDROOT=$TMPDIR/root
 
 # use preset $PRESET
 if [[ $PRESET ]]; then
@@ -285,7 +297,7 @@ done
 if (( ${#ADDED_MODULES[*]} )); then
     msg "Generating module dependencies"
     /sbin/depmod -b "${TMPDIR}/root" "${KERNELVERSION}"
-    rm "$TMPDIR/root/lib/modules/$KERNELVERSION"/modules.!(dep.bin|alias.bin|symbols.bin)
+    rm "$BUILDROOT/lib/modules/$KERNELVERSION"/modules.!(dep.bin|alias.bin|symbols.bin)
 fi
 
 declare -i status=0
@@ -294,7 +306,7 @@ if [[ "${GENIMG}" ]]; then
     msg "Creating $COMPRESSION initcpio image: %s" "$GENIMG"
     [[ "$COMPRESSION" = xz ]] && COMPRESSION_OPTIONS+=" --check=crc32"
 
-    pushd "$TMPDIR/root" >/dev/null
+    pushd "$BUILDROOT" >/dev/null
     find . -print0 | bsdcpio -0oH newc | $COMPRESSION $COMPRESSION_OPTIONS > "$IMGPATH"
     pipesave=("${PIPESTATUS[@]}") # save immediately
     popd >/dev/null

@@ -132,9 +132,9 @@ add_dir() {
     # Add a directory to the initcpio image.
     #   $1: absolute path of directory on image
 
-    if [[ ! -e "$TMPDIR/root/$1" ]]; then
+    if [[ ! -e "$BUILDROOT/$1" ]]; then
         (( QUIET )) || plain "adding dir: %s" "$1"
-        command install -dm755 "$TMPDIR/root/$1"
+        command install -dm755 "$BUILDROOT/$1"
     fi
 }
 
@@ -148,7 +148,7 @@ add_symlink() {
     add_dir $(get_dirname "$file")
     if [[ ! -e "$TMPDIR/root/$dest" ]]; then
         (( QUIET )) || plain "adding symlink: $file -> $dest"
-        ln -s "$dest" "$TMPDIR/root/$file"
+        ln -s "$dest" "$BUILDROOT/$file"
     fi
 }
 
@@ -170,9 +170,9 @@ add_file() {
             return
         fi
 
-        if [[ ! -e "$TMPDIR/root/$dest" ]]; then
+        if [[ ! -e "$BUILDROOT/$dest" ]]; then
             (( QUIET )) || plain "adding file: %s" "$dest"
-            command install -Dm$(stat -c '%a' "$file") "$file" "$TMPDIR/root/$dest"
+            command install -Dm$(stat -c '%a' "$file") "$file" "$BUILDROOT/$dest"
         fi
     else
         error "file '$file' does not exist"
