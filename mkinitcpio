@@ -36,24 +36,28 @@ unset GREP_OPTIONS
 
 APPNAME=${0##*/}
 
-usage ()
-{
-    echo "${APPNAME}: usage"
-    echo "  -c CONFIG        Use CONFIG file. default: /etc/mkinitcpio.conf"
-    echo "  -k KERNELVERSION Use KERNELVERSION. default: $(uname -r)"
-    echo "  -s               Save build directory. default: no"
-    echo "  -b BASEDIR       Use BASEDIR. default: /"
-    echo "  -g IMAGE         Generate a cpio image as IMAGE. default: no"
-    echo "  -p PRESET        Build specified preset."
-    echo "  -m MESSAGE       Print MESSAGE before passing control to init."
-    echo "  -n               Disable colorized output messages."
-    echo "  -S SKIPHOOKS     Skip SKIPHOOKS (comma-separated) when building the image."
-    echo "  -t TMPDIR        Use TMPDIR as the temporary build directory."
-    echo "  -v               Verbose output. Default: no"
-    echo "  -M               Display modules found via autodetection." 
-    echo "  -L               List all available hooks." 
-    echo "  -H HOOKNAME      Output help for hook 'HOOKNAME'."
-    echo "  -h               This message."
+usage() {
+    cat <<EOF
+usage: $APPNAME [options]
+
+  Options:
+   -b BASEDIR       Use BASEDIR. default: /
+   -c CONFIG        Use CONFIG file. default: /etc/mkinitcpio.conf
+   -g IMAGE         Generate a cpio image as IMAGE. default: no
+   -H HOOKNAME      Output help for hook 'HOOKNAME'.
+   -h               Display this message.
+   -k KERNELVERSION Use KERNELVERSION. default: $(uname -r)
+   -L               List all available hooks.
+   -M               Display modules found via autodetection.
+   -n               Disable colorized output messages.
+   -m MESSAGE       Print MESSAGE before passing control to init.
+   -p PRESET        Build specified preset from /etc/mkinitcpio.d
+   -S SKIPHOOKS     Skip SKIPHOOKS (comma-separated) when building the image.
+   -s               Save build directory. default: no
+   -t TMPDIR        Use TMPDIR as the temporary build directory.
+   -v               Verbose output. Default: no.
+
+EOF
     cleanup
     exit 1
 }
