@@ -262,28 +262,21 @@ parse_hook() {
     # prior to the start of hook processing, and after each hook's build
     # function is run.
 
-    local mod bin fil
-    for mod in ${MODULES}; do
-        if [ -n "${mod}" ]; then
-            add_module "${mod}"
-        fi
+    local item
+
+    for item in $MODULES; do
+        add_module "$item"
     done
 
-    for bin in ${BINARIES}; do
-        if [ -n "${bin}" ]; then
-            add_binary "${bin}"
-        fi
+    for item in $BINARIES; do
+        add_binary "$item"
     done
 
-    for fil in ${FILES}; do
-        if [ -n "${fil}" ]; then
-            add_file "${fil}"
-        fi
+    for item in $FILES; do
+        add_file "$item"
     done
 
-    if [ -n "${SCRIPT}" ]; then
-        add_file "${HOOKDIR}/${SCRIPT}" "/hooks/${SCRIPT}"
-    fi
+    [[ $SCRIPT ]] && add_file "$HOOKDIR/$SCRIPT" "/hooks/$SCRIPT"
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
