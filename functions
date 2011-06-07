@@ -1,3 +1,5 @@
+#!/bin/bash
+
 msg () { [ "${QUIET}" = "n" ] && echo $@; }
 err () { echo "ERROR: $@" >&2; }
 die () { echo "FATAL: $@" >&2; cleanup; exit 1; }
@@ -266,4 +268,5 @@ parse_hook() {
         add_file "${HOOKDIR}/${SCRIPT}" "/hooks/${SCRIPT}"
     fi
 }
+
 # vim: set ft=sh ts=4 sw=4 et:
