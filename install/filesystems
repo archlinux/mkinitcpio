@@ -1,21 +1,18 @@
-# vim: set ft=sh:
+#!/bin/bash
 
-build()
-{
-    if [ "${autodetect_fs_detection_failed}" = "1" ]; then
-        MODULES=" $(all_modules '/kernel/fs' | grep -v "nls")"
+build() {
+    if (( fs_autodetect_failed )); then
+        MODULES=$(all_modules '/kernel/fs' | grep -v "nls")
     else
-        MODULES=" $(checked_modules '/kernel/fs' | grep -v "nls")"
+        MODULES=$(checked_modules '/kernel/fs' | grep -v "nls")
     fi
-    BINARIES=""
-    FILES=""
-    SCRIPT=""
 }
 
-help ()
-{
-cat<<HELPEOF
-  This hook adds filesystems modules to the image. If you would like to
-  minimize the modules installed in the image, add the autodetect hook too.
+help() {
+    cat<<HELPEOF
+This hook adds filesystems modules to the image. If you would like to minimize
+the modules installed in the image, add the autodetect hook too.
 HELPEOF
 }
+
+# vim: set ft=sh ts=4 sw=4 et:

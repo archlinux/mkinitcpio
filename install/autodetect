@@ -1,75 +1,40 @@
-# vim: set ft=sh:
+#!/bin/bash
 
-build()
-{
-    MODULE_FILE="${TMPDIR}/autodetect_modules"
-    #blegh, we'll let /tmp clean itself up
-    AUTODETECT="$(auto_modules | \
-                  sed -e 's/ata_generic//g' -e 's/ide_generic//g')"
+build() {
+    MODULE_FILE=$TMPDIR/autodetect_modules
 
+    auto_modules | grep -xEv '(ata|ide)_generic' >"$MODULE_FILE"
 
-    #Filesystem detection, only probe the device for /
-    findfs ()
-    {
-        local rootdev
-
-        if [ -f /proc/self/mountinfo -a -x /bin/findmnt ]; then
-            /bin/findmnt -n -u -o fstype / 2>/dev/null
-        fi
-    }
-
-    if [ ${UID} -eq 0 -o "$(groups | grep disk)" != "" ]; then
-        fss=$(findfs | sort | uniq)
-        if [ -z "${fss}" ]; then
-            error "Root file system type detection failed."
-            autodetect_fs_detection_failed=1
-        fi
-        for fs in ${fss}; do
-            allfs="${fs} $(modprobe --set-version ${KERNELVERSION} --resolve-alias ${fs})"
-            for mod in ${allfs}; do
-                for modfile in $(find "${MODULEDIR}" -type f -name "${mod}.ko" -or -name "${mod}.ko.gz"); do
-                    if [ -n "${modfile}" ]; then
-                        AUTODETECT="${AUTODETECT} ${modfile}"
-                    fi
-                done
-            done
-        done
-
-        if [ -e /sbin/mdadm ]; then
-            for raidmod in $(/sbin/mdadm -E -s -v /dev/hd* /dev/sd* /dev/rd/* /dev/ida/* /dev/cciss/* /dev/ataraid/* /dev/mapper/* \
-                        | awk -Flevel= '{print $2}' | awk '{print $1}'); do
-                case "${raidmod}" in
-                    raid4|raid5|raid6)
-                        AUTODETECT="${AUTODETECT} raid456" ;;
-                    *)
-                        AUTODETECT="${AUTODETECT} ${raidmod}" ;;
-                esac
-            done
-        fi
-    else
-        autodetect_fs_detection_failed=1
-        autodetect_raid_detection_failed=1
-        error "User does not have proper permissions to read superblocks, raid and filesystem modules are not detected"
+    if [[ ! -d /sys/devices ]]; then
+        error "/sys does not appear to be mounted. Unable to use autodetection"
+        return 1
     fi
 
-    for m in ${AUTODETECT}; do
-        modname="$(get_module_name "${m}")"
-        echo "${modname}" >> "${MODULE_FILE}"
-    done
+    if ! findmnt -uno fstype "${BASEDIR:-/}" >>"$MODULE_FILE"; then
+        error "failed to detect root filesystem"
+        fs_autodetect_failed=1
+    fi
 
-    BINARIES=""
-    FILES=""
-    SCRIPT=""
+    if (( UID == 0 )) || in_array 'disk' $(groups); then
+        if [[ -x /sbin/mdadm ]]; then
+            /sbin/mdadm -Esv /dev/[hrsv]d* /dev/{ida,cciss,ataraid,mapper}/* |
+                sed -n 's/.*level=\([^ ]\+\) .*/\1/p' |
+                sed 's/\<raid[456]\>/raid456/g' | sort -u >>"$MODULE_FILE"
+        fi
+    else
+        error "Insufficient permission to perform autodetection for mdadm devices"
+        raid_autodetect_failed=1
+    fi
 }
 
-help ()
-{
-cat <<HELPEOF
-  This hook shrinks your initramdisk to a smaller size 
-  by autodetecting your needed modules. Be sure to verify
-  included modules are correct and none are missing.
-  This hook must be run before other subsystem hooks in
-  order to take advantage of auto-detection.  Any hooks
-  placed before 'autodetect' will be installed in full.
+help() {
+    cat <<HELPEOF
+This hook shrinks your initramdisk to a smaller size by autodetecting your
+needed modules. Be sure to verify included modules are correct and none are
+missing.  This hook must be run before other subsystem hooks in order to take
+advantage of auto-detection.  Any hooks placed before 'autodetect' will be
+installed in full.
 HELPEOF
 }
+
+# vim: set ft=sh ts=4 sw=4 et:
