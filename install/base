@@ -1,18 +1,9 @@
-# vim:set ft=sh:
+#!/bin/bash
 
-build()
-{
-    add_dir "/proc"
-    add_dir "/sys"
-    add_dir "/dev"
-    add_dir "/bin"
-    add_dir "/sbin"
-    add_dir "/lib"
-    add_dir "/usr"
-    add_dir "/usr/bin"
-    add_dir "/usr/lib"
-    add_dir "/usr/sbin"
-    add_dir "/run"
+build() {
+    for dir in proc sys dev run /usr/{bin,sbin}; do
+        add_dir "/$dir"
+    done
 
     add_binary /lib/initcpio/busybox /bin/busybox
     add_binary /sbin/modprobe
@@ -20,16 +11,15 @@ build()
 
     add_file "/lib/initcpio/init_functions" "/init_functions"
     add_file "/lib/initcpio/init" "/init"
-    add_file "${CONFIG}" "/config"
+    add_file "$CONFIG" "/config"
     add_file "/etc/modprobe.d/usb-load-ehci-first.conf"
-    SCRIPT=""
 }
 
-help ()
-{
-cat <<HELPEOF
-  This hook sets up all initial directories and installs base
-  utilities. DO NOT remove this one unless you know what you're
-  doing.
+help() {
+    cat <<HELPEOF
+This hook sets up all initial directories and installs base utilities. DO NOT
+remove this one unless you know what you're doing.
 HELPEOF
 }
+
+# vim: set ft=sh ts=4 sw=4 et:

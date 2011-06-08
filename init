@@ -4,6 +4,7 @@
 
 . /init_functions
 
+mkdir -p /new_root
 /bin/mount -t proc proc /proc -o nosuid,noexec,nodev
 /bin/mount -t sysfs sys /sys -o nosuid,noexec,nodev
 if grep -q devtmpfs /proc/filesystems 2>/dev/null; then
@@ -81,7 +82,6 @@ if [ "${break}" = "y" ]; then
 fi
 
 # Mount root at /new_root
-mkdir -p /new_root
 ${mount_handler} /new_root
 
 [ -z "${init}" ] && init="/sbin/init"
