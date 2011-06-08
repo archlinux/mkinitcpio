@@ -1,26 +1,19 @@
-# vim: set ft=sh:
+#!/bin/bash
 
-build()
-{
-    MODULES=" $(checked_modules "ata/pata_*") $(checked_modules "ata/ata_generic") 
-              $(checked_modules "ata/ata_piix")"
+build() {
+    for filter in 'ata/pata_*' 'ata/ata_generic' 'ata/ata_piix'; do
+        MODULES+=" $(checked_modules "$filter")"
+    done
 
-    MODULES=$(echo ${MODULES}) #trim whitespace
-    if [ -n "${MODULES}" ]; then
-        MODULES="${MODULES} sd_mod"
-    fi
-
-    BINARIES=""
-    FILES=""
-    SCRIPT=""
+    [[ $MODULES ]] && MODULES+=" sd_mod"
 }
 
-help ()
-{
-cat<<HELPEOF
-  This hook loads the necessary modules for a pata (ide) root device,
-  using the new libata subsystem.
-  Detection will take place at runtime. To minimize the modules
-  in the image, add the autodetect hook too.
+help() {
+    cat<<HELPEOF
+This hook loads the necessary modules for a pata (ide) root device, using the
+new libata subsystem. Detection will take place at runtime. To minimize the
+modules in the image, add the autodetect hook too.
 HELPEOF
 }
+
+# vim: set ft=sh ts=4 sw=4 et:

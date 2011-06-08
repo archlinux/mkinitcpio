@@ -1,27 +1,20 @@
-# vim: set ft=sh:
+#!/bin/bash
 
-build()
-{
-    MODULES=" $(checked_modules "scsi/.*ata") $(checked_modules "block/sx8") 
-              $(checked_modules "scsi/ahci") $(checked_modules "scsi/pdc_adma") 
-              $(checked_modules "ata/sata_*") $(checked_modules "ata/ahci") 
-              $(checked_modules "ata/pdc_adma") $(checked_modules "ata/ata_piix")"
+build() {
+    for filter in 'scsi/.*ata' 'block/sx8' 'ata/sata_*' \
+                  'ata/ahci' 'ata/pdc_adma' 'ata/ata_piix'; do
+        MODULES+=" $(checked_modules "$filter")"
+    done
 
-    MODULES=$(echo ${MODULES}) #trim whitespace
-    if [ -n "${MODULES}" ]; then
-        MODULES="${MODULES} sd_mod"
-    fi
-
-    BINARIES=""
-    FILES=""
-    SCRIPT=""
+    [[ $MODULES ]] && MODULES+=" sd_mod"
 }
 
-help ()
-{
-cat<<HELPEOF
-  This hook loads the necessary modules for an sata root device.
-  Detection will take place at runtime. To minimize the modules
-  in the image, add the autodetect hook too.
+help() {
+    cat<<HELPEOF
+This hook loads the necessary modules for an sata root device. Detection will
+take place at runtime. To minimize the modules in the image, add the autodetect
+hook too.
 HELPEOF
 }
+
+# vim: set ft=sh ts=4 sw=4 et:
