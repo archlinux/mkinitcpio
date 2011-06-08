@@ -42,14 +42,6 @@ get_basename() {
     echo "${1##*/}"
 }
 
-get_module_name() {
-    #cleanup - remove .ko, replace - with _
-    local modname="${1%.gz}"
-    modname=$(get_basename "${modname%.ko}")
-    modname="${modname//-/_}"
-    echo "$modname"
-}
-
 in_array() {
     # Search for an element in an array.
     #   $1: needle
