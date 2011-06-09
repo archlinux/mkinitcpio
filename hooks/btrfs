@@ -2,6 +2,6 @@
 
 run_hook ()
 {
-    /sbin/modprobe btrfs
-    /sbin/btrfs device scan
+    modprobe btrfs
+    btrfs device scan
 }

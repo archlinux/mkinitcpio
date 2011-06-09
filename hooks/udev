@@ -2,8 +2,8 @@
 run_hook ()
 {
     msg -n ":: Triggering uevents..."
-    /sbin/udevadm trigger --action=add --type=subsystems
-    /sbin/udevadm trigger --action=add --type=devices
-    /sbin/udevadm settle
+    udevadm trigger --action=add --type=subsystems
+    udevadm trigger --action=add --type=devices
+    udevadm settle
     msg "done."
 }

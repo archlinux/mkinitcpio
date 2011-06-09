@@ -4,11 +4,11 @@ run_hook ()
 {
     if [ -e /consolefont.psfu ]; then
         msg -n ":: Loading console font..."
-        /usr/sbin/setfont -C /dev/console /consolefont.psfu
+        setfont -C /dev/console /consolefont.psfu
         msg "done."
      elif [ -e /consolefont.psf ]; then
         msg -n ":: Loading console font..."
-        /usr/sbin/setfont -C /dev/console /consolefont.psf
+        setfont -C /dev/console /consolefont.psf
         msg "done."
     else
         msg "No consolefont found despite added hook."
