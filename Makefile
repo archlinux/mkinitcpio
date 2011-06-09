@@ -5,6 +5,7 @@ VERSION = 0.6.15
 all: doc
 
 install: all
+	install -d ${DESTDIR}/bin
 	install -d ${DESTDIR}/sbin
 	install -d ${DESTDIR}/lib/initcpio
 	install -d ${DESTDIR}/etc
@@ -17,6 +18,9 @@ install: all
 	    < mkinitcpio > ${DESTDIR}/sbin/mkinitcpio
 
 	chmod 755 ${DESTDIR}/sbin/mkinitcpio
+
+	sed "s|%VERSION%|${VERSION}|g" < lsinitcpio > ${DESTDIR}/bin/lsinitcpio
+	chmod 755 ${DESTDIR}/bin/lsinitcpio
 
 	install -D -m644 mkinitcpio.conf ${DESTDIR}/etc/mkinitcpio.conf
 	install -D -m755 init ${DESTDIR}/lib/initcpio/init
@@ -57,6 +61,7 @@ TARBALL_FILES = \
 	init_functions \
 	install \
 	01-memdisk.rules \
+	lsinitcpio \
 	mkinitcpio \
 	mkinitcpio.conf \
 	mkinitcpio.d \

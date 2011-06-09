@@ -1,0 +1,138 @@
+#!/bin/bash
+#
+# lsinitcpio - dump the contents of an initramfs image
+#
+
+shopt -s extglob
+
+die() {
+    local mesg=$1; shift
+    printf "error: $mesg\n" "$@"
+    exit 1
+}
+
+usage() {
+    cat<<USAGE
+lsinitramfs %VERSION%
+usage: ${0##*/} [options] <initramfs>
+
+  Options:
+   -a             analyze contents
+   -h             display this help
+   -v             more verbose output
+   -x             extract image to disk
+
+USAGE
+    exit 1
+}
+
+in_array() {
+    local item needle=$1; shift
+
+    for item; do
+      [[ "$item" == $needle ]] && return 0 # Found
+    done
+    return 1 # Not Found
+}
+
+decomp() {
+    ${compress:-cat} ${compress:+-cd} "$@"
+}
+
+declare verbose=
+declare list='--list'
+
+while getopts ':ahvx' flag; do
+    case $flag in
+        a) analyze=1 ;;
+        h) usage ;;
+        v) verbose='--verbose'  ;;
+        x) unset list ;;
+        \?) die "invalid option -- '$OPTARG'" ;;
+    esac
+done
+shift $(( OPTIND - 1 ))
+
+declare image=$1
+
+[[ $image ]] || usage
+[[ -f $image ]] || die "$image: No such file"
+
+# read compression type
+case "$(file -b "$image")" in
+    data|LZMA*) compress=lzma ;;
+    gzip*) compress=gzip ;;
+    bzip2*) compress=bzip2 ;;
+    lzop*) compress=lzop ;;
+    XZ*) compress=xz ;;
+esac
+
+if (( analyze )); then
+    declare -a binaries explicitmod modules foundhooks hooks
+    declare kernver ratio
+
+    # calculate compression ratio
+    if [[ $compress ]]; then
+        TIMEFORMAT=%R decomptime=$({ time decomp "$image" >/dev/null; } 2>&1 )
+        ratio=.$(( $(stat -c %s "$image") * 1000 /
+                   $(decomp "$image" | bsdtar xOf - | wc -c) % 1000 ))
+    fi
+
+    # read contents of image
+    while read -r line; do
+        if [[ $line = *.ko?(.gz) ]]; then # module
+            if [[ -z $kernver ]]; then
+                [[ $line =~ /lib/modules/([^/]+)/ ]] && kernver=${BASH_REMATCH[1]}
+            fi
+            line=${line##*/}
+            modules+=("${line%.ko?(.gz)}")
+            continue
+        elif [[ $line = ./hooks/* ]]; then
+            foundhooks+=("${line##*/}")
+        elif [[ $line = *@(/bin/|/sbin/)* ]]; then
+            binaries+=("${line#.}")
+        fi
+    done < <(decomp "$image" | bsdtar tf -)
+
+    # source and read config
+    . <(decomp "$image" | bsdtar xOf - config)
+    explicitmod=($MODULES)
+    for hook in $HOOKS; do
+        in_array "$hook" "${foundhooks[@]}" && hooks=("$hook")
+    done
+
+    # print results
+    printf '==> Image: %s\n' "$(readlink -e "$image")"
+    printf '==> Kernel: %s\n' "${kernver:-unknown}"
+
+    if [[ $compress ]]; then
+        printf '==> Compressed with: %s\n' "$compress"
+        printf '  -> Compression ratio: %s\n' "$ratio"
+        printf '  -> Estimated decompression time: %ss\n' "$decomptime"
+    fi
+    printf '\n'
+
+    if (( ${#modules[*]} )); then
+        printf '==> Included modules:\n'
+        for mod in "${modules[@]}"; do
+            printf '  %s' "$mod"
+            in_array "${mod//_/-}" "${explicitmod[@]//_/-}" && printf ' [explicit]'
+            printf '\n'
+        done | sort | column -c$(tput cols)
+        printf '\n'
+    fi
+
+    printf '==> Included binaries:\n'
+    printf '  %s\n' "${binaries[@]}"
+    printf '\n'
+
+    if (( ${#hooks[*]} )); then
+        printf '==> Hook run order:\n'
+        printf '  %s\n' "${hooks[@]}"
+        printf '\n'
+    fi
+else
+    decomp "$image" | bsdcpio -i --quiet $verbose $list
+fi
+
+# vim: set ft=sh ts=4 sw=4 et:
