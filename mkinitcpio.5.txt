@@ -15,47 +15,47 @@ Creates an initial ramdisk environment for booting the linux kernel. The initial
 
 Options
 -------
-*-c* 'config'::
-	Use 'config' file to generate the ramdisk. Default: /etc/mkinitcpio.conf
-
-*-k* 'kernelversion'::
-	Use 'kernelversion'. Default is the current running kernel.
-
-*-s*::
-	Saves the build directory for the initial ramdisk. Default: no; This means the directory will not be retained if this option isn't specified. Useful for debugging purposes.
-
 *-b* 'basedir'::
 	Use 'basedir' as a starting point for gathering information about the currently running system. Default: /.
 
+*-c* 'config'::
+	Use 'config' file to generate the ramdisk. Default: /etc/mkinitcpio.conf
+
 *-g* 'filename'::
 	Generate a CPIO image as 'filename'. Default: no; this means nothing will be written to the filesystem unless this option is specified.
-
-*-p* 'preset'::
-	Build initial ramdisk according to specified 'preset'. Presets are found in /etc/mkinitcpio.d
-
-*-n*::
-	Disable color output.
-
-*-S* 'hooks'::
-	Skip 'hooks' when generating the image. Several hooks should be comma-separated.
-
-*-t* 'tmpdir'::
-	Use 'tmpdir' as the temporary build directory instead of /tmp. 'tmpdir' must exist.
-
-*-v*::
-	Verbose output. Outputs more information about what's happening during creation of the ramdisk.
-
-*-M*::
-	Display modules found via autodetection. mkinitcpio will automatically try to determine which kernel modules are needed to start your computer. This option lists which modules were detected.
-
-*-L*::
-	List all available hooks.
 
 *-H* 'hookname'::
 	Output help for hookname 'hookname'
 
 *-h*::
 	Output a short overview of available command-line switches.
+
+*-k* 'kernelversion'::
+	Use 'kernelversion'. Default is the current running kernel.
+
+*-L*::
+	List all available hooks.
+
+*-M*::
+	Display modules found via autodetection. mkinitcpio will automatically try to determine which kernel modules are needed to start your computer. This option lists which modules were detected.
+
+*-n*::
+	Disable color output.
+
+*-p* 'preset'::
+	Build initial ramdisk according to specified 'preset'. Presets are found in /etc/mkinitcpio.d
+
+*-S* 'hooks'::
+	Skip 'hooks' when generating the image. Several hooks should be comma-separated.
+
+*-s*::
+	Saves the build directory for the initial ramdisk. Default: no; This means the directory will not be retained if this option isn't specified. Useful for debugging purposes.
+
+*-t* 'tmpdir'::
+	Use 'tmpdir' as the temporary build directory instead of /tmp. 'tmpdir' must exist.
+
+*-v*::
+	Verbose output. Outputs more information about what's happening during creation of the ramdisk.
 
 *-z* 'compress'::
 	Override the compression method with the 'compress' program.
