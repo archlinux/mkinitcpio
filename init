@@ -24,12 +24,7 @@ else
 fi
 mount -t tmpfs run /run -o nosuid,noexec,nodev,mode=755,size=10M
 
-root=""
-init=""
 echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
-
-# set default mount handler
-mount_handler="default_mount_handler"
 
 # parse the kernel command line
 parse_cmdline
@@ -84,9 +79,9 @@ if [ "${break}" = "y" ]; then
 fi
 
 # Mount root at /new_root
-${mount_handler} /new_root
+${mount_handler:-default_mount_handler} /new_root
 
-[ -z "${init}" ] && init="/sbin/init"
+init=${init:-/sbin/init}
 if [ "$(stat -c %D /)" = "$(stat -c %D /new_root)" ]; then
     # Nothing got mounted on /new_root. This is the end, we don't know what to do anymore
     # We fall back into a shell, but the shell has now PID 1
