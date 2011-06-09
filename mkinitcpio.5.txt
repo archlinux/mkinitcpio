@@ -57,6 +57,9 @@ Options
 *-h*::
 	Output a short overview of available command-line switches.
 
+*-z* 'compress'::
+	Override the compression method with the 'compress' program.
+
 About Hooks
 -----------
 A hook is a script that executes in the initial ramdisk. Scripts are
