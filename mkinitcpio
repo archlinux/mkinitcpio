@@ -107,6 +107,7 @@ while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
         s) SAVELIST=1; ;;
         b) BASEDIR="${OPTARG}" ;;
         g) GENIMG="${OPTARG}" ;;
+        h) usage ;;
         p) PRESET="${OPTARG}" ;;
         n) COLOR=0 ;;
         v) QUIET=0 ;;
@@ -127,8 +128,10 @@ while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
         M) SHOW_AUTOMODS=1 ;;
         t) TMPDIR=$OPTARG ;;
         z) optcompress=$OPTARG ;;
-        h|?) usage ;;
-        :) echo "${OPTARG} requires a value..."; usage ;;
+        :) echo "error: option requires an argument -- '$OPTARG'" >&2
+           exit 1 ;;
+       \?) echo "error: invalid option -- '$OPTARG'" >&2
+           exit 1 ;;
     esac
 done
 shift $((OPTIND - 1))
