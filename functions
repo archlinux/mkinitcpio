@@ -143,18 +143,13 @@ add_symlink() {
     #   $1: pathname of symlink on image
     #   $2: absolute path to target of symlink
 
-    local fil dest dir
-    if [[ -h $1 ]]; then
-        fil="${1##$BASEDIR}"
-        dest="${2##$BASEDIR}"
-        add_dir $(get_dirname "${dest}")
-        add_dir $(get_dirname "${fil}")
-        if [[ ! -e "$TMPDIR/root/$dest" ]]; then
-            (( QUIET )) || plain "adding symlink: $fil -> $dest"
-            ln -s "$dest" "$TMPDIR/root/$fil"
-        fi
+    local file=$1 dest=$2
+
+    add_dir $(get_dirname "$file")
+    if [[ ! -e "$TMPDIR/root/$dest" ]]; then
+        (( QUIET )) || plain "adding symlink: $file -> $dest"
+        ln -s "$dest" "$TMPDIR/root/$file"
     fi
-    #fail quietly
 }
 
 add_file() {
