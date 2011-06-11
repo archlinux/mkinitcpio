@@ -2,13 +2,22 @@
 
 VERSION = 0.6.15
 
+DIRS = \
+	/bin \
+	/sbin \
+	/etc/mkinitcpio.d \
+	/lib/initcpio/hooks \
+	/lib/initcpio/install \
+	/lib/initcpio/udev \
+	/usr/share/man/man5
+
+DIST_EXTRA = \
+	mkinitcpio.5
+
 all: doc
 
 install: all
-	install -d ${DESTDIR}/bin
-	install -d ${DESTDIR}/sbin
-	install -d ${DESTDIR}/lib/initcpio
-	install -d ${DESTDIR}/etc
+	$(foreach dir,${DIRS},install -dm755 ${DESTDIR}${dir};)
 
 	sed -e 's|CONFIG="mkinitcpio.conf"|CONFIG="/etc/mkinitcpio.conf"|g' \
 	    -e 's|FUNCTIONS="functions"|FUNCTIONS="/lib/initcpio/functions"|g' \
@@ -17,59 +26,40 @@ install: all
 	    -e 's|PRESETDIR="mkinitcpio.d"|PRESETDIR="/etc/mkinitcpio.d"|g' \
 	    < mkinitcpio > ${DESTDIR}/sbin/mkinitcpio
 
-	chmod 755 ${DESTDIR}/sbin/mkinitcpio
-
 	sed "s|%VERSION%|${VERSION}|g" < lsinitcpio > ${DESTDIR}/bin/lsinitcpio
-	chmod 755 ${DESTDIR}/bin/lsinitcpio
 
-	install -D -m644 mkinitcpio.conf ${DESTDIR}/etc/mkinitcpio.conf
-	install -D -m755 init ${DESTDIR}/lib/initcpio/init
-	install -D -m755 init_functions ${DESTDIR}/lib/initcpio/init_functions
-	install -D -m644 functions ${DESTDIR}/lib/initcpio/functions
-	install -D -m644 01-memdisk.rules ${DESTDIR}/lib/initcpio/udev/01-memdisk.rules
+	chmod 755 ${DESTDIR}/bin/lsinitcpio ${DESTDIR}/sbin/mkinitcpio
 
-	install -d ${DESTDIR}/lib/initcpio/hooks
-	install -d ${DESTDIR}/lib/initcpio/install
-	install -d ${DESTDIR}/etc/mkinitcpio.d
+	install -m644 mkinitcpio.conf ${DESTDIR}/etc/mkinitcpio.conf
+	install -m755 -t ${DESTDIR}/lib/initcpio init
+	install -m644 -t ${DESTDIR}/lib/initcpio init_functions functions
+	install -m644 01-memdisk.rules ${DESTDIR}/lib/initcpio/udev/01-memdisk.rules
 
-	cp -R hooks/* ${DESTDIR}/lib/initcpio/hooks
-	cp -R install/* ${DESTDIR}/lib/initcpio/install
-	cp -R mkinitcpio.d/* ${DESTDIR}/etc/mkinitcpio.d
+	install -m644 -t ${DESTDIR}/lib/initcpio/hooks hooks/*
+	install -m644 -t ${DESTDIR}/lib/initcpio/install install/*
+	install -m644 -t ${DESTDIR}/etc/mkinitcpio.d mkinitcpio.d/*
 
-	install -D -m644 mkinitcpio.5.gz ${DESTDIR}/usr/share/man/man5/mkinitcpio.5.gz
+	install -m644 mkinitcpio.5 ${DESTDIR}/usr/share/man/man5/mkinitcpio.5
 
-doc: mkinitcpio.5.gz
-
-mkinitcpio.5.gz: mkinitcpio.5.txt
-	a2x -d manpage -f manpage -a mansource=mkinitcpio -a manversion=${VERSION} -a manmanual=mkinitcpio mkinitcpio.5.txt
-	gzip -c --best mkinitcpio.5 > mkinitcpio.5.gz
+doc: mkinitcpio.5
+mkinitcpio.5: mkinitcpio.5.txt
+	a2x -d manpage \
+		-f manpage \
+		-a mansource=mkinitcpio \
+		-a manversion=${VERSION} \
+		-a manmanual=mkinitcpio mkinitcpio.5.txt
 
 clean:
-	rm -rf build
-	rm -f mkinitcpio-${VERSION}.tar.gz
-	rm -f mkinitcpio.5
-	rm -f mkinitcpio.5.xml
-	rm -f mkinitcpio.5.gz
+	${RM} -r build mkinitcpio-${VERSION}
+	${RM} mkinitcpio-${VERSION}.tar.gz mkinitcpio.5 mkinitcpio.5.gz
 
-TARBALL_FILES = \
-	Makefile \
-	LICENSE \
-	README \
-	hooks \
-	functions \
-	init \
-	init_functions \
-	install \
-	01-memdisk.rules \
-	lsinitcpio \
-	mkinitcpio \
-	mkinitcpio.conf \
-	mkinitcpio.d \
-	mkinitcpio.5.txt \
-	mkinitcpio.5.gz
+tarball: dist
+dist: doc
+	git archive --prefix=mkinitcpio-${VERSION}/ -o mkinitcpio-${VERSION}.tar HEAD
+	mkdir mkinitcpio-${VERSION}; \
+		cp -t mkinitcpio-${VERSION} ${DIST_EXTRA}; \
+		tar uf mkinitcpio-${VERSION}.tar mkinitcpio-${VERSION}; \
+		${RM} -r mkinitcpio-${VERSION}
+	gzip -9 mkinitcpio-${VERSION}.tar
 
-tarball: mkinitcpio.5.gz
-	mkdir -p build/mkinitcpio-${VERSION}
-	cp -a --backup=none ${TARBALL_FILES} build/mkinitcpio-${VERSION}
-	tar cvvzf mkinitcpio-${VERSION}.tar.gz -C build mkinitcpio-${VERSION}
-
+.PHONY: clean dist install tarball
