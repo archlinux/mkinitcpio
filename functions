@@ -202,7 +202,7 @@ add_module() {
         add_file "$path" || return
     else
         error "module '$module' not found"
-        return
+        return 1
     fi
 
     # explicit module depends

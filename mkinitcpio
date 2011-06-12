@@ -273,6 +273,11 @@ else
     msg "Starting build: %s" "$KERNELVERSION"
 fi
 
+# set errtrace and a trap to catch errors in parse_hook
+declare -i builderrors=0
+set -E
+trap '[[ $FUNCNAME = parse_hook ]] && (( ++builderrors ))' ERR
+
 #parse 'global' hook, as defined in ${CONFIG}
 parse_hook
 
@@ -306,6 +311,10 @@ for hook in ${HOOKS}; do
     fi
 done
 
+# unset errtrace and trap
+set +E
+trap ERR
+
 if (( ${#ADDED_MODULES[*]} )); then
     msg "Generating module dependencies"
     /sbin/depmod -b "${TMPDIR}/root" "${KERNELVERSION}"
@@ -329,6 +338,11 @@ if [[ "${GENIMG}" ]]; then
         errmsg="bsdcpio reported an error"
     elif (( pipesave[2] )); then
         errmsg="$COMPRESSION reported an error"
+    fi
+
+    if (( builderrors )); then
+        warning "errors were encountered during the build. The image may not be complete."
+        status=1
     fi
 
     if [[ $errmsg ]]; then
