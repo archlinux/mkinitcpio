@@ -53,7 +53,7 @@ fi
 
 . /config
 
-/sbin/modprobe -qab $MODULES
+[ -n "$MODULES" ] && /sbin/modprobe -qab $MODULES
 
 # If rootdelay is empty or not a non-negative integer, set it to 10
 if [ -z "${rootdelay}" ] || ! [ "${rootdelay}" -ge 0 ]; then
