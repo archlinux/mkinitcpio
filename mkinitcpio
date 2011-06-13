@@ -175,13 +175,17 @@ declare BUILDROOT=$TMPDIR/root
 
 # use preset $PRESET
 if [[ $PRESET ]]; then
-    if [[ -f "$PRESETDIR/$PRESET.preset" ]]; then
+    # allow absolute path to preset file, else resolve it
+    if [[ "${PRESET:0:1}" != '/' ]]; then
+        printf -v PRESET '%s/%s.preset' "$PRESETDIR" "$PRESET"
+    fi
+    if [[ -f "$PRESET" ]]; then
         # Use -b, -m and -v options specified earlier
         declare -a preset_mkopts preset_cmd
         [[ $BASEDIR ]] && preset_mkopts+=(-b "$BASEDIR")
         (( QUIET )) || preset_mkopts+=(-v)
         # Build all images
-        . "$PRESETDIR/$PRESET.preset"
+        . "$PRESET"
         for p in "${PRESETS[@]}"; do
             msg "Building image from preset: '$p'"
             preset_cmd=("${preset_mkopts[@]}")
