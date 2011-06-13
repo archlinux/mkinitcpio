@@ -256,15 +256,14 @@ for hook in ${HOOKS}; do
     in_array "$hook" "${SKIPHOOKS[@]}" && continue
     unset MODULES BINARIES FILES SCRIPT
     build () { error "$hook: no build function..."; }
-    # Deprecation check
-    # A hook is considered deprecated if it is a symlink
-    # within $INSTDIR.
-    if [[ -h "${INSTDIR}/${hook}" ]]; then
-        newhook="$(readlink -ne "${INSTDIR}/${hook}")"
-        if [ -n "${newhook}" -a "${INSTDIR}/$(get_basename ${newhook})" -ef "${newhook}" ]; then
-            newhook="$(get_basename ${newhook})"
+
+    # A hook is considered deprecated if it is a symlink within $INSTDIR.
+    if [[ -L "$INSTDIR/$hook" ]]; then
+        newhook=$(readlink -e "$INSTDIR/$hook")
+        if [[ $newhook && "$INSTDIR/${newhook##*/}" -ef "$newhook" ]]; then
+            newhook=${newhook##*/}
             warning "Hook '%s' is deprecated. Replace it with '%s' in your config" "$hook" "$newhook"
-            hook="${newhook}"
+            hook=$newhook
         fi
     fi
     if [[ -r "${INSTDIR}/${hook}" ]]; then
