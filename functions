@@ -56,7 +56,7 @@ all_modules ()
     while read -r -d '' mod; do
         (( ++count ))
         mod=${mod##*/}
-        mod="${mod%.ko.*}"
+        mod="${mod%.ko*}"
         printf '%s\n' "${mod//-/_}"
     done < <(find "$MODULEDIR" -name '*.ko*' -print0 2>/dev/null | grep -Zz "$@")
 
