@@ -41,6 +41,9 @@ fi
 # Add /{,usr}/sbin to path
 # works around undetected problems like in #8448
 PATH="${PATH}:/sbin:/usr/sbin"
+# Sanitize environment further
+# GREP_OPTIONS="--color=always" will break everything
+unset GREP_OPTIONS
 
 APPNAME=$(basename "${0}")
 
