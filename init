@@ -80,10 +80,6 @@ if [ "${break}" = "y" ]; then
     launch_interactive_shell
 fi
 
-if [ -f "/message" ]; then
-    msg "$(cat /message)"
-fi
-
 # Mount root at /new_root
 mkdir -p /new_root
 ${mount_handler} /new_root

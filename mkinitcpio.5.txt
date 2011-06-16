@@ -33,9 +33,6 @@ Options
 *-p* 'preset'::
 	Build initial ramdisk according to specified 'preset'. Presets are found in /etc/mkinitcpio.d
 
-*-m* 'message'::
-	Print 'message' before passing control to init.
-
 *-n*::
 	Disable color output.
 
