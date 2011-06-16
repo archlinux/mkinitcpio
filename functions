@@ -114,33 +114,26 @@ add_symlink ()
     #fail quietly
 }
 
-add_file ()
+add_file()
 {
-    local fil lnk dir dest
-    if [[ -f "$1" ]]; then
-        fil=$1
-        lnk=$(readlink -f "${fil}")
-        if [[ ${lnk} ]]; then
-            add_symlink "${fil}" "${lnk}"
-            fil="${lnk}"
-        fi
-        if [[ $2 ]]; then
-            dest=$2
-        else
-            dest="${fil##$BASEDIR}"
-            if [[ "${dest}" = "${dest#/}" ]]; then
-                dest="/${dest}"
-            fi
+    local file dest
+
+    file=$1
+    dest=${2:-${file##$BASEDIR}}
+
+    if [[ -f "$file" ]]; then
+        if [[ -L "$file" ]]; then
+            add_symlink "$file" "$(readlink -f "$file")"
+            add_file "$(readlink -f "$file")"
+            return
         fi
 
-        add_dir $(get_dirname "${dest}")
-
-        if [[ ! -e $TMPDIR/root/$dest ]]; then
-            msg "  adding file ${dest}"
-            command install -Dm$(stat -c '%a' "$fil") "$fil" "$TMPDIR/root/$dest"
+        if [[ ! -e "$TMPDIR/root/$dest" ]]; then
+            msg "  adding file $dest"
+            command install -Dm$(stat -c '%a' "$file") "$file" "$TMPDIR/root/$dest"
         fi
     else
-        err "file '${1}' does not exist"
+        err "file '$file' does not exist"
         return 1
     fi
 }
