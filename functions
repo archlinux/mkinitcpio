@@ -2,21 +2,18 @@ msg () { [ "${QUIET}" = "n" ] && echo $@; }
 err () { echo "ERROR: $@" >&2; }
 die () { echo "FATAL: $@" >&2; cleanup; exit 1; }
 
-get_dirname ()
-{
+get_dirname() {
     # strip any trailing slash first...
     local dir="${1%/}"
     # then get the directory portion
     echo "${dir%/*}"
 }
 
-get_basename ()
-{
+get_basename() {
     echo "${1##*/}"
 }
 
-get_module_name ()
-{
+get_module_name() {
     #cleanup - remove .ko, replace - with _
     local modname="${1%.gz}"
     modname=$(get_basename "${modname%.ko}")
@@ -24,12 +21,11 @@ get_module_name ()
     echo "$modname"
 }
 
-##
-#  usage : in_array( $needle, $haystack )
-# return : 0 - found
-#          1 - not found
-##
 in_array() {
+    # Search for an element in an array.
+    #   $1: needle
+    #   ${@:2}: haystack
+
     local needle=$1; shift
     [[ -z $1 ]] && return 1 # Not Found
     local item
@@ -40,11 +36,16 @@ in_array() {
 }
 
 kmodinfo() {
+    # A wrapper around modinfo, which is aware of our $BASEDIR and
+    # $KERNELVERSION
+    #   $@: args to modinfo
+
     modinfo -b "$BASEDIR" -k "$KERNELVERSION" "$@" 2>/dev/null
 }
 
-auto_modules ()
-{
+auto_modules() {
+    # Perform auto detection of modules via sysfs.
+
     IFS=$'\n' read -rd '' -a mods < \
         <(find /sys/devices -name modalias -exec sort -zu {} + |
         xargs -0 modprobe -aRS "$KERNELVERSION" |
@@ -54,8 +55,10 @@ auto_modules ()
     (( ${#mods[*]} ))
 }
 
-all_modules ()
-{
+all_modules() {
+    # Add modules to the initcpio, filtered by grep.
+    #   $@: filter arguments to grep
+
     local -i count=0
     while read -r -d '' mod; do
         (( ++count ))
@@ -67,8 +70,11 @@ all_modules ()
     (( count ))
 }
 
-checked_modules ()
-{
+checked_modules() {
+    # Add modules to the initcpio, filtered by the list of autodetected
+    # modules.
+    #   $@: arguments to all_modules
+
     if [[ -s "$MODULE_FILE" ]]; then
         grep -xFf "$MODULE_FILE" <(all_modules "$@")
         return 1
@@ -77,8 +83,11 @@ checked_modules ()
     fi
 }
 
-add_full_dir ()
-{
+add_full_dir() {
+    # Add a directory and all its contents, recursively, to the initcpio image.
+    # No parsing is performed and the contents of the directory is added as is.
+    #   $1: path to directory
+
     if [[ -n $1 && -d $1 ]]; then
         for f in "$1"/*; do
             if [[ -d "$f" ]]; then
@@ -90,16 +99,21 @@ add_full_dir ()
     fi
 }
 
-add_dir ()
-{
+add_dir() {
+    # Add a directory to the initcpio image.
+    #   $1: absolute path of directory on image
+
     if [[ ! -e "$TMPDIR/root/$1" ]]; then
         msg "  adding  dir ${1}"
         command install -dm755 "$TMPDIR/root/$1"
     fi
 }
 
-add_symlink ()
-{
+add_symlink() {
+    # Add a symlink to the initcpio image.
+    #   $1: pathname of symlink on image
+    #   $2: absolute path to target of symlink
+
     local fil dest dir
     if [[ -h $1 ]]; then
         fil="${1##$BASEDIR}"
@@ -114,8 +128,12 @@ add_symlink ()
     #fail quietly
 }
 
-add_file()
-{
+add_file() {
+    # Add a plain file to the initcpio image. No parsing is performed and only
+    # the singular file is added.
+    #   $1: path to file
+    #   $2: destination on initcpio (optional, defaults to same as source)
+
     local file dest
 
     file=$1
@@ -139,9 +157,11 @@ add_file()
 }
 
 declare -a ADDED_MODULES
-#modules are handled specially in order to enable autodetection
-add_module ()
-{
+add_module() {
+    # Add a kernel module to the initcpio image. Dependencies will be
+    # discovered and added.
+    #   $1: module name
+
     local module path fw dep deps
     module=${1%.ko*}
 
@@ -182,8 +202,12 @@ add_module ()
     esac
 }
 
-add_binary ()
-{
+add_binary() {
+    # add a binary file to the initcpio image. library dependencies will
+    # be discovered and added.
+    #   $1: path to binary
+    #   $2: destination on initcpio (optional, defaults to same as source)
+
     local bin dest lib
 
     bin=$(type -P "$1")
@@ -214,8 +238,11 @@ add_binary ()
     esac
 }
 
-parse_hook ()
-{
+parse_hook() {
+    # parse key global variables set by install hooks. This function is called
+    # prior to the start of hook processing, and after each hook's build
+    # function is run.
+
     local mod bin fil
     for mod in ${MODULES}; do
         if [ -n "${mod}" ]; then
