@@ -118,8 +118,12 @@ while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
            IFS=${OLDIFS}
            unset OLDIFS
            ;;
-        H) . "${INSTDIR}/${OPTARG}";
-           msg "Help for hook '${OPTARG}'"
+        H) if [[ ! -r "${INSTDIR}/${OPTARG}" ]]; then
+               error "No hook ${OPTARG}"
+               exit 1
+           fi
+           . "${INSTDIR}/${OPTARG}"
+           echo "Help for hook '${OPTARG}':"
            help
            exit 0 ;;
         L) msg "Available hooks"
