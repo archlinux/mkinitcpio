@@ -124,10 +124,11 @@ add_dir() {
     # Add a directory to the initcpio image.
     #   $1: absolute path of directory on image
 
-    if [[ ! -e "$BUILDROOT/$1" ]]; then
-        (( QUIET )) || plain "adding dir: %s" "$1"
-        command install -dm755 "$BUILDROOT/$1"
-    fi
+    (( ! $# )) && return 1
+
+    local path=$1 mode=${2:-755}
+
+    _add_dir "$path" "$mode"
 }
 
 add_symlink() {
@@ -135,13 +136,10 @@ add_symlink() {
     #   $1: pathname of symlink on image
     #   $2: absolute path to target of symlink
 
-    local file=$1 dest=$2
+    (( $# == 2 )) || return 1
 
-    add_dir $(get_dirname "$file")
-    if [[ ! -e "$TMPDIR/root/$dest" ]]; then
-        (( QUIET )) || plain "adding symlink: $file -> $dest"
-        ln -s "$dest" "$BUILDROOT/$file"
-    fi
+    _add_dir "$(get_dirname "$1")"
+    _add_symlink "$2" "$1"
 }
 
 add_file() {
@@ -150,26 +148,22 @@ add_file() {
     #   $1: path to file
     #   $2: destination on initcpio (optional, defaults to same as source)
 
-    local file dest
+    (( $# )) || return 1
 
-    file=$1
-    dest=${2:-${file##$BASEDIR}}
+    # determine source and destination
+    local src= dest=${2:-$1} mode=
 
-    if [[ -f "$file" ]]; then
-        if [[ -L "$file" ]]; then
-            add_symlink "$file" "$(readlink -f "$file")"
-            add_file "$(readlink -f "$file")"
-            return
-        fi
+    src=$BASEDIR$1
 
-        if [[ ! -e "$BUILDROOT/$dest" ]]; then
-            (( QUIET )) || plain "adding file: %s" "$dest"
-            command install -Dm$(stat -c '%a' "$file") "$file" "$BUILDROOT/$dest"
-        fi
-    else
-        error "file '$file' does not exist"
+    [[ -f "$src" ]] || { error "$src: No such file"; return 1; }
+
+    mode=$(stat -c %a "$src")
+    if [[ -z "$mode" ]]; then
+        error "failed to stat file: \`$src'"
         return 1
     fi
+
+    _add_file "${dest#$BASEDIR}" "$src" "$mode"
 }
 
 add_module() {
@@ -213,40 +207,85 @@ add_module() {
     esac
 }
 
+_ldd() {
+    LD_TRACE_LOADED_OBJECTS=1 "$LD_SO" "$@"
+}
+
+_add_file() {
+  # add a file to $BUILDROOT
+  #   $1: pathname on initcpio
+  #   $2: source on disk
+  #   $3: mode
+
+  (( $# == 3 )) || return $EINVAL
+  [[ -e "$BUILDROOT$1" ]] && return $EEXIST
+
+  (( QUIET )) || plain "adding file: %s" "$1"
+  install -Dm$3 "$2" "$BUILDROOT$1"
+}
+
+_add_dir() {
+  # add a directory (with parents) to $BUILDROOT
+  #   $1: pathname on initcpio
+  #   $2: mode
+
+    (( $# == 2 )) || [[ "$1" == /?* ]] || return 1 # bad args
+    [[ -e "$BUILDROOT$1" ]] && return 0 # file exists
+
+    (( QUIET )) || plain "adding dir: %s" "$1"
+    command install -dm$2 "$BUILDROOT$1"
+}
+
+_add_symlink() {
+  # add a symlink to $buildroot
+  #   $1: name on initcpio
+  #   $2: target of $1
+
+  (( $# == 2 )) || return $EINVAL
+  [[ -L "$BUILDROOT$1" ]] && return $EEXIST
+
+  (( QUIET )) || plain "adding symlink: %s -> %s" "$2" "$1"
+  ln -s "$2" "$BUILDROOT$1"
+}
+
 add_binary() {
     # add a binary file to the initcpio image. library dependencies will
     # be discovered and added.
     #   $1: path to binary
     #   $2: destination on initcpio (optional, defaults to same as source)
 
-    local bin dest lib
+    local -a sodeps
+    local regex binary dest mode sodep resolved dirname
 
-    bin=$(type -P "$1")
-    dest=$2
+    binary=$BASEDIR$1
 
-    if [[ ! -f "$bin" ]]; then
-        error "'$1' is not a file"
-        return 1
-    fi
+    [[ -f "$binary" ]] || { error "$binary not found"; return 1; }
 
-    case "$(file -b "$bin")" in
-        *script*)
-            plain "adding '$type' script, ensure proper interp exists..."
-            add_file "$bin" ${dest+"$dest"}
-            ;;
-        *executable*|*shared\ object*|*symbolic\ link*)
-            add_file "$bin" ${dest+"$dest"}
-            # note, this will also handle 'not a dynamic executable' spit out
-            # by static binaries... the deps will produce nothing
-            while read -r lib; do
-                [[ -f "$lib" ]] && add_file "$lib"
-            done < <(ldd "$bin" 2>/dev/null | sed '1d;s|.*=>\(.*\)|\1|;s/(0x[0-9a-f]\+)//')
-            ;;
-        *)
-            error "unknown type '$type' for binary '$bin'"
-            return 1
-            ;;
-    esac
+    dest=${2:-$binary}
+    mode=$(stat -c %a "$binary")
+
+    # always add the binary itself
+    _add_file "${dest#$BASEDIR}" "${binary#$BASEDIR}" "$mode"
+
+    $LD_SO --verify "$binary" &>/dev/null || return # not a binary!
+
+    # resolve sodeps
+    regex='^[[:space:]]*[^/].+ => (.*) \(.*\)'
+    while read line; do
+        [[ "$line" =~ $regex ]] && sodep=${BASH_REMATCH[1]} || continue
+
+        if [[ -f "$sodep" ]]; then # -f follows symlinks, don't believe it!
+            if [[ ! -L $sodep ]]; then
+                _add_file "$sodep" "$BASEDIR$sodep" "$(stat -c %a "$sodep")"
+            else
+                resolved=$(readlink -e "$basedir$sodep")
+                dirname=${resolved%/*}
+                _add_dir "${dirname#$basedir}" 755
+                _add_symlink "$sodep" "${resolved#$BASEDIR}"
+                _add_file "${resolved#$BASEDIR}" "$resolved" 755
+            fi
+        fi
+    done < <(_ldd "$binary")
 }
 
 parse_hook() {
