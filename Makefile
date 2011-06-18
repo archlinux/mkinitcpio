@@ -40,6 +40,7 @@ install: all
 	install -m644 -t ${DESTDIR}/etc/mkinitcpio.d mkinitcpio.d/*
 
 	install -m644 mkinitcpio.5 ${DESTDIR}/usr/share/man/man5/mkinitcpio.5
+	install -m644 bash-completion ${DESTDIR}/etc/bash_completion.d/mkinitcpio
 
 doc: mkinitcpio.5
 mkinitcpio.5: mkinitcpio.5.txt

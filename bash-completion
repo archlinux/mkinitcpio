@@ -1,0 +1,20 @@
+# mkinitcpio bash completion by Seblu <seblu@seblu.net>
+
+_mkinitcpio ()
+{
+	local action="-c -k -s -b -g -a -p -m -S -v -M -L -H -h"
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local caction="${COMP_WORDS[COMP_CWORD-1]}"
+	case "$caction" in
+		-c|-g|-s|-a) _filedir;;
+		-k) COMPREPLY=($(cd /lib/modules && compgen -d -- $cur));;
+		-b) COMPREPLY=($(compgen -d "$cur" -- $cur));;
+		-p) COMPREPLY=($(cd /etc/mkinitcpio.d/ && compgen -X '!*.preset' -f  -- $cur|sed 's/\.preset//'));;
+		-H|-S) COMPREPLY=($(cd /lib/initcpio/install/ && compgen -f -- $cur));;
+		-m) COMPREPLY=();;
+		*)	COMPREPLY=($(compgen -W "${action}" -- "$cur"));;
+	esac
+}
+complete -F _mkinitcpio mkinitcpio
+
+# vim: set ts=2 sw=2 ft=sh noet:
