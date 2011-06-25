@@ -42,7 +42,7 @@ install: all
 	install -m644 mkinitcpio.5 ${DESTDIR}/usr/share/man/man5/mkinitcpio.5
 
 doc: mkinitcpio.5
-mkinitcpio.5: mkinitcpio.5.txt
+mkinitcpio.5: mkinitcpio.5.txt Makefile
 	a2x -d manpage \
 		-f manpage \
 		-a mansource=mkinitcpio \
