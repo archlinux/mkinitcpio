@@ -2,7 +2,7 @@
 
 build()
 {
-    MODULES=" $(checked_modules '/pcmcia/' | grep -ve 'sound' -e 'net') $(checked_modules '/ide/legacy')"
+    MODULES=" $(checked_modules '/drivers/pcmcia/' | grep -ve 'sound' -e 'net') $(checked_modules '/ide/legacy')"
     MODULES=$(echo ${MODULES}) #trim whitespace
     if [ -n "${MODULES}" ]; then
         MODULES="${MODULES} sd_mod"

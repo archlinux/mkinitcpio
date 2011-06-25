@@ -2,7 +2,7 @@
 
 build()
 {
-    MODULES=" $(checked_modules "/firewire/") "
+    MODULES=" $(checked_modules "/drivers/firewire/") "
 
     MODULES=$(echo ${MODULES}) #trim whitespace
     if [ -n "${MODULES}" ]; then
