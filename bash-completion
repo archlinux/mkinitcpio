@@ -13,11 +13,11 @@ _lsinitcpio ()
 
 _mkinitcpio ()
 {
-	local action="-c -k -s -b -g -a -p -S -v -M -L -H -h"
+	local action="-c -k -s -b -g -p -S -v -M -L -H -h"
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local caction="${COMP_WORDS[COMP_CWORD-1]}"
 	case "$caction" in
-		-c|-g|-s|-a) _filedir;;
+		-c|-g) _filedir;;
 		-k) COMPREPLY=($(cd /lib/modules && compgen -d -- $cur));;
 		-b) COMPREPLY=($(compgen -d "$cur" -- $cur));;
 		-p) COMPREPLY=($(cd /etc/mkinitcpio.d/ && compgen -X '!*.preset' -f  -- $cur|sed 's/\.preset//'));;
