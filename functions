@@ -278,9 +278,9 @@ add_binary() {
             if [[ ! -L $sodep ]]; then
                 _add_file "$sodep" "$BASEDIR$sodep" "$(stat -c %a "$sodep")"
             else
-                resolved=$(readlink -e "$basedir$sodep")
+                resolved=$(readlink -e "$BASEDIR$sodep")
                 dirname=${resolved%/*}
-                _add_dir "${dirname#$basedir}" 755
+                _add_dir "${dirname#$BASEDIR}" 755
                 _add_symlink "$sodep" "${resolved#$BASEDIR}"
                 _add_file "${resolved#$BASEDIR}" "$resolved" 755
             fi
