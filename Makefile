@@ -5,6 +5,7 @@ VERSION = 0.6.15
 DIRS = \
 	/bin \
 	/sbin \
+	/etc/bash_completion.d \
 	/etc/mkinitcpio.d \
 	/lib/initcpio/hooks \
 	/lib/initcpio/install \
