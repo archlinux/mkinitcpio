@@ -118,8 +118,16 @@ while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
            IFS=${OLDIFS}
            unset OLDIFS
            ;;
-        H) . "${INSTDIR}/${OPTARG}";
-           msg "Help for hook '${OPTARG}'"
+        H) if [[ ! -r "${INSTDIR}/${OPTARG}" ]]; then
+               error "No hook ${OPTARG}"
+               exit 1
+           fi
+           . "${INSTDIR}/${OPTARG}"
+           if [[ $(type -t help) != function ]]; then
+               error "No help for hook ${OPTARG}"
+               exit 1
+           fi
+           echo "Help for hook '${OPTARG}':"
            help
            exit 0 ;;
         L) msg "Available hooks"
@@ -129,9 +137,9 @@ while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
         M) SHOW_AUTOMODS=1 ;;
         t) TMPDIR=$OPTARG ;;
         z) optcompress=$OPTARG ;;
-        :) echo "error: option requires an argument -- '$OPTARG'" >&2
+        :) error "option requires an argument -- '$OPTARG'" >&2
            exit 1 ;;
-       \?) echo "error: invalid option -- '$OPTARG'" >&2
+       \?) error "invalid option -- '$OPTARG'" >&2
            exit 1 ;;
     esac
 done
