@@ -182,7 +182,7 @@ add_module() {
         # get module firmware
         while read -r -d '' fw; do
             if [[ -e "$BASEDIR/lib/firmware/$fw" ]]; then
-                add_file "$BASEDIR/lib/firmware/$fw"
+                add_file "/lib/firmware/$fw"
             fi
         done < <(kmodinfo -0F firmware "$module")
 
@@ -193,7 +193,7 @@ add_module() {
         done
 
         ADDED_MODULES+=("${module//-/_}")
-        add_file "$path" || return
+        add_file "${path#$BASEDIR}" || return
     else
         error "module '$module' not found"
         return 1
@@ -265,7 +265,7 @@ add_binary() {
     mode=$(stat -c %a "$binary")
 
     # always add the binary itself
-    _add_file "${dest#$BASEDIR}" "${binary#$BASEDIR}" "$mode"
+    _add_file "${dest#$BASEDIR}" "$binary" "$mode"
 
     $LD_SO --verify "$binary" &>/dev/null || return # not a binary!
 
