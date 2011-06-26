@@ -221,7 +221,7 @@ _add_file() {
   [[ -e "$BUILDROOT$1" ]] && return $EEXIST
 
   (( QUIET )) || plain "adding file: %s" "$1"
-  install -Dm$3 "$2" "$BUILDROOT$1"
+  command install -Dm$3 "$2" "$BUILDROOT$1"
 }
 
 _add_dir() {
