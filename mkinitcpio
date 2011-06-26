@@ -137,9 +137,9 @@ while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
         M) SHOW_AUTOMODS=1 ;;
         t) TMPDIR=$OPTARG ;;
         z) optcompress=$OPTARG ;;
-        :) echo "error: option requires an argument -- '$OPTARG'" >&2
+        :) error "option requires an argument -- '$OPTARG'" >&2
            exit 1 ;;
-       \?) echo "error: invalid option -- '$OPTARG'" >&2
+       \?) error "invalid option -- '$OPTARG'" >&2
            exit 1 ;;
     esac
 done
