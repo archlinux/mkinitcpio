@@ -2,10 +2,10 @@
 
 _lsinitcpio ()
 {
-	local action="-a -h -v -x"
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-	local caction="${COMP_WORDS[COMP_CWORD]}"
-	case "$caction" in
+	local action cur
+	action="-a -h -v -x"
+	_get_comp_words_by_ref cur
+	case "$cur" in
 		-*)	COMPREPLY=($(compgen -W "${action}" -- "$cur"));;
 		*) _filedir;;
 	esac
@@ -13,10 +13,10 @@ _lsinitcpio ()
 
 _mkinitcpio ()
 {
-	local action="-c -k -s -b -g -p -S -v -M -L -H -h"
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-	local caction="${COMP_WORDS[COMP_CWORD-1]}"
-	case "$caction" in
+	local action cur prev
+	action="-c -k -s -b -g -p -S -v -M -L -H -h"
+	_get_comp_words_by_ref cur prev
+	case "$prev" in
 		-c|-g) _filedir;;
 		-k) COMPREPLY=($(cd /lib/modules && compgen -d -- $cur));;
 		-b) COMPREPLY=($(compgen -d "$cur" -- $cur));;
