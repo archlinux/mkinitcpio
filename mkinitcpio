@@ -123,6 +123,10 @@ while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
                exit 1
            fi
            . "${INSTDIR}/${OPTARG}"
+           if [[ $(type -t help) != function ]]; then
+               error "No help for hook ${OPTARG}"
+               exit 1
+           fi
            echo "Help for hook '${OPTARG}':"
            help
            exit 0 ;;
