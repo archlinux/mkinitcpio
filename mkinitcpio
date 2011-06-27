@@ -209,7 +209,7 @@ if [[ $PRESET ]]; then
 
             preset_config=${p}_config
             if [[ ${!preset_config:-$ALL_config} ]]; then
-              preset_cmd+=(-c "${!preset_config:-$ALL_config}")
+              preset_cmd+=(-c "$BASEDIR${!preset_config:-$ALL_config}")
             else
                 warning "No configuration file specified. Skipping image '%s'" "$p"
                 continue
