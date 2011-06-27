@@ -8,6 +8,7 @@ conflicts=('mkinitcpio')
 provides=('mkinitcpio=9999')
 depends=('mkinitcpio-busybox>=1.16.1-2' 'module-init-tools' 'util-linux>=2.19' 'libarchive' 'coreutils'
          'bash' 'findutils' 'sed' 'grep' 'filesystem>=2009.01-2' 'udev>=168' 'file' 'gzip')
+makedepends=('asciidoc')
 optdepends=('xz: Use lzma or xz compression for the initramfs image'
             'bzip2: Use bzip2 compression for the initramfs image'
             'lzop: Use lzo compression for the initramfs image'
