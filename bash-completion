@@ -11,6 +11,20 @@ _lsinitcpio ()
 	esac
 }
 
+_find_kernel_versions() {
+	local -a matches
+	local regex
+
+	regex="Linux kernel.*version"
+	while IFS=':' read -r file metadata; do
+		[[ $metadata =~ $regex ]] || continue
+		matches+=("$file")
+	done < <(file -e ascii /boot/*)
+
+	COMPREPLY=($(cd /lib/modules && compgen -d -- $cur)
+		$(compgen -W "${matches[*]}" -- $cur))
+}
+
 _mkinitcpio ()
 {
 	local action cur prev
@@ -18,7 +32,7 @@ _mkinitcpio ()
 	_get_comp_words_by_ref cur prev
 	case "$prev" in
 		-c|-g) _filedir;;
-		-k) COMPREPLY=($(cd /lib/modules && compgen -d -- $cur));;
+		-k) _find_kernel_versions;;
 		-b) COMPREPLY=($(compgen -d "$cur" -- $cur));;
 		-p) COMPREPLY=($(cd /etc/mkinitcpio.d/ && compgen -X '!*.preset' -f  -- $cur|sed 's/\.preset//'));;
 		-H|-S) COMPREPLY=($(cd /lib/initcpio/install/ && compgen -f -- $cur));;
