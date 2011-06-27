@@ -306,9 +306,8 @@ if (( ${#LD_SO[*]} != 1 )); then # uh oh...
 fi
 
 resolved=$(readlink -e "$LD_SO")
-_add_dir "${resolved%/*}" 755
-_add_symlink "${LD_SO#$BASEDIR}" "${resolved#$BASEDIR}"
-_add_file "${resolved#$BASEDIR}" "${resolved#$BASEDIR}" 755
+_add_file "${resolved#$BASEDIR}" "$resolved" 755
+_add_symlink "${LD_SO#$BASEDIR}" "$resolved"
 unset resolved
 
 for hook in ${HOOKS}; do
