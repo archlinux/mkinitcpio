@@ -1,7 +1,7 @@
+#!/bin/bash
 # mkinitcpio bash completion by Seblu <seblu@seblu.net>
 
-_lsinitcpio ()
-{
+_lsinitcpio() {
 	local action cur
 	action="-a -h -v -x"
 	_get_comp_words_by_ref cur
@@ -25,8 +25,7 @@ _find_kernel_versions() {
 		$(compgen -W "${matches[*]}" -- $cur))
 }
 
-_mkinitcpio ()
-{
+_mkinitcpio() {
 	local action cur prev
 	action="-c -k -s -b -g -p -S -v -M -L -H -h"
 	_get_comp_words_by_ref cur prev
@@ -36,9 +35,10 @@ _mkinitcpio ()
 		-b) COMPREPLY=($(compgen -d "$cur" -- $cur));;
 		-p) COMPREPLY=($(cd /etc/mkinitcpio.d/ && compgen -X '!*.preset' -f  -- $cur|sed 's/\.preset//'));;
 		-H|-S) COMPREPLY=($(cd /lib/initcpio/install/ && compgen -f -- $cur));;
-		*)	COMPREPLY=($(compgen -W "${action}" -- "$cur"));;
+		*) COMPREPLY=($(compgen -W "${action}" -- "$cur"));;
 	esac
 }
+
 complete -F _mkinitcpio mkinitcpio
 complete -F _lsinitcpio lsinitcpio
 
