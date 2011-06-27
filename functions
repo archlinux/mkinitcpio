@@ -182,7 +182,7 @@ add_module() {
         # get module firmware
         while read -r -d '' fw; do
             if [[ -e "$BASEDIR/lib/firmware/$fw" ]]; then
-                add_file "$BASEDIR/lib/firmware/$fw"
+                add_file "/lib/firmware/$fw"
             fi
         done < <(kmodinfo -0F firmware "$module")
 
@@ -193,7 +193,7 @@ add_module() {
         done
 
         ADDED_MODULES+=("${module//-/_}")
-        add_file "$path" || return
+        add_file "${path#$BASEDIR}" || return
     else
         error "module '$module' not found"
         return 1
@@ -221,7 +221,7 @@ _add_file() {
   [[ -e "$BUILDROOT$1" ]] && return $EEXIST
 
   (( QUIET )) || plain "adding file: %s" "$1"
-  install -Dm$3 "$2" "$BUILDROOT$1"
+  command install -Dm$3 "$2" "$BUILDROOT$1"
 }
 
 _add_dir() {
@@ -265,7 +265,7 @@ add_binary() {
     mode=$(stat -c %a "$binary")
 
     # always add the binary itself
-    _add_file "${dest#$BASEDIR}" "${binary#$BASEDIR}" "$mode"
+    _add_file "${dest#$BASEDIR}" "$binary" "$mode"
 
     $LD_SO --verify "$binary" &>/dev/null || return # not a binary!
 
@@ -278,9 +278,9 @@ add_binary() {
             if [[ ! -L $sodep ]]; then
                 _add_file "$sodep" "$BASEDIR$sodep" "$(stat -c %a "$sodep")"
             else
-                resolved=$(readlink -e "$basedir$sodep")
+                resolved=$(readlink -e "$BASEDIR$sodep")
                 dirname=${resolved%/*}
-                _add_dir "${dirname#$basedir}" 755
+                _add_dir "${dirname#$BASEDIR}" 755
                 _add_symlink "$sodep" "${resolved#$BASEDIR}"
                 _add_file "${resolved#$BASEDIR}" "$resolved" 755
             fi
