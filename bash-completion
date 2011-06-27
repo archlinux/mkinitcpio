@@ -33,7 +33,8 @@ _mkinitcpio() {
 		-c|-g) _filedir;;
 		-k) _find_kernel_versions;;
 		-b) COMPREPLY=($(compgen -d "$cur" -- $cur));;
-		-p) COMPREPLY=($(cd /etc/mkinitcpio.d/ && compgen -X '!*.preset' -f  -- $cur|sed 's/\.preset//'));;
+		-p) COMPREPLY=($(cd /etc/mkinitcpio.d/ && compgen -X '!*.preset' -f  -- $cur))
+			COMPREPLY=("${COMPREPLY[@]%.preset}");;
 		-H|-S) COMPREPLY=($(cd /lib/initcpio/install/ && compgen -f -- $cur));;
 		*) COMPREPLY=($(compgen -W "${action}" -- "$cur"));;
 	esac
