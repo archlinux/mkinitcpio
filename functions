@@ -56,14 +56,6 @@ in_array() {
     return 1 # Not Found
 }
 
-kmodinfo() {
-    # A wrapper around modinfo, which is aware of our $BASEDIR and
-    # $KERNELVERSION
-    #   $@: args to modinfo
-
-    modinfo -b "$BASEDIR" -k "$KERNELVERSION" "$@" 2>/dev/null
-}
-
 auto_modules() {
     # Perform auto detection of modules via sysfs.
 
@@ -171,33 +163,38 @@ add_module() {
     # discovered and added.
     #   $1: module name
 
-    local module path fw dep deps
+    local module path dep deps field value
     module=${1%.ko*}
 
     # skip expensive stuff if this module has already been added
     in_array "${module//-/_}" "${ADDED_MODULES[@]}" && return
 
-    path=$(kmodinfo -0F filename "$module")
-    if [[ $path ]]; then
-        # get module firmware
-        while read -r -d '' fw; do
-            if [[ -e "$BASEDIR/lib/firmware/$fw" ]]; then
-                add_file "/lib/firmware/$fw"
-            fi
-        done < <(kmodinfo -0F firmware "$module")
+    while IFS=':= ' read -r -d '' field value; do
+        case "$field" in
+            filename)
+                path=$value
+                ;;
+            depends)
+                IFS=',' read -r -a deps <<< "$value"
+                for dep in "${deps[@]}"; do
+                    add_module "$dep"
+                done
+                ;;
+            firmware)
+                if [[ -e "$BASEDIR/lib/firmware/$value" ]]; then
+                    _add_file "/lib/firmware/$value" "$BASEDIR/lib/firmware/$value" 644
+                fi
+                ;;
+        esac
+    done < <(modinfo -b "$BASEDIR" -k "$KERNELVERSION" -0 "$module" 2>/dev/null)
 
-        # get module depends
-        IFS=',' read -r -d '' -a deps < <(kmodinfo -0F depends "$module")
-        for dep in "${deps[@]}"; do
-            add_module "$dep"
-        done
-
-        ADDED_MODULES+=("${module//-/_}")
-        add_file "${path#$BASEDIR}" || return
-    else
+    if [[ -z $path ]]; then
         error "module '$module' not found"
         return 1
     fi
+
+    add_file "${path#$BASEDIR}"
+    ADDED_MODULES+=("${module//-/_}")
 
     # explicit module depends
     case "$module" in
