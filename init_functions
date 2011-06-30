@@ -75,7 +75,7 @@ parse_cmdline() {
 default_mount_handler() {
     # resolve tag name to block device
     if [ "${root:0:5}" = 'UUID=' ] || [ "${root:0:6}" = 'LABEL=' ]; then
-        device=$(blkid -t "$root" -o device)
+        device=$(blkid -l -t "$root" -o device)
         if [ -n "$device" ]; then
             root=$device
         fi
