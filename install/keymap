@@ -6,11 +6,11 @@ build() {
     eval "$(grep -E "^(LOCALE|KEYMAP)=" /etc/rc.conf)"
     if [[ $KEYMAP ]]; then
         if [[ $LOCALE = *[Uu][Tt][Ff]-8 ]]; then
-            printf '%s\n' "UTF8=yes" > "$buildroot/keymap.utf8"
-            /bin/loadkeys -q -u $KEYMAP -b > "$buildroot/keymap.bin"
+            printf '%s\n' "UTF8=yes" > "$BUILDROOT/keymap.utf8"
+            /bin/loadkeys -q -u $KEYMAP -b > "$BUILDROOT/keymap.bin"
         else
-            printf '%s\n' "UTF8=no" > "$buildroot/keymap.utf8"
-            /bin/loadkeys -q $KEYMAP -b > "$buildroot/keymap.bin"
+            printf '%s\n' "UTF8=no" > "$BUILDROOT/keymap.utf8"
+            /bin/loadkeys -q $KEYMAP -b > "$BUILDROOT/keymap.bin"
         fi
     fi
 }
