@@ -1,0 +1,4 @@
+mkinitcpio.5
+*~
+*.bak
+mkinitcpio-*.tar.gz
