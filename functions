@@ -286,6 +286,8 @@ add_binary() {
             fi
         fi
     done < <(_ldd "$binary")
+
+    return 0
 }
 
 parse_hook() {
