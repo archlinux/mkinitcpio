@@ -204,10 +204,6 @@ add_module() {
     esac
 }
 
-_ldd() {
-    LD_TRACE_LOADED_OBJECTS=1 "$LD_SO" "$@"
-}
-
 _add_file() {
   # add a file to $BUILDROOT
   #   $1: pathname on initcpio
@@ -264,10 +260,10 @@ add_binary() {
     # always add the binary itself
     _add_file "${dest#$BASEDIR}" "$binary" "$mode"
 
-    $LD_SO --verify "$binary" &>/dev/null || return # not a binary!
+    lddout=$(ldd "$binary" 2>/dev/null) || return 1 # not a binary!
 
     # resolve sodeps
-    regex='^[[:space:]]*[^/].+ => (.*) \(.*\)'
+    regex='(/.+) \(0x[a-fA-F0-9]+\)'
     while read line; do
         [[ "$line" =~ $regex ]] && sodep=${BASH_REMATCH[1]} || continue
 
@@ -282,7 +278,7 @@ add_binary() {
                 _add_file "${resolved#$BASEDIR}" "$resolved" 755
             fi
         fi
-    done < <(_ldd "$binary")
+    done <<< "$lddout"
 
     return 0
 }

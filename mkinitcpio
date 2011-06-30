@@ -22,7 +22,7 @@ INSTDIR=install
 PRESETDIR=mkinitcpio.d
 COMPRESSION=gzip
 
-declare TMPDIR BASEDIR MODULE_FILE GENIMG PRESET COMPRESSION_OPTIONS BUILDROOT LD_SO
+declare TMPDIR BASEDIR MODULE_FILE GENIMG PRESET COMPRESSION_OPTIONS BUILDROOT
 declare NC= BOLD= BLUE= GREEN= RED= YELLOW=
 declare -i QUIET=1 SHOW_AUTOMODS=0 SAVELIST=0 COLOR=1
 declare -a SKIPHOOKS ADDED_MODULES
@@ -293,22 +293,6 @@ trap '[[ $FUNCNAME = parse_hook ]] && (( ++builderrors ))' ERR
 
 #parse 'global' hook, as defined in ${CONFIG}
 parse_hook
-
-# resolve the linker and add it
-case $CARCH in
-  i686) LD_SO=("$BASEDIR"/lib/ld-linux.so.?*) ;;
-  x86_64) LD_SO=("$BASEDIR"/lib/ld-linux-${CARCH//_/-}.so.?*) ;;
-  *) die "unknown architecture: $CARCH" ;;
-esac
-
-if (( ${#LD_SO[*]} != 1 )); then # uh oh...
-  die "failed to resolve the location of /lib/ld.so. Please report this bug."
-fi
-
-resolved=$(readlink -e "$LD_SO")
-_add_file "${resolved#$BASEDIR}" "$resolved" 755
-_add_symlink "${LD_SO#$BASEDIR}" "$resolved"
-unset resolved
 
 for hook in ${HOOKS}; do
     in_array "$hook" "${SKIPHOOKS[@]}" && continue
