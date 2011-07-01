@@ -98,7 +98,7 @@ if (( analyze )); then
     . <(decomp "$image" | bsdtar xOf - config)
     explicitmod=($MODULES)
     for hook in $HOOKS; do
-        in_array "$hook" "${foundhooks[@]}" && hooks=("$hook")
+        in_array "$hook" "${foundhooks[@]}" && hooks+=("$hook")
     done
 
     # print results
