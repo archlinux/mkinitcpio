@@ -26,9 +26,9 @@ error() {
 }
 
 die() {
-  error "$@"
-  cleanup
-  exit 1
+    error "$@"
+    cleanup
+    exit 1
 }
 
 get_dirname() {
@@ -205,22 +205,22 @@ add_module() {
 }
 
 _add_file() {
-  # add a file to $BUILDROOT
-  #   $1: pathname on initcpio
-  #   $2: source on disk
-  #   $3: mode
+    # add a file to $BUILDROOT
+    #   $1: pathname on initcpio
+    #   $2: source on disk
+    #   $3: mode
 
-  (( $# == 3 )) || return $EINVAL
-  [[ -e "$BUILDROOT$1" ]] && return $EEXIST
+    (( $# == 3 )) || return $EINVAL
+    [[ -e "$BUILDROOT$1" ]] && return $EEXIST
 
-  (( QUIET )) || plain "adding file: %s" "$1"
-  command install -Dm$3 "$2" "$BUILDROOT$1"
+    (( QUIET )) || plain "adding file: %s" "$1"
+    command install -Dm$3 "$2" "$BUILDROOT$1"
 }
 
 _add_dir() {
-  # add a directory (with parents) to $BUILDROOT
-  #   $1: pathname on initcpio
-  #   $2: mode
+    # add a directory (with parents) to $BUILDROOT
+    #   $1: pathname on initcpio
+    #   $2: mode
 
     (( $# == 2 )) || [[ "$1" == /?* ]] || return 1 # bad args
     [[ -e "$BUILDROOT$1" ]] && return 0 # file exists
@@ -230,15 +230,15 @@ _add_dir() {
 }
 
 _add_symlink() {
-  # add a symlink to $buildroot
-  #   $1: name on initcpio
-  #   $2: target of $1
+    # add a symlink to $buildroot
+    #   $1: name on initcpio
+    #   $2: target of $1
 
-  (( $# == 2 )) || return $EINVAL
-  [[ -L "$BUILDROOT$1" ]] && return $EEXIST
+    (( $# == 2 )) || return $EINVAL
+    [[ -L "$BUILDROOT$1" ]] && return $EEXIST
 
-  (( QUIET )) || plain "adding symlink: %s -> %s" "$2" "$1"
-  ln -s "$2" "$BUILDROOT$1"
+    (( QUIET )) || plain "adding symlink: %s -> %s" "$2" "$1"
+    ln -s "$2" "$BUILDROOT$1"
 }
 
 add_binary() {
