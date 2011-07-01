@@ -167,7 +167,8 @@ add_module() {
         return 1
     fi
 
-    _add_file "${path#$BASEDIR}" "$path" 644
+    # aggregate modules and add them all at once to save some forks
+    MODPATHS+=("$path")
     ADDED_MODULES+=("${module//-/_}")
 
     # explicit module depends
