@@ -27,7 +27,9 @@ install: all
 	    -e 's|^PRESETDIR=.*|PRESETDIR=/etc/mkinitcpio.d|' \
 	    < mkinitcpio > ${DESTDIR}/sbin/mkinitcpio
 
-	sed "s|%VERSION%|${VERSION}|g" < lsinitcpio > ${DESTDIR}/bin/lsinitcpio
+	sed -e 's|\(^declare FUNCTIONS\)=.*|\1=/lib/initcpio/functions|' \
+	    -e 's|%VERSION%|${VERSION}|g' \
+	    < lsinitcpio > ${DESTDIR}/bin/lsinitcpio
 
 	chmod 755 ${DESTDIR}/bin/lsinitcpio ${DESTDIR}/sbin/mkinitcpio
 

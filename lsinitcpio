@@ -5,11 +5,11 @@
 
 shopt -s extglob
 
-die() {
-    local mesg=$1; shift
-    printf "error: $mesg\n" "$@"
-    exit 1
-}
+declare verbose=
+declare list='--list'
+declare -i color=1
+declare NC= BOLD= BLUE= GREEN= RED= YELLOW=
+declare FUNCTIONS=functions
 
 usage() {
     cat<<USAGE
@@ -19,6 +19,7 @@ usage: ${0##*/} [options] <initramfs>
   Options:
    -a             analyze contents
    -h             display this help
+   -n             disable colorized output
    -v             more verbose output
    -x             extract image to disk
 
@@ -39,13 +40,19 @@ decomp() {
     ${compress:-cat} ${compress:+-cd} "$@"
 }
 
-declare verbose=
-declare list='--list'
+. "$FUNCTIONS"
 
-while getopts ':ahvx' flag; do
+# override the die method from functions
+die() {
+    error "$@"
+    exit 1
+}
+
+while getopts ':ahnvx' flag; do
     case $flag in
         a) analyze=1 ;;
         h) usage ;;
+        n) color=0 ;;
         v) verbose='--verbose'  ;;
         x) unset list ;;
         \?) die "invalid option -- '$OPTARG'" ;;
@@ -54,6 +61,26 @@ done
 shift $(( OPTIND - 1 ))
 
 declare image=$1
+
+if [[ -t 2 ]] && (( color )); then
+    # prefer terminal safe colored and bold text when tput is supported
+    if tput setaf 0 &>/dev/null; then
+        NC="$(tput sgr0)"
+        BOLD="$(tput bold)"
+        BLUE="$BOLD$(tput setaf 4)"
+        GREEN="$BOLD$(tput setaf 2)"
+        RED="$BOLD$(tput setaf 1)"
+        YELLOW="$BOLD$(tput setaf 3)"
+    else
+        NC="\e[1;0m"
+        BOLD="\e[1;1m"
+        BLUE="$BOLD\e[1;34m"
+        GREEN="$BOLD\e[1;32m"
+        RED="$BOLD\e[1;31m"
+        YELLOW="$BOLD\e[1;33m"
+    fi
+fi
+readonly NC BOLD BLUE GREEN RED YELLOW
 
 [[ $image ]] || usage
 [[ -f $image ]] || die "$image: No such file"
@@ -102,18 +129,18 @@ if (( analyze )); then
     done
 
     # print results
-    printf '==> Image: %s\n' "$(readlink -e "$image")"
-    printf '==> Kernel: %s\n' "${kernver:-unknown}"
+    msg 'Image: %s' "$(readlink -e "$image")"
+    msg 'Kernel: %s' "${kernver:-unknown}"
 
     if [[ $compress ]]; then
-        printf '==> Compressed with: %s\n' "$compress"
-        printf '  -> Compression ratio: %s\n' "$ratio"
-        printf '  -> Estimated decompression time: %ss\n' "$decomptime"
+        msg 'Compressed with: %s' "$compress"
+        msg2 'Compression ratio: %s' "$ratio"
+        msg2 'Estimated decompression time: %ss' "$decomptime"
     fi
     printf '\n'
 
     if (( ${#modules[*]} )); then
-        printf '==> Included modules:\n'
+        msg 'Included modules:'
         for mod in "${modules[@]}"; do
             printf '  %s' "$mod"
             in_array "${mod//_/-}" "${explicitmod[@]//_/-}" && printf ' [explicit]'
@@ -122,12 +149,12 @@ if (( analyze )); then
         printf '\n'
     fi
 
-    printf '==> Included binaries:\n'
+    msg 'Included binaries:'
     printf '  %s\n' "${binaries[@]}"
     printf '\n'
 
     if (( ${#hooks[*]} )); then
-        printf '==> Hook run order:\n'
+        msg 'Hook run order:'
         printf '  %s\n' "${hooks[@]}"
         printf '\n'
     fi
