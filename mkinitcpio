@@ -127,7 +127,7 @@ while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
                error "No help for hook ${OPTARG}"
                exit 1
            fi
-           echo "Help for hook '${OPTARG}':"
+           msg "Help for hook '${OPTARG}':"
            help
            exit 0 ;;
         L) msg "Available hooks"
