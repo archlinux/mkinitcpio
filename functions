@@ -193,7 +193,7 @@ add_module() {
         return 1
     fi
 
-    add_file "${path#$BASEDIR}"
+    _add_file "${path#$BASEDIR}" "$path" 644
     ADDED_MODULES+=("${module//-/_}")
 
     # explicit module depends
