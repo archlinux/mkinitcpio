@@ -14,7 +14,6 @@ shopt -s extglob
 
 # Settings
 KERNELVERSION=$(uname -r)
-CARCH=$(uname -m)
 FUNCTIONS=functions
 CONFIG=mkinitcpio.conf
 HOOKDIR=hooks
@@ -34,11 +33,9 @@ PATH=$PATH:/sbin:/usr/sbin
 # GREP_OPTIONS="--color=always" will break everything
 unset GREP_OPTIONS
 
-APPNAME=${0##*/}
-
 usage() {
     cat <<EOF
-usage: $APPNAME [options]
+usage: ${0##*/} [options]
 
   Options:
    -b BASEDIR       Use BASEDIR. default: /
@@ -46,7 +43,7 @@ usage: $APPNAME [options]
    -g IMAGE         Generate a cpio image as IMAGE. default: no
    -H HOOKNAME      Output help for hook 'HOOKNAME'.
    -h               Display this message.
-   -k KERNELVERSION Use KERNELVERSION. default: $(uname -r)
+   -k KERNELVERSION Use KERNELVERSION. default: $KERNELVERSION
    -L               List all available hooks.
    -M               Display modules found via autodetection.
    -n               Disable colorized output messages.
