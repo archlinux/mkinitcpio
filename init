@@ -45,13 +45,14 @@ if [ -n "${disablehooks}" ]; then
     done
 fi
 
-if [ -n "${earlymodules}" ]; then
-    modprobe -qab ${earlymodules//,/ }
+earlymodules=${earlymodules//,/ }
+if [ -n "${earlymodules## }" ]; then
+    modprobe -qab ${earlymodules}
 fi
 
 . /config
 
-[ -n "$MODULES" ] && modprobe -qab $MODULES
+[ -n "${MODULES## }" ] && modprobe -qab $MODULES
 
 # If rootdelay is empty or not a non-negative integer, set it to 10
 if [ -z "${rootdelay}" ] || ! [ "${rootdelay}" -ge 0 ]; then
