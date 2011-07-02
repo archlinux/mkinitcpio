@@ -27,8 +27,7 @@ error() {
 
 die() {
     error "$@"
-    cleanup
-    exit 1
+    cleanup 1
 }
 
 get_dirname() {
