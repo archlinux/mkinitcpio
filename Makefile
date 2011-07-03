@@ -1,6 +1,6 @@
 # Makefile for mkinitcpio
 
-VERSION = 0.7
+VERSION = 0.7.1
 
 DIRS = \
 	/bin \
