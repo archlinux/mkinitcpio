@@ -95,8 +95,8 @@ auto_modules() {
     # Perform auto detection of modules via sysfs.
 
     IFS=$'\n' read -rd '' -a mods < \
-        <(find /sys/devices -name modalias -exec sort -zu {} + |
-        xargs -0 modprobe -d "$BASEDIR" -aRS "$KERNELVERSION" |
+        <(find /sys/devices -name modalias -exec sort -u {} + |
+        xargs modprobe -d "$BASEDIR" -aRS "$KERNELVERSION" |
         sort -u)
 
     printf "%s\n" "${mods[@]//-/_}"
