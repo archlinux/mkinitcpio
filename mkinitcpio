@@ -31,7 +31,8 @@ declare -a SKIPHOOKS ADDED_MODULES MODPATHS
 PATH=$PATH:/sbin:/usr/sbin
 # Sanitize environment further
 # GREP_OPTIONS="--color=always" will break everything
-unset GREP_OPTIONS
+# CDPATH can affect cd and pushd
+unset GREP_OPTIONS CDPATH
 
 usage() {
     cat <<EOF
@@ -159,6 +160,16 @@ if [[ -t 2 ]] && (( COLOR )); then
 fi
 readonly NC BOLD BLUE GREEN RED YELLOW
 
+if [[ $BASEDIR ]]; then
+    # resolve the path. it might be a relative path and/or contain symlinks
+    if ! pushd "$BASEDIR" &>/dev/null; then
+        die "base directory '$BASEDIR' does not exist or is not a directory"
+    fi
+    BASEDIR=$(pwd -P)
+    BASEDIR=${BASEDIR%/}
+    popd &>/dev/null
+fi
+
 if [[ $optkver ]]; then
     if ! KERNELVERSION=$(get_kernver "$optkver"); then
          die "'$optkver' is an invalid kernel specifier"
@@ -228,16 +239,6 @@ if [[ $PRESET ]]; then
     else
         die "Preset $PRESET does not exist. Exiting."
     fi
-fi
-
-if [[ $BASEDIR ]]; then
-    # resolve the path. it might be a relative path and/or contain symlinks
-    abspath=$(readlink -e "$BASEDIR")
-    if [[ -z $abspath ]]; then
-        die "base directory '$BASEDIR' does not exist or is not a directory"
-    fi
-    BASEDIR=$abspath
-    unset abspath
 fi
 
 if [[ $GENIMG ]]; then
