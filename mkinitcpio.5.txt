@@ -36,13 +36,15 @@ Options
 	written to the filesystem unless this option is specified.
 
 *-H* 'hookname'::
-	Output help for hookname 'hookname'
+	Output help for hookname 'hookname'.
 
 *-h*::
 	Output a short overview of available command-line switches.
 
 *-k* 'kernelversion'::
-	Use 'kernelversion'. Default is the current running kernel.
+	Use 'kernelversion', instead of the current running kernel. This may be a
+	path to a kernel image or a specific kernel version. If specified as a path to
+	an image, this will always be prefixed by the 'basedir'.
 
 *-L*::
 	List all available hooks.
@@ -56,8 +58,9 @@ Options
 	Disable color output.
 
 *-p* 'preset'::
-	Build initial ramdisk according to specified 'preset'. Presets are found in
-	/etc/mkinitcpio.d
+	Build initramfs image(s) according to specified 'preset'. This may be a file in
+	/etc/mkinitcpio.d (without the .preset extension) or a full, absolute path to a
+	file.
 
 *-S* 'hooks'::
 	Skip 'hooks' when generating the image. Several hooks should be comma-separated.
@@ -113,6 +116,11 @@ Examples
 *mkinitcpio -p kernel26*::
 	Create an initial ramdisk based on the 'kernel26' preset.
 
+*mkinitcpio -b /mnt -g /mnt/boot/kernel26.img -k /boot/vmlinuz26*::
+	Create an initial ramdisk for the root at /mnt, with the kernel at
+	/mnt/boot/vmlinuz26. The resulting image will be written to
+	/mnt/boot/kernel26.img.
+
 See also
 --------
 A more thorough article on configuring mkinitcpio:
@@ -127,7 +135,7 @@ Upon writing this manpage, there were no noticeable bugs present. Please visit
 
 Authors
 -------
-mkinitcpio created by the Arch Linux Developer community.
+mkinitcpio is created by the Arch Linux Developer community.
 
 Manpage written by:::
 * Glenn 'RedShift' Matthys <glenn@opengate.be>
