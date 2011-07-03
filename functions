@@ -162,7 +162,7 @@ add_module() {
     done < <(modinfo -b "$BASEDIR" -k "$KERNELVERSION" -0 "$module" 2>/dev/null)
 
     if [[ -z $path ]]; then
-        error "module '$module' not found"
+        error "module not found: \`%s'" "$module"
         return 1
     fi
 
@@ -229,11 +229,11 @@ add_file() {
 
     src=$BASEDIR$1
 
-    [[ -f "$src" ]] || { error "$src: No such file"; return 1; }
+    [[ -f "$src" ]] || { error "file not found: \`%s'" "$src"; return 1; }
 
     mode=$(stat -c %a "$src")
     if [[ -z "$mode" ]]; then
-        error "failed to stat file: \`$src'"
+        error "failed to stat file: \`%s'." "$src"
         return 1
     fi
 
@@ -251,7 +251,7 @@ add_binary() {
 
     binary=$BASEDIR$1
 
-    [[ -f "$binary" ]] || { error "$binary not found"; return 1; }
+    [[ -f "$binary" ]] || { error "file not found: \`%s'" "$binary"; return 1; }
 
     dest=${2:-$binary}
     mode=$(stat -c %a "$binary")
