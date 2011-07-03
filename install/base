@@ -13,8 +13,21 @@ build() {
     add_file "/lib/initcpio/init" "/init"
     add_file "/etc/modprobe.d/usb-load-ehci-first.conf"
 
-    # private API call is required here
-    _add_file "/config" "$CONFIG" 644
+    # write a new config file. re-source the config as we can't guarantee the
+    # environment hasn't been modified, but subshell it so it doesn't disturb
+    # anyone else.
+    (
+        . "$CONFIG"
+
+        # sanitize of any extra whitespace
+        read -r -a modules <<< "$MODULES"
+        read -r -a hooks <<< "$HOOKS"
+
+        {
+            (( ${#modules[*]} )) && printf 'MODULES="%s"\n' "${modules[*]}"
+            (( ${#hooks[*]} )) && printf 'HOOKS="%s"\n' "${hooks[*]}"
+        } >"$BUILDROOT/config"
+    )
 }
 
 help() {

@@ -46,9 +46,8 @@ in_array() {
     #   $1: needle
     #   ${@:2}: haystack
 
-    local needle=$1; shift
-    [[ -z $1 ]] && return 1 # Not Found
-    local item
+    local item= needle=$1; shift
+
     for item in "$@"; do
         [[ $item = $needle ]] && return 0 # Found
     done
