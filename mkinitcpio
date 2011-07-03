@@ -323,7 +323,10 @@ trap ERR
 
 if (( ${#ADDED_MODULES[*]} )); then
     mkdir -p "${MODPATHS[@]%/*}"
-    cp --parents "${MODPATHS[@]}" "$BUILDROOT"
+
+    pushd "${BASEDIR:-/}" >/dev/null
+    cp --parents "${MODPATHS[@]/#$BASEDIR/.}" "$BUILDROOT"
+    popd >/dev/null
 
     msg "Generating module dependencies"
     /sbin/depmod -b "${TMPDIR}/root" "${KERNELVERSION}"
