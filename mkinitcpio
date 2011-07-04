@@ -36,6 +36,7 @@ unset GREP_OPTIONS CDPATH
 
 usage() {
     cat <<EOF
+mkinitcpio %VERSION%
 usage: ${0##*/} [options]
 
   Options:

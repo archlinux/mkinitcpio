@@ -25,6 +25,7 @@ install: all
 	    -e 's|^HOOKDIR=.*|HOOKDIR=/lib/initcpio/hooks|' \
 	    -e 's|^INSTDIR=.*|INSTDIR=/lib/initcpio/install|' \
 	    -e 's|^PRESETDIR=.*|PRESETDIR=/etc/mkinitcpio.d|' \
+	    -e 's|%VERSION%|${VERSION}|g' \
 	    < mkinitcpio > ${DESTDIR}/sbin/mkinitcpio
 
 	sed -e 's|\(^declare FUNCTIONS\)=.*|\1=/lib/initcpio/functions|' \
