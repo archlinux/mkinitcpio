@@ -3,12 +3,12 @@
 build() {
     MODULE_FILE=$TMPDIR/autodetect_modules
 
-    auto_modules | grep -xEv '(ata|ide)_generic' >"$MODULE_FILE"
-
     if [[ ! -d /sys/devices ]]; then
         error "/sys does not appear to be mounted. Unable to use autodetection"
         return 1
     fi
+
+    auto_modules | grep -xEv '(ata|ide)_generic' >"$MODULE_FILE"
 
     if ! findmnt -uno fstype "${BASEDIR:-/}" >>"$MODULE_FILE"; then
         error "failed to detect root filesystem"
