@@ -1,6 +1,6 @@
 # Makefile for mkinitcpio
 
-VERSION = 0.7.1
+VERSION = $(shell if test -f VERSION; then cat VERSION; else git describe; fi)
 
 DIRS = \
 	/bin \
@@ -13,7 +13,8 @@ DIRS = \
 	/usr/share/man/man5
 
 DIST_EXTRA = \
-	mkinitcpio.5
+	mkinitcpio.5 \
+	VERSION
 
 all: doc
 
@@ -46,6 +47,9 @@ install: all
 	install -m644 mkinitcpio.5 ${DESTDIR}/usr/share/man/man5/mkinitcpio.5
 	install -m644 bash-completion ${DESTDIR}/etc/bash_completion.d/mkinitcpio
 
+write-ver:
+	git describe > VERSION
+
 doc: mkinitcpio.5
 mkinitcpio.5: mkinitcpio.5.txt Makefile
 	a2x -d manpage \
@@ -56,15 +60,16 @@ mkinitcpio.5: mkinitcpio.5.txt Makefile
 
 clean:
 	${RM} -r build mkinitcpio-${VERSION}
-	${RM} mkinitcpio-${VERSION}.tar.gz mkinitcpio.5 mkinitcpio.5.gz
+	${RM} mkinitcpio-${VERSION}.tar.gz mkinitcpio.5 mkinitcpio.5.gz VERSION
 
 tarball: dist
-dist: doc
+dist: clean write-ver doc
 	git archive --prefix=mkinitcpio-${VERSION}/ -o mkinitcpio-${VERSION}.tar HEAD
 	mkdir mkinitcpio-${VERSION}; \
 		cp -t mkinitcpio-${VERSION} ${DIST_EXTRA}; \
 		tar uf mkinitcpio-${VERSION}.tar mkinitcpio-${VERSION}; \
 		${RM} -r mkinitcpio-${VERSION}
 	gzip -9 mkinitcpio-${VERSION}.tar
+	${RM} VERSION
 
-.PHONY: clean dist install tarball
+.PHONY: clean dist install tarball write-ver
