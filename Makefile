@@ -1,6 +1,6 @@
 # Makefile for mkinitcpio
 
-VERSION = $(shell if test -f VERSION; then cat VERSION; else git describe; fi)
+VERSION = $(shell if test -f VERSION; then cat VERSION; else git describe | sed 's/-/./g'; fi)
 
 DIRS = \
 	/bin \
@@ -68,4 +68,7 @@ dist: clean doc
 		${RM} -r mkinitcpio-${VERSION}
 	gzip -9 mkinitcpio-${VERSION}.tar
 
-.PHONY: clean dist install tarball
+version:
+	@echo ${VERSION}
+
+.PHONY: clean dist install tarball version

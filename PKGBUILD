@@ -1,7 +1,5 @@
-IFS='-' read -r major minor _ < <(git describe)
-
 pkgname=mkinitcpio-git
-pkgver=$major.$minor
+pkgver=$(make version)
 pkgrel=1
 pkgdesc="Modular initramfs image creation utility"
 arch=(any)
