@@ -167,6 +167,7 @@ add_module() {
     fi
 
     # aggregate modules and add them all at once to save some forks
+    (( QUIET )) || plain "adding module: %s" "$1"
     MODPATHS+=("$path")
     ADDED_MODULES+=("${module//-/_}")
 
