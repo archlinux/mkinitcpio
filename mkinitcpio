@@ -341,7 +341,9 @@ if [[ "${GENIMG}" ]]; then
     [[ "$COMPRESSION" = xz ]] && COMPRESSION_OPTIONS+=" --check=crc32"
 
     pushd "$BUILDROOT" >/dev/null
-    find . -print0 | bsdcpio -0oH newc | $COMPRESSION $COMPRESSION_OPTIONS > "$IMGPATH"
+    find . -print0 |
+        bsdcpio $( (( QUIET )) && echo '--quiet' ) -0oH newc |
+        $COMPRESSION $COMPRESSION_OPTIONS > "$IMGPATH"
     pipesave=("${PIPESTATUS[@]}") # save immediately
     popd >/dev/null
 
