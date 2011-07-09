@@ -25,6 +25,10 @@ build() {
         error "Insufficient permission to perform autodetection for mdadm devices"
         raid_autodetect_failed=1
     fi
+
+    if (( !QUIET )) && [[ -s $MODULE_FILE ]]; then
+        plain "caching %d modules" $(wc -l < "$MODULE_FILE")
+    fi
 }
 
 help() {
