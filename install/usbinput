@@ -2,9 +2,7 @@
 
 build() {
     MODULES=" $(checked_modules "/usb/host" | grep -ve "_cs" -e "sl811_hcd" -e "isp116x_hcd")"
-    MODULES+=" $(all_modules "/hid/hid-")"
-
-    [[ $MODULES ]] && MODULES+=" usbhid"
+    MODULES+=" $(all_modules "/hid/hid-") usbhid?"
 }
 
 help() {

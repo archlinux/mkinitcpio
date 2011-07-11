@@ -3,7 +3,7 @@
 build() {
     MODULES=$(checked_modules "/drivers/firewire/")
 
-    [[ $MODULES ]] && MODULES+=" firewire-sbp2 sd_mod sr_mod"
+    [[ $MODULES ]] && MODULES+=" firewire-sbp2? sd_mod? sr_mod?"
 }
 
 help() {

@@ -3,7 +3,7 @@
 build() {
     MODULES="$(checked_modules "/ide/" | grep -v "legacy")"
 
-    [[ $MODULES ]] && MODULES+=" ide-gd_mod"
+    [[ $MODULES ]] && MODULES+=" ide-gd_mod?"
 }
 
 help() {

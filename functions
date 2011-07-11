@@ -137,6 +137,13 @@ add_module() {
     #   $1: module name
 
     local module path dep deps field value
+    local -i ign_errors=0
+
+    if [[ $1 = -@(t|-try) ]]; then
+        ign_errors=1
+        shift
+    fi
+
     module=${1%.ko*}
 
     # skip expensive stuff if this module has already been added
@@ -162,6 +169,7 @@ add_module() {
     done < <(modinfo -b "$BASEDIR" -k "$KERNELVERSION" -0 "$module" 2>/dev/null)
 
     if [[ -z $path ]]; then
+        (( ign_errors )) && return 0
         error "module not found: \`%s'" "$module"
         return 1
     fi
@@ -173,9 +181,9 @@ add_module() {
 
     # explicit module depends
     case "$module" in
-        fat) add_module "nls_cp437" ;;
-        ocfs2) add_module "configfs" ;;
-        libcrc32c) add_module "crc32c"; add_module "crc32c_intel" ;;
+        fat) add_module --try "nls_cp437" ;;
+        ocfs2) add_module --try "configfs" ;;
+        libcrc32c) add_module --try "crc32c"; add_module --try "crc32c_intel" ;;
     esac
 }
 
@@ -291,7 +299,11 @@ parse_hook() {
     local item
 
     for item in $MODULES; do
-        add_module "$item"
+        if [[ ${item:(-1)} = '?' ]]; then
+            try=--try
+            item=${item%\?}
+        fi
+        add_module $try "$item"
     done
 
     for item in $BINARIES; do

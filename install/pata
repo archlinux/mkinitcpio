@@ -5,7 +5,7 @@ build() {
         MODULES+=" $(checked_modules "$filter")"
     done
 
-    [[ $MODULES ]] && MODULES+=" sd_mod"
+    [[ $MODULES ]] && MODULES+=" sd_mod?"
 }
 
 help() {

@@ -4,9 +4,8 @@ build() {
     FILES="/etc/pcmcia/config.opts"
     MODULES=" $(checked_modules '/drivers/pcmcia/' | grep -ve 'sound' -e 'net') $(checked_modules '/ide/legacy')"
 
-    if [[ $MODULES ]]; then
-        MODULES+=" sd_mod"
-    fi
+    [[ $MODULES ]] MODULES+=" sd_mod?"
+
     add_binary "/lib/udev/pcmcia-socket-startup"
     add_binary "/lib/udev/pcmcia-check-broken-cis"
     add_file "/lib/udev/rules.d/60-pcmcia.rules"

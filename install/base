@@ -24,7 +24,7 @@ build() {
         read -r -a hooks <<< "$HOOKS"
 
         {
-            (( ${#modules[*]} )) && printf 'MODULES="%s"\n' "${modules[*]}"
+            (( ${#modules[*]} )) && printf 'MODULES="%s"\n' "${modules[*]%\?}"
             (( ${#hooks[*]} )) && printf 'HOOKS="%s"\n' "${hooks[*]}"
         } >"$BUILDROOT/config"
     )

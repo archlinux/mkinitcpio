@@ -6,7 +6,7 @@ build(){
              $(checked_modules "/block/" | grep -E '(cciss|cpqarray|DAC960)')
              $(checked_modules "/fusion/")"
 
-    [[ $MODULES ]] && MODULES+=" sd_mod"
+    [[ $MODULES ]] && MODULES+=" sd_mod?"
 }
 
 help() {
