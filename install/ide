@@ -1,25 +1,17 @@
-# vim: set ft=sh:
+#!/bin/bash
 
-build()
-{
-    MODULES=" $(checked_modules "/ide/" | grep -v "legacy") ";
+build() {
+    MODULES="$(checked_modules "/ide/" | grep -v "legacy")"
 
-    MODULES=$(echo ${MODULES}) #trim whitespace
-    if [ -n "${MODULES}" ]; then
-        MODULES="${MODULES} ide-gd_mod"
-    fi
-
-    BINARIES=""
-    FILES=""
-    SCRIPT=""
+    [[ $MODULES ]] && MODULES+=" ide-gd_mod"
 }
 
-help ()
-{
-cat<<HELPEOF
-  This hook loads the necessary modules for an ide root device,
-  using the old ide subsystem.
-  Detection will take place at runtime. To minimize the modules
-  in the image, add the autodetect hook too.
+help() {
+    cat <<HELPEOF
+This hook loads the necessary modules for an ide root device, using the old ide
+subsystem.  Detection will take place at runtime. To minimize the modules in
+the image, add the autodetect hook too.
 HELPEOF
 }
+
+# vim: set ft=sh ts=4 sw=4 et:

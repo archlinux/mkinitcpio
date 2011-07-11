@@ -9,7 +9,7 @@ build() {
 }
 
 help() {
-    cat<<HELPEOF
+    cat <<HELPEOF
 This hook loads the necessary modules for a pata (ide) root device, using the
 new libata subsystem. Detection will take place at runtime. To minimize the
 modules in the image, add the autodetect hook too.

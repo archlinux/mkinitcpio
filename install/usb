@@ -1,24 +1,20 @@
-# vim: set ft=sh:
+#!/bin/bash
 
-build()
-{
-    MODULES=" $(checked_modules "/usb/host" | grep -ve "_cs" -e "sl811_hcd" -e "isp116x_hcd")"
+build() {
+    MODULES="$(checked_modules "/usb/host" | grep -ve "_cs" -e "sl811_hcd" -e "isp116x_hcd")"
 
-    MODULES=$(echo ${MODULES}) #trim whitespace
-    if [ -n "${MODULES}" ]; then
-        MODULES="${MODULES} usb_storage sd_mod sr_mod"
-        MODULES="${MODULES} $(checked_modules "drivers/usb/storage/ums-*")"
+    if [[ $MODULES ]]; then
+        MODULES+=" usb_storage sd_mod sr_mod"
+        MODULES+=" $(checked_modules "drivers/usb/storage/ums-*")"
     fi
-    BINARIES=""
-    FILES=""
-    SCRIPT=""
 }
 
-help ()
-{
-cat<<HELPEOF
-  This hook loads the necessary modules for an usb root device.
-  Detection will take place at runtime. To minimize the modules
-  in the image, add the autodetect hook too.
+help() {
+    cat <<HELPEOF
+This hook loads the necessary modules for an usb root device.  Detection will
+take place at runtime. To minimize the modules in the image, add the autodetect
+hook too.
 HELPEOF
 }
+
+# vim: set ft=sh ts=4 sw=4 et:

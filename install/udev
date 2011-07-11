@@ -1,27 +1,26 @@
-# vim:set ft=sh:
+#!/bin/bash
 
-build()
-{
-    MODULES=""
-    BINARIES=""
-    FILES=" /etc/udev/udev.conf"
+build() {
+    FILES="/etc/udev/udev.conf"
     SCRIPT="udev"
+
     add_binary /sbin/udevd
     add_binary /sbin/udevadm
-    for rules in 50-firmware.rules 50-udev-default.rules 60-persistent-storage.rules 80-drivers.rules; do
-        add_file /lib/udev/rules.d/${rules}
+
+    for rules in 50-{firmware,udev-default}.rules 60-persistent-storage.rules 80-drivers.rules; do
+        add_file "/lib/udev/rules.d/$rules"
     done
-    for tool in firmware ata_id path_id scsi_id usb_id; do
-        add_file /lib/udev/${tool}
+    for tool in firmware {ata,path,scsi,usb}_id; do
+        add_file "/lib/udev/$tool"
     done
 }
 
-help ()
-{
-cat <<HELPEOF
-  This hook will use udev to create your root device node
-  and detect the needed modules for your root device. It
-  is also required for firmware loading in initramfs.
-  It is recommended to use this hook.
+help() {
+    cat <<HELPEOF
+This hook will use udev to create your root device node and detect the needed
+modules for your root device. It is also required for firmware loading in
+initramfs. It is recommended to use this hook.
 HELPEOF
 }
+
+# vim: set ft=sh ts=4 sw=4 et:

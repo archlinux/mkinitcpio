@@ -1,22 +1,17 @@
-# vim:set ft=sh:
+#!/bin/bash
 
-build()
-{
-    MODULES=""
-    BINARIES=""
-    FILES=""
+build() {
     SCRIPT="sleep"
 }
 
-help ()
-{
-cat <<HELPEOF
-  This hook causes the init process to interrupt
-  for a fixed time interval. The time in seconds
-  can be specified in the sleeptime= command line
-  parameter. The default is 5 seconds.
-  If a sleepdevice= parameter is specified, sleep
-  until the given device node is available, polling
-  at one second intervals until sleeptime is reached.
+help() {
+    cat <<HELPEOF
+This hook causes the init process to interrupt for a fixed time interval. The
+time in seconds can be specified in the sleeptime= command line parameter. The
+default is 5 seconds. If a sleepdevice= parameter is specified, sleep until the
+given device node is available, polling at one second intervals until sleeptime
+is reached.
 HELPEOF
 }
+
+# vim: set ft=sh ts=4 sw=4 et:

@@ -9,7 +9,7 @@ build() {
 }
 
 help() {
-    cat<<HELPEOF
+    cat <<HELPEOF
 This hook adds filesystems modules to the image. If you would like to minimize
 the modules installed in the image, add the autodetect hook too.
 HELPEOF

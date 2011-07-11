@@ -1,19 +1,14 @@
-# vim: set ft=sh:
+#!/bin/bash
 
-build()
-{
-    MODULES=""
-    BINARIES=""
-    FILES=""
-    SCRIPT=""
+build() {
     add_file "/lib/initcpio/custom.dsdt" "DSDT.aml"
 }
 
-help ()
-{
-cat<<HELPEOF
-  This hook loads a custom acpi dsdt file during boot.
-  Place your custom dsdt file for inclusion here:
-  /lib/initcpio/custom.dsdt
+help() {
+    cat <<HELPEOF
+This hook loads a custom acpi dsdt file during boot.  Place your custom dsdt
+file for inclusion here: /lib/initcpio/custom.dsdt
 HELPEOF
 }
+
+# vim: set ft=sh ts=4 sw=4 et:

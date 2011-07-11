@@ -1,16 +1,15 @@
-# vim:set ft=sh:
+#!/bin/bash
 
-build()
-{
+build() {
     MODULES="$(all_modules btrfs)"
     BINARIES="/sbin/btrfs"
     SCRIPT="btrfs"
 }
 
-help ()
-{
-cat <<HELPEOF
-  This hook is needed to support Btrfs volumes spread
-  over multiple devices.
+help() {
+    cat <<HELPEOF
+This hook is needed to support Btrfs volumes spread over multiple devices.
 HELPEOF
 }
+
+# vim: set ft=sh ts=4 sw=4 et:
