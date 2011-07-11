@@ -3,26 +3,30 @@
 build() {
     local file ext
 
-    eval "$(grep -e "^CONSOLEFONT=" /etc/rc.conf)"
-    if [[ -n "$CONSOLEFONT" ]]; then
-        for file in "$BASEDIR/usr/share/kbd/consolefonts/$CONSOLEFONT".psf?(u)?(.gz); do
-            if [[ -e $file ]]; then
-                [[ $file =~ \.(psfu?)(\.gz)?$ ]] && ext=${BASH_REMATCH[1]}
-                if [[ $file = *.gz ]]; then
-                    gzip -cd "$file" > "$BUILDROOT/consolefont.$ext"
-                else
-                    add_file "${file#$BASEDIR}" "/consolefont.$ext"
+    # subshell to avoid namespace pollution
+    (
+        . "$BASEDIR/etc/rc.conf"
+        if [[ -n "$CONSOLEFONT" ]]; then
+            for file in "$BASEDIR/usr/share/kbd/consolefonts/$CONSOLEFONT".psf?(u)?(.gz); do
+                if [[ -e $file ]]; then
+                    [[ $file =~ \.(psfu?)(\.gz)?$ ]] && ext=${BASH_REMATCH[1]}
+                    if [[ $file = *.gz ]]; then
+                        gzip -cd "$file" > "$BUILDROOT/consolefont.$ext"
+                    else
+                        add_file "${file#$BASEDIR}" "/consolefont.$ext"
+                    fi
+                    exit 0
                 fi
-                SCRIPT=consolefont
-                return 0
-            fi
-        done
-        error "consolefont: requested font not found: \`%s'" "$CONSOLEFONT"
-        return 1
-    else
-        warning "consolefont: no font found in %s/etc/rc.conf" "${BASEDIR%/}"
-        return 1
-    fi
+            done
+            error "consolefont: requested font not found: \`%s'" "$CONSOLEFONT"
+            exit 1
+        else
+            warning "consolefont: no font found in %s/etc/rc.conf" "${BASEDIR%/}"
+            exit 1
+        fi
+    )
+
+    (( $? == 0 )) && SCRIPT=consolefont
 }
 
 help() {
