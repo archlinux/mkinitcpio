@@ -115,6 +115,8 @@ _add_symlink() {
 auto_modules() {
     # Perform auto detection of modules via sysfs.
 
+    local mods=
+
     IFS=$'\n' read -rd '' -a mods < \
         <(find /sys/devices -name modalias -exec sort -u {} + |
         # delimit each input by a newline, expanded in place
@@ -130,6 +132,8 @@ all_modules() {
     #   $@: filter arguments to grep
 
     local -i count=0
+    local mod=
+
     while read -r -d '' mod; do
         (( ++count ))
         mod=${mod##*/}
@@ -158,7 +162,7 @@ add_module() {
     # discovered and added.
     #   $1: module name
 
-    local module path dep deps field value
+    local module= path= dep= deps= field= value=
     local -i ign_errors=0
 
     if [[ $1 = -@(t|-try) ]]; then
@@ -213,6 +217,8 @@ add_full_dir() {
     # Add a directory and all its contents, recursively, to the initcpio image.
     # No parsing is performed and the contents of the directory is added as is.
     #   $1: path to directory
+
+    local f=
 
     if [[ -n $1 && -d $1 ]]; then
         for f in "$1"/*; do
@@ -278,7 +284,7 @@ add_binary() {
     #   $2: destination on initcpio (optional, defaults to same as source)
 
     local -a sodeps
-    local regex binary dest mode sodep resolved dirname
+    local line= regex= binary= dest= mode= sodep= resolved= dirname=
 
     if [[ ${1:0:1} != '/' ]]; then
         binary=$(pathlookup "$1")
@@ -322,7 +328,7 @@ parse_hook() {
     # prior to the start of hook processing, and after each hook's build
     # function is run.
 
-    local item
+    local item=
 
     for item in $MODULES; do
         if [[ ${item:(-1)} = '?' ]]; then
