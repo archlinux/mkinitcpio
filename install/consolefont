@@ -1,32 +1,34 @@
-# vim: set ft=sh:
+#!/bin/bash
 
-build()
-{
-    MODULES=""
-    BINARIES=""
-    FILES=""
-    SCRIPT="consolefont"
+build() {
+    local file ext
+
     eval "$(grep -e "^CONSOLEFONT=" /etc/rc.conf)"
-    if [ -n "$CONSOLEFONT" ]; then
-        if [ -e /usr/share/kbd/consolefonts/$CONSOLEFONT.psfu.gz ]; then
-            CONSOLEFONT_FILE_GZ="/usr/share/kbd/consolefonts/$CONSOLEFONT.psfu.gz"
-            CONSOLEFONT_FILE="$(mktemp ${TMPDIR}/consolefont.psfu.XXXXXX)"
-            zcat ${CONSOLEFONT_FILE_GZ} > ${CONSOLEFONT_FILE}
-            add_file ${CONSOLEFONT_FILE} /consolefont.psfu
-        elif [ -e /usr/share/kbd/consolefonts/$CONSOLEFONT.psf.gz ]; then
-            CONSOLEFONT_FILE_GZ="/usr/share/kbd/consolefonts/$CONSOLEFONT.psf.gz"
-            CONSOLEFONT_FILE="$(mktemp ${TMPDIR}/consolefont.psf.XXXXXX)"
-            zcat ${CONSOLEFONT_FILE_GZ} > ${CONSOLEFONT_FILE}
-            add_file ${CONSOLEFONT_FILE} /consolefont.psf
-        else
-            echo "consolefont: Font file does not exist or does not end with .psf.gz or .psfu.gz."
-        fi
+    if [[ -n "$CONSOLEFONT" ]]; then
+        for file in "$BASEDIR/usr/share/kbd/consolefonts/$CONSOLEFONT".psf?(u)?(.gz); do
+            if [[ -e $file ]]; then
+                [[ $file =~ \.(psfu?)(\.gz)?$ ]] && ext=${BASH_REMATCH[1]}
+                if [[ $file = *.gz ]]; then
+                    gzip -cd "$file" > "$BUILDROOT/consolefont.$ext"
+                else
+                    add_file "${file#$BASEDIR}" "/consolefont.$ext"
+                fi
+                SCRIPT=consolefont
+                return 0
+            fi
+        done
+        error "consolefont: requested font not found: \`%s'" "$CONSOLEFONT"
+        return 1
+    else
+        warning "consolefont: no font found in %s/etc/rc.conf" "${BASEDIR%/}"
+        return 1
     fi
 }
 
-help ()
-{
-cat<<HELPEOF
-  This hook loads consolefont specified in rc.conf during early userspace.
+help() {
+    cat <<HELPEOF
+This hook loads consolefont specified in rc.conf during early userspace.
 HELPEOF
 }
+
+# vim: set ft=sh ts=4 sw=4 et:
