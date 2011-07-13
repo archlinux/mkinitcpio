@@ -7,12 +7,10 @@ build() {
         . "$BASEDIR/etc/rc.conf"
         if [[ $KEYMAP ]]; then
             if [[ $LOCALE = *[Uu][Tt][Ff]-8 ]]; then
-                printf '%s\n' "UTF8=yes" > "$BUILDROOT/keymap.utf8"
-                /bin/loadkeys -q -u $KEYMAP -b > "$BUILDROOT/keymap.bin"
-            else
-                printf '%s\n' "UTF8=no" > "$BUILDROOT/keymap.utf8"
-                /bin/loadkeys -q $KEYMAP -b > "$BUILDROOT/keymap.bin"
+                touch "$BUILDROOT/keymap.utf8"
+                uc=-u
             fi
+            /bin/loadkeys -q $uc $KEYMAP -b > "$BUILDROOT/keymap.bin"
         fi
     )
 

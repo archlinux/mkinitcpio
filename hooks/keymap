@@ -3,14 +3,15 @@ run_hook ()
 {
     if [ -e /keymap.bin ]; then
         msg -n ":: Loading keymap..."
-        . /keymap.utf8
-        if [ "${UTF8}" = "yes" ]; then
-            kbd_mode -u -C /dev/console
-            printf "\033%%G" >> /dev/console
+        if [ -f /keymap.utf8 ]; then
+          mode=-u
+          ctrl=G
         else
-            kbd_mode -a -C /dev/console
-            printf "\033%%@" >> /dev/console
+          mode=-a
+          ctrl=@
         fi
+        kbd_mode $mode -C /dev/console
+        printf "\033%%$ctrl" >> /dev/console
         loadkmap < /keymap.bin
         msg "done."
     fi
