@@ -30,15 +30,16 @@ die() {
     cleanup 1
 }
 
-get_dirname() {
-    # strip any trailing slash first...
-    local dir="${1%/}"
-    # then get the directory portion
-    echo "${dir%/*}"
+get_basename() {
+  local base=${1%/}
+  base=${base##*/}
+  printf '%s' "${base:-/}"
 }
 
-get_basename() {
-    echo "${1##*/}"
+get_dirname() {
+  local dir=${1%/}
+  dir=${dir%/*}
+  printf '%s' "${dir:-/}"
 }
 
 in_array() {
