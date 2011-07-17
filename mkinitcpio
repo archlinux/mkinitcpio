@@ -108,12 +108,7 @@ while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
         p) PRESET="${OPTARG}" ;;
         n) COLOR=0 ;;
         v) QUIET=0 ;;
-        S) OLDIFS=${IFS}
-           IFS=,
-           SKIPHOOKS=(${OPTARG})
-           IFS=${OLDIFS}
-           unset OLDIFS
-           ;;
+        S) IFS=, read -r -a SKIPHOOKS <<< "$OPTARG" ;;
         H) if [[ ! -r "${INSTDIR}/${OPTARG}" ]]; then
                error "No hook ${OPTARG}"
                exit 1
