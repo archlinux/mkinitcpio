@@ -74,8 +74,9 @@ if [ -e "/hooks" ]; then
     done
 fi
 
-if [ "${break}" = "y" ]; then
-    echo ":: Break requested, type 'exit' to resume operation"
+# honor the old behavior of break=y as a synonym for break=premount
+if [ "${break}" = "y" ] || [ "${break}" = "premount" ]; then
+    echo ":: Pre-mount break requested, type 'exit' to resume operation"
     launch_interactive_shell
 fi
 
@@ -98,6 +99,11 @@ elif [ ! -x "/new_root${init}" ]; then
     echo "Bailing out, you are on your own. Good luck."
     echo
     launch_interactive_shell --exec
+fi
+
+if [ "${break}" = "postmount" ]; then
+    echo ":: Post-mount break requested, type 'exit' to resume operation"
+    launch_interactive_shell
 fi
 
 # Stop udevd if is running
