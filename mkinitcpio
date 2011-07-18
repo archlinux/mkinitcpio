@@ -246,7 +246,7 @@ if [[ $GENIMG ]]; then
 fi
 
 if [[ ! -f "$CONFIG" ]]; then
-    die "Config file does not exist: \`%s'" " $CONFIG"
+    die "Config file does not exist: \`%s'" "$CONFIG"
 fi
 . "$CONFIG"
 
@@ -356,7 +356,7 @@ if [[ "${GENIMG}" ]]; then
     fi
 
     if [[ $errmsg ]]; then
-        error "Image generation FAILED: %s\n" "$errmsg"
+        error "Image generation FAILED: %s" "$errmsg"
         status=1
     else
         msg "Image generation successful"
