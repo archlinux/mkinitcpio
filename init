@@ -22,7 +22,7 @@ else
   # /dev/mem is needed if we want to load uvesafb before triggering uevents
   mknod /dev/mem c 1 1
 fi
-mount -t tmpfs run /run -o nosuid,noexec,nodev,mode=755,size=10M
+mount -t tmpfs run /run -o nosuid,nodev,mode=755,size=10M
 
 echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
 
