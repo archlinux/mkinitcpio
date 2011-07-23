@@ -55,6 +55,26 @@ in_array() {
     return 1 # Not Found
 }
 
+pathlookup() {
+    # a basedir aware 'type -P' (or which) for executables
+    #   $1: binary to find
+
+    local path=
+    local -a paths=
+
+    IFS=: read -r -a paths <<< "$PATH"
+
+    for path in "${paths[@]}"; do
+        [[ ${path:0:1} = [.~] ]] && continue
+        if [[ -x $BASEDIR$path/$1 ]]; then
+            printf '%s' "$BASEDIR$path/$1"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 _add_file() {
     # add a file to $BUILDROOT
     #   $1: pathname on initcpio
@@ -259,7 +279,11 @@ add_binary() {
     local -a sodeps
     local regex binary dest mode sodep resolved dirname
 
-    binary=$BASEDIR$1
+    if [[ ${1:0:1} != '/' ]]; then
+        binary=$(pathlookup "$1")
+    else
+        binary=$BASEDIR$1
+    fi
 
     [[ -f "$binary" ]] || { error "file not found: \`%s'" "$binary"; return 1; }
 
