@@ -312,7 +312,8 @@ for hook in ${HOOKS}; do
         fi
         parse_hook
     else
-        die "Hook '$hook' can not be found."
+        error "Hook '$hook' can not be found."
+        (( ++builderrors ))
     fi
 done
 
