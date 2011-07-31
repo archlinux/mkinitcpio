@@ -40,8 +40,7 @@ parse_cmdline() {
                 # The kernel passes those to init on its own
                 [0123456Ss]) ;;
                 single) ;;
-                rw) readwrite="yes" ;;
-                ro) readwrite="no" ;;
+                rw|ro) rwopt="$w" ;;
                 # only export stuff that does work with ash :)
                 *=*) rhs="$(echo "${w}" | cut -d= -f2-)"
                     lhs="$(echo "${w}" | cut -d= -f1 | sed 's|\.|_|g;s|-|_|g;')"
@@ -116,31 +115,22 @@ default_mount_handler() {
         fi
     fi
     # We didn't build filesystem support into busybox,
-    # instead we use util-linux-ng's blkid for best compatibility
-    if [ -n "${rootfstype}" ]; then
-        fstype="${rootfstype}"
-    else
-        fstype=$(blkid -u filesystem -o value -s TYPE -p "${root}")
-        if [ -z "${fstype}" ]; then
-            err "Unable to determine the file system type of ${root}:"
-            echo "Either it contains no filesystem, an unknown filesystem,"
-            echo "or more than one valid file system signature was found."
-            echo
-            echo "Try adding"
-            echo "    rootfstype=your_filesystem_type"
-            echo "to the kernel command line."
-            echo
-            echo "You are now being dropped into an emergency shell."
-            launch_interactive_shell
-            msg "Trying to continue (this will most likely fail) ..."
-        fi
+    # instead we use util-linux's blkid for best compatibility
+    fstype=${rootfstype:-$(blkid -u filesystem -o value -s TYPE -p "$root")}
+    if [ -z "$fstype" ]; then
+        err "Unable to determine the file system type of ${root}:"
+        echo "Either it contains no filesystem, an unknown filesystem,"
+        echo "or more than one valid file system signature was found."
+        echo
+        echo "Try adding"
+        echo "    rootfstype=your_filesystem_type"
+        echo "to the kernel command line."
+        echo
+        echo "You are now being dropped into an emergency shell."
+        launch_interactive_shell
+        msg "Trying to continue (this will most likely fail) ..."
     fi
-    if [ "${readwrite}" = "yes" ]; then
-        rwopt="rw"
-    else
-        rwopt="ro"
-    fi
-    mount ${fstype:+-t ${fstype}} -o ${rwopt}${rootflags:+,${rootflags}} "${root}" "$1"
+    mount ${fstype:+-t $fstype} -o ${rwopt:-ro}${rootflags:+,$rootflags} "$root" "$1"
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
