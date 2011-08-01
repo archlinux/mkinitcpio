@@ -42,10 +42,11 @@ parse_cmdline() {
                 single) ;;
                 rw|ro) rwopt="$w" ;;
                 # only export stuff that does work with ash :)
-                *=*) rhs="$(echo "${w}" | cut -d= -f2-)"
-                    lhs="$(echo "${w}" | cut -d= -f1 | sed 's|\.|_|g;s|-|_|g;')"
-                    if [ "\"" = "${rhs:0:1}" ]; then
-                        if [ "\"" = "${rhs:$((${#rhs}-1))}" ]; then
+                *=*) rhs=${w#*=}
+                    lhs=${w%%=*}
+                    lhs=${lhs//[-.]/_}
+                    if [ '"' = "${rhs:0:1}" ]; then
+                        if [ "${rhs:$((${#rhs}-1))}" = '"' ]; then
                             rhs="${rhs:1:$((${#rhs}-2))}"
                         else
                             rhs="${rhs:1}"
@@ -53,17 +54,17 @@ parse_cmdline() {
                             continue
                         fi
                     fi
-                    (echo "${lhs}" | grep -qe '^[0-9]' -e '[^a-zA-Z0-9_]') || eval ${lhs}=\${rhs}
+                    [ "$lhs" = "${lhs//[^0-9a-zA-Z]}" ] && [ "$lhs" = "${lhs#[0-9]}" ] && eval ${lhs}=\${rhs}
                     ;;
-                *)  lhs="$(echo "${w}" | sed 's|\.|_|g;s|-|_|g;')"
-                    (echo "${lhs}" | grep -qe '^[0-9]' -e '[^a-zA-Z0-9_]') || eval ${lhs}=y
+                *)  lhs=${w//[-.]/_}
+                    [ "$lhs" = "${lhs//[^0-9a-zA-Z]}" ] && [ "$lhs" = "${lhs#[0-9]}" ] && eval ${lhs}=y
                     ;;
             esac
         else
-            if [ "\"" = "${w:$((${#w}-1))}" ]; then
-                rhs="${rhs} ${w:0:$((${#w}-1))}"
+            if [ '"' = "${w:$((${#w}-1))}" ]; then
+                rhs="${rhs} ${w%\"}"
                 in_quotes=0
-                (echo "${lhs}" | grep -qe '^[0-9]' -e '[^a-zA-Z0-9_]') || eval ${lhs}=\${rhs}
+                [ "$lhs" = "${lhs//[^0-9a-zA-Z]}" ] && [ "$lhs" = "${lhs#[0-9]}" ] && eval ${lhs}=\${rhs}
             else
                 rhs="${rhs} ${w}"
             fi
@@ -92,12 +93,12 @@ default_mount_handler() {
                 break
             fi
         # It might be a major/minor pair (8:1)
-        elif echo ${root} | grep -q :; then
+        elif [ "$root" != "${root/:}" ]; then
             major="$(echo ${root} | cut -d: -f1)"
             minor="$(echo ${root} | cut -d: -f2)"
             root="/dev/root"
         # It might be major/minor encoded as a single hex-number (lilo-style) (801)
-        elif [ ${#root} -le 4 -a ${#root} -gt 2 ] && echo "${root}" | grep -qe '^[A-Fa-f0-9]*$'; then
+        elif [ ${#root} -le 4 -a ${#root} -gt 2 -a -z "${root//[0-9a-fA-F]}" ]; then
             str_offset=$((${#root}-2))
             major=$((0x${root:0:${str_offset}}))
             minor=$((0x${root:${str_offset}}))
