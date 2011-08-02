@@ -62,7 +62,7 @@ shift $(( OPTIND - 1 ))
 
 declare image=$1
 
-if [[ -t 2 ]] && (( color )); then
+if [[ -t 1 ]] && (( color )); then
     # prefer terminal safe colored and bold text when tput is supported
     if tput setaf 0 &>/dev/null; then
         NC="$(tput sgr0)"
