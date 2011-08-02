@@ -156,6 +156,10 @@ if [[ -t 2 ]] && (( COLOR )); then
 fi
 readonly NC BOLD BLUE GREEN RED YELLOW
 
+# insist that /proc and /dev be mounted (important for chroots)
+mountpoint -q /proc || die "/proc must be mounted!"
+mountpoint -q /dev || die "/dev must be mounted!"
+
 if [[ $BASEDIR ]]; then
     # resolve the path. it might be a relative path and/or contain symlinks
     if ! pushd "$BASEDIR" &>/dev/null; then
