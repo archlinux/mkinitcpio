@@ -86,7 +86,7 @@ readonly NC BOLD BLUE GREEN RED YELLOW
 [[ -f $image ]] || die "$image: No such file"
 
 # read compression type
-case "$(file -b "$image")" in
+case "$(file -Lb "$image")" in
     @(data|LZMA)*) compress=lzma ;;
     gzip*) compress=gzip ;;
     bzip2*) compress=bzip2 ;;
@@ -129,7 +129,9 @@ if (( analyze )); then
     done
 
     # print results
-    msg 'Image: %s' "$(readlink -e "$image")"
+    imagename=$image
+    [[ -L $image ]] && imagename+=" -> $(readlink -e "$image")"
+    msg 'Image: %s' "$imagename"
     msg 'Kernel: %s' "${kernver:-unknown}"
 
     if [[ $compress ]]; then
