@@ -108,7 +108,7 @@ _add_symlink() {
     (( $# == 2 )) || return $EINVAL
     [[ -L "$BUILDROOT$1" ]] && return $EEXIST
 
-    (( QUIET )) || plain "adding symlink: %s -> %s" "$2" "$1"
+    (( QUIET )) || plain "adding symlink: %s -> %s" "$1" "$2"
     ln -s "$2" "$BUILDROOT$1"
 }
 
