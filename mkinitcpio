@@ -276,7 +276,7 @@ if [[ -z $GENIMG ]]; then
 else
     COMPRESSION=${optcompress:-$COMPRESSION}
     if ! type -P "$COMPRESSION" >/dev/null; then
-        die "Unable to locate compression method: %s" "$optcompress"
+        die "Unable to locate compression method: %s" "$COMPRESSION"
     fi
 
     msg "Starting build: %s" "$KERNELVERSION"
