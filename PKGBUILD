@@ -5,6 +5,7 @@ pkgdesc="Modular initramfs image creation utility"
 arch=(any)
 url="http://www.archlinux.org/"
 license=('GPL')
+groups=('base')
 conflicts=('mkinitcpio')
 provides=("mkinitcpio=$pkgver")
 depends=('mkinitcpio-busybox>=1.16.1-2' 'module-init-tools' 'util-linux>=2.19' 'libarchive' 'coreutils'
