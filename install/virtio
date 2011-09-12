@@ -1,0 +1,15 @@
+#!/bin/bash
+
+build() {
+    MODULES="$(checked_modules 'virtio_\(blk\|pci\)')"
+}
+
+help() {
+    cat <<HELPEOF
+This hook loads the necessary modules for a virtio root device.  Detection will
+take place at runtime. To minimize the modules in the image, add the autodetect
+hook too.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
