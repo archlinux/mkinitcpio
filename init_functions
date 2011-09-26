@@ -45,8 +45,8 @@ parse_cmdline() {
                 # only export stuff that does work with ash :)
                 *=*) rhs="$(echo "${w}" | cut -d= -f2-)"
                     lhs="$(echo "${w}" | cut -d= -f1 | sed 's|\.|_|g;s|-|_|g;')"
-                    if [ "${rhs:0:1}" = "\"" ]; then
-                        if [ "${rhs:$((${#rhs}-1))}" = "\"" ]; then
+                    if [ "\"" = "${rhs:0:1}" ]; then
+                        if [ "\"" = "${rhs:$((${#rhs}-1))}" ]; then
                             rhs="${rhs:1:$((${#rhs}-2))}"
                         else
                             rhs="${rhs:1}"
@@ -61,7 +61,7 @@ parse_cmdline() {
                     ;;
             esac
         else
-            if [ "${w:$((${#w}-1))}" = "\"" ]; then
+            if [ "\"" = "${w:$((${#w}-1))}" ]; then
                 rhs="${rhs} ${w:0:$((${#w}-1))}"
                 in_quotes=0
                 (echo "${lhs}" | grep -qe '^[0-9]' -e '[^a-zA-Z0-9_]') || eval ${lhs}=\${rhs}
