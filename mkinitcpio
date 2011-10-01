@@ -60,10 +60,10 @@ EOF
     cleanup 1
 }
 
-cleanup ()
-{
+cleanup() {
     if [[ $TMPDIR ]]; then
-        if (( $SAVELIST )); then
+        # when PRESET is set, we're in the main loop, not a worker process
+        if (( SAVELIST )) && [[ -z $PRESET ]]; then
             msg "build directory saved in %s" "$TMPDIR"
         else
             rm -rf "$TMPDIR"
