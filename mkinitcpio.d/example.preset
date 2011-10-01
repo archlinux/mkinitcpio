@@ -4,10 +4,9 @@
 PRESETS=('default' 'fallback')
 
 # ALL_kver is used if presetname_kver is not set
-# note for distribution kernels: this should be in a separate file
-# and read like this:
-# . /etc/mkinitcpio.d/exmaple.kver
-ALL_kver='/boot/vmlinuz26'
+# The kver can be specified as an explicit kernel version or
+# as the path to an kernel image.
+ALL_kver='/boot/vmlinuz-linux'
 ALL_config='/etc/mkinitcpio.conf'
 
 # presetname_kver    - the kernel version (omit if ALL_kver should be used)
@@ -15,12 +14,12 @@ ALL_config='/etc/mkinitcpio.conf'
 # presetname_image   - the filename of generated image
 # presetname_options - any extra options
 
-#default_kver="2.6.18-ARCH"
+#default_kver="3.0-ARCH"
 #default_config="/etc/mkinitcpio.conf"
-default_image="/tmp/kernel26.img"
+default_image="/tmp/initramfs-linux.img"
 default_options=""
 
-#fallback_kver="2.6.18-ARCH"
+#fallback_kver="3.0-ARCH"
 #fallback_config="/etc/mkinitcpio.conf"
-fallback_image="/tmp/kernel26-fallback.img"
+fallback_image="/tmp/initramfs-linux-fallback.img"
 fallback_options="-S autodetect"
