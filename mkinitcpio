@@ -248,7 +248,7 @@ fi
 if [[ $GENIMG ]]; then
     IMGPATH=$(readlink -f "$GENIMG")
     if [[ -z $IMGPATH || ! -w ${IMGPATH%/*} ]]; then
-      die "error: unable to write to path: \`%s'" "$GENIMG"
+      die "Unable to write to path: \`%s'" "$GENIMG"
     fi
 fi
 
