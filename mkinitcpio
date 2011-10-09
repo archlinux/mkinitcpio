@@ -157,8 +157,10 @@ fi
 readonly NC BOLD BLUE GREEN RED YELLOW
 
 # insist that /proc and /dev be mounted (important for chroots)
-mountpoint -q /proc || die "/proc must be mounted!"
-mountpoint -q /dev || die "/dev must be mounted!"
+# NOTE: avoid using mountpoint for this -- look for the paths that we actually
+# use in mkinitcpio. Avoids issues like FS#26344.
+[[ -e /proc/self/mountinfo ]] || die "/proc must be mounted!"
+[[ -e /dev/fd ]] || die "/dev must be mounted!"
 
 if [[ $BASEDIR ]]; then
     # resolve the path. it might be a relative path and/or contain symlinks
