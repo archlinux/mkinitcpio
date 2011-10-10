@@ -21,7 +21,7 @@ INSTDIR=install
 PRESETDIR=mkinitcpio.d
 COMPRESSION=gzip
 
-declare TMPDIR= BASEDIR= MODULE_FILE= GENIMG= PRESET= COMPRESSION_OPTIONS= BUILDROOT=
+declare BASEDIR= MODULE_FILE= GENIMG= PRESET= COMPRESSION_OPTIONS= BUILDROOT=
 declare NC= BOLD= BLUE= GREEN= RED= YELLOW=
 declare -i QUIET=1 SHOW_AUTOMODS=0 SAVELIST=0 COLOR=1
 declare -a SKIPHOOKS ADDED_MODULES MODPATHS
@@ -52,7 +52,7 @@ usage: ${0##*/} [options]
    -p PRESET        Build specified preset from /etc/mkinitcpio.d
    -S SKIPHOOKS     Skip SKIPHOOKS (comma-separated) when building the image.
    -s               Save build directory. default: no
-   -t TMPDIR        Use TMPDIR as the temporary build directory.
+   -t DIR           Use DIR as the temporary build directory.
    -v               Verbose output. Default: no.
    -z COMPRESS      Use COMPRESS on resulting image
 
@@ -61,12 +61,12 @@ EOF
 }
 
 cleanup() {
-    if [[ $TMPDIR ]]; then
+    if [[ $workdir ]]; then
         # when PRESET is set, we're in the main loop, not a worker process
         if (( SAVELIST )) && [[ -z $PRESET ]]; then
-            msg "build directory saved in %s" "$TMPDIR"
+            msg "build directory saved in %s" "$workdir"
         else
-            rm -rf "$TMPDIR"
+            rm -rf "$workdir"
         fi
     fi
 
@@ -182,15 +182,18 @@ fi
 if [[ $TMPDIR ]]; then
     if [[ ! -d $TMPDIR ]]; then
         error "Temporary directory does not exist or is not a directory: \`%s'" "$TMPDIR"
-        unset TMPDIR
+        cleanup 1
+    fi
+    if [[ ! -w $TMPDIR ]]; then
+        error "Temporary directory is not writeable: \`%s'" "$TMPDIR"
         cleanup 1
     fi
 fi
-TMPDIR=$(mktemp -d "${TMPDIR:-/tmp}/mkinitcpio.XXXXXX")
-declare BUILDROOT=$TMPDIR/root
+workdir=$(TMPDIR=$TMPDIR mktemp -d --tmpdir mkinitcpio.XXXXXX)
+BUILDROOT=$workdir/root
 
 # explicitly create the buildroot
-mkdir "$TMPDIR/root"
+mkdir "$BUILDROOT"
 
 # use preset $PRESET
 if [[ $PRESET ]]; then
@@ -335,7 +338,7 @@ if (( ${#ADDED_MODULES[*]} )); then
     popd >/dev/null
 
     msg "Generating module dependencies"
-    /sbin/depmod -b "${TMPDIR}/root" "${KERNELVERSION}"
+    /sbin/depmod -b "$BUILDROOT" "${KERNELVERSION}"
     rm "$BUILDROOT/lib/modules/$KERNELVERSION"/modules.!(dep.bin|alias.bin|symbols.bin)
 fi
 
