@@ -13,7 +13,6 @@
 shopt -s extglob
 
 # Settings
-KERNELVERSION=$(uname -r)
 FUNCTIONS=functions
 CONFIG=mkinitcpio.conf
 HOOKDIR=hooks
@@ -45,7 +44,7 @@ usage: ${0##*/} [options]
    -g IMAGE         Generate a cpio image as IMAGE. default: no
    -H HOOKNAME      Output help for hook 'HOOKNAME'.
    -h               Display this message.
-   -k KERNELVERSION Use KERNELVERSION. default: $KERNELVERSION
+   -k KERNELVERSION Use KERNELVERSION. default: $(uname -r)
    -L               List all available hooks.
    -M               Display modules found via autodetection.
    -n               Disable colorized output messages.
@@ -76,18 +75,29 @@ cleanup() {
 get_kernver() {
     local kernver= kernel=$1
 
-    if [[ "${kernel:0:1}" != / ]]; then
-        echo $kernel
+    if [[ -z $kernel ]]; then
+        uname -r
         return 0
     fi
 
-    [[ -r "$BASEDIR$kernel" ]] || return 1
+    if [[ ${kernel:0:1} != / ]]; then
+        echo "$kernel"
+        return 0
+    fi
+
+    if [[ ! -e $BASEDIR$kernel ]]; then
+        error "Specified kernel image does not exist: \`%s'" "$BASEDIR$kernel"
+        return 1
+    fi
 
     read _ kernver < <(file -b "$BASEDIR$kernel" | grep -o 'version [^ ]\+')
-    if [[ "$kernver" && -e "$BASEDIR/lib/modules/$kernver" ]]; then
+    if [[ $kernver && -e $BASEDIR/lib/modules/$kernver ]]; then
         echo "$kernver"
         return 0
     fi
+
+    [[ ${optkver:0:1} == / ]] && optkver=$BASEDIR$optkver
+    error "invalid kernel specifier: \`%s'" "$optkver"
 
     return 1
 }
@@ -172,12 +182,7 @@ if [[ $BASEDIR ]]; then
     popd &>/dev/null
 fi
 
-if [[ $optkver ]]; then
-    if ! KERNELVERSION=$(get_kernver "$optkver"); then
-        [[ ${optkver:0:1} == / ]] && optkver=$BASEDIR$optkver
-        die "invalid kernel specifier: \`%s'" "$optkver"
-    fi
-fi
+KERNELVERSION=$(get_kernver "$optkver") || cleanup 1
 
 if [[ $TMPDIR ]]; then
     if [[ ! -d $TMPDIR ]]; then
