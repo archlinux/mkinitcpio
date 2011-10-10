@@ -10,10 +10,10 @@ DIRS = \
 	/lib/initcpio/hooks \
 	/lib/initcpio/install \
 	/lib/initcpio/udev \
-	/usr/share/man/man5
+	/usr/share/man/man8
 
 DIST_EXTRA = \
-	mkinitcpio.5
+	mkinitcpio.8
 
 all: doc
 
@@ -43,20 +43,20 @@ install: all
 	install -m644 -t ${DESTDIR}/lib/initcpio/install install/*
 	install -m644 -t ${DESTDIR}/etc/mkinitcpio.d mkinitcpio.d/*
 
-	install -m644 mkinitcpio.5 ${DESTDIR}/usr/share/man/man5/mkinitcpio.5
+	install -m644 mkinitcpio.8 ${DESTDIR}/usr/share/man/man8/mkinitcpio.8
 	install -m644 bash-completion ${DESTDIR}/etc/bash_completion.d/mkinitcpio
 
-doc: mkinitcpio.5
-mkinitcpio.5: mkinitcpio.5.txt Makefile
+doc: mkinitcpio.8
+mkinitcpio.8: mkinitcpio.8.txt Makefile
 	a2x -d manpage \
 		-f manpage \
 		-a mansource=mkinitcpio \
 		-a manversion=${VERSION} \
-		-a manmanual=mkinitcpio mkinitcpio.5.txt
+		-a manmanual=mkinitcpio mkinitcpio.8.txt
 
 clean:
 	${RM} -r build mkinitcpio-${VERSION}
-	${RM} mkinitcpio-${VERSION}.tar.gz mkinitcpio.5 mkinitcpio.5.gz
+	${RM} mkinitcpio-${VERSION}.tar.gz mkinitcpio.8 mkinitcpio.8.gz
 
 tarball: dist
 dist: clean doc
