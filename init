@@ -2,7 +2,7 @@
 # Install busybox's applets as symlinks
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
 
-busybox --install -s
+/bin/busybox --install -s
 
 . /init_functions
 
