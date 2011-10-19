@@ -4,13 +4,13 @@ build() {
     FILES="/etc/udev/udev.conf"
     SCRIPT="udev"
 
-    add_binary /sbin/udevd
+    add_binary /lib/udev/udevd
     add_binary /sbin/udevadm
 
     for rules in 50-{firmware,udev-default}.rules 60-persistent-storage.rules 80-drivers.rules; do
         add_file "/lib/udev/rules.d/$rules"
     done
-    for tool in firmware {ata,path,scsi,usb}_id; do
+    for tool in firmware {ata,scsi}_id; do
         add_file "/lib/udev/$tool"
     done
 }

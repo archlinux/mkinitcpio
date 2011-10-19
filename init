@@ -30,9 +30,9 @@ echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
 parse_cmdline
 
 # if available, start udevd at this stage
-if [ -x /sbin/udevd ]; then
+if [ -x /lib/udev/udevd ]; then
     msg ":: Starting udevd..."
-    udevd --daemon --resolve-names=never
+    /lib/udev/udevd --daemon --resolve-names=never
     udevd_running=1
     msg "done."
 else
