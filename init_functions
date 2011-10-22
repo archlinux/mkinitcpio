@@ -42,6 +42,7 @@ parse_cmdline() {
                 single) ;;
                 rw|ro) rwopt="$w" ;;
                 # only export stuff that does work with ash :)
+                =*) ;;
                 *=*) rhs=${w#*=}
                     lhs=${w%%=*}
                     lhs=${lhs//[-.]/_}
