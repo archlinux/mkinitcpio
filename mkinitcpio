@@ -90,7 +90,7 @@ get_kernver() {
         return 1
     fi
 
-    read _ kernver < <(file -b "$BASEDIR$kernel" | grep -o 'version [^ ]\+')
+    read _ kernver < <(file -Lb "$BASEDIR$kernel" | grep -o 'version [^ ]\+')
     if [[ $kernver && -e $BASEDIR/lib/modules/$kernver ]]; then
         echo "$kernver"
         return 0
