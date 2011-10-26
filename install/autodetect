@@ -10,7 +10,7 @@ build() {
 
     auto_modules | grep -xEv '(ata|ide)_generic' >"$MODULE_FILE"
 
-    if ! findmnt -uno fstype "${BASEDIR:-/}" >>"$MODULE_FILE"; then
+    if ! rootfstype=$(findmnt -uno fstype "${BASEDIR:-/}" | tee -a "$MODULE_FILE"); then
         error "failed to detect root filesystem"
         fs_autodetect_failed=1
     fi
