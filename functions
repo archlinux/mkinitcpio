@@ -249,8 +249,8 @@ add_symlink() {
 
     (( $# == 2 )) || return 1
 
-    _add_dir "$(get_dirname "$1")"
-    _add_symlink "$2" "$1"
+    add_dir "$(get_dirname "$1")"
+    _add_symlink "$1" "$2"
 }
 
 add_file() {
