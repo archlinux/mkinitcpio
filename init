@@ -23,8 +23,6 @@ else
 fi
 mount -t tmpfs run /run -o nosuid,nodev,mode=755,size=10M
 
-echo "/sbin/modprobe" > /proc/sys/kernel/modprobe
-
 # parse the kernel command line
 parse_cmdline
 
