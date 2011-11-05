@@ -3,8 +3,7 @@
 VERSION = $(shell if test -f VERSION; then cat VERSION; else git describe | sed 's/-/./g'; fi)
 
 DIRS = \
-	/bin \
-	/sbin \
+	/usr/bin \
 	/etc/bash_completion.d \
 	/etc/mkinitcpio.d \
 	/lib/initcpio/hooks \
@@ -26,13 +25,13 @@ install: all
 	    -e 's|^INSTDIR=.*|INSTDIR=/lib/initcpio/install|' \
 	    -e 's|^PRESETDIR=.*|PRESETDIR=/etc/mkinitcpio.d|' \
 	    -e 's|%VERSION%|${VERSION}|g' \
-	    < mkinitcpio > ${DESTDIR}/sbin/mkinitcpio
+	    < mkinitcpio > ${DESTDIR}/usr/bin/mkinitcpio
 
 	sed -e 's|\(^declare FUNCTIONS\)=.*|\1=/lib/initcpio/functions|' \
 	    -e 's|%VERSION%|${VERSION}|g' \
-	    < lsinitcpio > ${DESTDIR}/bin/lsinitcpio
+	    < lsinitcpio > ${DESTDIR}/usr/bin/lsinitcpio
 
-	chmod 755 ${DESTDIR}/bin/lsinitcpio ${DESTDIR}/sbin/mkinitcpio
+	chmod 755 ${DESTDIR}/usr/bin/lsinitcpio ${DESTDIR}/usr/bin/mkinitcpio
 
 	install -m644 mkinitcpio.conf ${DESTDIR}/etc/mkinitcpio.conf
 	install -m755 -t ${DESTDIR}/lib/initcpio init
