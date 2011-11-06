@@ -71,6 +71,9 @@ parse_cmdline() {
                     fi
                     [ "$lhs" = "${lhs//[^0-9a-zA-Z]}" ] && [ "$lhs" = "${lhs#[0-9]}" ] && eval ${lhs}=\${rhs}
                     ;;
+                forcefsck)
+                    FORCEFSCK="-f"
+                    ;;
                 *)  lhs=${w//[-.]/_}
                     [ "$lhs" = "${lhs//[^0-9a-zA-Z]}" ] && [ "$lhs" = "${lhs#[0-9]}" ] && eval ${lhs}=y
                     ;;
@@ -85,6 +88,66 @@ parse_cmdline() {
             fi
         fi
     done
+}
+
+fsck_device() {
+    [ -x /sbin/fsck ] || return 255
+
+    if [ ! -b "$1" ]; then
+        err "device '$1' not found. Skipping fsck."
+        return 255
+    fi
+
+    msg ":: performing fsck on '$1'"
+    FSTAB_FILE=/dev/null fsck -Ta -C"$FSCK_FD" "$1" -- $FORCEFSCK
+}
+
+fsck_root() {
+    fsck_device "$root"
+    fsckret=$?
+
+    fsck_ret() {
+        [ -z "$fsckret" ] && return 1
+        [ "$fsckret" -eq "$1" ] && return 0
+        [ "$(( $fsckret & $1 ))" -eq "$1" ]
+    }
+
+    if [ "$fsckret" -ne 255 ]; then
+        if fsck_ret 0 || fsck_ret 1; then
+            echo "$fsckret" > /run/initramfs/root-fsck
+        elif fsck_ret 4; then
+            err "Bailing out. Run 'fsck $root' manually"
+            printf '%s\n' \
+                "********** FILESYSTEM CHECK FAILED **********"
+                "*                                           *"
+                "*  Please run fsck manually. After leaving  *"
+                "*  this maintenance shell, the system will  *"
+                "   reboot automatically.                    *"
+                "*                                           *"
+                "*********************************************"
+            launch_interactive_shell
+            echo ":: Automatic reboot in progress"
+            sleep 2
+            reboot -f
+        elif fsck_ret 2; then
+            printf '%s\n' \
+                "************** REBOOT REQUIRED **************" \
+                "*                                           *" \
+                "*   automatically restarting in 10 seconds  *" \
+                "*                                           *" \
+                "*********************************************"
+            sleep 10
+            reboot -f
+        elif fsck_ret 8; then
+            err "fsck failed on '$root'"
+        elif fsck_ret 16; then
+            err "Failed to invoke fsck: usage or syntax error"
+        elif fsck_ret 32; then
+            echo ":: fsck cancelled on user request"
+        elif fsck_ret 128; then
+            err "fatal error invoking fsck"
+        fi
+    fi
 }
 
 resolve_device() {
@@ -136,9 +199,7 @@ resolve_device() {
 }
 
 default_mount_handler() {
-    local rootdev
-
-    if ! rootdev=$(resolve_device "$root"); then
+    if [ ! -b "$root" ]; then
         err "Unable to determine major/minor number of root device '$root'."
         echo "You are being dropped to a recovery shell"
         echo "    Type 'exit' to try and continue booting"
@@ -146,7 +207,7 @@ default_mount_handler() {
         msg "Trying to continue (this will most likely fail) ..."
     fi
 
-    if ! mount ${fstype:+-t $fstype} -o ${rwopt:-ro}${rootflags:+,$rootflags} "$rootdev" "$1"; then
+    if ! mount ${fstype:+-t $fstype} -o ${rwopt:-ro}${rootflags:+,$rootflags} "$root" "$1"; then
         echo "You are now being dropped into an emergency shell."
         launch_interactive_shell
         msg "Trying to continue (this will most likely fail) ..."
