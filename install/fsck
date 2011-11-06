@@ -1,0 +1,32 @@
+#!/bin/bash
+
+build() {
+    local added=0
+
+    if (( ! fs_autodetect_failed )) && [[ $rootfstype ]]; then
+        add_binary /sbin/fsck.$rootfstype && (( ++added ))
+    else
+        for fsck in "$BASEDIR"/sbin/fsck.*; do
+            [[ -f $fsck ]] || continue
+            add_binary "${fsck#$BASEDIR}" && (( ++added ))
+        done
+    fi
+
+    if (( added )); then
+        add_binary /sbin/fsck
+    else
+        warning "No fsck helpers found. fsck will not be run on boot."
+    fi
+}
+
+help() {
+    cat <<HELPEOF
+This hook provides fsck and filesystem specific helpers to perform an fsck
+operation on the root device prior to mounting. If the autodetect hook is used,
+only the fsck helper specific to your filesystem will be added to the image. It
+is highly recommended that if you include this hook that you also include any
+necessary modules to ensure your keyboard will work in early userspace.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
