@@ -8,6 +8,9 @@ build() {
     add_binary /lib/initcpio/busybox /bin/busybox
     add_binary /sbin/modprobe
     add_binary /sbin/blkid
+    add_binary /bin/mount
+
+    add_symlink "/etc/mtab" "/proc/self/mounts"
 
     add_file "/lib/initcpio/init_functions" "/init_functions"
     add_file "/lib/initcpio/init" "/init"
