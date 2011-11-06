@@ -8,20 +8,21 @@ err () {
 }
 
 poll_device() {
-    device="$1"
-    if [ "$2" -ge 0 ]; then
-        seconds="$2"
-    else
-        seconds=5
-    fi
-    if [ "${udevd_running}" -eq 1 ]; then
-        msg "Waiting ${seconds} seconds for device ${device} ..."
-        while [ ! -b "${device}" -a ${seconds} -gt 0 ]; do
+    local device=$1 seconds=${2//[!0-9]}
+
+    [ -z "$seconds" ] && seconds=5
+
+    [ -b "$device" ] && return 0
+
+    if [ "$udevd_running" -eq 1 ]; then
+        msg "Waiting $seconds seconds for device $device ..."
+        while [ ! -b "$device" -a "$seconds" -gt 0 ]; do
             sleep 1
-            seconds=$((${seconds}-1))
+            seconds=$(( $seconds - 1 ))
         done
     fi
-    [ -b "${device}" ]
+
+    [ -b "$device" ]
 }
 
 launch_interactive_shell() {
