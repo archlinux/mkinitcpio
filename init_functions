@@ -74,7 +74,7 @@ parse_cmdline() {
     done
 }
 
-default_mount_handler() {
+resolve_device() {
     # resolve tag name to block device
     if [ "${root:0:5}" = 'UUID=' ] || [ "${root:0:6}" = 'LABEL=' ]; then
         device=$(blkid -l -t "$root" -o device)
@@ -117,6 +117,10 @@ default_mount_handler() {
             msg "Trying to continue (this will most likely fail) ..."
         fi
     fi
+}
+
+default_mount_handler() {
+    resolve_device
 
     if ! mount ${fstype:+-t $fstype} -o ${rwopt:-ro}${rootflags:+,$rootflags} "$root" "$1"; then
         echo "You are now being dropped into an emergency shell."
