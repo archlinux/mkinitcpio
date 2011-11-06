@@ -75,54 +75,62 @@ parse_cmdline() {
 }
 
 resolve_device() {
-    # resolve tag name to block device
-    if [ "${root:0:5}" = 'UUID=' ] || [ "${root:0:6}" = 'LABEL=' ]; then
-        device=$(blkid -l -t "$root" -o device)
-        if [ -n "$device" ]; then
-            root=$device
-        fi
-        unset device
+    local major minor dev device=$1
+
+    case $device in
+        # resolve tag name to block device
+        UUID=*|LABEL=*)
+            dev=$(blkid -lt "$device" -o device)
+            [ -n "$device" ] && device=$dev
+            ;;
+    esac
+
+    case $device in
+        /dev/*)
+            if poll_device "$device" "$rootdelay"; then
+                echo "$device"
+                return 0
+            fi
+
+            # block device, e.g. (/dev/sda1) -> /sys/class/block/sda1/dev
+            if [ -e /sys/class/block/${device:5}/dev ]; then
+                IFS=':' read major minor < "/sys/class/block/${device:5}/dev"
+            fi
+            ;;
+        [0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])
+            # hex encoded major/minor, such as from LILO
+            major=$(( 0x0$device >> 8 ))
+            minor=$(( 0x0$device & 0xff ))
+            ;;
+        0x[0-9a-fA-F][0-9a-fA-F]*)
+            major=$(( $device >> 8 ))
+            minor=$(( $device & 0xff ))
+            ;;
+    esac
+
+    if [ -n "$major" -a -n "$minor" ]; then
+        device=/dev/root
+        msg "Creating device node with major $major and minor $minor." >&2
+        mknod "$device" b "$major" "$minor"
+        echo "$device"
+        return 0
     fi
 
-    if [ ${root:0:5} != "/dev/" ] || ! poll_device "${root}" ${rootdelay}; then
-        msg "Root device '${root}' doesn't exist. Attempting to create it."
-        major=""
-        minor=""
-        if [ ${devtmpfs_mounted} -eq 0 -a ${root:0:5} = "/dev/" ]; then
-            # It might be a block device (/dev/sda) -> /sys/class/block/sda/dev
-            if [ -e /sys/class/block/${root:5}/dev ]; then
-                IFS=':' read major minor < "/sys/class/block/${root:5}/dev"
-                break
-            fi
-        # It might be a major/minor pair (8:1)
-        elif [ "$root" != "${root/:}" ]; then
-            major="$(echo ${root} | cut -d: -f1)"
-            minor="$(echo ${root} | cut -d: -f2)"
-            root="/dev/root"
-        # It might be major/minor encoded as a single hex-number (lilo-style) (801)
-        elif [ ${#root} -le 4 -a ${#root} -gt 2 -a -z "${root//[0-9a-fA-F]}" ]; then
-            str_offset=$((${#root}-2))
-            major=$((0x${root:0:${str_offset}}))
-            minor=$((0x${root:${str_offset}}))
-            root="/dev/root"
-        fi
-        if [ -n "${major}" -a -n "${minor}" ]; then
-            msg "Creating root device ${root} with major ${major} and minor ${minor}."
-            mknod ${root} b ${major} ${minor}
-        else
-            err "Unable to determine major/minor number of root device '${root}'."
-            echo "You are being dropped to a recovery shell"
-            echo "    Type 'exit' to try and continue booting"
-            launch_interactive_shell
-            msg "Trying to continue (this will most likely fail) ..."
-        fi
-    fi
+    return 1
 }
 
 default_mount_handler() {
-    resolve_device
+    local rootdev
 
-    if ! mount ${fstype:+-t $fstype} -o ${rwopt:-ro}${rootflags:+,$rootflags} "$root" "$1"; then
+    if ! rootdev=$(resolve_device "$root"); then
+        err "Unable to determine major/minor number of root device '$root'."
+        echo "You are being dropped to a recovery shell"
+        echo "    Type 'exit' to try and continue booting"
+        launch_interactive_shell
+        msg "Trying to continue (this will most likely fail) ..."
+    fi
+
+    if ! mount ${fstype:+-t $fstype} -o ${rwopt:-ro}${rootflags:+,$rootflags} "$rootdev" "$1"; then
         echo "You are now being dropped into an emergency shell."
         launch_interactive_shell
         msg "Trying to continue (this will most likely fail) ..."
