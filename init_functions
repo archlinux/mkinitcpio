@@ -31,6 +31,19 @@ launch_interactive_shell() {
     sh -i
 }
 
+major_minor_to_device() {
+    local dev
+
+    [ -e "/sys/dev/block/$1:$2" ] || return 1
+
+    if dev=$(readlink -f "/sys/dev/block/$1:$2" 2>/dev/null); then
+        echo "/dev/${dev##*/}"
+        return 0
+    fi
+
+    return 1
+}
+
 parse_cmdline() {
     local w in_quotes lhs rhs
     in_quotes=0
@@ -109,9 +122,12 @@ resolve_device() {
     esac
 
     if [ -n "$major" -a -n "$minor" ]; then
-        device=/dev/root
-        msg "Creating device node with major $major and minor $minor." >&2
-        mknod "$device" b "$major" "$minor"
+        device=$(major_minor_to_device "$major" "$minor" || echo '/dev/root')
+
+        if [ ! -b "$device" ]; then
+            msg "Creating device node with major $major and minor $minor." >&2
+            mknod "$device" b "$major" "$minor"
+        fi
         echo "$device"
         return 0
     fi
