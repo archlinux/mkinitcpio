@@ -48,43 +48,41 @@ parse_cmdline() {
     local w in_quotes lhs rhs
     in_quotes=0
     for w in $(cat /proc/cmdline); do
-        if [ ${in_quotes} -eq 0 ]; then
-            case "${w}" in
-                \#*) break ;; # ignore everything after a # in the commandline
-                # The kernel passes those to init on its own
-                [0123456Ss]) ;;
-                single) ;;
-                rw|ro) rwopt="$w" ;;
-                # only export stuff that does work with ash :)
-                =*) ;;
-                *=*) rhs=${w#*=}
+        if [ "$in_quotes" = 0 ]; then
+            case "$w" in
+                # ignore everything after a # in the commandline
+                \#*) break ;;
+                # special cases
+                rw|ro) rwopt=$w ;;
+                forcefsck) FORCEFSCK=-f ;;
+                # abide by shell variable naming rules
+                [[:alpha:]_]*=*)
+                    rhs=${w#*=}
                     lhs=${w%%=*}
                     lhs=${lhs//[-.]/_}
                     if [ '"' = "${rhs:0:1}" ]; then
-                        if [ "${rhs:$((${#rhs}-1))}" = '"' ]; then
+                        if [ '"' = "${rhs:$((${#rhs}-1))}" ]; then
                             rhs="${rhs:1:$((${#rhs}-2))}"
                         else
-                            rhs="${rhs:1}"
+                            rhs=${rhs:1}
                             in_quotes=1
                             continue
                         fi
                     fi
-                    [ "$lhs" = "${lhs//[^0-9a-zA-Z]}" ] && [ "$lhs" = "${lhs#[0-9]}" ] && eval ${lhs}=\${rhs}
+                    eval $lhs=\$rhs
                     ;;
-                forcefsck)
-                    FORCEFSCK="-f"
-                    ;;
-                *)  lhs=${w//[-.]/_}
-                    [ "$lhs" = "${lhs//[^0-9a-zA-Z]}" ] && [ "$lhs" = "${lhs#[0-9]}" ] && eval ${lhs}=y
+                [[:alpha:]_]*)
+                    lhs=${w//[-.]/_}
+                    eval $lhs=y
                     ;;
             esac
         else
             if [ '"' = "${w:$((${#w}-1))}" ]; then
-                rhs="${rhs} ${w%\"}"
+                rhs="$rhs ${w%\"}"
                 in_quotes=0
-                [ "$lhs" = "${lhs//[^0-9a-zA-Z]}" ] && [ "$lhs" = "${lhs#[0-9]}" ] && eval ${lhs}=\${rhs}
+                eval $lhs=\$rhs
             else
-                rhs="${rhs} ${w}"
+                rhs="$rhs $w"
             fi
         fi
     done
