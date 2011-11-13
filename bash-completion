@@ -3,7 +3,7 @@
 
 _lsinitcpio() {
 	local action cur
-	action="-a -h -v -x"
+	action="-a -h -n -v -x"
 	_get_comp_words_by_ref cur
 	case "$cur" in
 		-*)	COMPREPLY=($(compgen -W "${action}" -- "$cur"));;
@@ -15,24 +15,30 @@ _find_kernel_versions() {
 	local -a matches
 	local regex
 
+	# add completions from kernels in /boot
 	regex="Linux kernel.*version"
 	while IFS=':' read -r file metadata; do
 		[[ $metadata =~ $regex ]] || continue
 		matches+=("$file")
 	done < <(file -e ascii /boot/*)
 
-	COMPREPLY=($(cd /lib/modules && compgen -d -- $cur)
-		$(compgen -W "${matches[*]}" -- $cur))
+	# add completions based on kernel versions in /lib/modules
+	for dir in /lib/modules/*/kernel; do
+		dir=${dir%/kernel}
+		matches+=("${dir#/lib/modules/}")
+	done
+
+	COMPREPLY=($(compgen -W "${matches[*]}" -- $cur))
 }
 
 _mkinitcpio() {
 	local action cur prev
-	action="-c -k -s -b -g -p -S -v -M -L -H -h"
+	action="-b -c -g -H -h -k -L -M -n -p -S -s -v -z"
 	_get_comp_words_by_ref cur prev
 	case "$prev" in
 		-c|-g) _filedir;;
 		-k) _find_kernel_versions;;
-		-b) COMPREPLY=($(compgen -d "$cur" -- $cur));;
+		-b) _filedir -d;;
 		-p) COMPREPLY=($(cd /etc/mkinitcpio.d/ && compgen -X '!*.preset' -f  -- $cur))
 			COMPREPLY=("${COMPREPLY[@]%.preset}");;
 		-H|-S) COMPREPLY=($(cd /lib/initcpio/install/ && compgen -f -- $cur));;
