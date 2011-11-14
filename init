@@ -115,13 +115,6 @@ if [ "${udevd_running}" -eq 1 ]; then
     udevadm info --cleanup-db
 fi
 
-for d in proc sys dev run; do
-    if [ -d /new_root/${d} ]; then
-        mount --move /${d} /new_root/${d}
-    else
-        umount /${d}
-    fi
-done
-exec env -i TERM=$TERM /sbin/switch_root -c /dev/console /new_root ${init} "$@"
+exec env -i "TERM=$TERM" /sbin/switch_root /new_root $init "$@"
 
 # vim: set ft=sh ts=4 sw=4 et:
