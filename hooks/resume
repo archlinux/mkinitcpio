@@ -1,8 +1,6 @@
 # vim:set ft=sh:
 run_hook ()
 {
-    fmtdevice () { echo "${1}:${2}"; }
-
     if [ -n "${resume}" ]; then
         if echo ${resume} | grep -q ':'; then
             # Tux-on-ice syntax: swap:/dev/sda2 or file:/dev/sda2:0xdeadbeef
