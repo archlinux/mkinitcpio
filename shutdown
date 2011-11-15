@@ -1,0 +1,29 @@
+#!/usr/bin/ash
+
+findmnt -Rruno TARGET /oldroot | awk '
+BEGIN { i = 0 }
+! /^\/(proc|dev|sys)/ {
+  i++
+  mounts[i] = $0
+}
+END {
+  for (j = i; j > 0; j--) {
+    print mounts[j]
+  }
+}
+' | while read -r mount; do
+  umount -l "$mount"
+done
+
+case $1 in
+  reboot)
+    type kexec >/dev/null && kexec -e
+    reboot -f
+    ;;
+  poweroff|shutdown|halt)
+    "$1" -f
+    ;;
+  *)
+    poweroff -f
+    ;;
+esac

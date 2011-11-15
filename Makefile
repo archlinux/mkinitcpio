@@ -34,7 +34,7 @@ install: all
 	chmod 755 ${DESTDIR}/usr/bin/lsinitcpio ${DESTDIR}/usr/bin/mkinitcpio
 
 	install -m644 mkinitcpio.conf ${DESTDIR}/etc/mkinitcpio.conf
-	install -m755 -t ${DESTDIR}/lib/initcpio init
+	install -m755 -t ${DESTDIR}/lib/initcpio init shutdown
 	install -m644 -t ${DESTDIR}/lib/initcpio init_functions functions
 	install -m644 01-memdisk.rules ${DESTDIR}/lib/initcpio/udev/01-memdisk.rules
 

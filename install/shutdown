@@ -1,0 +1,17 @@
+#!/bin/bash
+
+build() {
+    BINARIES='cp findmnt'
+    SCRIPT='shutdown'
+
+    add_file "/lib/initcpio/shutdown" "/shutdown"
+}
+
+help() {
+    cat <<HELPEOF
+This hook copies the contents of the initramfs into /run/initramfs for reuse
+on shutdown. This is needed when you have /usr mounted on a separate partition.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
