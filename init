@@ -36,11 +36,9 @@ else
     udevd_running=0
 fi
 
-if [ -n "${disablehooks}" ]; then
-    for d in ${disablehooks//,/ }; do
-        eval "hook_${d}=disabled"
-    done
-fi
+for d in ${disablehooks//,/ }; do
+    eval "hook_${d}=disabled"
+done
 
 earlymodules=${earlymodules//,/ }
 if [ -n "${earlymodules## }" ]; then
