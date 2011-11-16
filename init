@@ -1,8 +1,6 @@
 #!/usr/bin/ash
 PATH=/usr/bin
 
-/bin/busybox --install -s
-
 . /init_functions
 
 mount -t proc proc /proc -o nosuid,noexec,nodev

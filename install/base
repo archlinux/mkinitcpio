@@ -10,6 +10,11 @@ build() {
     add_symlink /usr/sbin bin
 
     add_binary /lib/initcpio/busybox /bin/busybox
+
+    for applet in $(/lib/initcpio/busybox --list); do
+        add_symlink "/usr/bin/$applet" busybox
+    done
+
     add_binary /sbin/modprobe
     add_binary /sbin/blkid
     add_binary /bin/mount
