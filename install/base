@@ -1,7 +1,7 @@
 #!/bin/bash
 
 build() {
-    for dir in new_root proc sys dev run usr/{bin,sbin}; do
+    for dir in new_root proc sys dev run tmp usr/{bin,sbin}; do
         add_dir "/$dir"
     done
 
