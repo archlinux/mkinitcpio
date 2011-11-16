@@ -4,7 +4,8 @@ run_hook ()
     if [ -n "${resume}" ]; then
         if [ "${resume}" != "${resume/:}" ]; then
             # Tux-on-ice syntax: swap:/dev/sda2 or file:/dev/sda2:0xdeadbeef
-            resumedev="$(echo ${resume} | cut -d: -f2)"
+            resumedev=${resume#*:}
+            resumedev=${resumedev%%:*}
         else
             # Classical syntax: just a device
             resumedev="${resume}"
