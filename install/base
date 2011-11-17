@@ -1,9 +1,13 @@
 #!/bin/bash
 
 build() {
-    for dir in new_root proc sys dev run tmp usr/{bin,sbin}; do
+    for dir in new_root proc sys dev run tmp usr/bin; do
         add_dir "/$dir"
     done
+
+    add_symlink /sbin usr/bin
+    add_symlink /bin usr/bin
+    add_symlink /usr/sbin bin
 
     add_binary /lib/initcpio/busybox /bin/busybox
     add_binary /sbin/modprobe

@@ -1,6 +1,5 @@
-#!/bin/busybox ash
-# Install busybox's applets as symlinks
-PATH=/usr/sbin:/usr/bin:/sbin:/bin
+#!/usr/bin/ash
+PATH=/usr/bin
 
 /bin/busybox --install -s
 
