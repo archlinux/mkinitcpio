@@ -82,7 +82,6 @@ _add_file() {
     #   $3: mode
 
     (( $# == 3 )) || return $EINVAL
-    [[ -e "$BUILDROOT$1" ]] && return $EEXIST
 
     (( QUIET )) || plain "adding file: %s" "$1"
     command install -Dm$3 "$2" "$BUILDROOT$1"
@@ -106,10 +105,9 @@ _add_symlink() {
     #   $2: target of $1
 
     (( $# == 2 )) || return $EINVAL
-    [[ -L "$BUILDROOT$1" ]] && return $EEXIST
 
     (( QUIET )) || plain "adding symlink: %s -> %s" "$1" "$2"
-    ln -s "$2" "$BUILDROOT$1"
+    ln -sfn "$2" "$BUILDROOT$1"
 }
 
 auto_modules() {
