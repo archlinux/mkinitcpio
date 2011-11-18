@@ -13,6 +13,9 @@ build() {
 
     add_symlink "/etc/mtab" "/proc/self/mounts"
 
+    # Add an empty fstab to avoid mount warning when -o remount is used
+    >"$BUILDROOT/etc/fstab"
+
     add_file "/lib/initcpio/init_functions" "/init_functions"
     add_file "/lib/initcpio/init" "/init"
     add_file "/lib/modprobe.d/usb-load-ehci-first.conf"
