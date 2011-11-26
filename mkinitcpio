@@ -345,6 +345,8 @@ if (( ${#ADDED_MODULES[*]} )); then
     msg "Generating module dependencies"
     /sbin/depmod -b "$BUILDROOT" "${KERNELVERSION}"
     rm "$BUILDROOT/lib/modules/$KERNELVERSION"/modules.!(dep.bin|alias.bin|symbols.bin)
+else
+    warning "No modules were added to the image. This is probably not what you want."
 fi
 
 declare -i status=0
