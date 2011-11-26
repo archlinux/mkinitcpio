@@ -96,7 +96,7 @@ esac
 
 if (( analyze )); then
     declare -a binaries explicitmod modules foundhooks hooks
-    declare kernver ratio
+    declare kernver ratio columns=$(tput cols)
 
     # calculate compression ratio
     if [[ $compress ]]; then
@@ -147,12 +147,12 @@ if (( analyze )); then
             printf '  %s' "$mod"
             in_array "${mod//_/-}" "${explicitmod[@]//_/-}" && printf ' [explicit]'
             printf '\n'
-        done | sort | column -c$(tput cols)
+        done | sort | column -c$columns
         printf '\n'
     fi
 
     msg 'Included binaries:'
-    printf '  %s\n' "${binaries[@]}"
+    printf '%s\n' "${binaries[@]}" | column -c$columns
     printf '\n'
 
     if (( ${#hooks[*]} )); then
