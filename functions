@@ -316,7 +316,7 @@ add_binary() {
     while read line; do
         [[ "$line" =~ $regex ]] && sodep=${BASH_REMATCH[1]} || continue
 
-        if [[ -f "$sodep" ]]; then # -f follows symlinks, don't believe it!
+        if [[ -f $sodep && ! -e $BUILDROOT$sodep ]]; then
             if [[ ! -L $sodep ]]; then
                 _add_file "$sodep" "$BASEDIR$sodep" "$(stat -c %a "$sodep")"
             else
