@@ -83,7 +83,13 @@ _add_file() {
 
     (( $# == 3 )) || return $EINVAL
 
-    (( QUIET )) || plain "adding file: %s" "$1"
+    if (( ! QUIET )); then
+        if [[ -e "$BUILDROOT$1" ]]; then
+            plain "overwriting file: %s" "$1"
+        else
+            plain "adding file: %s" "$1"
+        fi
+    fi
     command install -Dm$3 "$2" "$BUILDROOT$1"
 }
 
@@ -105,8 +111,13 @@ _add_symlink() {
     #   $2: target of $1
 
     (( $# == 2 )) || return $EINVAL
-
-    (( QUIET )) || plain "adding symlink: %s -> %s" "$1" "$2"
+    if (( ! QUIET )); then
+        if [[ -L "$BUILDROOT$1" ]]; then
+            plain "overwriting symlink %s -> %s" "$1" "$2"
+        else
+            plain "adding symlink: %s -> %s" "$1" "$2"
+        fi
+    fi
     ln -sfn "$2" "$BUILDROOT$1"
 }
 
