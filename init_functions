@@ -198,7 +198,7 @@ resolve_device() {
 
 default_mount_handler() {
     if [ ! -b "$root" ]; then
-        err "Unable to determine major/minor number of root device '$root'."
+        err "Unable to find root device '$root'."
         echo "You are being dropped to a recovery shell"
         echo "    Type 'exit' to try and continue booting"
         launch_interactive_shell
