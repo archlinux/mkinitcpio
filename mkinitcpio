@@ -297,8 +297,10 @@ declare -i builderrors=0
 set -E
 trap '[[ $FUNCNAME = parse_hook ]] && (( ++builderrors ))' ERR
 
-#parse 'global' hook, as defined in ${CONFIG}
-parse_hook
+# save vars from $CONFIG; they will be parsed last
+for var in MODULES BINARIES FILES; do
+    declare "cfg_$var=${!var}"
+done
 
 for hook in ${HOOKS}; do
     in_array "$hook" "${SKIPHOOKS[@]}" && continue
@@ -330,6 +332,12 @@ for hook in ${HOOKS}; do
         (( ++builderrors ))
     fi
 done
+
+# restore $CONFIG vars add to image
+for var in cfg_{MODULES,BINARIES,FILES}; do
+    declare "${var#cfg_}=${!var}"
+done
+parse_hook
 
 # unset errtrace and trap
 set +E
