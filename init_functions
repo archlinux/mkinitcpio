@@ -15,7 +15,7 @@ poll_device() {
     [ -b "$device" ] && return 0
 
     if [ "$udevd_running" -eq 1 ]; then
-        msg "Waiting $seconds seconds for device $device ..."
+        msg "Waiting $seconds seconds for device $device ..." >&2
         while [ ! -b "$device" -a "$seconds" -gt 0 ]; do
             sleep 1
             seconds=$(( $seconds - 1 ))
