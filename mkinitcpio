@@ -10,6 +10,8 @@
 #   in case of embedded spaces, quote all path names and string comparisons
 #
 
+declare -r version=%VERSION%
+
 shopt -s extglob
 
 # Settings
@@ -35,7 +37,7 @@ unset GREP_OPTIONS CDPATH
 
 usage() {
     cat <<EOF
-mkinitcpio %VERSION%
+mkinitcpio $version
 usage: ${0##*/} [options]
 
   Options:
@@ -362,6 +364,9 @@ declare -a pipesave
 if [[ "${GENIMG}" ]]; then
     msg "Creating $COMPRESSION initcpio image: %s" "$GENIMG"
     [[ "$COMPRESSION" = xz ]] && COMPRESSION_OPTIONS+=" --check=crc32"
+
+    # write version stamp
+    printf '%s' "$version" > "$BUILDROOT/VERSION"
 
     pushd "$BUILDROOT" >/dev/null
     find . -print0 |
