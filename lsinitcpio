@@ -121,6 +121,8 @@ if (( analyze )); then
         fi
     done < <(decomp "$image" | bsdtar tf -)
 
+    read -r version < <(decomp "$image" | bsdtar xOf - VERSION 2>/dev/null)
+
     # source and read config
     . <(decomp "$image" | bsdtar xOf - config)
     explicitmod=($MODULES)
@@ -131,7 +133,8 @@ if (( analyze )); then
     # print results
     imagename=$image
     [[ -L $image ]] && imagename+=" -> $(readlink -e "$image")"
-    msg 'Image: %s' "$imagename"
+    msg 'Image: %s %s' "$imagename"
+    [[ $version ]] && msg 'Created with mkinitcpio %s' "$version"
     msg 'Kernel: %s' "${kernver:-unknown}"
 
     if [[ $compress ]]; then
