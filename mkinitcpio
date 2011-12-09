@@ -269,7 +269,7 @@ if [[ ! -f "$CONFIG" ]]; then
 fi
 . "$CONFIG"
 
-MODULEDIR=$BASEDIR/lib/modules/$KERNELVERSION
+MODULEDIR=$BASEDIR/lib/modules/$KERNELVERSION/
 if [[ ! -d $MODULEDIR ]]; then
     die "'$MODULEDIR' is not a valid kernel module directory"
 fi
