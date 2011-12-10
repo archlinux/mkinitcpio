@@ -155,7 +155,7 @@ if (( analyze )); then
     fi
 
     msg 'Included binaries:'
-    printf '%s\n' "${binaries[@]}" | column -c$columns
+    printf '  %s\n' "${binaries[@]##*/}" | sort | column -c$columns
     printf '\n'
 
     if (( ${#hooks[*]} )); then
