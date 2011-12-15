@@ -309,7 +309,7 @@ add_binary() {
     # always add the binary itself
     _add_file "${dest#$BASEDIR}" "$binary" "$mode"
 
-    lddout=$(ldd "$binary" 2>/dev/null) || return 1 # not a binary!
+    lddout=$(ldd "$binary" 2>/dev/null) || return 0 # not a binary!
 
     # resolve sodeps
     regex='(/.+) \(0x[a-fA-F0-9]+\)'
