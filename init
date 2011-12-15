@@ -18,7 +18,7 @@ else
   mknod /dev/mem c 1 1
 fi
 mount -t tmpfs run /run -o nosuid,nodev,mode=0755
-mkdir /run/initramfs
+mkdir -m755 /run/initramfs
 
 # parse the kernel command line
 parse_cmdline
