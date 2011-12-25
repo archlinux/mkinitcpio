@@ -148,7 +148,7 @@ while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
 done
 shift $((OPTIND - 1))
 
-if [[ -t 2 ]] && (( COLOR )); then
+if [[ -t 1 ]] && (( COLOR )); then
     # prefer terminal safe colored and bold text when tput is supported
     if tput setaf 0 &>/dev/null; then
         NC="$(tput sgr0)"
