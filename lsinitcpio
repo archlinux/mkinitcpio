@@ -27,15 +27,6 @@ USAGE
     exit 1
 }
 
-in_array() {
-    local item needle=$1; shift
-
-    for item; do
-      [[ "$item" == $needle ]] && return 0 # Found
-    done
-    return 1 # Not Found
-}
-
 decomp() {
     ${compress:-cat} ${compress:+-cd} "$@"
 }
