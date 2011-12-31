@@ -16,8 +16,8 @@ build() {
     fi
 
     if (( UID == 0 )) || in_array 'disk' $(groups); then
-        if [[ -x /sbin/mdadm ]]; then
-            /sbin/mdadm -Esv /dev/[hrsv]d* /dev/{ida,cciss,ataraid,mapper}/* |
+        if [[ -x $(type -P mdadm) ]]; then
+            mdadm -Esv /dev/[hrsv]d* /dev/{ida,cciss,ataraid,mapper}/* |
                 sed -n 's/.*level=\([^ ]\+\) .*/\1/p' |
                 sed 's/\<raid[456]\>/raid456/g' | sort -u >>"$MODULE_FILE"
         fi

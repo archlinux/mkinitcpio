@@ -353,7 +353,7 @@ if (( ${#ADDED_MODULES[*]} )); then
     popd >/dev/null
 
     msg "Generating module dependencies"
-    /sbin/depmod -b "$BUILDROOT" "${KERNELVERSION}"
+    depmod -b "$BUILDROOT" "${KERNELVERSION}"
     rm "$BUILDROOT/lib/modules/$KERNELVERSION"/modules.!(dep.bin|alias.bin|symbols.bin)
 else
     warning "No modules were added to the image. This is probably not what you want."
