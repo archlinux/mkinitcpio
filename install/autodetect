@@ -10,9 +10,14 @@ build() {
 
     auto_modules | grep -xEv '(ata|ide)_generic' >"$MODULE_FILE"
 
-    if ! rootfstype=$(findmnt -uno fstype "${BASEDIR:-/}" | tee -a "$MODULE_FILE"); then
+    if ! rootfstype=$(findmnt -uno fstype "${BASEDIR:-/}"); then
         error "failed to detect root filesystem"
         fs_autodetect_failed=1
+    fi
+
+    # filesystem module might be a builtin
+    if modinfo -k "$KERNELVERSION" "$rootfstype" &>/dev/null; then
+        printf '%s\n' "$rootfstype" >>"$MODULE_FILE"
     fi
 
     if (( UID == 0 )) || in_array 'disk' $(groups); then
