@@ -129,7 +129,7 @@ auto_modules() {
     IFS=$'\n' read -rd '' -a mods < \
         <(find /sys/devices -name modalias -exec sort -u {} + |
         # delimit each input by a newline, expanded in place
-        xargs -d $'\n' modprobe -d "$BASEDIR" -aRS "$KERNELVERSION" |
+        xargs -d $'\n' modprobe -qd "$BASEDIR" -aRS "$KERNELVERSION" |
         sort -u)
 
     printf "%s\n" "${mods[@]//-/_}"
