@@ -9,7 +9,7 @@ groups=('base')
 conflicts=('mkinitcpio')
 provides=("mkinitcpio=$pkgver")
 depends=('mkinitcpio-busybox>=1.16.1-2' 'module-init-tools' 'util-linux>=2.19' 'libarchive' 'coreutils'
-         'bash' 'findutils' 'sed' 'grep' 'filesystem>=2011.10-1' 'udev>=174-1' 'file' 'gzip')
+         'bash' 'findutils' 'sed' 'grep' 'filesystem>=2011.10-1' 'udev>=177-1' 'file' 'gzip')
 makedepends=('asciidoc' 'git')
 optdepends=('xz: Use lzma or xz compression for the initramfs image'
             'bzip2: Use bzip2 compression for the initramfs image'

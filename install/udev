@@ -7,10 +7,10 @@ build() {
     add_binary /lib/udev/udevd
     add_binary /sbin/udevadm
 
-    for rules in 50-{firmware,udev-default}.rules 60-persistent-storage.rules 80-drivers.rules; do
+    for rules in 50-udev-default.rules 60-persistent-storage.rules 80-drivers.rules; do
         add_file "/lib/udev/rules.d/$rules"
     done
-    for tool in firmware {ata,scsi}_id; do
+    for tool in ata_id scsi_id; do
         add_file "/lib/udev/$tool"
     done
 }
