@@ -353,8 +353,13 @@ if (( ${#ADDED_MODULES[*]} )); then
     popd >/dev/null
 
     msg "Generating module dependencies"
+    install -m644 -t "$BUILDROOT/lib/modules/$KERNELVERSION" \
+        "$BASEDIR/lib/modules/$KERNELVERSION"/modules.{builtin,order}
     depmod -b "$BUILDROOT" "${KERNELVERSION}"
-    rm "$BUILDROOT/lib/modules/$KERNELVERSION"/modules.!(dep.bin|alias.bin|symbols.bin)
+
+    # remove all non-binary module.* files
+    rm "$BUILDROOT/lib/modules/$KERNELVERSION"/modules.!(*.bin)
+
 else
     warning "No modules were added to the image. This is probably not what you want."
 fi
