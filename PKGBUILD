@@ -8,7 +8,7 @@ license=('GPL')
 groups=('base')
 conflicts=('mkinitcpio')
 provides=("mkinitcpio=$pkgver")
-depends=('mkinitcpio-busybox>=1.16.1-2' 'module-init-tools' 'util-linux>=2.19' 'libarchive' 'coreutils'
+depends=('mkinitcpio-busybox>=1.16.1-2' 'module-init-tools' 'util-linux>=2.20.1-2' 'libarchive' 'coreutils'
          'bash' 'findutils' 'sed' 'grep' 'filesystem>=2011.10-1' 'udev>=177-1' 'file' 'gzip')
 makedepends=('asciidoc' 'git')
 optdepends=('xz: Use lzma or xz compression for the initramfs image'

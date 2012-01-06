@@ -98,6 +98,15 @@ elif [ ! -x "/new_root${init}" ]; then
     launch_interactive_shell --exec
 fi
 
+# mount /usr if it exists
+if [ -f /new_root/etc/fstab ]; then
+    if usr_source=$(findmnt -nero source -s/new_root/etc/fstab /usr); then
+        mountopts=$(findmnt -nero options -s/new_root/etc/fstab /usr)
+        fsck_device "$usr_source"
+        mount "$usr_source" /new_root/usr -o "$mountopts"
+    fi
+fi
+
 if [ "${break}" = "postmount" ]; then
     echo ":: Post-mount break requested, type 'exit' to resume operation"
     launch_interactive_shell
