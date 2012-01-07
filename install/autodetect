@@ -3,6 +3,12 @@
 build() {
     MODULE_FILE=$workdir/autodetect_modules
 
+    add_if_avail() {
+        if modinfo -k "$KERNELVERSION" "$1" &>/dev/null; then
+            printf '%s\n' "$1" >>"$MODULE_FILE"
+        fi
+    }
+
     if [[ ! -d /sys/devices ]]; then
         error "/sys does not appear to be mounted. Unable to use autodetection"
         return 1
@@ -16,8 +22,11 @@ build() {
     fi
 
     # filesystem module might be a builtin
-    if modinfo -k "$KERNELVERSION" "$rootfstype" &>/dev/null; then
-        printf '%s\n' "$rootfstype" >>"$MODULE_FILE"
+    add_if_avail "$rootfstype"
+
+    # detect separate /usr
+    if usrfstype=$(findmnt -nero fstype -s"$BASEDIR/etc/fstab" /usr); then
+        add_if_avail "$usrfstype"
     fi
 
     if (( UID == 0 )) || in_array 'disk' $(groups); then
