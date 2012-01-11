@@ -357,8 +357,8 @@ if (( ${#ADDED_MODULES[*]} )); then
         "$BASEDIR/lib/modules/$KERNELVERSION"/modules.{builtin,order}
     depmod -b "$BUILDROOT" "${KERNELVERSION}"
 
-    # remove all non-binary module.* files
-    rm "$BUILDROOT/lib/modules/$KERNELVERSION"/modules.!(*.bin)
+    # remove all non-binary module.* files (except devname for on-demand module loading)
+    rm "$BUILDROOT/lib/modules/$KERNELVERSION"/modules.!(*.bin|devname)
 
 else
     warning "No modules were added to the image. This is probably not what you want."
