@@ -5,18 +5,7 @@ PATH=/usr/bin
 
 mount -t proc proc /proc -o nosuid,noexec,nodev
 mount -t sysfs sys /sys -o nosuid,noexec,nodev
-if mount -n -t devtmpfs udev /dev -o mode=0755,nosuid; then
-  devtmpfs_mounted=1
-else
-  mount -n -t tmpfs udev /dev -o mode=0755,nosuid
-  devtmpfs_mounted=0
-  # We don't have devtmpfs, so add the most important standard devices
-  mknod /dev/null c 1 3
-  mknod /dev/zero c 1 5
-  mknod /dev/console c 5 1
-  # /dev/mem is needed if we want to load uvesafb before triggering uevents
-  mknod /dev/mem c 1 1
-fi
+mount -t devtmpfs dev /dev -o mode=0755,nosuid
 mount -t tmpfs run /run -o nosuid,nodev,mode=0755
 mkdir -m755 /run/initramfs
 
