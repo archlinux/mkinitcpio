@@ -19,6 +19,7 @@ build() {
     add_binary /sbin/blkid
     add_binary /bin/mount
     add_binary /sbin/switch_root
+    add_binary /bin/findmnt
 
     add_symlink "/etc/mtab" "/proc/self/mounts"
 
