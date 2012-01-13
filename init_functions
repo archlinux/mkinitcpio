@@ -26,7 +26,7 @@ poll_device() {
 }
 
 launch_interactive_shell() {
-    export PS1='[ramfs \W]\$ '
+    export PS1='[rootfs \W]\$ '
     [ "$1" = "--exec" ] && exec sh -i
     sh -i
 }
