@@ -114,13 +114,13 @@ Examples
 	Perform a 'dry-run'. This will generate an initial ramdisk but will not
 	write anything. Use -g to create the real image.
 
-*mkinitcpio -p kernel26*::
-	Create an initial ramdisk based on the 'kernel26' preset.
+*mkinitcpio -p linux*::
+	Create an initial ramdisk based on the 'linux' preset.
 
-*mkinitcpio -b /mnt -g /mnt/boot/kernel26.img -k /boot/vmlinuz26*::
+*mkinitcpio -b /mnt -g /mnt/boot/initramfs-linux.img -k /boot/vmlinuz-linux*::
 	Create an initial ramdisk for the root at /mnt, with the kernel at
-	/mnt/boot/vmlinuz26. The resulting image will be written to
-	/mnt/boot/kernel26.img.
+	/mnt/boot/vmlinuz-linux. The resulting image will be written to
+	/mnt/boot/initramfs-linux.img.
 
 See also
 --------
