@@ -3,8 +3,13 @@
 build() {
     local added=0
 
-    if (( ! fs_autodetect_failed )) && [[ $rootfstype ]]; then
-        add_binary /sbin/fsck.$rootfstype && (( ++added ))
+    if (( ! fs_autodetect_failed )) && [[ $rootfstype$usrfstype ]]; then
+        if [[ $rootfstype ]]; then
+            add_binary /sbin/fsck.$rootfstype && (( ++added ))
+        fi
+        if [[ $usrfstype && $usrfstype != $rootfstype ]]; then
+            add_binary /sbin/fsck.$rootfstype && (( ++added ))
+        fi
     else
         for fsck in "$BASEDIR"/sbin/fsck.*; do
             [[ -f $fsck ]] || continue
