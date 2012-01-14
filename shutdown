@@ -16,14 +16,11 @@ END {
 done
 
 case $1 in
-  reboot)
-    type kexec >/dev/null && kexec -e
-    reboot -f
-    ;;
   poweroff|shutdown|halt)
     "$1" -f
     ;;
   *)
-    poweroff -f
+    type kexec >/dev/null && kexec -e
+    reboot -f
     ;;
 esac
