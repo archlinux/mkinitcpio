@@ -15,7 +15,12 @@ build() {
         add_symlink "/usr/bin/$applet" busybox
     done
 
-    add_binary /sbin/modprobe
+    # add kmod with applet symlinks
+    add_binary kmod
+    for applet in {dep,ins,rm,ls}mod mod{probe,info}; do
+        add_symlink "/usr/bin/$applet" kmod
+    done
+
     add_binary /sbin/blkid
     add_binary /bin/mount
     add_binary /sbin/switch_root
