@@ -321,13 +321,7 @@ for hook in ${HOOKS}; do
     if [[ -r "${INSTDIR}/${hook}" ]]; then
         . "${INSTDIR}/${hook}"
         msg2 "Parsing hook: [%s]" "$hook"
-        if [[ $(type -t install) = 'function' ]]; then
-            warning "Hook '%s' uses a deprecated 'install' function. This should be renamed 'build'" "$hook"
-            install
-            unset install
-        else
-            build
-        fi
+        build
         parse_hook
     else
         error "Hook '$hook' can not be found."
