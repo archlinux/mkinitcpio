@@ -88,9 +88,10 @@ elif [ ! -x "/new_root${init}" ]; then
 fi
 
 # mount /usr if it exists
-if [ -f /new_root/etc/fstab ]; then
-    if usr_source=$(findmnt -nero source -s/new_root/etc/fstab /usr); then
-        mountopts=$(findmnt -nero options -s/new_root/etc/fstab /usr)
+realtab=/new_root/etc/fstab
+if [ -f "$realtab" ]; then
+    if usr_source=$(findmnt -snero source --tab-file="$realtab" /usr); then
+        mountopts=$(findmnt -snero options --tab-file="$realtab" /usr)
         fsck_device "$usr_source"
         mount "$usr_source" /new_root/usr -o "$mountopts"
     fi

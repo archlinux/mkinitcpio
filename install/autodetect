@@ -34,7 +34,7 @@ build() {
     add_if_avail "$rootfstype"
 
     # detect separate /usr
-    if usrfstype=$(findmnt -nero fstype -s"$BASEDIR/etc/fstab" /usr); then
+    if usrfstype=$(findmnt -snero fstype --tab-file "$BASEDIR/etc/fstab" /usr); then
         add_if_avail "$usrfstype"
     fi
 
