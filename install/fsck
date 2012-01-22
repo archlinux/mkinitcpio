@@ -5,10 +5,10 @@ build() {
 
     if (( ! fs_autodetect_failed )) && [[ $rootfstype$usrfstype ]]; then
         if [[ $rootfstype ]]; then
-            add_binary /sbin/fsck.$rootfstype && (( ++added ))
+            add_binary fsck.$rootfstype && (( ++added ))
         fi
         if [[ $usrfstype && $usrfstype != $rootfstype ]]; then
-            add_binary /sbin/fsck.$rootfstype && (( ++added ))
+            add_binary fsck.$rootfstype && (( ++added ))
         fi
     else
         for fsck in "$BASEDIR"/sbin/fsck.*; do
@@ -18,7 +18,7 @@ build() {
     fi
 
     if (( added )); then
-        add_binary /sbin/fsck
+        add_binary fsck
     else
         warning "No fsck helpers found. fsck will not be run on boot."
     fi

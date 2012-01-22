@@ -10,7 +10,7 @@ build() {
                 touch "$BUILDROOT/keymap.utf8"
                 uc=-u
             fi
-            /bin/loadkeys -q $uc $KEYMAP -b > "$BUILDROOT/keymap.bin"
+            loadkeys -q $uc $KEYMAP -b > "$BUILDROOT/keymap.bin"
         fi
     )
 
