@@ -341,10 +341,10 @@ parse_hook() {
 
     for item in $MODULES; do
         if [[ ${item:(-1)} = '?' ]]; then
-            try=--try
-            item=${item%\?}
+            add_module --try "${item%\?}"
+        else
+            add_module "$item"
         fi
-        add_module $try "$item"
     done
 
     for item in $BINARIES; do
