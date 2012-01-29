@@ -8,7 +8,7 @@ build() {
             add_binary fsck.$rootfstype && (( ++added ))
         fi
         if [[ $usrfstype && $usrfstype != $rootfstype ]]; then
-            add_binary fsck.$rootfstype && (( ++added ))
+            add_binary fsck.$usrfstype && (( ++added ))
         fi
     else
         for fsck in "$BASEDIR"/sbin/fsck.*; do
