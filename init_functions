@@ -96,6 +96,11 @@ fsck_device() {
         return 255
     fi
 
+    if [ -n "$fastboot" ]; then
+        msg ":: skipping fsck on '$1'"
+        return
+    fi
+
     msg ":: performing fsck on '$1'"
     FSTAB_FILE=/dev/null fsck -Ta -C"$FSCK_FD" "$1" -- $FORCEFSCK
 }

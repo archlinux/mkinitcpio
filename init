@@ -64,7 +64,7 @@ fi
 rootdev=$(resolve_device "$root") && root=$rootdev
 unset rootdev
 
-[ -z "$skipfsck" ] && fsck_root
+fsck_root
 
 # Mount root at /new_root
 ${mount_handler:-default_mount_handler} /new_root
