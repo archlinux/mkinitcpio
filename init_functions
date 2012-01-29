@@ -111,17 +111,17 @@ fsck_root() {
     }
 
     if [ "$fsckret" -ne 255 ]; then
-        if fsck_ret 0 || fsck_ret 1; then
+        if [ "$fsckret" = '0' ] || fsck_ret 1; then
             echo "$fsckret" > /run/initramfs/root-fsck
         elif fsck_ret 4; then
             err "Bailing out. Run 'fsck $root' manually"
             printf '%s\n' \
-                "********** FILESYSTEM CHECK FAILED **********"
-                "*                                           *"
-                "*  Please run fsck manually. After leaving  *"
-                "*  this maintenance shell, the system will  *"
-                "   reboot automatically.                    *"
-                "*                                           *"
+                "********** FILESYSTEM CHECK FAILED **********" \
+                "*                                           *" \
+                "*  Please run fsck manually. After leaving  *" \
+                "*  this maintenance shell, the system will  *" \
+                "   reboot automatically.                    *" \
+                "*                                           *" \
                 "*********************************************"
             launch_interactive_shell
             echo ":: Automatic reboot in progress"
