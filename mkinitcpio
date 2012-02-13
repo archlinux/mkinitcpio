@@ -335,9 +335,8 @@ for var in cfg_{MODULES,BINARIES,FILES}; do
 done
 parse_hook
 
-# unset errtrace and trap
-set +E
-trap ERR
+# reset the trap to catch all errors
+trap '(( ++builderrors ))' ERR
 
 if (( ${#ADDED_MODULES[*]} )); then
     mkdir -p "${MODPATHS[@]%/*}"
@@ -357,6 +356,10 @@ if (( ${#ADDED_MODULES[*]} )); then
 else
     warning "No modules were added to the image. This is probably not what you want."
 fi
+
+# unset errtrace and trap
+set +E
+trap ERR
 
 declare -i status=0
 declare -a pipesave
