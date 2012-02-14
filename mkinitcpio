@@ -200,7 +200,7 @@ workdir=$(TMPDIR=$TMPDIR mktemp -d --tmpdir mkinitcpio.XXXXXX)
 BUILDROOT=$workdir/root
 
 # explicitly create the buildroot
-mkdir "$BUILDROOT"
+mkdir -p "$BUILDROOT/lib/modules/$KERNELVERSION/kernel"
 
 # use preset $PRESET
 if [[ $PRESET ]]; then
@@ -339,11 +339,7 @@ parse_hook
 trap '(( ++builderrors ))' ERR
 
 if (( ${#ADDED_MODULES[*]} )); then
-    mkdir -p "${MODPATHS[@]%/*}"
-
-    pushd "${BASEDIR:-/}" >/dev/null
-    cp --parents "${MODPATHS[@]/#$BASEDIR/.}" "$BUILDROOT"
-    popd >/dev/null
+    cp "${MODPATHS[@]}" "$BUILDROOT/lib/modules/$KERNELVERSION/kernel"
 
     msg "Generating module dependencies"
     install -m644 -t "$BUILDROOT/lib/modules/$KERNELVERSION" \
