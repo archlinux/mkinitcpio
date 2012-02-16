@@ -341,6 +341,9 @@ trap '(( ++builderrors ))' ERR
 if (( ${#ADDED_MODULES[*]} )); then
     cp "${MODPATHS[@]}" "$BUILDROOT/lib/modules/$KERNELVERSION/kernel"
 
+    # unzip modules prior to recompression
+    gzip -dr "$BUILDROOT/lib/modules/$KERNELVERSION/kernel"
+
     msg "Generating module dependencies"
     install -m644 -t "$BUILDROOT/lib/modules/$KERNELVERSION" \
         "$BASEDIR/lib/modules/$KERNELVERSION"/modules.{builtin,order}
