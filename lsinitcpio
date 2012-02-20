@@ -98,13 +98,11 @@ if (( analyze )); then
 
     # read contents of image
     while read -r line; do
-        if [[ $line = *.ko?(.gz) ]]; then # module
-            if [[ -z $kernver ]]; then
-                [[ $line =~ /lib/modules/([^/]+)/ ]] && kernver=${BASH_REMATCH[1]}
-            fi
+        if [[ $line = *.ko?(.?z) ]]; then
             line=${line##*/}
-            modules+=("${line%.ko?(.gz)}")
-            continue
+            modules+=("${line%.ko?(.?z)}")
+        elif [[ -z $kernver && $line =~ /lib/modules/([^/]+)/ ]]; then
+            kernver=${BASH_REMATCH[1]}
         elif [[ $line = ./hooks/* ]]; then
             foundhooks+=("${line##*/}")
         elif [[ $line = *@(/bin/|/sbin/)* ]]; then
