@@ -105,8 +105,8 @@ if (( analyze )); then
             kernver=${BASH_REMATCH[1]}
         elif [[ $line = ./hooks/* ]]; then
             foundhooks+=("${line##*/}")
-        elif [[ $line = *@(/bin/|/sbin/)* ]]; then
-            binaries+=("${line#.}")
+        elif [[ $line = *@(/?(s)bin/)* ]]; then
+            binaries+=("${line##*/}")
         fi
     done < <(decomp "$image" | bsdtar tf -)
 
@@ -144,7 +144,7 @@ if (( analyze )); then
     fi
 
     msg 'Included binaries:'
-    printf '  %s\n' "${binaries[@]##*/}" | sort | column -c$columns
+    printf '  %s\n' "${binaries[@]}" | sort | column -c$columns
     printf '\n'
 
     if (( ${#hooks[*]} )); then
