@@ -7,8 +7,14 @@ build() {
     MODULE_FILE=$workdir/autodetect_modules
 
     add_if_avail() {
-        if modinfo -k "$KERNELVERSION" "$1" &>/dev/null; then
-            printf '%s\n' "$1" >>"$MODULE_FILE"
+        local resolved
+
+        # treat this as an alias, since ext3 might be aliased to ext4.
+        IFS=$'\n' read -rd '' -a resolved < \
+            <(modprobe -S "$KERNELVERSION" -R "$1" 2>/dev/null)
+
+        if (( ${#resolved[*]} )); then
+            printf '%s\n' "${resolved[@]}" >>"$MODULE_FILE"
         fi
     }
 
