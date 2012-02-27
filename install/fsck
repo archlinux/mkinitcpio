@@ -3,12 +3,22 @@
 build() {
     local added=0
 
+    add_fsck() {
+        if [[ $1 = ext[234] ]]; then
+            add_binary fsck.ext4
+            add_symlink /usr/bin/fsck.ext2 fsck.ext4
+            add_symlink /usr/bin/fsck.ext3 fsck.ext4
+        else
+            add_binary "fsck.$1"
+        fi
+    }
+
     if (( ! fs_autodetect_failed )) && [[ $rootfstype$usrfstype ]]; then
         if [[ $rootfstype ]]; then
-            add_binary fsck.$rootfstype && (( ++added ))
+            add_fsck $rootfstype && (( ++added ))
         fi
         if [[ $usrfstype && $usrfstype != $rootfstype ]]; then
-            add_binary fsck.$usrfstype && (( ++added ))
+            add_fsck $usrfstype && (( ++added ))
         fi
     else
         for fsck in "$BASEDIR"/sbin/fsck.*; do
