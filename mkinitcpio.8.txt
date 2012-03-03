@@ -105,6 +105,7 @@ Files
 '/etc/mkinitcpio.d'::
 	Folder containing mkinitcpio presets.
 
+'/usr/lib/initcpio'::
 '/lib/initcpio'::
 	Files related to creating an initial ramdisk.
 

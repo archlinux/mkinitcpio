@@ -4,7 +4,7 @@ build() {
     BINARIES='cp'
     SCRIPT='shutdown'
 
-    add_file "/lib/initcpio/shutdown" "/shutdown"
+    add_file "/usr/lib/initcpio/shutdown" "/shutdown"
 }
 
 help() {

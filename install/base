@@ -9,9 +9,9 @@ build() {
     add_symlink /bin usr/bin
     add_symlink /usr/sbin bin
 
-    add_binary /lib/initcpio/busybox /bin/busybox
+    add_binary /usr/lib/initcpio/busybox /bin/busybox
 
-    for applet in $(/lib/initcpio/busybox --list); do
+    for applet in $(/usr/lib/initcpio/busybox --list); do
         add_symlink "/usr/bin/$applet" busybox
     done
 
@@ -31,8 +31,8 @@ build() {
     # Add an empty fstab to avoid mount warning when -o remount is used
     >"$BUILDROOT/etc/fstab"
 
-    add_file "/lib/initcpio/init_functions" "/init_functions"
-    add_file "/lib/initcpio/init" "/init"
+    add_file "/usr/lib/initcpio/init_functions" "/init_functions"
+    add_file "/usr/lib/initcpio/init" "/init"
     add_file "/lib/modprobe.d/usb-load-ehci-first.conf"
 
     # write a new config file. re-source the config as we can't guarantee the

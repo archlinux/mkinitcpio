@@ -337,7 +337,7 @@ parse_hook() {
     # prior to the start of hook processing, and after each hook's build
     # function is run.
 
-    local item=
+    local item= script=
 
     for item in $MODULES; do
         if [[ ${item:(-1)} = '?' ]]; then
@@ -355,7 +355,21 @@ parse_hook() {
         add_file "$item"
     done
 
-    [[ $SCRIPT ]] && add_file "$HOOKDIR/$SCRIPT" "/hooks/$SCRIPT"
+    if [[ $SCRIPT ]]; then
+        script=$(find_in_dirs "$SCRIPT" "${HOOKDIR[@]}") &&
+            add_file "$script" "/hooks/$SCRIPT"
+    fi
+}
+
+find_in_dirs() {
+    for dir in "${@:2}"; do
+        if [[ -e $dir/$1 ]]; then
+            printf '%s' "$dir/$1"
+            return 0
+        fi
+    done
+
+    return 1
 }
 
 # vim: set ft=sh ts=4 sw=4 et:

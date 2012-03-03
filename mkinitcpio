@@ -110,32 +110,34 @@ trap 'cleanup 130' INT
 trap 'cleanup 143' TERM
 
 while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
-    case "${arg}" in
-        c) CONFIG="${OPTARG}" ;;
+    case $arg in
+        c) CONFIG=$OPTARG ;;
         k) optkver=$OPTARG ;;
-        s) SAVELIST=1; ;;
-        b) BASEDIR="${OPTARG}" ;;
-        g) GENIMG="${OPTARG}" ;;
+        s) SAVELIST=1 ;;
+        b) BASEDIR=$OPTARG ;;
+        g) GENIMG=$OPTARG ;;
         h) usage ;;
-        p) PRESET="${OPTARG}" ;;
+        p) PRESET=$OPTARG ;;
         n) COLOR=0 ;;
         v) QUIET=0 ;;
         S) IFS=, read -r -a SKIPHOOKS <<< "$OPTARG" ;;
-        H) if [[ ! -r "${INSTDIR}/${OPTARG}" ]]; then
-               error "No hook ${OPTARG}"
+        H) if script=$(find_in_dirs "$OPTARG" "${INSTDIR[@]}"); then
+               . "$script"
+               if [[ $(type -t help) != function ]]; then
+                   error "No help for hook $OPTARG"
+                   exit 1
+               fi
+           else
+               error "No hook '$OPTARG'"
                exit 1
            fi
-           . "${INSTDIR}/${OPTARG}"
-           if [[ $(type -t help) != function ]]; then
-               error "No help for hook ${OPTARG}"
-               exit 1
-           fi
-           msg "Help for hook '${OPTARG}':"
+           msg "Help for hook '$OPTARG':"
            help
            exit 0 ;;
         L) msg "Available hooks"
-           cd "$INSTDIR" >/dev/null
-           printf '   %s\n' * | column -c$(tput cols)
+           for dir in "${INSTDIR[@]}"; do
+               ( cd "$dir" >/dev/null; printf '   %s\n' * )
+           done | column -c$(tput cols)
            exit 0 ;;
         M) SHOW_AUTOMODS=1 ;;
         t) TMPDIR=$OPTARG ;;
@@ -276,9 +278,10 @@ fi
 
 if (( SHOW_AUTOMODS )); then
     msg "Modules autodetected"
-    . "${INSTDIR}/autodetect"
+    autodetect=$(find_in_dirs 'autodetect' "${INSTDIR[@]}")
+    . "$autodetect"
     build
-    cat "${MODULE_FILE}"
+    cat "$MODULE_FILE"
     cleanup 0
 fi
 
@@ -307,26 +310,37 @@ done
 for hook in ${HOOKS}; do
     in_array "$hook" "${SKIPHOOKS[@]}" && continue
     unset MODULES BINARIES FILES SCRIPT
-    build () { error "$hook: no build function..."; }
+    build() { error "$hook: no build function..."; return 1; }
 
-    # A hook is considered deprecated if it is a symlink within $INSTDIR.
-    if [[ -L "$INSTDIR/$hook" ]]; then
-        newhook=$(readlink -e "$INSTDIR/$hook")
-        if [[ $newhook && "$INSTDIR/${newhook##*/}" -ef "$newhook" ]]; then
-            newhook=${newhook##*/}
-            warning "Hook '%s' is deprecated. Replace it with '%s' in your config" "$hook" "$newhook"
-            hook=$newhook
-        fi
-    fi
-    if [[ -r "${INSTDIR}/${hook}" ]]; then
-        . "${INSTDIR}/${hook}"
-        msg2 "Parsing hook: [%s]" "$hook"
-        build
-        parse_hook
-    else
-        error "Hook '$hook' can not be found."
+    # find script in install dirs
+    if ! script=$(find_in_dirs "$hook" "${INSTDIR[@]}"); then
+        error "Hook '$hook' cannot be found."
         (( ++builderrors ))
+        continue
     fi
+
+    # check for deprecation
+    if [[ -L $script ]]; then
+        if ! realscript=$(readlink -e "$script"); then
+            error "$script is a broken symlink to $(realpath "$script")"
+            (( ++builderrors ))
+            continue
+        fi
+        warning "Hook '%s' is deprecated. Replace it with '%s' in your config" "$script" "$realscript"
+        script=$realscript
+    fi
+
+    # source
+    if ! . "$script"; then
+        error 'Failed to read %s' "$script"
+        (( ++builderrors ))
+        continue
+    fi
+
+    # run
+    msg2 "Parsing hook: [%s]" "${script##*/}"
+    build
+    parse_hook
 done
 
 # restore $CONFIG vars add to image
