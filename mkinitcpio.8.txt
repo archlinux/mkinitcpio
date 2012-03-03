@@ -24,6 +24,11 @@ other features.
 
 Options
 -------
+*-A* 'hooks'::
+	Add the additional 'hooks' to the image. These will be processed in order
+	after all other hooks from the config file. Multiple hooks should be
+	comma-separated. This option can be specified multiple times.
+
 *-b* 'basedir'::
 	Use 'basedir' as a starting point for gathering information about the
 	currently running system. Default: /.
@@ -63,7 +68,7 @@ Options
 	file.
 
 *-S* 'hooks'::
-	Skip 'hooks' when generating the image. Several hooks should be comma-separated.
+	Skip 'hooks' when generating the image. Multiple hooks should be comma-separated.
 	This option can be specified multiple times.
 
 *-s*::

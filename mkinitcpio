@@ -109,8 +109,11 @@ get_kernver() {
 trap 'cleanup 130' INT
 trap 'cleanup 143' TERM
 
-while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
+while getopts ':A:c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
     case $arg in
+        A) IFS=, read -r -a add <<< "$OPTARG"
+           ADDHOOKS+=("${add[@]}")
+           unset add ;;
         c) CONFIG=$OPTARG ;;
         k) optkver=$OPTARG ;;
         s) SAVELIST=1 ;;
@@ -309,7 +312,7 @@ for var in MODULES BINARIES FILES; do
     declare "cfg_$var=${!var}"
 done
 
-for hook in ${HOOKS}; do
+for hook in ${HOOKS} "${ADDHOOKS[@]}"; do
     in_array "$hook" "${SKIPHOOKS[@]}" && continue
     unset MODULES BINARIES FILES SCRIPT
     build() { error "$hook: no build function..."; return 1; }
