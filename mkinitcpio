@@ -120,7 +120,9 @@ while getopts ':c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
         p) PRESET=$OPTARG ;;
         n) COLOR=0 ;;
         v) QUIET=0 ;;
-        S) IFS=, read -r -a SKIPHOOKS <<< "$OPTARG" ;;
+        S) IFS=, read -r -a skip <<< "$OPTARG"
+           SKIPHOOKS+=("${skip[@]}")
+           unset skip ;;
         H) if script=$(find_in_dirs "$OPTARG" "${INSTDIR[@]}"); then
                . "$script"
                if [[ $(type -t help) != function ]]; then

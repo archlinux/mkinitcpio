@@ -64,6 +64,7 @@ Options
 
 *-S* 'hooks'::
 	Skip 'hooks' when generating the image. Several hooks should be comma-separated.
+	This option can be specified multiple times.
 
 *-s*::
 	Saves the build directory for the initial ramdisk. Default: no; This means
