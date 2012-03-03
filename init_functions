@@ -154,15 +154,32 @@ fsck_root() {
 }
 
 resolve_device() {
-    local major minor dev device=$1
+    local major minor dev tagval device=$1
 
+    # do lazy resolution of devices by tag when udev is
+    # available. this allows us to wait on disks that
+    # might not show up immediately (e.g. USB). If udev
+    # isn't running, fall back on using blkid.
     case $device in
-        # resolve tag name to block device
-        UUID=*|LABEL=*)
-            dev=$(blkid -lt "$device" -o device)
-            [ -n "$device" ] && device=$dev
+        UUID=*)
+            tagval=${device#*=}
+            if [ "$udevd_running" -eq 1 ]; then
+                dev=/dev/disk/by-uuid/$tagval
+            else
+                dev=$(blkid -U "$tagval")
+            fi
+            ;;
+        LABEL=*)
+            tagval=${device#*=}
+            if [ "$udevd_running" -eq 1 ]; then
+                dev=/dev/disk/by-label/$tagval
+            else
+                dev=$(blkid -L "$tagval")
+            fi
             ;;
     esac
+
+    [ -n "$dev" ] && device=$dev
 
     case $device in
         /dev/*)
