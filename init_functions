@@ -227,6 +227,7 @@ default_mount_handler() {
         msg "Trying to continue (this will most likely fail) ..."
     fi
 
+    msg ":: mounting '$root' on real root"
     if ! mount ${fstype:+-t $fstype} -o ${rwopt:-ro}${rootflags:+,$rootflags} "$root" "$1"; then
         echo "You are now being dropped into an emergency shell."
         launch_interactive_shell
