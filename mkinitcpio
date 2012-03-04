@@ -358,7 +358,8 @@ parse_hook
 trap '(( ++builderrors ))' ERR
 
 if (( ${#ADDED_MODULES[*]} )); then
-    cp "${MODPATHS[@]}" "$BUILDROOT/lib/modules/$KERNELVERSION/kernel"
+    printf '%s\0' "${MODPATHS[@]}" | sort -zu |
+        xargs -0 cp -t "$BUILDROOT/lib/modules/$KERNELVERSION/kernel"
 
     # unzip modules prior to recompression
     gzip -dr "$BUILDROOT/lib/modules/$KERNELVERSION/kernel"
