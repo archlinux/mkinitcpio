@@ -391,7 +391,7 @@ if [[ "${GENIMG}" ]]; then
 
     pushd "$BUILDROOT" >/dev/null
     find . -print0 |
-        bsdcpio $( (( QUIET )) && echo '--quiet' ) -0oH newc |
+        bsdcpio $( (( QUIET )) && echo '--quiet' ) -R 0:0 -0oH newc |
         $COMPRESSION $COMPRESSION_OPTIONS > "$IMGPATH"
     pipesave=("${PIPESTATUS[@]}") # save immediately
     popd >/dev/null
