@@ -1,29 +1,41 @@
-# vim:set ft=sh:
-run_hook ()
-{
-    if [ -n "${resume}" ]; then
-        if [ "${resume}" != "${resume/:}" ]; then
-            # Tux-on-ice syntax: swap:/dev/sda2 or file:/dev/sda2:0xdeadbeef
-            resumedev=${resume#*:}
-            resumedev=${resumedev%%:*}
-        else
-            # Classical syntax: just a device
-            resumedev="${resume}"
-        fi
-        if poll_device "${resumedev}" ${rootdelay}; then
-            if [ "${resume}" != "${resume/:}" ]; then
-                # Try resuming with tuxonice
-                tuxoniceroot="/sys/power/tuxonice"
-                if [ -d "${tuxoniceroot}" ]; then
-                    echo ${resume} > ${tuxoniceroot}/resume
-                    echo > ${tuxoniceroot}/do_resume
-                fi
+#!/usr/bin/ash
+
+run_hook () {
+    local resumedev
+
+    case $resume in
+        '')
+            err "resume: no device specified for hibernation"
+            return 1;
+            ;;
+        swap:*|file:*)
+            # tux-on-ice syntax: swap:/dev/sda2 or file:/dev/sda2:0xdeadbeef
+            if [ -d /sys/power/tuxonice  ]; then
+                echo "$resume" >/sys/power/tuxonice/resume
+                echo >/sys/power/tuxonice/do_resume
+                return 0
             else
-                # Try resuming with vanilla hibernation
-                if [ -e "/sys/power/resume" ]; then
-                    printf "%d:%d" $(stat -Lc "0x%t 0x%T" ${resume}) > /sys/power/resume
+                err "resume: tux-on-ice syntax detected, but no support found"
+                return 1
+            fi
+            ;;
+
+        *)
+            # standard hibernation
+            if resumedev=$(resolve_device "$resume" "$rootdelay"); then
+                if [ -e /sys/power/resume ]; then
+                    printf "%d:%d" $(stat -Lc "0x%t 0x%T" "$resumedev") >/sys/power/resume
+                    return 0
+                else
+                    err "resume: no hibernation support found"
+                    return 1
                 fi
             fi
-        fi
-    fi
+            ;;
+    esac
+
+    err "resume: hibernation device '$resume' not found"
+    return 1
 }
+
+# vim: set ft=sh ts=4 sw=4 et:
