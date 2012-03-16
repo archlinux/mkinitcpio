@@ -33,7 +33,7 @@ _find_kernel_versions() {
 
 _mkinitcpio() {
 	local action cur prev
-	action="-b -c -g -H -h -k -L -M -n -p -S -s -v -z"
+	action="-A -b -c -g -H -h -k -L -M -n -p -S -s -v -z"
 	_get_comp_words_by_ref cur prev
 	case "$prev" in
 		-c|-g) _filedir;;
@@ -41,7 +41,8 @@ _mkinitcpio() {
 		-b) _filedir -d;;
 		-p) COMPREPLY=($(cd /etc/mkinitcpio.d/ && compgen -X '!*.preset' -f  -- $cur))
 			COMPREPLY=("${COMPREPLY[@]%.preset}");;
-		-H|-S) COMPREPLY=($(cd /lib/initcpio/install/ && compgen -f -- $cur));;
+		-A|-H|-S) COMPREPLY=($(cd /lib/initcpio/install/ && compgen -f -- $cur) \
+		                     $(cd /usr/lib/initcpio/install/ && compgen -f -- $cur));;
 		*) COMPREPLY=($(compgen -W "${action}" -- "$cur"));;
 	esac
 }
