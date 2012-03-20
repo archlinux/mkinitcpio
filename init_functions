@@ -54,6 +54,12 @@ parse_cmdline() {
                 \#*) break ;;
                 # special cases
                 rw|ro) rwopt=$w ;;
+                fsck.mode=*)
+                    case ${w#*=} in
+                        force) forcefsck=y ;;
+                        skip) fastboot=y ;;
+                    esac
+                    ;;
                 # abide by shell variable naming rules
                 [[:alpha:]_]*=*)
                     rhs=${w#*=}
