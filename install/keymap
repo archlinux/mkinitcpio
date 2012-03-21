@@ -4,13 +4,25 @@ build() {
 
     # subshell to avoid namespace pollution
     (
-        . "$BASEDIR/etc/rc.conf"
+        l=$LANG
+        unset LANG
+
+        for cfg in etc/{rc,vconsole,locale}.conf; do
+            [[ -s $BASEDIR/$cfg ]] && . "$BASEDIR/$cfg"
+        done
+
+        [[ $LANG ]] && LOCALE=$LANG
+        LANG=$l
+
         if [[ $KEYMAP ]]; then
-            if [[ $LOCALE = *[Uu][Tt][Ff]-8 ]]; then
+            if [[ $LOCALE = *[Uu][Tt][Ff]?(-)8 ]]; then
                 touch "$BUILDROOT/keymap.utf8"
                 uc=-u
             fi
             loadkeys -q $uc $KEYMAP -b > "$BUILDROOT/keymap.bin"
+        else
+            warning "keymap: hook specified, but no KEYMAP found in configuration"
+            return 1
         fi
     )
 
@@ -19,7 +31,8 @@ build() {
 
 help() {
     cat <<HELPEOF
-This hook loads keymap(s) specified in rc.conf during early userspace.
+This hook loads keymap(s) specified in vconsole.conf or rc.conf during early
+userspace.
 HELPEOF
 }
 

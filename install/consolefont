@@ -5,8 +5,13 @@ build() {
 
     # subshell to avoid namespace pollution
     (
-        . "$BASEDIR/etc/rc.conf"
-        if [[ -n "$CONSOLEFONT" ]]; then
+        for cfg in etc/{rc,vconsole}.conf; do
+            [[ -s $BASEDIR/$cfg ]] && . "$BASEDIR/$cfg"
+        done
+
+        [[ $FONT ]] && CONSOLEFONT=$FONT
+
+        if [[ $CONSOLEFONT ]]; then
             for file in "$BASEDIR/usr/share/kbd/consolefonts/$CONSOLEFONT".psf?(u)?(.gz); do
                 if [[ -e $file ]]; then
                     [[ $file =~ \.(psfu?)(\.gz)?$ ]] && ext=${BASH_REMATCH[1]}
@@ -21,7 +26,7 @@ build() {
             error "consolefont: requested font not found: \`%s'" "$CONSOLEFONT"
             exit 1
         else
-            warning "consolefont: no font found in %s/etc/rc.conf" "${BASEDIR%/}"
+            warning "consolefont: no font found in configuration"
             exit 1
         fi
     )
@@ -31,7 +36,8 @@ build() {
 
 help() {
     cat <<HELPEOF
-This hook loads consolefont specified in rc.conf during early userspace.
+This hook loads consolefont specified in locale.conf or rc.conf during early
+userspace.
 HELPEOF
 }
 
