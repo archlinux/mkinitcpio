@@ -4,7 +4,7 @@ VERSION = $(shell if test -f VERSION; then cat VERSION; else git describe | sed 
 
 DIRS = \
 	/usr/bin \
-	/etc/bash_completion.d \
+	/usr/share/bash-completion/completions \
 	/etc/mkinitcpio.d \
 	/usr/lib/initcpio/hooks \
 	/usr/lib/initcpio/install \
@@ -43,7 +43,7 @@ install: all
 	install -m644 -t ${DESTDIR}/etc/mkinitcpio.d mkinitcpio.d/*
 
 	install -m644 mkinitcpio.8 ${DESTDIR}/usr/share/man/man8/mkinitcpio.8
-	install -m644 bash-completion ${DESTDIR}/etc/bash_completion.d/mkinitcpio
+	install -m644 bash-completion ${DESTDIR}/usr/share/bash-completion/completions/mkinitcpio
 
 doc: mkinitcpio.8
 mkinitcpio.8: mkinitcpio.8.txt Makefile
