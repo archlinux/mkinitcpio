@@ -1,5 +1,59 @@
 #!/usr/bin/ash
 
+# teardown a single device by node name
+#   $1: device node name, e.g. md0, dm-2
+stop_device() {
+    local devtype= devname=
+
+    # the device must still be active
+    [ -e "/sys/class/block/$1" ] || return 1
+
+    # this can sometimes fail on stopped md devices, when the
+    # sysfs node doesn't go away as quickly as i'd like it to.
+    devtype=$(lsblk -drno TYPE "/dev/$1" 2>/dev/null) || return 1
+    case $devtype in
+        crypt)
+            read devname <"$1/dm/name"
+            cryptsetup luksClose "$devname"
+            ;;
+        dm|lvm)
+            # disassemble the parent VG
+            read devname <"$1/dm/name"
+            lvm lvdisplay -c "/dev/mapper/$devname" | {
+                IFS=: read _ vgname _
+                lvm vgchange -an "$vgname"
+            }
+            ;;
+        raid*)
+            mdadm --stop "/dev/$1"
+            ;;
+        dmraid)
+            # XXX: i have no idea how dmraid works
+            dmraid -an
+            ;;
+        # silently ignore unstacked devices
+    esac
+}
+
+# recursively disassemble a device chain
+#   $1: device node name, e.g. md0, dm-2
+disassemble() {
+    local holder=
+
+    for holder in "$1"/holders/*; do
+        if [ ! -e "$holder" ]; then
+            # end of the chain, recurse back up
+            stop_device "$1"
+            return
+        fi
+        disassemble "${holder##*/}"
+        stop_device "$1"
+    done
+}
+
+printf '%s\n' "Unmounting all devices."
+
+# unmount everything, but leave the API mounts
 findmnt -Rruno TARGET /oldroot | awk '
 BEGIN { i = 0 }
 ! /^\/(proc|dev|sys)/ {
@@ -13,6 +67,16 @@ END {
 }
 ' | while read -r mount; do
     umount -l "$mount"
+done
+
+printf '%s\n' "Disassembling stacked devices."
+
+# chdir, so that we can avoid a lot of path chopping
+cd /sys/class/block
+
+# iterate over devices with holders
+for part in */holders/*; do
+    [ -e "$part" ] && disassemble "${part%%/*}"
 done
 
 case $1 in
