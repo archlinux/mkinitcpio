@@ -3,24 +3,26 @@
 findmnt -Rruno TARGET /oldroot | awk '
 BEGIN { i = 0 }
 ! /^\/(proc|dev|sys)/ {
-  i++
-  mounts[i] = $0
+    i++
+    mounts[i] = $0
 }
 END {
-  for (j = i; j > 0; j--) {
-    print mounts[j]
-  }
+    for (j = i; j > 0; j--) {
+        print mounts[j]
+    }
 }
 ' | while read -r mount; do
-  umount -l "$mount"
+    umount -l "$mount"
 done
 
 case $1 in
-  poweroff|shutdown|halt)
-    "$1" -f
-    ;;
-  *)
-    type kexec >/dev/null && kexec -e
-    reboot -f
-    ;;
+    poweroff|shutdown|halt)
+        "$1" -f
+        ;;
+    *)
+        type kexec >/dev/null && kexec -e
+        reboot -f
+        ;;
 esac
+
+# vim: ft=sh ts=4 sw=4
