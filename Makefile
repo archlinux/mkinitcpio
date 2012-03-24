@@ -57,15 +57,12 @@ clean:
 	${RM} -r build mkinitcpio-${VERSION}
 	${RM} mkinitcpio-${VERSION}.tar.gz mkinitcpio.8 mkinitcpio.8.gz
 
-tarball: dist
-dist: clean doc
-	git archive --prefix=mkinitcpio-${VERSION}/ -o mkinitcpio-${VERSION}.tar HEAD
-	mkdir mkinitcpio-${VERSION}; \
-		cp -t mkinitcpio-${VERSION} ${DIST_EXTRA}; \
-		echo ${VERSION} > mkinitcpio-${VERSION}/VERSION; \
-		tar uf mkinitcpio-${VERSION}.tar mkinitcpio-${VERSION}; \
-		${RM} -r mkinitcpio-${VERSION}
-	gzip -9 mkinitcpio-${VERSION}.tar
+dist: doc
+	echo ${VERSION} > VERSION
+	git ls-files -z | xargs -0 \
+		bsdtar -czf mkinitcpio-${VERSION}.tar.gz -s ,^,mkinitcpio-${VERSION}/, VERSION ${DIST_EXTRA}
+	${RM} VERSION
+
 
 version:
 	@echo ${VERSION}
