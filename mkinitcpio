@@ -17,8 +17,8 @@ shopt -s extglob
 # Settings
 FUNCTIONS=functions
 CONFIG=mkinitcpio.conf
-HOOKDIR=hooks
-INSTDIR=install
+HOOKDIR=(hooks /usr/lib/initcpio/hooks /lib/initcpio/hooks)
+INSTDIR=(install /usr/lib/initcpio/install /lib/initcpio/install)
 PRESETDIR=mkinitcpio.d
 COMPRESSION=gzip
 

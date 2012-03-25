@@ -17,6 +17,7 @@ DIST_EXTRA = \
 all: doc
 
 install: all
+	mkdir -p ${DESTDIR}
 	$(foreach dir,${DIRS},install -dm755 ${DESTDIR}${dir};)
 
 	sed -e 's|^CONFIG=.*|CONFIG=/etc/mkinitcpio.conf|' \
