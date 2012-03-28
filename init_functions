@@ -107,7 +107,7 @@ fsck_device() {
     fi
 
     msg ":: performing fsck on '$1'"
-    FSTAB_FILE=/dev/null fsck -Ta -C"$FSCK_FD" "$1" -- ${forcefsck+-f}
+    fsck -Ta -C"$FSCK_FD" "$1" -- ${forcefsck+-f}
 }
 
 fsck_root() {
