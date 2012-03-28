@@ -14,9 +14,13 @@ stop_device() {
     case $devtype in
         crypt)
             read devname <"$1/dm/name"
-            cryptsetup luksClose "$devname"
+            cryptsetup remove "$devname"
             ;;
-        dm|lvm)
+        dm)
+            read devname <"$1/dm/name"
+            dmsetup remove "$devname"
+            ;;
+        lvm)
             # disassemble the parent VG
             read devname <"$1/dm/name"
             lvm lvdisplay -c "/dev/mapper/$devname" | {
@@ -28,8 +32,8 @@ stop_device() {
             mdadm --stop "/dev/$1"
             ;;
         dmraid)
-            # XXX: i have no idea how dmraid works
-            dmraid -an
+            read devname <"$1/dm/name"
+            dmraid -an "$devname"
             ;;
         # silently ignore unstacked devices
     esac
