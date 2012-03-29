@@ -57,10 +57,10 @@ disassemble() {
 
 printf '%s\n' "Unmounting all devices."
 
-# unmount everything, but leave the API mounts
+# unmount everything in /oldroot
 findmnt -Rruno TARGET /oldroot | awk '
 BEGIN { i = 0 }
-! /^\/(proc|dev|sys)/ {
+{
     i++
     mounts[i] = $0
 }
@@ -70,7 +70,7 @@ END {
     }
 }
 ' | while read -r mount; do
-    umount -l "$mount"
+    umount "$mount"
 done
 
 printf '%s\n' "Disassembling stacked devices."
