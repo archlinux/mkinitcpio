@@ -27,9 +27,9 @@ declare NC= BOLD= BLUE= GREEN= RED= YELLOW=
 declare -i QUIET=1 SHOW_AUTOMODS=0 SAVELIST=0 COLOR=1
 declare -a SKIPHOOKS ADDED_MODULES MODPATHS
 
-# Add /{,usr}/sbin to path
-# works around undetected problems like in #8448
-PATH=$PATH:/sbin:/usr/sbin
+# export a sane PATH
+export PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+
 # Sanitize environment further
 # GREP_OPTIONS="--color=always" will break everything
 # CDPATH can affect cd and pushd
