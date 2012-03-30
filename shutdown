@@ -55,6 +55,12 @@ disassemble() {
     done
 }
 
+printf '%s\n' 'Detaching loop devices.'
+
+for loop in loop*/loop; do
+    [ -e "$loop" ] && losetup -d "${loop%/loop}"
+done
+
 printf '%s\n' "Unmounting all devices."
 
 # unmount everything in /oldroot
