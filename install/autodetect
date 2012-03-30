@@ -2,7 +2,6 @@
 
 build() {
     local -a md_devs
-    local dev insufficient_perms
 
     MODULE_FILE=$workdir/autodetect_modules
 
@@ -38,28 +37,11 @@ build() {
         add_if_avail "$usrfstype"
     fi
 
-    # look for raid devices
-    shopt -s nullglob
-    for dev in /sys/class/block/*/md/dev-*; do
-        dev=/dev/${dev#*/dev-}
-
-        [[ -r $dev ]] || insufficient_perms=1
-
-        md_devs+=("$dev")
-    done
-    shopt -u nullglob
-
-    # scan members of raid devices if found
-    if (( ${#md_devs[*]} )); then
-        (( !QUIET )) && plain "found %d raid members to scan" "${#md_devs[*]}"
-        if (( ! insufficient_perms )); then
-            mdadm -Esv "${md_devs[@]}" |
-                sed -n 's/.*level=\([^ ]\+\) .*/\1/p' |
-                sed 's/\<raid[456]\>/raid456/g' | sort -u >>"$MODULE_FILE"
-        else
-            warning "Insufficient permission to perform autodetection for mdadm devices"
-            raid_autodetect_failed=1
-        fi
+    # scan for md raid devices
+    md_devs=(/sys/class/block/md*/md/level)
+    if [[ -e $md_devs ]]; then
+        (( !QUIET )) && plain "found %d mdadm arrays to scan" "${#md_devs[*]}"
+        sort -u "${md_devs[@]}" >>"$MODULE_FILE"
     fi
 
     if (( !QUIET )) && [[ -s $MODULE_FILE ]]; then
