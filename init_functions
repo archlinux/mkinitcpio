@@ -130,7 +130,7 @@ fsck_root() {
                 "*                                           *" \
                 "*  Please run fsck manually. After leaving  *" \
                 "*  this maintenance shell, the system will  *" \
-                "   reboot automatically.                    *" \
+                "*  reboot automatically.                    *" \
                 "*                                           *" \
                 "*********************************************"
             launch_interactive_shell
