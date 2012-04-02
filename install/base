@@ -33,7 +33,7 @@ build() {
 
     add_file "/usr/lib/initcpio/init_functions" "/init_functions"
     add_file "/usr/lib/initcpio/init" "/init"
-    add_file "/lib/modprobe.d/usb-load-ehci-first.conf"
+    add_file "/usr/lib/modprobe.d/usb-load-ehci-first.conf"
 
     # write a new config file. re-source the config as we can't guarantee the
     # environment hasn't been modified, but subshell it so it doesn't disturb
