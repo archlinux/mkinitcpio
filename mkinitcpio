@@ -207,7 +207,7 @@ workdir=$(TMPDIR=$TMPDIR mktemp -d --tmpdir mkinitcpio.XXXXXX)
 BUILDROOT=$workdir/root
 
 # explicitly create the buildroot
-mkdir -p "$BUILDROOT/lib/modules/$KERNELVERSION/kernel"
+mkdir -p "$BUILDROOT/usr/lib/modules/$KERNELVERSION/kernel"
 
 # use preset $PRESET
 if [[ $PRESET ]]; then

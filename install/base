@@ -5,6 +5,7 @@ build() {
         add_dir "/$dir"
     done
 
+    add_symlink /lib usr/lib
     add_symlink /sbin usr/bin
     add_symlink /bin usr/bin
     add_symlink /usr/sbin bin
