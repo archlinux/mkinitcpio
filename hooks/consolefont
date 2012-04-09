@@ -1,12 +1,11 @@
-# vim: set ft=sh:
+#!/usr/bin/ash
 
-run_hook ()
-{
+run_hook() {
     if [ -e /consolefont.psfu ]; then
         msg -n ":: Loading console font..."
         setfont -C /dev/console /consolefont.psfu
         msg "done."
-     elif [ -e /consolefont.psf ]; then
+    elif [ -e /consolefont.psf ]; then
         msg -n ":: Loading console font..."
         setfont -C /dev/console /consolefont.psf
         msg "done."
@@ -14,3 +13,5 @@ run_hook ()
         msg "No consolefont found despite added hook."
     fi
 }
+
+# vim: set ft=sh ts=4 sw=4 et:

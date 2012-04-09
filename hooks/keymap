@@ -1,6 +1,6 @@
-# vim: set ft=sh:
-run_hook ()
-{
+#!/usr/bin/ash
+
+run_hook() {
     if [ -e /keymap.bin ]; then
         msg -n ":: Loading keymap..."
         if [ -f /keymap.utf8 ]; then
@@ -16,3 +16,5 @@ run_hook ()
         msg "done."
     fi
 }
+
+# vim: set ft=sh ts=4 sw=4 et:
