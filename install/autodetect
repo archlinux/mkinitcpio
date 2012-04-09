@@ -41,7 +41,7 @@ build() {
     md_devs=(/sys/class/block/md*/md/level)
     if [[ -e $md_devs ]]; then
         (( !QUIET )) && plain "found %d mdadm arrays to scan" "${#md_devs[*]}"
-        sort -u "${md_devs[@]}" >>"$MODULE_FILE"
+        sed 's/^raid[456]$/raid456/' "${md_devs[@]}" | sort -u >>"$MODULE_FILE"
     fi
 
     if (( !QUIET )) && [[ -s $MODULE_FILE ]]; then
