@@ -1,7 +1,0 @@
-# vim: set ft=sh:
-
-run_hook ()
-{
-    modprobe btrfs
-    btrfs device scan
-}
