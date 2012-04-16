@@ -359,18 +359,18 @@ trap '(( ++builderrors ))' ERR
 
 if (( ${#ADDED_MODULES[*]} )); then
     printf '%s\0' "${MODPATHS[@]}" | sort -zu |
-        xargs -0 cp -t "$BUILDROOT/lib/modules/$KERNELVERSION/kernel"
+        xargs -0 cp -t "$BUILDROOT/usr/lib/modules/$KERNELVERSION/kernel"
 
     # unzip modules prior to recompression
-    gzip -dr "$BUILDROOT/lib/modules/$KERNELVERSION/kernel"
+    gzip -dr "$BUILDROOT/usr/lib/modules/$KERNELVERSION/kernel"
 
     msg "Generating module dependencies"
-    install -m644 -t "$BUILDROOT/lib/modules/$KERNELVERSION" \
+    install -m644 -t "$BUILDROOT/usr/lib/modules/$KERNELVERSION" \
         "$BASEDIR/lib/modules/$KERNELVERSION"/modules.{builtin,order}
-    depmod -b "$BUILDROOT" "${KERNELVERSION}"
+    depmod -b "$BUILDROOT" "$KERNELVERSION"
 
     # remove all non-binary module.* files (except devname for on-demand module loading)
-    rm "$BUILDROOT/lib/modules/$KERNELVERSION"/modules.!(*.bin|devname)
+    rm "$BUILDROOT/usr/lib/modules/$KERNELVERSION"/modules.!(*.bin|devname)
 
 else
     warning "No modules were added to the image. This is probably not what you want."
