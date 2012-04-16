@@ -276,6 +276,10 @@ if [[ ! -f "$CONFIG" ]]; then
 fi
 . "$CONFIG"
 
+if [[ -z ${HOOKS//[[:space:]]} && -z ${ADDHOOKS[@]} ]]; then
+    die "Invalid config: No hooks found"
+fi
+
 MODULEDIR=$BASEDIR/lib/modules/$KERNELVERSION/
 if [[ ! -d $MODULEDIR ]]; then
     die "'$MODULEDIR' is not a valid kernel module directory"
