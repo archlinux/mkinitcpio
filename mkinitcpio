@@ -41,21 +41,22 @@ mkinitcpio $version
 usage: ${0##*/} [options]
 
   Options:
-   -b BASEDIR       Use BASEDIR. default: /
-   -c CONFIG        Use CONFIG file. default: /etc/mkinitcpio.conf
-   -g IMAGE         Generate a cpio image as IMAGE. default: no
-   -H HOOKNAME      Output help for hook 'HOOKNAME'.
-   -h               Display this message.
-   -k KERNELVERSION Use KERNELVERSION. default: $(uname -r)
-   -L               List all available hooks.
-   -M               Display modules found via autodetection.
-   -n               Disable colorized output messages.
-   -p PRESET        Build specified preset from /etc/mkinitcpio.d
-   -S SKIPHOOKS     Skip SKIPHOOKS (comma-separated) when building the image.
-   -s               Save build directory. default: no
-   -t DIR           Use DIR as the temporary build directory.
-   -v               Verbose output. Default: no.
-   -z COMPRESS      Use COMPRESS on resulting image
+   -A, --add <hooks>            Add specified hooks, comma separated, to image
+   -b, --basedir <dir>          Use alternate base directory. (default: /)
+   -c, --config <config>        Use alternate config file. (default: /etc/mkinitcpio.conf)
+   -g, --generate <path>        Generate cpio image and write to specified path
+   -H, --hookhelp <hookname>    Display help for given hook and exit
+   -h, --help                   Display this message and exit
+   -k, --kernel <kernelver>     Use specified kernel version (default: $(uname -r))
+   -L, --listhooks              List all available hooks
+   -M, --automods               Display modules found via autodetection
+   -n, --nocolor                Disable colorized output messages
+   -p, --preset <file>          Build specified preset from /etc/mkinitcpio.d
+   -S, --skiphooks <hooks>      Skip specified hooks, comma-separated, during build
+   -s, --save                   Save build directory. (default: no)
+   -t, --builddir <dir>         Use DIR as the temporary build directory
+   -v, --verbose                Verbose output (default: no)
+   -z, --compress <program>     Use an alternate compressor on the image
 
 EOF
     cleanup 1
@@ -109,51 +110,86 @@ get_kernver() {
 trap 'cleanup 130' INT
 trap 'cleanup 143' TERM
 
-while getopts ':A:c:k:sb:g:p:m:nvH:LMhS:t:z:' arg; do
-    case $arg in
-        A) IFS=, read -r -a add <<< "$OPTARG"
-           ADDHOOKS+=("${add[@]}")
-           unset add ;;
-        c) CONFIG=$OPTARG ;;
-        k) optkver=$OPTARG ;;
-        s) SAVELIST=1 ;;
-        b) BASEDIR=$OPTARG ;;
-        g) GENIMG=$OPTARG ;;
-        h) usage ;;
-        p) PRESET=$OPTARG ;;
-        n) COLOR=0 ;;
-        v) QUIET=0 ;;
-        S) IFS=, read -r -a skip <<< "$OPTARG"
-           SKIPHOOKS+=("${skip[@]}")
-           unset skip ;;
-        H) if script=$(find_in_dirs "$OPTARG" "${INSTDIR[@]}"); then
-               . "$script"
-               if [[ $(type -t help) != function ]]; then
-                   error "No help for hook $OPTARG"
-                   exit 1
-               fi
-           else
-               error "No hook '$OPTARG'"
-               exit 1
-           fi
-           msg "Help for hook '$OPTARG':"
-           help
-           exit 0 ;;
-        L) msg "Available hooks"
-           for dir in "${INSTDIR[@]}"; do
-               ( cd "$dir" >/dev/null; printf '   %s\n' * )
-           done | column -c$(tput cols)
-           exit 0 ;;
-        M) SHOW_AUTOMODS=1 ;;
-        t) TMPDIR=$OPTARG ;;
-        z) optcompress=$OPTARG ;;
-        :) error "option requires an argument -- '$OPTARG' (use -h for help)"
-           exit 1 ;;
-       \?) error "invalid option -- '$OPTARG' (use -h for help)"
-           exit 1 ;;
+OPT_SHORT='A:b:c:g:H:hk:mnLMp:S:st:vz:'
+OPT_LONG=('add:' 'basedir:' 'config:' 'generate:' 'hookhelp:' 'help' 'kernel:' 'listhooks'
+          'automods' 'nocolor' 'preset:' 'skiphooks:' 'save' 'builddir:' 'verbose' 'compress:')
+
+if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
+    exit 1
+fi
+set -- "${OPTRET[@]}"
+unset OPT_SHORT OPT_LONG OPTRET
+
+while :; do
+    case $1 in
+        -A|--add)
+            shift
+            IFS=, read -r -a add <<< "$1"
+            ADDHOOKS+=("${add[@]}")
+            unset add ;;
+        -c|--config)
+            shift
+            CONFIG=$1 ;;
+        -k|--kernel)
+            shift
+            optkver=$1 ;;
+        -s|--save)
+            SAVELIST=1 ;;
+        -b|--basedir)
+            shift
+            BASEDIR=$1 ;;
+        -g|--generate)
+            shift
+            GENIMG=$1 ;;
+        -h|--help)
+            usage ;;
+        -p|--preset)
+            shift
+            PRESET=$1 ;;
+        -n|--nocolor)
+            COLOR=0 ;;
+        -v|--verbose)
+            QUIET=0 ;;
+        -S|--skiphooks)
+            shift
+            IFS=, read -r -a skip <<< "$1"
+            SKIPHOOKS+=("${skip[@]}")
+            unset skip ;;
+        -H|--hookhelp)
+            shift
+            if script=$(find_in_dirs "$1" "${INSTDIR[@]}"); then
+                . "$script"
+                if [[ $(type -t help) != function ]]; then
+                    error "No help for hook $1"
+                    exit 1
+                fi
+            else
+                error "No hook '$1'"
+                exit 1
+            fi
+            msg "Help for hook '$1':"
+            help
+            exit 0 ;;
+        -L|--listhooks)
+            msg "Available hooks"
+            for dir in "${INSTDIR[@]}"; do
+                ( cd "$dir" >/dev/null; printf '   %s\n' * )
+            done | column -c$(tput cols)
+            exit 0 ;;
+        -M|--automods)
+            SHOW_AUTOMODS=1 ;;
+        -t|--builddir)
+            shift
+            TMPDIR=$1 ;;
+        -z|--compress)
+            shift
+            optcompress=$1 ;;
+        --)
+            shift
+            break 2 ;;
     esac
+    shift
 done
-shift $((OPTIND - 1))
 
 if [[ -t 1 ]] && (( COLOR )); then
     # prefer terminal safe colored and bold text when tput is supported
