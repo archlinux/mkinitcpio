@@ -13,15 +13,15 @@ declare FUNCTIONS=functions
 
 usage() {
     cat<<USAGE
-lsinitramfs %VERSION%
+lsinitcpio %VERSION%
 usage: ${0##*/} [options] <initramfs>
 
   Options:
-   -a             analyze contents
-   -h             display this help
-   -n             disable colorized output
-   -v             more verbose output
-   -x             extract image to disk
+   -a, --analyze        analyze contents
+   -h, --help           display this help
+   -n, --nocolor        disable colorized output
+   -v, --verbose        more verbose output
+   -x, --extract        extract image to disk
 
 USAGE
     exit 1
@@ -39,17 +39,33 @@ die() {
     exit 1
 }
 
-while getopts ':ahnvx' flag; do
-    case $flag in
-        a) analyze=1 ;;
-        h) usage ;;
-        n) color=0 ;;
-        v) verbose='--verbose'  ;;
-        x) unset list ;;
-        \?) die "invalid option -- '$OPTARG'" ;;
+OPT_SHORT='ahnvx'
+OPT_LONG=('analyze' 'help' 'nocolor' 'verbose' 'extract')
+
+if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
+    exit 1
+fi
+set -- "${OPTRET[@]}"
+unset OPT_SHORT OPT_LONG OPTRET
+
+while :; do
+    case $1 in
+        -a|--analyze)
+            analyze=1 ;;
+        -h|--help)
+            usage ;;
+        -n|--nocolor)
+            color=0 ;;
+        -v|--verbose)
+            verbose='--verbose' ;;
+        -x|--extract)
+            unset list ;;
+        --)
+            shift
+            break 2 ;;
     esac
+    shift
 done
-shift $(( OPTIND - 1 ))
 
 declare image=$1
 

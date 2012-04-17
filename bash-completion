@@ -2,18 +2,22 @@
 # mkinitcpio bash completion by Seblu <seblu@seblu.net>
 
 _lsinitcpio() {
-    local action cur
-    action="-a -h -n -v -x"
+    local cur opts
+    opts=(-a --analyze -h --help -n --nocolor -v --verbose -x --extract)
+
     _get_comp_words_by_ref cur
-    case "$cur" in
-        -*)    COMPREPLY=($(compgen -W "${action}" -- "$cur"));;
-        *) _filedir;;
+
+    case $cur in
+        -*)
+            COMPREPLY=($(compgen -W "${opts[*]}" -- "$cur")) ;;
+        *)
+            _filedir ;;
     esac
 }
 
 _find_kernel_versions() {
     local -a matches
-    local regex
+    local dir regex
 
     # add completions from kernels in /boot
     regex="Linux kernel.*version"
