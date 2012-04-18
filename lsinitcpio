@@ -39,6 +39,28 @@ die() {
     exit 1
 }
 
+size_to_human() {
+    awk -v size="$1" '
+    BEGIN {
+        suffix[1] = "B"
+        suffix[2] = "KiB"
+        suffix[3] = "MiB"
+        suffix[4] = "GiB"
+        suffix[5] = "TiB"
+        count = 1
+
+        while (size > 1024) {
+            size /= 1024
+            count++
+        }
+
+        sizestr = sprintf("%.2f", size)
+        sub(/\.?0+$/, "", sizestr)
+        printf("%s %s", sizestr, suffix[count])
+    }'
+}
+
+
 OPT_SHORT='ahnvx'
 OPT_LONG=('analyze' 'help' 'nocolor' 'verbose' 'extract')
 
@@ -105,11 +127,13 @@ if (( analyze )); then
     declare -a binaries explicitmod modules foundhooks hooks
     declare kernver ratio columns=$(tput cols)
 
+    zsize=$(stat -c %s "$image")
+
     # calculate compression ratio
     if [[ $compress ]]; then
         TIMEFORMAT=%R decomptime=$({ time decomp "$image" >/dev/null; } 2>&1 )
-        ratio=.$(( $(stat -c %s "$image") * 1000 /
-                   $(decomp "$image" | bsdtar xOf - | wc -c) % 1000 ))
+        fullsize=$(decomp "$image" | bsdtar xOf - | wc -c)
+        ratio=.$(( zsize * 1000 / fullsize % 1000 ))
     fi
 
     # read contents of image
@@ -141,10 +165,11 @@ if (( analyze )); then
     msg 'Image: %s %s' "$imagename"
     [[ $version ]] && msg 'Created with mkinitcpio %s' "$version"
     msg 'Kernel: %s' "${kernver:-unknown}"
+    msg 'Size: %s' "$(size_to_human "$zsize")"
 
     if [[ $compress ]]; then
         msg 'Compressed with: %s' "$compress"
-        msg2 'Compression ratio: %s' "$ratio"
+        msg2 'Uncompressed size: %s (%s ratio)' "$(size_to_human "$fullsize")" "$ratio"
         msg2 'Estimated decompression time: %ss' "$decomptime"
     fi
     printf '\n'
