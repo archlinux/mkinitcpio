@@ -59,7 +59,6 @@ usage: ${0##*/} [options]
    -z, --compress <program>     Use an alternate compressor on the image
 
 EOF
-    cleanup 1
 }
 
 cleanup() {
@@ -142,7 +141,8 @@ while :; do
             shift
             GENIMG=$1 ;;
         -h|--help)
-            usage ;;
+            usage
+            cleanup 0 ;;
         -p|--preset)
             shift
             PRESET=$1 ;;
