@@ -10,7 +10,7 @@ mkinitcpio - Create an initial ramdisk environment
 
 Synopsis
 --------
-mkinitcpio ['OPTIONS']
+'mkinitcpio' [options]
 
 Description
 -----------
@@ -134,7 +134,7 @@ See also
 A more thorough article on configuring mkinitcpio:
 <http://wiki.archlinux.org/index.php/Configuring_mkinitcpio>
 
-initrd(4)
+*initrd*(4), *lsinitcpio*(1)
 
 Bugs
 ----
