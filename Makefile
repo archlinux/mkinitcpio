@@ -9,10 +9,12 @@ DIRS = \
 	/usr/lib/initcpio/hooks \
 	/usr/lib/initcpio/install \
 	/usr/lib/initcpio/udev \
-	/usr/share/man/man8
+	/usr/share/man/man8 \
+	/usr/share/man/man1
 
 DIST_EXTRA = \
-	mkinitcpio.8
+	mkinitcpio.8 \
+	lsinitcpio.1
 
 all: doc
 
@@ -44,15 +46,23 @@ install: all
 	install -m644 -t ${DESTDIR}/etc/mkinitcpio.d mkinitcpio.d/*
 
 	install -m644 mkinitcpio.8 ${DESTDIR}/usr/share/man/man8/mkinitcpio.8
+	install -m644 lsinitcpio.1 ${DESTDIR}/usr/share/man/man1/lsinitcpio.1
 	install -m644 bash-completion ${DESTDIR}/usr/share/bash-completion/completions/mkinitcpio
 
-doc: mkinitcpio.8
+doc: mkinitcpio.8 lsinitcpio.1
 mkinitcpio.8: mkinitcpio.8.txt Makefile
 	a2x -d manpage \
 		-f manpage \
 		-a mansource=mkinitcpio \
 		-a manversion=${VERSION} \
 		-a manmanual=mkinitcpio mkinitcpio.8.txt
+
+lsinitcpio.1: lsinitcpio.1.txt Makefile
+	a2x -d manpage \
+		-f manpage \
+		-a mansource=lsinitcpio \
+		-a manversion=${VERSION} \
+		-a manmanual=lsinitcpio lsinitcpio.1.txt
 
 clean:
 	${RM} -r build mkinitcpio-${VERSION}
