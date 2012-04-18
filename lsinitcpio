@@ -24,7 +24,6 @@ usage: ${0##*/} [options] <initramfs>
    -x, --extract        extract image to disk
 
 USAGE
-    exit 1
 }
 
 decomp() {
@@ -75,7 +74,8 @@ while :; do
         -a|--analyze)
             analyze=1 ;;
         -h|--help)
-            usage ;;
+            usage
+            exit 0 ;;
         -n|--nocolor)
             color=0 ;;
         -v|--verbose)
@@ -111,8 +111,8 @@ if [[ -t 1 ]] && (( color )); then
 fi
 readonly NC BOLD BLUE GREEN RED YELLOW
 
-[[ $image ]] || usage
-[[ -f $image ]] || die "$image: No such file"
+[[ $image ]] || die "No image specified (use -h for help)"
+[[ -f $image ]] || die "No such file: $image"
 
 # read compression type
 case "$(file -Lb "$image")" in
