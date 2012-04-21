@@ -1,0 +1,19 @@
+#!/bin/bash
+
+build() {
+    MODULES=$(checked_modules "/mmc")
+
+    if [[ $MODULES ]]; then
+        MODULES+=" tifm_7xx1 mmc_block"
+    fi
+}
+
+help() {
+    cat <<HELPEOF
+This hook loads the necessary modules for a mmc root device. Detection will
+take place at runtime. To minimize the modules in the image, add the autodetect
+hook too.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
