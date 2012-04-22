@@ -35,6 +35,23 @@ _find_kernel_versions() {
     COMPREPLY=($(compgen -W "${matches[*]}" -- $cur))
 }
 
+_files_from_dirs() {
+    local files stripsuf d f
+
+    if [[ $1 = -s ]]; then
+        stripsuf=$2
+        shift 2
+    fi
+
+    for d in "$@"; do
+        for f in "$d"/*; do
+            [[ -f $f ]] && files+=("${f##*/}")
+        done
+    done
+
+    printf '%s\n' "${files[@]%$stripsuf}"
+}
+
 _mkinitcpio() {
     local action cur prev opts
     opts=(-A --add -b --basedir -c --config -g --generate -H --hookhelp
@@ -52,11 +69,9 @@ _mkinitcpio() {
         -[bt]|--basedir|--builddir)
             _filedir -d ;;
         -p|--preset)
-            COMPREPLY=($(cd /etc/mkinitcpio.d/ && compgen -X '!*.preset' -f  -- $cur))
-            COMPREPLY=("${COMPREPLY[@]%.preset}") ;;
+            COMPREPLY=($(compgen -W "$(_files_from_dirs -s .preset /etc/mkinitcpio.d)" -- "$cur")) ;;
         -[AHS]|--add|--hookhelp|--skiphooks)
-            COMPREPLY=($(cd /lib/initcpio/install/ && compgen -f -- $cur)
-                       $(cd /usr/lib/initcpio/install/ && compgen -f -- $cur)) ;;
+            COMPREPLY=($(compgen -W "$(_files_from_dirs {/usr,}/lib/initcpio/install)" -- "$cur")) ;;
         *)
             COMPREPLY=($(compgen -W "${opts[*]}" -- "$cur")) ;;
     esac
