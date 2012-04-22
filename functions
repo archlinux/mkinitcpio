@@ -35,7 +35,7 @@ parseopts() {
                 return 255 ;;
             *)
                 # fail, ambiguous match
-                error "option '%s' is ambiguous; possibilities:%s" \
+                printf "%s: option '%s' is ambiguous; possibilities:%s\n" "${0##*/}" \
                     "--$1" "$(printf " '%s'" "${longmatch[@]%:}")"
                 return 254 ;;
         esac
@@ -53,7 +53,7 @@ parseopts() {
 
                     # option doesn't exist
                     if [[ $shortopts != *$opt* ]]; then
-                        error "invalid option '%s'" "$opt"
+                        printf "%s: invalid option -- '%s'\n" "${0##*/}" "$opt"
                         OPTRET=(--)
                         return 1
                     fi
@@ -72,7 +72,7 @@ parseopts() {
                             break
                         # parse failure
                         else
-                            error "option '%s' requires an argument" "-$opt"
+                            printf "%s: option '%s' requires an argument\n" "${0##*/}" "-$opt"
                             OPTRET=(--)
                             return 1
                         fi
@@ -85,7 +85,7 @@ parseopts() {
                 case $? in
                     0)
                         if [[ $optarg ]]; then
-                            error "option '%s' does not allow an argument" "--$opt"
+                            printf "%s: option '--%s' doesn't allow an argument\n" "${0##*/}" "$opt"
                             OPTRET=(--)
                             return 1
                         else
@@ -104,7 +104,7 @@ parseopts() {
                             OPTRET+=("--$opt" "$2" )
                             shift 2
                         else
-                            error "option '%s' requires an argument" "--$opt"
+                            printf "%s: option '--%s' requires an argument\n" "${0##*/}" "$opt"
                             OPTRET=(--)
                             return 1
                         fi
@@ -116,12 +116,11 @@ parseopts() {
                         return 1
                         ;;
                     255)
-                        error "invalid option '%s'" "--$opt"
+                        # parse failure
+                        printf "%s: unrecognized option '%s'\n" "${0##*/}" "--$opt"
                         OPTRET=(--)
                         return 1
                         ;;
-                    *)
-                        error "internal error: invalid option in longopt array '%s'" "--$opt"
                 esac
                 ;;
             *) # non-option arg encountered, add it as a parameter
