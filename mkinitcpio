@@ -173,8 +173,8 @@ while :; do
         -L|--listhooks)
             msg "Available hooks"
             for dir in "${INSTDIR[@]}"; do
-                ( cd "$dir" >/dev/null; printf '   %s\n' * )
-            done | column -c$(tput cols)
+                ( cd "$dir" &>/dev/null && printf '   %s\n' * )
+            done | sort -u | column -c$(tput cols)
             exit 0 ;;
         -M|--automods)
             SHOW_AUTOMODS=1 ;;
