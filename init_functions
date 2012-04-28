@@ -179,19 +179,15 @@ resolve_device() {
     [ -n "$dev" ] && device=$dev
 
     case $device in
+        # path to kernel named block device
         /dev/*)
             if poll_device "$device" "$rootdelay"; then
                 echo "$device"
                 return 0
             fi
-
-            # block device, e.g. (/dev/sda1) -> /sys/class/block/sda1/dev
-            if [ -e /sys/class/block/${device:5}/dev ]; then
-                IFS=':' read major minor < "/sys/class/block/${device:5}/dev"
-            fi
             ;;
+        # hex encoded major/minor, such as from LILO
         [0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])
-            # hex encoded major/minor, such as from LILO
             major=$(( 0x0$device >> 8 ))
             minor=$(( 0x0$device & 0xff ))
             ;;
