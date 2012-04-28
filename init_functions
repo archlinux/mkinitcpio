@@ -159,7 +159,7 @@ fsck_root() {
 }
 
 resolve_device() {
-    local major minor dev tagval device=$1
+    local major minor dev tag tagval device=$1
 
     # attempt to resolve devices immediately. if this fails
     # and udev is running, fall back on lazy resolution using
@@ -167,20 +167,13 @@ resolve_device() {
     # usage of tags without udev and "slow" devices like root on
     # USB, which might not immediately show up.
     case $device in
-        UUID=*)
-            tagval=${device#*=}
-            dev=$(blkid -U "$tagval")
+        UUID=*|LABEL=*|PARTUUID=*)
+            dev=$(blkid -lt "$device" -o device)
             if [ -z "$dev" -a "$udevd_running" -eq 1 ]; then
-                dev=/dev/disk/by-uuid/$tagval
+                tag=$(awk -v t="${device%%=*}" 'BEGIN { print tolower(t) }')
+                tagval=${device#*=}
+                dev=/dev/disk/by-$tag/$tagval
             fi
-            ;;
-        LABEL=*)
-            tagval=${device#*=}
-            dev=$(blkid -L "$tagval")
-            if [ -z "$dev" -a  "$udevd_running" -eq 1 ]; then
-                dev=/dev/disk/by-label/$tagval
-            fi
-            ;;
     esac
 
     [ -n "$dev" ] && device=$dev
