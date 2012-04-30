@@ -127,6 +127,9 @@ if (( analyze )); then
     declare -a binaries explicitmod modules foundhooks hooks
     declare kernver ratio columns=$(tput cols)
 
+    # fallback in case tput failed us
+    columns=${columns:-80}
+
     zsize=$(stat -c %s "$image")
 
     # calculate compression ratio
