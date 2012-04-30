@@ -1,7 +1,7 @@
 #!/bin/bash
 
 build() {
-    local added=0
+    local fsck= added=0
 
     add_fsck() {
         if [[ $1 = ext[234] ]]; then
@@ -21,7 +21,7 @@ build() {
             add_fsck $usrfstype && (( ++added ))
         fi
     else
-        for fsck in "$BASEDIR"/sbin/fsck.*; do
+        for fsck in "$BASEDIR"/{usr/,}{s,}bin/fsck.*; do
             [[ -f $fsck ]] || continue
             add_binary "${fsck#$BASEDIR}" && (( ++added ))
         done
