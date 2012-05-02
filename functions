@@ -333,8 +333,8 @@ add_module() {
                 done
                 ;;
             firmware)
-                if [[ -e "$BASEDIR/lib/firmware/$value" ]]; then
-                    _add_file "/lib/firmware/$value" "$BASEDIR/lib/firmware/$value" 644
+                if [[ -e "$BASEDIR/usr/lib/firmware/$value" ]]; then
+                    _add_file "/usr/lib/firmware/$value" "$BASEDIR/usr/lib/firmware/$value" 644
                 fi
                 ;;
         esac
