@@ -104,6 +104,13 @@ get_kernver() {
     return 1
 }
 
+compute_hookset() {
+    for h in $HOOKS "${ADDHOOKS[@]}"; do
+        in_array "$h" "${SKIPHOOKS[@]}" && continue
+        hooks+=("$h")
+    done
+}
+
 . "$FUNCTIONS"
 
 trap 'cleanup 130' INT
@@ -312,7 +319,11 @@ if [[ ! -f "$CONFIG" ]]; then
 fi
 . "$CONFIG"
 
-if [[ -z ${HOOKS//[[:space:]]} && -z ${ADDHOOKS[@]} ]]; then
+# after returning, hooks are populated into the array 'hooks'
+# HOOKS should not be referenced from here on
+compute_hookset
+
+if (( ${#hooks[*]} == 0 )); then
     die "Invalid config: No hooks found"
 fi
 
@@ -352,8 +363,7 @@ for var in MODULES BINARIES FILES; do
     declare "cfg_$var=${!var}"
 done
 
-for hook in ${HOOKS} "${ADDHOOKS[@]}"; do
-    in_array "$hook" "${SKIPHOOKS[@]}" && continue
+for hook in "${hooks[@]}"; do
     unset MODULES BINARIES FILES SCRIPT
     build() { error "$hook: no build function..."; return 1; }
 

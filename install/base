@@ -1,6 +1,8 @@
 #!/bin/bash
 
 build() {
+    local dir applet
+
     for dir in new_root proc sys dev run tmp usr/bin; do
         add_dir "/$dir"
     done
@@ -44,7 +46,6 @@ build() {
 
         # sanitize of any extra whitespace
         read -r -a modules <<< "$MODULES"
-        read -r -a hooks <<< "$HOOKS"
 
         {
             (( ${#modules[*]} )) && printf 'MODULES="%s"\n' "${modules[*]%\?}"
