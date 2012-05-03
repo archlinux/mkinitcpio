@@ -54,20 +54,19 @@ _files_from_dirs() {
 
 _mkinitcpio() {
     local action cur prev opts
-    opts=(-A --add -b --basedir -c --config -g --generate -H --hookhelp
-          -h --help -k --kernel -L --listhooks -M --automods -n --nocolor
-          -p --preset -S --skiphooks -s --save -t --builddir -v --verbose
-          -z --compress)
+    opts=(-A --add -c --config -g --generate -H --hookhelp -h --help -k --kernel
+          -L --listhooks -M --automods -n --nocolor -p --preset -S --skiphooks
+          -s --save -t --builddir -v --verbose -z --compress)
 
     _get_comp_words_by_ref cur prev
 
     case $prev in
         -[cg]|--config|--generate)
             _filedir ;;
+        -t|--builddir)
+            _filedir -d ;;
         -k|--kernel)
             _find_kernel_versions ;;
-        -[bt]|--basedir|--builddir)
-            _filedir -d ;;
         -p|--preset)
             COMPREPLY=($(compgen -W "$(_files_from_dirs -s .preset /etc/mkinitcpio.d)" -- "$cur")) ;;
         -[AHS]|--add|--hookhelp|--skiphooks)

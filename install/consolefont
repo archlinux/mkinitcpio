@@ -5,20 +5,20 @@ build() {
 
     # subshell to avoid namespace pollution
     (
-        for cfg in etc/{rc,vconsole}.conf; do
-            [[ -s $BASEDIR/$cfg ]] && . "$BASEDIR/$cfg"
+        for cfg in /etc/{rc,vconsole}.conf; do
+            [[ -s $cfg ]] && . "$cfg"
         done
 
         [[ $FONT ]] && CONSOLEFONT=$FONT
 
         if [[ $CONSOLEFONT ]]; then
-            for file in "$BASEDIR/usr/share/kbd/consolefonts/$CONSOLEFONT".psf?(u)?(.gz); do
+            for file in "/usr/share/kbd/consolefonts/$CONSOLEFONT".psf?(u)?(.gz); do
                 if [[ -e $file ]]; then
                     [[ $file =~ \.(psfu?)(\.gz)?$ ]] && ext=${BASH_REMATCH[1]}
                     if [[ $file = *.gz ]]; then
                         gzip -cd "$file" > "$BUILDROOT/consolefont.$ext"
                     else
-                        add_file "${file#$BASEDIR}" "/consolefont.$ext"
+                        add_file "$file" "/consolefont.$ext"
                     fi
                     exit 0
                 fi

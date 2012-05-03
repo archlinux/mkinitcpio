@@ -7,8 +7,8 @@ build() {
         l=$LANG
         unset LANG
 
-        for cfg in etc/{rc,vconsole,locale}.conf; do
-            [[ -s $BASEDIR/$cfg ]] && . "$BASEDIR/$cfg"
+        for cfg in /etc/{rc,vconsole,locale}.conf; do
+            [[ -s $cfg ]] && . "$cfg"
         done
 
         [[ $LANG ]] && LOCALE=$LANG

@@ -22,7 +22,7 @@ INSTDIR=(install /usr/lib/initcpio/install /lib/initcpio/install)
 PRESETDIR=mkinitcpio.d
 COMPRESSION=gzip
 
-declare BASEDIR= MODULE_FILE= GENIMG= PRESET= COMPRESSION_OPTIONS= BUILDROOT=
+declare MODULE_FILE= GENIMG= PRESET= COMPRESSION_OPTIONS= BUILDROOT=
 declare NC= BOLD= BLUE= GREEN= RED= YELLOW=
 declare -i QUIET=1 SHOW_AUTOMODS=0 SAVELIST=0 COLOR=1
 declare -a SKIPHOOKS ADDED_MODULES MODPATHS
@@ -42,7 +42,6 @@ usage: ${0##*/} [options]
 
   Options:
    -A, --add <hooks>            Add specified hooks, comma separated, to image
-   -b, --basedir <dir>          Use alternate base directory. (default: /)
    -c, --config <config>        Use alternate config file. (default: /etc/mkinitcpio.conf)
    -g, --generate <path>        Generate cpio image and write to specified path
    -H, --hookhelp <hookname>    Display help for given hook and exit
@@ -87,18 +86,17 @@ get_kernver() {
         return 0
     fi
 
-    if [[ ! -e $BASEDIR$kernel ]]; then
-        error "Specified kernel image does not exist: \`%s'" "$BASEDIR$kernel"
+    if [[ ! -e $kernel ]]; then
+        error "Specified kernel image does not exist: \`%s'" "$kernel"
         return 1
     fi
 
-    read _ kernver < <(file -Lb "$BASEDIR$kernel" | grep -o 'version [^ ]\+')
-    if [[ $kernver && -e $BASEDIR/lib/modules/$kernver ]]; then
+    read _ kernver < <(file -Lb "$kernel" | grep -o 'version [^ ]\+')
+    if [[ $kernver && -e /lib/modules/$kernver ]]; then
         echo "$kernver"
         return 0
     fi
 
-    [[ ${optkver:0:1} == / ]] && optkver=$BASEDIR$optkver
     error "invalid kernel specifier: \`%s'" "$optkver"
 
     return 1
@@ -116,9 +114,9 @@ compute_hookset() {
 trap 'cleanup 130' INT
 trap 'cleanup 143' TERM
 
-OPT_SHORT='A:b:c:g:H:hk:mnLMp:S:st:vz:'
-OPT_LONG=('add:' 'basedir:' 'config:' 'generate:' 'hookhelp:' 'help' 'kernel:' 'listhooks'
-          'automods' 'nocolor' 'preset:' 'skiphooks:' 'save' 'builddir:' 'verbose' 'compress:')
+OPT_SHORT='A:c:g:H:hk:mnLMp:S:st:vz:'
+OPT_LONG=('add:' 'config:' 'generate:' 'hookhelp:' 'help' 'kernel:' 'listhooks' 'automods'
+          'nocolor' 'preset:' 'skiphooks:' 'save' 'builddir:' 'verbose' 'compress:')
 
 if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
     exit 1
@@ -141,9 +139,6 @@ while :; do
             optkver=$1 ;;
         -s|--save)
             SAVELIST=1 ;;
-        -b|--basedir)
-            shift
-            BASEDIR=$1 ;;
         -g|--generate)
             shift
             GENIMG=$1 ;;
@@ -224,16 +219,6 @@ readonly NC BOLD BLUE GREEN RED YELLOW
 [[ -e /proc/self/mountinfo ]] || die "/proc must be mounted!"
 [[ -e /dev/fd ]] || die "/dev must be mounted!"
 
-if [[ $BASEDIR ]]; then
-    # resolve the path. it might be a relative path and/or contain symlinks
-    if ! pushd "$BASEDIR" &>/dev/null; then
-        die "base directory does not exist or is not a directory: \`%s'" "$BASEDIR"
-    fi
-    BASEDIR=$(pwd -P)
-    BASEDIR=${BASEDIR%/}
-    popd &>/dev/null
-fi
-
 KERNELVERSION=$(get_kernver "$optkver") || cleanup 1
 
 if [[ $TMPDIR ]]; then
@@ -261,7 +246,6 @@ if [[ $PRESET ]]; then
     if [[ -f "$PRESET" ]]; then
         # Use -b, -m and -v options specified earlier
         declare -a preset_mkopts preset_cmd
-        [[ $BASEDIR ]] && preset_mkopts+=(-b "$BASEDIR")
         (( QUIET )) || preset_mkopts+=(-v)
         # Build all images
         . "$PRESET"
@@ -279,7 +263,7 @@ if [[ $PRESET ]]; then
 
             preset_config=${p}_config
             if [[ ${!preset_config:-$ALL_config} ]]; then
-              preset_cmd+=(-c "$BASEDIR${!preset_config:-$ALL_config}")
+              preset_cmd+=(-c "${!preset_config:-$ALL_config}")
             else
                 warning "No configuration file specified. Skipping image \`%s'" "$p"
                 continue
@@ -287,7 +271,7 @@ if [[ $PRESET ]]; then
 
             preset_image=${p}_image
             if [[ ${!preset_image} ]]; then
-                preset_cmd+=(-g "$BASEDIR${!preset_image}")
+                preset_cmd+=(-g "${!preset_image}")
             else
                 warning "No image file specified. Skipping image \`%s'" "$p"
                 continue
@@ -327,7 +311,7 @@ if (( ${#hooks[*]} == 0 )); then
     die "Invalid config: No hooks found"
 fi
 
-MODULEDIR=$BASEDIR/lib/modules/$KERNELVERSION/
+MODULEDIR=/lib/modules/$KERNELVERSION/
 if [[ ! -d $MODULEDIR ]]; then
     die "'$MODULEDIR' is not a valid kernel module directory"
 fi
@@ -416,7 +400,7 @@ if (( ${#ADDED_MODULES[*]} )); then
 
     msg "Generating module dependencies"
     install -m644 -t "$BUILDROOT/usr/lib/modules/$KERNELVERSION" \
-        "$BASEDIR/lib/modules/$KERNELVERSION"/modules.{builtin,order}
+        "/lib/modules/$KERNELVERSION"/modules.{builtin,order}
     depmod -b "$BUILDROOT" "$KERNELVERSION"
 
     # remove all non-binary module.* files (except devname for on-demand module loading)

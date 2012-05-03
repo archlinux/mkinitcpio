@@ -29,10 +29,6 @@ Options
 	after all other hooks from the config file. Multiple hooks should be
 	comma-separated. This option can be specified multiple times.
 
-*-b, \--basedir* 'basedir'::
-	Use 'basedir' as a starting point for gathering information about the
-	currently running system. Default: /.
-
 *-c, \--config* 'config'::
 	Use 'config' file to generate the ramdisk. Default: /etc/mkinitcpio.conf
 
@@ -48,8 +44,7 @@ Options
 
 *-k, \--kernel* 'kernelversion'::
 	Use 'kernelversion', instead of the current running kernel. This may be a
-	path to a kernel image or a specific kernel version. If specified as a path to
-	an image, this will always be prefixed by the 'basedir'.
+	path to a kernel image or a specific kernel version.
 
 *-L, \--listhooks*::
 	List all available hooks.
@@ -124,10 +119,9 @@ Examples
 *mkinitcpio -p linux*::
 	Create an initial ramdisk based on the 'linux' preset.
 
-*mkinitcpio -b /mnt -g /mnt/boot/initramfs-linux.img -k /boot/vmlinuz-linux*::
-	Create an initial ramdisk for the root at /mnt, with the kernel at
-	/mnt/boot/vmlinuz-linux. The resulting image will be written to
-	/mnt/boot/initramfs-linux.img.
+*mkinitcpio -g /boot/initramfs-linux.img -k /boot/vmlinuz-linux*::
+	Create an initial ramdisk for the kernel at /boot/vmlinuz-linux. The
+	resulting image will be written to /boot/initramfs-linux.img.
 
 See also
 --------

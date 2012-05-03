@@ -25,7 +25,7 @@ build() {
     auto_modules >"$MODULE_FILE"
 
     # detect filesystem for root
-    if rootfstype=$(findmnt -uno fstype "${BASEDIR:-/}"); then
+    if rootfstype=$(findmnt -uno fstype '/'); then
         add_if_avail "$rootfstype"
     else
         error "failed to detect root filesystem"
@@ -33,7 +33,7 @@ build() {
     fi
 
     # detect filesystem for separate /usr
-    if usrfstype=$(findmnt -snero fstype --tab-file "$BASEDIR/etc/fstab" /usr); then
+    if usrfstype=$(findmnt -snero fstype --tab-file '/etc/fstab' /usr); then
         add_if_avail "$usrfstype"
     fi
 

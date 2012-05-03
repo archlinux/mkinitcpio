@@ -192,26 +192,6 @@ in_array() {
     return 1 # Not Found
 }
 
-pathlookup() {
-    # a basedir aware 'type -P' (or which) for executables
-    #   $1: binary to find
-
-    local path=
-    local -a paths=
-
-    IFS=: read -r -a paths <<< "$PATH"
-
-    for path in "${paths[@]}"; do
-        [[ ${path:0:1} = [.~] ]] && continue
-        if [[ -x $BASEDIR$path/$1 ]]; then
-            printf '%s' "$BASEDIR$path/$1"
-            return 0
-        fi
-    done
-
-    return 1
-}
-
 _add_file() {
     # add a file to $BUILDROOT
     #   $1: pathname on initcpio
@@ -266,7 +246,7 @@ auto_modules() {
     IFS=$'\n' read -rd '' -a mods < \
         <(find /sys/devices -name modalias -exec sort -u {} + |
         # delimit each input by a newline, expanded in place
-        xargs -d $'\n' modprobe -qd "$BASEDIR" -aRS "$KERNELVERSION" |
+        xargs -d $'\n' modprobe -qaRS "$KERNELVERSION" |
         sort -u)
 
     printf "%s\n" "${mods[@]//-/_}"
@@ -333,12 +313,12 @@ add_module() {
                 done
                 ;;
             firmware)
-                if [[ -e "$BASEDIR/usr/lib/firmware/$value" ]]; then
-                    _add_file "/usr/lib/firmware/$value" "$BASEDIR/usr/lib/firmware/$value" 644
+                if [[ -e /usr/lib/firmware/$value ]]; then
+                    _add_file "/usr/lib/firmware/$value" "/usr/lib/firmware/$value" 644
                 fi
                 ;;
         esac
-    done < <(modinfo -b "$BASEDIR" -k "$KERNELVERSION" -0 "$module" 2>/dev/null)
+    done < <(modinfo -k "$KERNELVERSION" -0 "$module" 2>/dev/null)
 
     if [[ -z $path ]]; then
         (( ign_errors )) && return 0
@@ -410,7 +390,7 @@ add_file() {
     # determine source and destination
     local src= dest=${2:-$1} mode=
 
-    src=$BASEDIR$1
+    src=$1
 
     [[ -f "$src" ]] || { error "file not found: \`%s'" "$src"; return 1; }
 
@@ -420,7 +400,7 @@ add_file() {
         return 1
     fi
 
-    _add_file "${dest#$BASEDIR}" "$src" "$mode"
+    _add_file "$dest" "$src" "$mode"
 }
 
 add_binary() {
@@ -433,9 +413,9 @@ add_binary() {
     local line= regex= binary= dest= mode= sodep= resolved= dirname=
 
     if [[ ${1:0:1} != '/' ]]; then
-        binary=$(pathlookup "$1")
+        binary=$(type -P "$1")
     else
-        binary=$BASEDIR$1
+        binary=$1
     fi
 
     [[ -f "$binary" ]] || { error "file not found: \`%s'" "$1"; return 1; }
@@ -444,7 +424,7 @@ add_binary() {
     mode=$(stat -c %a "$binary")
 
     # always add the binary itself
-    _add_file "${dest#$BASEDIR}" "$binary" "$mode"
+    _add_file "$dest" "$binary" "$mode"
 
     lddout=$(ldd "$binary" 2>/dev/null) || return 0 # not a binary!
 
@@ -455,13 +435,13 @@ add_binary() {
 
         if [[ -f $sodep && ! -e $BUILDROOT$sodep ]]; then
             if [[ ! -L $sodep ]]; then
-                _add_file "$sodep" "$BASEDIR$sodep" "$(stat -c %a "$sodep")"
+                _add_file "$sodep" "$sodep" "$(stat -c %a "$sodep")"
             else
-                resolved=$(readlink -e "$BASEDIR$sodep")
+                resolved=$(readlink -e "$sodep")
                 dirname=${resolved%/*}
-                _add_dir "${dirname#$BASEDIR}" 755
-                _add_symlink "$sodep" "${resolved#$BASEDIR}"
-                _add_file "${resolved#$BASEDIR}" "$resolved" 755
+                _add_dir "$dirname" 755
+                _add_symlink "$sodep" "$resolved"
+                _add_file "$resolved" "$resolved" 755
             fi
         fi
     done <<< "$lddout"
