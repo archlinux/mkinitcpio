@@ -192,22 +192,6 @@ in_array() {
     return 1 # Not Found
 }
 
-_add_symlink() {
-    # add a symlink to $buildroot
-    #   $1: name on initcpio
-    #   $2: target of $1
-
-    (( $# == 2 )) || return $EINVAL
-    if (( ! QUIET )); then
-        if [[ -L "$BUILDROOT$1" ]]; then
-            plain "overwriting symlink %s -> %s" "$1" "$2"
-        else
-            plain "adding symlink: %s -> %s" "$1" "$2"
-        fi
-    fi
-    ln -sfn "$2" "$BUILDROOT$1"
-}
-
 auto_modules() {
     # Perform auto detection of modules via sysfs.
 
@@ -350,7 +334,15 @@ add_symlink() {
     (( $# == 2 )) || return 1
 
     add_dir "$(get_dirname "$1")"
-    _add_symlink "$1" "$2"
+
+    if (( ! QUIET )); then
+        if [[ -L $BUILDROOT$1 ]]; then
+            plain "overwriting symlink %s -> %s" "$1" "$2"
+        else
+            plain "adding symlink: %s -> %s" "$1" "$2"
+        fi
+    fi
+    ln -sfn "$2" "$BUILDROOT$1"
 }
 
 add_file() {
@@ -363,7 +355,7 @@ add_file() {
     (( $# )) || return 1
 
     # determine source and destination
-    local src=$1 dest=${2:-$1} mode=$3
+    local src=$1 dest=${2:-$1} mode=
 
     [[ -f $src ]] || { error "file not found: \`%s'" "$src"; return 1; }
 
@@ -420,7 +412,7 @@ add_binary() {
                 resolved=$(readlink -e "$sodep")
                 dirname=${resolved%/*}
                 add_dir "$dirname" 755
-                _add_symlink "$sodep" "$resolved"
+                add_symlink "$sodep" "$resolved"
                 add_file "$resolved" "$resolved" 755
             fi
         fi
