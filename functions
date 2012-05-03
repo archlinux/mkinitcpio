@@ -229,7 +229,7 @@ checked_modules() {
     # modules.
     #   $@: arguments to all_modules
 
-    if [[ -s "$MODULE_FILE" ]]; then
+    if [[ -s $MODULE_FILE ]]; then
         grep -xFf "$MODULE_FILE" <(all_modules "$@")
         return 1
     else
@@ -360,7 +360,7 @@ add_file() {
     [[ -f $src ]] || { error "file not found: \`%s'" "$src"; return 1; }
 
     mode=${3:-$(stat -c %a "$src")}
-    if [[ -z "$mode" ]]; then
+    if [[ -z $mode ]]; then
         error "failed to stat file: \`%s'." "$src"
         return 1
     fi
@@ -390,7 +390,7 @@ add_binary() {
         binary=$1
     fi
 
-    [[ -f "$binary" ]] || { error "file not found: \`%s'" "$1"; return 1; }
+    [[ -f $binary ]] || { error "file not found: \`%s'" "$1"; return 1; }
 
     dest=${2:-$binary}
     mode=$(stat -c %a "$binary")
@@ -403,7 +403,7 @@ add_binary() {
     # resolve sodeps
     regex='(/.+) \(0x[a-fA-F0-9]+\)'
     while read line; do
-        [[ "$line" =~ $regex ]] && sodep=${BASH_REMATCH[1]} || continue
+        [[ $line =~ $regex ]] && sodep=${BASH_REMATCH[1]} || continue
 
         if [[ -f $sodep && ! -e $BUILDROOT$sodep ]]; then
             if [[ ! -L $sodep ]]; then

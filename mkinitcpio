@@ -240,10 +240,10 @@ mkdir -p "$BUILDROOT/usr/lib/modules/$KERNELVERSION/kernel"
 # use preset $PRESET
 if [[ $PRESET ]]; then
     # allow absolute path to preset file, else resolve it
-    if [[ "${PRESET:0:1}" != '/' ]]; then
+    if [[ ${PRESET:0:1} != '/' ]]; then
         printf -v PRESET '%s/%s.preset' "$PRESETDIR" "$PRESET"
     fi
-    if [[ -f "$PRESET" ]]; then
+    if [[ -f $PRESET ]]; then
         # Use -b, -m and -v options specified earlier
         declare -a preset_mkopts preset_cmd
         (( QUIET )) || preset_mkopts+=(-v)
@@ -298,7 +298,7 @@ if [[ $GENIMG ]]; then
     fi
 fi
 
-if [[ ! -f "$CONFIG" ]]; then
+if [[ ! -f $CONFIG ]]; then
     die "Config file does not exist: \`%s'" "$CONFIG"
 fi
 . "$CONFIG"
@@ -416,9 +416,9 @@ trap ERR
 
 declare -i status=0
 declare -a pipesave
-if [[ "${GENIMG}" ]]; then
+if [[ $GENIMG ]]; then
     msg "Creating $COMPRESSION initcpio image: %s" "$GENIMG"
-    [[ "$COMPRESSION" = xz ]] && COMPRESSION_OPTIONS+=" --check=crc32"
+    [[ $COMPRESSION = xz ]] && COMPRESSION_OPTIONS+=" --check=crc32"
 
     # write version stamp
     printf '%s' "$version" > "$BUILDROOT/VERSION"
