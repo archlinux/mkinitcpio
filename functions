@@ -192,24 +192,6 @@ in_array() {
     return 1 # Not Found
 }
 
-_add_file() {
-    # add a file to $BUILDROOT
-    #   $1: pathname on initcpio
-    #   $2: source on disk
-    #   $3: mode
-
-    (( $# == 3 )) || return $EINVAL
-
-    if (( ! QUIET )); then
-        if [[ -e "$BUILDROOT$1" ]]; then
-            plain "overwriting file: %s" "$1"
-        else
-            plain "adding file: %s" "$1"
-        fi
-    fi
-    command install -Dm$3 "$2" "$BUILDROOT$1"
-}
-
 _add_symlink() {
     # add a symlink to $buildroot
     #   $1: name on initcpio
@@ -302,7 +284,7 @@ add_module() {
                 ;;
             firmware)
                 if [[ -e /usr/lib/firmware/$value ]]; then
-                    _add_file "/usr/lib/firmware/$value" "/usr/lib/firmware/$value" 644
+                    add_file "/usr/lib/firmware/$value" "/usr/lib/firmware/$value" 644
                 fi
                 ;;
         esac
@@ -376,23 +358,29 @@ add_file() {
     # the singular file is added.
     #   $1: path to file
     #   $2: destination on initcpio (optional, defaults to same as source)
+    #   $3: mode
 
     (( $# )) || return 1
 
     # determine source and destination
-    local src= dest=${2:-$1} mode=
+    local src=$1 dest=${2:-$1} mode=$3
 
-    src=$1
+    [[ -f $src ]] || { error "file not found: \`%s'" "$src"; return 1; }
 
-    [[ -f "$src" ]] || { error "file not found: \`%s'" "$src"; return 1; }
-
-    mode=$(stat -c %a "$src")
+    mode=${3:-$(stat -c %a "$src")}
     if [[ -z "$mode" ]]; then
         error "failed to stat file: \`%s'." "$src"
         return 1
     fi
 
-    _add_file "$dest" "$src" "$mode"
+    if (( ! QUIET )); then
+        if [[ -e $BUILDROOT$dest ]]; then
+            plain "overwriting file: %s" "$dest"
+        else
+            plain "adding file: %s" "$dest"
+        fi
+    fi
+    command install -Dm$mode "$src" "$BUILDROOT$dest"
 }
 
 add_binary() {
@@ -416,7 +404,7 @@ add_binary() {
     mode=$(stat -c %a "$binary")
 
     # always add the binary itself
-    _add_file "$dest" "$binary" "$mode"
+    add_file "$binary" "$dest" "$mode"
 
     lddout=$(ldd "$binary" 2>/dev/null) || return 0 # not a binary!
 
@@ -427,13 +415,13 @@ add_binary() {
 
         if [[ -f $sodep && ! -e $BUILDROOT$sodep ]]; then
             if [[ ! -L $sodep ]]; then
-                _add_file "$sodep" "$sodep" "$(stat -c %a "$sodep")"
+                add_file "$sodep" "$sodep" "$(stat -c %a "$sodep")"
             else
                 resolved=$(readlink -e "$sodep")
                 dirname=${resolved%/*}
                 add_dir "$dirname" 755
                 _add_symlink "$sodep" "$resolved"
-                _add_file "$resolved" "$resolved" 755
+                add_file "$resolved" "$resolved" 755
             fi
         fi
     done <<< "$lddout"
