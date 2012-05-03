@@ -210,18 +210,6 @@ _add_file() {
     command install -Dm$3 "$2" "$BUILDROOT$1"
 }
 
-_add_dir() {
-    # add a directory (with parents) to $BUILDROOT
-    #   $1: pathname on initcpio
-    #   $2: mode
-
-    (( $# == 2 )) || [[ "$1" == /?* ]] || return 1 # bad args
-    [[ -e "$BUILDROOT$1" ]] && return 0 # file exists
-
-    (( QUIET )) || plain "adding dir: %s" "$1"
-    command install -dm$2 "$BUILDROOT$1"
-}
-
 _add_symlink() {
     # add a symlink to $buildroot
     #   $1: name on initcpio
@@ -358,14 +346,18 @@ add_full_dir() {
 }
 
 add_dir() {
-    # Add a directory to the initcpio image.
-    #   $1: absolute path of directory on image
+    # add a directory (with parents) to $BUILDROOT
+    #   $1: pathname on initcpio
+    #   $2: mode (optional)
 
-    (( ! $# )) && return 1
+    { (( ! $# )) || [[ $1 != /?* ]]; } && return 1
 
     local path=$1 mode=${2:-755}
 
-    _add_dir "$path" "$mode"
+    [[ -e $BUILDROOT$1 ]] && return 0 # file exists
+
+    (( QUIET )) || plain "adding dir: %s" "$path"
+    command install -dm$mode "$BUILDROOT$path"
 }
 
 add_symlink() {
@@ -439,7 +431,7 @@ add_binary() {
             else
                 resolved=$(readlink -e "$sodep")
                 dirname=${resolved%/*}
-                _add_dir "$dirname" 755
+                add_dir "$dirname" 755
                 _add_symlink "$sodep" "$resolved"
                 _add_file "$resolved" "$resolved" 755
             fi
