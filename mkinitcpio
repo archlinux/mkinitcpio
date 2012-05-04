@@ -400,7 +400,7 @@ if (( ${#ADDED_MODULES[*]} )); then
 
     msg "Generating module dependencies"
     install -m644 -t "$BUILDROOT/usr/lib/modules/$KERNELVERSION" \
-        "/lib/modules/$KERNELVERSION"/modules.{builtin,order}
+        "$MODULEDIR"/modules.{builtin,order}
     depmod -b "$BUILDROOT" "$KERNELVERSION"
 
     # remove all non-binary module.* files (except devname for on-demand module loading)
