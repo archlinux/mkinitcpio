@@ -73,7 +73,7 @@ cleanup() {
     exit ${1:0}
 }
 
-get_kernver() {
+resolve_kernver() {
     local kernver= kernel=$1
 
     if [[ -z $kernel ]]; then
@@ -87,17 +87,30 @@ get_kernver() {
     fi
 
     if [[ ! -e $kernel ]]; then
-        error "Specified kernel image does not exist: \`%s'" "$kernel"
+        error "specified kernel image does not exist: \`%s'" "$kernel"
         return 1
     fi
 
-    read _ kernver < <(file -Lb "$kernel" | grep -o 'version [^ ]\+')
-    if [[ $kernver && -e /lib/modules/$kernver ]]; then
-        echo "$kernver"
+    if file -Lb "$kernel" | grep -oP '(?<=version )[^ ]+'; then
         return 0
     fi
 
-    error "invalid kernel specifier: \`%s'" "$optkver"
+    error "invalid kernel specified: \`%s'" "$optkver"
+
+    return 1
+}
+
+find_moduledir() {
+    local d
+
+    for d in {/usr,}/lib/modules; do
+        if [[ -d $d/$1/ ]]; then
+            printf '%s' "$d/$1/"
+            return 0
+        fi
+    done
+
+    error "unable to locate module directory for kernel \`%s'" "$1"
 
     return 1
 }
@@ -219,7 +232,7 @@ readonly NC BOLD BLUE GREEN RED YELLOW
 [[ -e /proc/self/mountinfo ]] || die "/proc must be mounted!"
 [[ -e /dev/fd ]] || die "/dev must be mounted!"
 
-KERNELVERSION=$(get_kernver "$optkver") || cleanup 1
+KERNELVERSION=$(resolve_kernver "$optkver") || cleanup 1
 
 if [[ $TMPDIR ]]; then
     if [[ ! -d $TMPDIR ]]; then
@@ -311,7 +324,8 @@ if (( ${#hooks[*]} == 0 )); then
     die "Invalid config: No hooks found"
 fi
 
-MODULEDIR=/lib/modules/$KERNELVERSION/
+MODULEDIR=$(find_moduledir "$KERNELVERSION") || cleanup 1
+
 if [[ ! -d $MODULEDIR ]]; then
     die "'$MODULEDIR' is not a valid kernel module directory"
 fi
