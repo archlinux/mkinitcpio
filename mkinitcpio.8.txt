@@ -98,6 +98,57 @@ you generate a new initial ramdisk, you define a preset and use the -p switch
 to generate an initial ramdisk according to your preset. Presets are located in
 /etc/mkinitcpio.d
 
+Early Init Environment
+----------------------
+mkinitcpio gives special treatment to certain environment variables passed on
+the kernel command line:
+
+*break*['=<premount|postmount>']::
+	If specified, mkinitcpio will start a shell during early init. The optional
+	parameter controls when this occurs: when 'premount' or no parameter are
+	specified, the shell will be launched prior to mounting root. If 'postmount'
+	is specified, the shell will be launched after mounting root.
+
+*disablehooks=*'hooklist'::
+	This is a comma separated list of hooks which will be skipped during early
+	init.
+
+*earlymodules=*'modulelist'::
+	This is a comma separated list of modules which will be loaded prior to any
+	others. This is generally not needed, and usually points to a configuration
+	or kernel problem.
+
+*quiet*::
+	Causes mkinitcpio to output fewer messages during boot. Errors will not be
+	suppressed.
+
+*ro*::
+	Specifies that root should be mounted with readonly permissions. This is the
+	default behavior.
+
+*rw*::
+	Specifies that root should be mounted with readwrite permissions. This is
+	generally only useful if your initramfs uses the 'fsck' hook.
+
+*root=*'rootdevice'::
+	This variable describes the root partition which early init will mount
+	before passing control to the real init. mkinitcpio understands a variety of
+	formats, the most basic of which is the path to the block device, either
+	directly, such as '/dev/sda2', or using a udev symlink such as
+	'/dev/disk/by-label/CorsairF80-root'.  Support for identification by LABEL or
+	UUID tags are also supported, such as, 'LABEL=CorsairF80-root'. As of
+	util-linux 2.22, PARTUUID is also supported.  Identification via hex encoded
+	major/minor device ID is supported for legacy reasons, but should not be used.
+
+*rootdelay=*'seconds'::
+	Sets the delay, in seconds, that mkinitcpio is willing to wait for the root
+	device to show up, if it is not available immediately. This defaults to 5
+	seconds. If an invalid integer is passed, this variable will have no effect.
+
+These are only the variables that the core of mkinitcpio honor. Additional
+hooks may look for other environment variables and should be documented by the
+help output for the hook.
+
 Files
 -----
 '/etc/mkinitcpio.conf'::
