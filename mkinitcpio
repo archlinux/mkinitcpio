@@ -351,10 +351,10 @@ else
     msg "Starting build: %s" "$KERNELVERSION"
 fi
 
-# set errtrace and a trap to catch errors in parse_hook
+# set functrace and trap to catch errors in add_* functions
 declare -i builderrors=0
-set -E
-trap '[[ $FUNCNAME = parse_hook ]] && (( ++builderrors ))' ERR
+set -o functrace
+trap '(( $? )) && [[ $FUNCNAME = add_* ]] && (( ++builderrors ))' RETURN
 
 # save vars from $CONFIG; they will be parsed last
 for var in MODULES BINARIES FILES; do
@@ -402,7 +402,8 @@ for var in cfg_{MODULES,BINARIES,FILES}; do
 done
 parse_hook
 
-# reset the trap to catch all errors
+# switch out the error handler to catch all errors
+trap -- RETURN
 trap '(( ++builderrors ))' ERR
 
 if (( ${#ADDED_MODULES[*]} )); then
@@ -425,8 +426,8 @@ else
 fi
 
 # unset errtrace and trap
-set +E
-trap ERR
+set +o functrace
+trap -- ERR
 
 declare -i status=0
 declare -a pipesave
