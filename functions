@@ -168,18 +168,6 @@ die() {
     cleanup 1
 }
 
-get_basename() {
-  local base=${1%/}
-  base=${base##*/}
-  printf '%s' "${base:-/}"
-}
-
-get_dirname() {
-  local dir=${1%/}
-  dir=${dir%/*}
-  printf '%s' "${dir:-/}"
-}
-
 in_array() {
     # Search for an element in an array.
     #   $1: needle
@@ -337,7 +325,7 @@ add_symlink() {
 
     (( $# == 2 )) || return 1
 
-    add_dir "$(get_dirname "$1")"
+    add_dir "${1%/*}"
 
     if (( ! QUIET )); then
         if [[ -L $BUILDROOT$1 ]]; then
