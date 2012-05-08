@@ -232,11 +232,11 @@ add_module() {
     #   $1: module name
 
     local module= path= dep= deps= field= value=
-    local -i ign_errors=0
+    local ign_errors=0
 
-    if [[ $1 = -@(t|-try) ]]; then
+    if [[ $1 = *\? ]]; then
         ign_errors=1
-        shift
+        set -- "${1%?}"
     fi
 
     module=${1%.ko*}
@@ -274,11 +274,18 @@ add_module() {
     MODPATHS+=("$path")
     ADDED_MODULES+=("${module//-/_}")
 
-    # explicit module depends
-    case "$module" in
-        fat) add_module --try "nls_cp437" ;;
-        ocfs2) add_module --try "configfs" ;;
-        libcrc32c) add_module --try "crc32c"; add_module --try "crc32c_intel" ;;
+    # handle module quirks
+    case $module in
+        fat)
+            add_module "nls_cp437?"
+            ;;
+        ocfs2)
+            add_module "configfs?"
+            ;;
+        libcrc32c)
+            add_module "crc32c_intel?"
+            add_module "crc32c?"
+            ;;
     esac
 }
 
@@ -422,11 +429,7 @@ parse_hook() {
     local item= script=
 
     for item in $MODULES; do
-        if [[ ${item:(-1)} = '?' ]]; then
-            add_module --try "${item%\?}"
-        else
-            add_module "$item"
-        fi
+        add_module "$item"
     done
 
     for item in $BINARIES; do
