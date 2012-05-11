@@ -422,8 +422,49 @@ add_file() {
     command install -Dm$mode "$src" "$BUILDROOT$dest"
 }
 
+add_runscript() {
+    # Adds a runtime script to the initcpio image. The name is derived from the
+    # script which calls it, though it can be overriden by passing the name of
+    # the runtime hook as the first argument to the function. This shouldn't be
+    # needed and is only left for legacy compatability reasons. It may not work
+    # in future versions of mkinitcpio.
+
+    local funcs fn script hookname=${SCRIPT:-${BASH_SOURCE[1]##*/}}
+
+    if ! script=$(find_in_dirs "$hookname" "${HOOKDIR[@]}"); then
+        error "runtime script for \`%s' not found" "$hookname"
+        return
+    fi
+
+    add_file "$script" "/hooks/$hookname" 755
+
+    mapfile -t funcs < \
+        <(awk '
+            /^[[:space:]]*[[:alnum:]_]+[[:space:]]*\([[:space:]]*\)/ {
+                match($1, /[[:alnum:]_]+/)
+                print substr($1, RSTART, RLENGTH)
+            }' "$script")
+
+    for fn in "${funcs[@]}"; do
+        case $fn in
+            run_earlyhook)
+                RUNHOOKS['early']+=" $hookname"
+                ;;
+            run_hook)
+                RUNHOOKS['hooks']+=" $hookname"
+                ;;
+            run_latehook)
+                RUNHOOKS['late']+=" $hookname"
+                ;;
+            run_cleanuphook)
+                RUNHOOKS['cleanup']="$hookname ${RUNHOOKS['cleanup']}"
+                ;;
+        esac
+    done
+}
+
 add_binary() {
-    # add a binary file to the initcpio image. library dependencies will
+    # Add a binary file to the initcpio image. library dependencies will
     # be discovered and added.
     #   $1: path to binary
     #   $2: destination on initcpio (optional, defaults to same as source)
@@ -474,7 +515,7 @@ parse_hook() {
     # prior to the start of hook processing, and after each hook's build
     # function is run.
 
-    local item= script=
+    local item=
 
     for item in $MODULES; do
         add_module "$item"
@@ -489,8 +530,7 @@ parse_hook() {
     done
 
     if [[ $SCRIPT ]]; then
-        script=$(find_in_dirs "$SCRIPT" "${HOOKDIR[@]}") &&
-            add_file "$script" "/hooks/$SCRIPT"
+        add_runscript "$SCRIPT"
     fi
 }
 

@@ -26,6 +26,7 @@ declare MODULE_FILE= GENIMG= PRESET= COMPRESSION_OPTIONS= BUILDROOT=
 declare NC= BOLD= BLUE= GREEN= RED= YELLOW=
 declare -i QUIET=1 SHOW_AUTOMODS=0 SAVELIST=0 COLOR=1
 declare -a SKIPHOOKS ADDED_MODULES MODPATHS
+declare -A RUNHOOKS
 
 # export a sane PATH
 export PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
