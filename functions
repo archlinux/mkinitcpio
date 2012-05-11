@@ -199,12 +199,23 @@ auto_modules() {
 all_modules() {
     # Add modules to the initcpio, filtered by grep.
     #   $@: filter arguments to grep
+    #   -f FILTER: ERE to filter found modules
 
     local -i count=0
-    local mod=
+    local mod= OPTIND= OPTARG= filter=()
+
+    while getopts ':f:' flag; do
+        case $flag in f) filter+=("$OPTARG") ;; esac
+    done
+    shift $(( OPTIND - 1 ))
 
     while read -r -d '' mod; do
         (( ++count ))
+
+        for f in "${filter[@]}"; do
+            [[ $mod =~ $f ]] && continue 2
+        done
+
         mod=${mod##*/}
         mod="${mod%.ko*}"
         printf '%s\n' "${mod//-/_}"
@@ -213,10 +224,47 @@ all_modules() {
     (( count ))
 }
 
-checked_modules() {
+add_all_modules() {
+    # Add modules to the initcpio.
+    #   $@: arguments to all_modules
+
+    local mod mods
+
+    mapfile -t mods < <(all_modules "$@")
+
+    for mod in "${mods[@]}"; do
+        add_module "$mod"
+    done
+
+    return $(( !${#mods[*]} ))
+}
+
+add_checked_modules() {
     # Add modules to the initcpio, filtered by the list of autodetected
     # modules.
     #   $@: arguments to all_modules
+
+    local mod mods
+
+    if [[ -s $MODULE_FILE ]]; then
+        mapfile -t mods < <(all_modules "$@" | grep -xFf "$MODULE_FILE")
+    else
+        mapfile -t mods < <(all_modules "$@")
+    fi
+
+    for mod in "${mods[@]}"; do
+        add_module "$mod"
+    done
+
+    return $(( !${#mods[*]} ))
+}
+
+checked_modules() {
+    # Returns a list of modules filtered by the list of autodetected modules.
+    #   $@: arguments to all_modules
+    #
+    # DEPRECATED: Use add_checked_modules instead
+    #
 
     if [[ -s $MODULE_FILE ]]; then
         grep -xFf "$MODULE_FILE" <(all_modules "$@")
