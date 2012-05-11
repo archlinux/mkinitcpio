@@ -154,7 +154,10 @@ while :; do
             SAVELIST=1 ;;
         -g|--generate)
             shift
-            GENIMG=$1 ;;
+            [[ -d $1 ]] && die "Invalid image path -- must not be a directory"
+            if ! GENIMG=$(readlink -f "$1") || [[ ! -e ${GENIMG%/*} ]]; then
+                die "Unable to write to path: \`%s'" "$1"
+            fi ;;
         -h|--help)
             usage
             cleanup 0 ;;
@@ -304,13 +307,6 @@ if [[ $PRESET ]]; then
     fi
 fi
 
-if [[ $GENIMG ]]; then
-    IMGPATH=$(readlink -f "$GENIMG")
-    if [[ -z $IMGPATH || ! -w ${IMGPATH%/*} ]]; then
-      die "Unable to write to path: \`%s'" "$GENIMG"
-    fi
-fi
-
 if [[ ! -f $CONFIG ]]; then
     die "Config file does not exist: \`%s'" "$CONFIG"
 fi
@@ -441,7 +437,7 @@ if [[ $GENIMG ]]; then
     pushd "$BUILDROOT" >/dev/null
     find . -print0 |
         bsdcpio $( (( QUIET )) && echo '--quiet' ) -R 0:0 -0oH newc |
-        $COMPRESSION $COMPRESSION_OPTIONS > "$IMGPATH"
+        $COMPRESSION $COMPRESSION_OPTIONS > "$GENIMG"
     pipesave=("${PIPESTATUS[@]}") # save immediately
     popd >/dev/null
 
