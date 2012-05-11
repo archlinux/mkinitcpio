@@ -1,9 +1,13 @@
 #!/bin/bash
 
 build() {
-    MODULES=$(checked_modules "/drivers/firewire/")
+    local mod
 
-    [[ $MODULES ]] && MODULES+=" firewire-sbp2? sd_mod? sr_mod?"
+    if add_checked_modules '/drivers/firewire/'; then
+        for mod in firewire-sbp2 sd_mod sr_mod; do
+            add_module "$mod?"
+        done
+    fi
 }
 
 help() {

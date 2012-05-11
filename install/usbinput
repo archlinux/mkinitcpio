@@ -1,8 +1,9 @@
 #!/bin/bash
 
 build() {
-    MODULES=" $(checked_modules "/usb/host" | grep -ve "_cs" -e "sl811_hcd" -e "isp116x_hcd")"
-    MODULES+=" $(all_modules "/hid/hid-") usbhid?"
+    add_checked_modules -f '(_cs|sl811_hcd|isp116x_hcd)' '/usb/host'
+    add_all_modules '/hid/hid-'
+    add_module 'usbhid?'
 }
 
 help() {

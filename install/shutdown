@@ -1,10 +1,11 @@
 #!/bin/bash
 
 build() {
-    BINARIES='cp lsblk'
-    SCRIPT='shutdown'
-
+    add_binary cp
+    add_binary lsblk
     add_file "/usr/lib/initcpio/shutdown" "/shutdown"
+
+    add_runscript
 }
 
 help() {

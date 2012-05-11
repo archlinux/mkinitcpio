@@ -1,8 +1,6 @@
 #!/bin/bash
 
 build() {
-    local file ext
-
     # subshell to avoid namespace pollution
     (
         for cfg in /etc/{rc,vconsole}.conf; do
@@ -29,9 +27,7 @@ build() {
             warning "consolefont: no font found in configuration"
             exit 1
         fi
-    )
-
-    (( $? == 0 )) && SCRIPT=consolefont
+    ) && add_runscript
 }
 
 help() {

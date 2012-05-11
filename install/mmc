@@ -1,10 +1,9 @@
 #!/bin/bash
 
 build() {
-    MODULES=$(checked_modules "/mmc")
-
-    if [[ $MODULES ]]; then
-        MODULES+=" tifm_7xx1 mmc_block"
+    if add_checked_modules '/mmc'; then
+        add_module 'tifm_7xx1'
+        add_module 'mmc_block'
     fi
 }
 

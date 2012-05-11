@@ -24,9 +24,7 @@ build() {
             warning "keymap: hook specified, but no KEYMAP found in configuration"
             return 1
         fi
-    )
-
-    (( $? == 0 )) && SCRIPT=keymap
+    ) && add_runscript
 }
 
 help() {

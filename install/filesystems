@@ -2,9 +2,9 @@
 
 build() {
     if (( fs_autodetect_failed )); then
-        MODULES=$(all_modules '/kernel/fs' | grep -v "nls")
+        add_all_modules -f 'nls' '/kernel/fs'
     else
-        MODULES=$(checked_modules '/kernel/fs' | grep -v "nls")
+        add_checked_modules -f 'nls' '/kernel/fs'
     fi
 }
 

@@ -1,9 +1,7 @@
 #!/bin/bash
 
 build() {
-    MODULES="$(checked_modules "/ide/" | grep -v "legacy")"
-
-    [[ $MODULES ]] && MODULES+=" ide-gd_mod?"
+    add_checked_modules "/ide/" && add_module "ide-gd_mod?"
 }
 
 help() {

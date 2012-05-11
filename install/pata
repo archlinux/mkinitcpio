@@ -1,11 +1,13 @@
 #!/bin/bash
 
 build() {
+    local filter added
+
     for filter in 'ata/pata_*' 'ata/ata_generic' 'ata/ata_piix'; do
-        MODULES+=" $(checked_modules "$filter")"
+        add_checked_modules "$filter" && (( ++added ))
     done
 
-    [[ $MODULES ]] && MODULES+=" sd_mod?"
+    (( added )) && add_module "sd_mod?"
 }
 
 help() {

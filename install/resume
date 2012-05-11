@@ -1,7 +1,7 @@
 #!/bin/bash
 
 build() {
-    SCRIPT="resume"
+    add_runscript
 }
 
 help() {

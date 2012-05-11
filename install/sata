@@ -1,12 +1,14 @@
 #!/bin/bash
 
 build() {
+    local filter added
+
     for filter in 'scsi/.*ata' 'block/sx8' 'ata/sata_*' \
                   'ata/ahci' 'ata/pdc_adma' 'ata/ata_piix'; do
-        MODULES+=" $(checked_modules "$filter")"
+        add_checked_modules "$filter" && (( ++added ))
     done
 
-    [[ $MODULES ]] && MODULES+=" sd_mod?"
+    (( added )) && add_module "sd_mod?"
 }
 
 help() {

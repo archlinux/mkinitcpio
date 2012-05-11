@@ -1,12 +1,13 @@
 #!/bin/bash
 
 build(){
+    local filter added
 
-    MODULES="$(checked_modules "/scsi/" | grep -vE '(imm|ata|pcmcia)')
-             $(checked_modules "/block/" | grep -E '(cciss|cpqarray|DAC960)')
-             $(checked_modules "/fusion/")"
+    add_checked_modules -f '(imm|ata|pcmcia)' '/scsi/' && (( ++added ))
+    add_checked_modules -f '(cciss|cpqarray|DAC960)' '/block/' && (( ++added ))
+    add_checked_modules '/fusion/' && (( ++added ))
 
-    [[ $MODULES ]] && MODULES+=" sd_mod?"
+    (( added )) && add_module 'sd_mod?'
 }
 
 help() {

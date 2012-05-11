@@ -1,13 +1,11 @@
 #!/bin/bash
 
 build() {
-    local module=
-
-    MODULES="$(checked_modules "/usb/host" | grep -ve "_cs" -e "sl811_hcd" -e "isp116x_hcd")"
-
-    if [[ $MODULES ]]; then
-        MODULES+=" usb_storage? sd_mod? sr_mod?"
-        MODULES+=" $(checked_modules "drivers/usb/storage/ums-*")"
+    if add_checked_modules -f '(_cs|sl811_hcd|isp116x_hcd)' '/usb/host'; then
+        add_module 'usb_storage?'
+        add_module 'sd_mod?'
+        add_module 'sr_mod?'
+        add_checked_modules 'drivers/usb/storage/ums-*'
     fi
 }
 

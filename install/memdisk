@@ -1,10 +1,13 @@
 #!/bin/bash
 
 build() {
-    MODULES="phram mtdblock"
-    BINARIES="/usr/bin/memdiskfind"
-    SCRIPT="memdisk"
+    add_module 'phram'
+    add_module 'mtdblock'
+
     add_file /usr/lib/initcpio/udev/01-memdisk.rules /lib/udev/rules.d/01-memdisk.rules
+    add_binary "memdiskfind"
+
+    add_runscript
 }
 
 help() {

@@ -219,7 +219,7 @@ all_modules() {
         mod=${mod##*/}
         mod="${mod%.ko*}"
         printf '%s\n' "${mod//-/_}"
-    done < <(find "$MODULEDIR" -name '*.ko*' -print0 2>/dev/null | grep -Zz "$@")
+    done < <(find "$MODULEDIR" -name '*.ko*' -print0 2>/dev/null | grep -EZz "$@")
 
     (( count ))
 }
