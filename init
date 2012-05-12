@@ -26,14 +26,11 @@ for d in ${disablehooks//,/ }; do
     eval "hook_${d}=disabled"
 done
 
-earlymodules=${earlymodules//,/ }
-if [ -n "${earlymodules## }" ]; then
-    modprobe -qab ${earlymodules}
-fi
+[ -n "${earlymodules//[[:space:]]}" ] && modprobe -qab ${earlymodules//,/ }
 
 . /config
 
-[ -n "${MODULES## }" ] && modprobe -qab $MODULES
+[ -n "${MODULES//[[:space:]]}" ] && modprobe -qab $MODULES
 
 # If rootdelay is empty or not a non-negative integer, set it to 10
 if [ -z "${rootdelay}" ] || ! [ "${rootdelay}" -ge 0 ]; then
