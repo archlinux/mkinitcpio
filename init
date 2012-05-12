@@ -26,10 +26,11 @@ for d in ${disablehooks//,/ }; do
     [ -e "/hooks/$d" ] && chmod 644 "/hooks/$d"
 done
 
-[ -n "${earlymodules//[[:space:]]}" ] && modprobe -qab ${earlymodules//,/ }
-
 . /config
 
+run_hookfunctions 'run_earlyhook' 'early hook' $EARLYHOOKS
+
+[ -n "${earlymodules//[[:space:]]}" ] && modprobe -qab ${earlymodules//,/ }
 [ -n "${MODULES//[[:space:]]}" ] && modprobe -qab $MODULES
 
 # If rootdelay is empty or not a non-negative integer, set it to 10
@@ -70,6 +71,10 @@ elif [ ! -x "/new_root${init}" ]; then
     echo
     launch_interactive_shell --exec
 fi
+
+run_hookfunctions 'run_latehook' 'late hook' $LATEHOOKS
+
+run_hookfunctions 'run_cleanuphook' 'cleanup hook' $CLEANUPHOOKS
 
 # mount /usr if it exists
 realtab=/new_root/etc/fstab
