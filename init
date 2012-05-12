@@ -23,7 +23,7 @@ else
 fi
 
 for d in ${disablehooks//,/ }; do
-    eval "hook_${d}=disabled"
+    [ -e "/hooks/$d" ] && chmod 644 "/hooks/$d"
 done
 
 [ -n "${earlymodules//[[:space:]]}" ] && modprobe -qab ${earlymodules//,/ }
@@ -37,20 +37,7 @@ if [ -z "${rootdelay}" ] || ! [ "${rootdelay}" -ge 0 ]; then
     rootdelay=10
 fi
 
-if [ -e "/hooks" ]; then
-    for h in ${HOOKS}; do
-        TST=""
-        eval "TST=\$hook_${h}"
-        if [ "${TST}" != "disabled" ]; then
-            run_hook () { msg "${h}: no run function defined"; }
-            if [ -e "/hooks/${h}" ]; then
-               . /hooks/${h}
-               msg ":: Running Hook [${h}]"
-               run_hook
-            fi
-        fi
-    done
-fi
+run_hookfunctions 'run_hook' 'hook' $HOOKS
 
 # honor the old behavior of break=y as a synonym for break=premount
 if [ "${break}" = "y" ] || [ "${break}" = "premount" ]; then

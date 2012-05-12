@@ -44,6 +44,22 @@ major_minor_to_device() {
     return 1
 }
 
+run_hookfunctions() {
+    local hook fn=$1 desc=$2
+
+    shift 2
+    for hook in "$@"; do
+        [ -x "/hooks/$hook" ] || continue
+
+        unset "$fn"
+        . "/hooks/$hook"
+        type "$fn" >/dev/null || continue
+
+        msg ":: running $desc [$hook]"
+        "$fn"
+    done
+}
+
 parse_cmdline() {
     local w in_quotes lhs rhs
     in_quotes=0
