@@ -3,7 +3,7 @@
 build() {
     add_binary cp
     add_binary lsblk
-    add_file "/usr/lib/initcpio/shutdown" "/shutdown"
+    add_file "/usr/lib/initcpio/shutdown" "/shutdown" 755
 
     add_runscript
 }
