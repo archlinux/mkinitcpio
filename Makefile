@@ -67,7 +67,7 @@ lsinitcpio.1: lsinitcpio.1.txt Makefile
 
 clean:
 	${RM} -r build mkinitcpio-${VERSION}
-	${RM} mkinitcpio-${VERSION}.tar.gz mkinitcpio.8 mkinitcpio.8.gz
+	${RM} mkinitcpio-${VERSION}.tar.gz mkinitcpio.8 lsinitcpio.1
 
 dist: doc
 	echo ${VERSION} > VERSION
