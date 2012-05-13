@@ -170,25 +170,6 @@ if (( analyze )); then
 
     explicitmod=($MODULES)
 
-    for hook in $HOOKS; do
-        [[ -e $workdir/hooks/$hook ]] || continue
-
-        mapfile -t funcs < \
-            <(awk '
-                /^[[:space:]]*[[:alnum:]_]+/ && /\([[:space:]]*\)/ {
-                    match($1, /[[:alnum:]_]+/)
-                    print substr($1, RSTART, RLENGTH)
-                }' "$workdir/hooks/$hook")
-
-        for fn in "${funcs[@]}"; do
-            case $fn in
-                run_hook)
-                    hooks+=("$hook")
-                    ;;
-            esac
-        done
-    done
-
     # print results
     imagename=$image
     [[ -L $image ]] && imagename+=" -> $(readlink -e "$image")"
@@ -218,9 +199,27 @@ if (( analyze )); then
     printf '  %s\n' "${binaries[@]}" | sort | column -c$columns
     printf '\n'
 
-    if (( ${#hooks[*]} )); then
+    if [[ $EARLYHOOKS ]]; then
+        msg 'Early hook run order:'
+        printf '  %s\n' $EARLYHOOKS
+        printf '\n'
+    fi
+
+    if [[ $HOOKS ]]; then
         msg 'Hook run order:'
-        printf '  %s\n' "${hooks[@]}"
+        printf '  %s\n' $HOOKS
+        printf '\n'
+    fi
+
+    if [[ $LATEHOOKS ]]; then
+        msg 'Late hook run order:'
+        printf '  %s\n' $LATEHOOKS
+        printf '\n'
+    fi
+
+    if [[ $CLEANUPHOOKS ]]; then
+        msg 'Cleanup hook run order:'
+        printf '  %s\n' $CLEANUPHOOKS
         printf '\n'
     fi
 else
