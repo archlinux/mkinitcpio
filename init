@@ -1,5 +1,6 @@
 #!/usr/bin/ash
 PATH=/usr/bin
+udevd_running=0
 
 . /init_functions
 
@@ -11,16 +12,6 @@ mkdir -m755 /run/initramfs
 
 # parse the kernel command line
 parse_cmdline
-
-# if available, start udevd at this stage
-if [ -x /usr/lib/udev/udevd ]; then
-    msg ":: Starting udevd..."
-    /usr/lib/udev/udevd --daemon --resolve-names=never
-    udevd_running=1
-    msg "done."
-else
-    udevd_running=0
-fi
 
 for d in ${disablehooks//,/ }; do
     [ -e "/hooks/$d" ] && chmod 644 "/hooks/$d"
@@ -90,12 +81,6 @@ fi
 if [ "${break}" = "postmount" ]; then
     echo ":: Post-mount break requested, type 'exit' to resume operation"
     launch_interactive_shell
-fi
-
-# Stop udevd if is running
-if [ "${udevd_running}" -eq 1 ]; then
-    udevadm control --exit
-    udevadm info --cleanup-db
 fi
 
 exec env -i "TERM=$TERM" /sbin/switch_root /new_root $init "$@"
