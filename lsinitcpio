@@ -135,8 +135,8 @@ if (( analyze )); then
     zsize=$(stat -c %s "$image")
 
     # calculate compression ratio
+    TIMEFORMAT=%R decomptime=$({ time decomp "$image" >/dev/null; } 2>&1 )
     if [[ $compress ]]; then
-        TIMEFORMAT=%R decomptime=$({ time decomp "$image" >/dev/null; } 2>&1 )
         fullsize=$(decomp "$image" | bsdtar xOf - | wc -c)
         ratio=.$(( zsize * 1000 / fullsize % 1000 ))
     fi
@@ -181,8 +181,8 @@ if (( analyze )); then
     if [[ $compress ]]; then
         msg 'Compressed with: %s' "$compress"
         msg2 'Uncompressed size: %s (%s ratio)' "$(size_to_human "$fullsize")" "$ratio"
-        msg2 'Estimated decompression time: %ss' "$decomptime"
     fi
+    msg2 'Estimated extraction time: %ss' "$decomptime"
     printf '\n'
 
     if (( ${#modules[*]} )); then
