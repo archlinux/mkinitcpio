@@ -67,17 +67,6 @@ run_hookfunctions 'run_latehook' 'late hook' $LATEHOOKS
 
 run_hookfunctions 'run_cleanuphook' 'cleanup hook' $CLEANUPHOOKS
 
-# mount /usr if it exists
-realtab=/new_root/etc/fstab
-if [ -f "$realtab" ]; then
-    if usr_source=$(findmnt -snero source --tab-file="$realtab" /usr); then
-        mountopts=$(findmnt -snero options --tab-file="$realtab" /usr)
-        fsck_device "$usr_source"
-        msg ":: mounting '$usr_source' on /usr"
-        mount "$usr_source" /new_root/usr -o "$mountopts"
-    fi
-fi
-
 if [ "${break}" = "postmount" ]; then
     echo ":: Post-mount break requested, type 'exit' to resume operation"
     launch_interactive_shell

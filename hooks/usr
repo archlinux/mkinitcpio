@@ -1,0 +1,16 @@
+#!/usr/bin/ash
+
+run_latehook() {
+    local realtab=/new_root/etc/fstab
+
+    if [ -f "$realtab" ]; then
+        if usr_source=$(findmnt -snero source --tab-file="$realtab" /usr); then
+            mountopts=$(findmnt -snero options --tab-file="$realtab" /usr)
+            fsck_device "$usr_source"
+            msg ":: mounting '$usr_source' on /usr"
+            mount "$usr_source" /new_root/usr -o "$mountopts"
+        fi
+    fi
+}
+
+# vim: set ft=sh ts=4 sw=4 et:

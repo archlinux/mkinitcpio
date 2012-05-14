@@ -1,0 +1,16 @@
+#!/bin/bash
+
+build() {
+    add_binary findmnt
+    add_runscript
+}
+
+help() {
+    cat <<HELPEOF
+This provides a support for mounting /usr via a late running hook. No
+configuration is needed, as the mount options will be pulled directly from the
+fstab on the real root device.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
