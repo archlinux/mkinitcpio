@@ -399,6 +399,8 @@ for var in cfg_{MODULES,BINARIES,FILES}; do
 done
 parse_hook
 
+write_image_config
+
 # switch out the error handler to catch all errors
 trap -- RETURN
 trap '(( ++builderrors ))' ERR

@@ -547,4 +547,24 @@ find_in_dirs() {
     return 1
 }
 
+write_image_config() {
+    # write a config file. re-source the config as we can't guarantee the
+    # environment hasn't been modified, but subshell it so it doesn't disturb
+    # anyone else.
+    (
+        . "$CONFIG"
+
+        # sanitize of any extra whitespace
+        read -r -a modules <<< "$MODULES"
+        (( ${#modules[*]} )) && printf 'MODULES="%s"\n' "${modules[*]%\?}"
+
+        printf '%s="%s"\n' \
+            'EARLYHOOKS' "${RUNHOOKS['early']# }" \
+            'HOOKS' "${RUNHOOKS['hooks']# }" \
+            'LATEHOOKS' "${RUNHOOKS['late']# }" \
+            'CLEANUPHOOKS' "${RUNHOOKS['cleanup']% }"
+
+    ) >"$BUILDROOT/config"
+}
+
 # vim: set ft=sh ts=4 sw=4 et:
