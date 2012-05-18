@@ -2,6 +2,10 @@
 PATH=/usr/bin
 udevd_running=0
 
+if [ -x /usr/bin/systemd-timestamp ]; then
+    RD_TIMESTAMP=$(systemd-timestamp)
+fi
+
 . /init_functions
 
 mount -t proc proc /proc -o nosuid,noexec,nodev
@@ -72,6 +76,9 @@ if [ "${break}" = "postmount" ]; then
     launch_interactive_shell
 fi
 
-exec env -i "TERM=$TERM" /sbin/switch_root /new_root $init "$@"
+exec env -i \
+    "TERM=$TERM" \
+    "RD_TIMESTAMP=$RD_TIMESTAMP" \
+    /usr/bin/switch_root /new_root $init "$@"
 
 # vim: set ft=sh ts=4 sw=4 et:
