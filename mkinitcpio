@@ -188,6 +188,7 @@ while :; do
             fi
             msg "Help for hook '$1':"
             help
+            list_hookpoints "$script"
             exit 0 ;;
         -L|--listhooks)
             msg "Available hooks"

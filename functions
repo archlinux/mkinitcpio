@@ -181,6 +181,29 @@ in_array() {
     return 1 # Not Found
 }
 
+funcgrep() {
+    awk -v funcmatch="$1" '
+        /^[[:space:]]*[[:alnum:]_]+[[:space:]]*\([[:space:]]*\)/ {
+            match($1, funcmatch)
+            print substr($1, RSTART, RLENGTH)
+        }' "$2"
+}
+
+list_hookpoints() {
+    local funcs
+
+    [[ -e ${1/install/hooks} ]] || return 0
+
+    mapfile -t funcs < <(funcgrep '^run_[[:alnum:]_]+' "${1/install/hooks}")
+
+    echo
+    msg "This hook has runtime scripts:"
+    in_array run_earlyhook "${funcs[@]}" && msg2 "early hook"
+    in_array run_hook "${funcs[@]}" && msg2 "pre-mount hook"
+    in_array run_latehook "${funcs[@]}" && msg2 "post-mount hook"
+    in_array run_cleanuphook "${funcs[@]}" && msg2 "cleanup hook"
+}
+
 auto_modules() {
     # Perform auto detection of modules via sysfs.
 
@@ -441,12 +464,7 @@ add_runscript() {
 
     add_file "$script" "/hooks/$hookname" 755
 
-    mapfile -t funcs < \
-        <(awk '
-            /^[[:space:]]*[[:alnum:]_]+[[:space:]]*\([[:space:]]*\)/ {
-                match($1, /[[:alnum:]_]+/)
-                print substr($1, RSTART, RLENGTH)
-            }' "$script")
+    mapfile -t funcs < <(funcgrep '^run_[[:alnum:]_]+' "$script")
 
     for fn in "${funcs[@]}"; do
         case $fn in
