@@ -1,0 +1,32 @@
+#!/bin/bash
+
+build() {
+    find "$BUILDROOT" -type f -perm -u+w -print0 2>/dev/null | while read -d '' bin; do
+        case $(file -bi "$bin") in
+            *application/x-sharedlib*)
+                # Libraries (.so)
+                strip --strip-unneeded "$bin"
+                ;;
+            *application/x-archive*)
+                # Libraries (.a)
+                strip --strip-debug "$bin"
+                ;;
+            *application/x-executable*)
+                # Binaries
+                strip --strip-all "$bin"
+                ;;
+        esac
+    done
+}
+
+help() {
+    cat <<HELPEOF
+This hook will locate and strip binaries on your image before archival and
+compression. This hook should be last, as any binaries added to the image after
+this hook runs will not be stripped. This is mostly useful for users who run
+local debug builds but whom do not want or need the extra weight of debug
+symbols on their image.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
