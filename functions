@@ -570,4 +570,41 @@ write_image_config() {
     ) >"$BUILDROOT/config"
 }
 
+run_build_hook() {
+    local hook=$1 script= realscript=
+    local MODULES= BINARIES= FILES= SCRIPT=
+
+    # find script in install dirs
+    if ! script=$(find_in_dirs "$hook" "${INSTDIR[@]}"); then
+        error "Hook '$hook' cannot be found"
+        return 1
+    fi
+
+    # check for deprecation
+    if [[ -L $script ]]; then
+        if ! realscript=$(readlink -e "$script"); then
+            error "$script is a broken symlink to $(readlink "$script")"
+            return 1
+        fi
+        warning "Hook '%s' is deprecated. Replace it with '%s' in your config" "$script" "$realscript"
+        script=$realscript
+    fi
+
+    # source
+    if ! . "$script"; then
+        error 'Failed to read %s' "$script"
+        return 1
+    fi
+
+    if [[ $(type -t build) != function ]]; then
+        error 'Hook '$script' has no build function'
+        return 1
+    fi
+
+    # run
+    msg2 "Running build hook: [%s]" "${script##*/}"
+    build
+    parse_hook
+}
+
 # vim: set ft=sh ts=4 sw=4 et:

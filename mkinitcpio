@@ -353,52 +353,12 @@ declare -i builderrors=0
 set -o functrace
 trap '(( $? )) && [[ $FUNCNAME = add_* ]] && (( ++builderrors ))' RETURN
 
-# save vars from $CONFIG; they will be parsed last
-for var in MODULES BINARIES FILES; do
-    declare "cfg_$var=${!var}"
-done
-
 for hook in "${hooks[@]}"; do
-    unset MODULES BINARIES FILES SCRIPT
-    build() { error "$hook: no build function..."; return 1; }
-
-    # find script in install dirs
-    if ! script=$(find_in_dirs "$hook" "${INSTDIR[@]}"); then
-        error "Hook '$hook' cannot be found."
-        (( ++builderrors ))
-        continue
-    fi
-
-    # check for deprecation
-    if [[ -L $script ]]; then
-        if ! realscript=$(readlink -e "$script"); then
-            error "$script is a broken symlink to $(realpath "$script")"
-            (( ++builderrors ))
-            continue
-        fi
-        warning "Hook '%s' is deprecated. Replace it with '%s' in your config" "$script" "$realscript"
-        script=$realscript
-    fi
-
-    # source
-    if ! . "$script"; then
-        error 'Failed to read %s' "$script"
-        (( ++builderrors ))
-        continue
-    fi
-
-    # run
-    msg2 "Parsing hook: [%s]" "${script##*/}"
-    build
-    parse_hook
+    run_build_hook "$hook" || (( ++builderrors ))
 done
 
-# restore $CONFIG vars add to image
-for var in cfg_{MODULES,BINARIES,FILES}; do
-    declare "${var#cfg_}=${!var}"
-done
+# process config file
 parse_hook
-
 write_image_config
 
 # switch out the error handler to catch all errors
