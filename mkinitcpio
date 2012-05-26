@@ -389,18 +389,27 @@ set +o functrace
 trap -- ERR
 
 declare -i status=0
-declare -a pipesave
 if [[ $GENIMG ]]; then
     msg "Creating $COMPRESSION initcpio image: %s" "$GENIMG"
-    [[ $COMPRESSION = xz ]] && COMPRESSION_OPTIONS+=" --check=crc32"
+
+    case $COMPRESSION in
+        xz)
+            COMPRESSION_OPTIONS+=' --check=crc32'
+            ;;
+    esac
+
+    cpio_opts=('-R' '0:0' '-0' '-o' '-H' 'newc')
+    if (( QUIET )); then
+        cpio_opts+=('--quiet')
+    fi
 
     # write version stamp
     printf '%s' "$version" > "$BUILDROOT/VERSION"
 
     pushd "$BUILDROOT" >/dev/null
     find . -print0 |
-        bsdcpio $( (( QUIET )) && echo '--quiet' ) -R 0:0 -0oH newc |
-        $COMPRESSION $COMPRESSION_OPTIONS > "$GENIMG"
+            bsdcpio "${cpio_opts[@]}" |
+            $COMPRESSION $COMPRESSION_OPTIONS > "$GENIMG"
     pipesave=("${PIPESTATUS[@]}") # save immediately
     popd >/dev/null
 
