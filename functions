@@ -386,7 +386,9 @@ add_dir() {
     #   $1: pathname on initcpio
     #   $2: mode (optional)
 
-    { (( ! $# )) || [[ $1 != /?* ]]; } && return 1
+    if [[ -z $1 || $1 != /?* ]]; then
+        return 1
+    fi
 
     local path=$1 mode=${2:-755}
 
@@ -430,7 +432,10 @@ add_file() {
     # determine source and destination
     local src=$1 dest=${2:-$1} mode=
 
-    [[ -f $src ]] || { error "file not found: \`%s'" "$src"; return 1; }
+    if [[ ! -f $src ]]; then
+        error "file not found: \`%s'" "$src"
+        return 1
+    fi
 
     mode=${3:-$(stat -c %a "$src")}
     if [[ -z $mode ]]; then
@@ -499,7 +504,10 @@ add_binary() {
         binary=$1
     fi
 
-    [[ -f $binary ]] || { error "file not found: \`%s'" "$1"; return 1; }
+    if [[ ! -f $binary ]]; then
+        error "file not found: \`%s'" "$1"
+        return 1
+    fi
 
     dest=${2:-$binary}
     mode=$(stat -c %a "$binary")
