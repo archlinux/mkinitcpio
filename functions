@@ -590,8 +590,12 @@ write_image_config() {
         . "$CONFIG"
 
         # sanitize of any extra whitespace
-        read -r -a modules <<< "$MODULES"
-        (( ${#modules[*]} )) && printf 'MODULES="%s"\n' "${modules[*]%\?}"
+        read -ra modules <<< "$MODULES"
+        for mod in "${modules[@]}"; do
+            in_array "${mod%\?}" "${ADDED_MODULES[@]}" || continue
+            add+=("${mod%\?}")
+        done
+        (( ${#add[*]} )) && printf 'MODULES="%s"\n' "${add[*]}"
 
         printf '%s="%s"\n' \
             'EARLYHOOKS' "${RUNHOOKS['early']# }" \
