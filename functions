@@ -606,6 +606,32 @@ write_image_config() {
     ) >"$BUILDROOT/config"
 }
 
+initialize_buildroot() {
+    # creates a temporary directory for the buildroot and initialize it with a
+    # basic set of necessary directories and symlinks
+
+    local workdir= kernver=$1
+
+    if ! workdir=$(mktemp -d --tmpdir mkinitcpio.XXXXXX); then
+        error 'Failed to create temporary working directory in %s' "${TMPDIR:-/tmp}"
+        return 1
+    fi
+
+    # base directory structure
+    install -dm755 "$workdir/root"/{new_root,proc,sys,dev,run,tmp,usr/{local,lib,bin}}
+    ln -s "usr/lib" "$workdir/root/lib"
+    ln -s "../lib"  "$workdir/root/usr/local/lib"
+    ln -s "bin"     "$workdir/root/usr/sbin"
+    ln -s "usr/bin" "$workdir/root/bin"
+    ln -s "usr/bin" "$workdir/root/sbin"
+    ln -s "../bin"  "$workdir/root/usr/local/bin"
+
+    # kernel module dir
+    install -dm755 "$workdir/root/usr/lib/modules/$kernver/kernel"
+
+    printf '%s' "$workdir"
+}
+
 run_build_hook() {
     local hook=$1 script= realscript=
     local MODULES= BINARIES= FILES= SCRIPT=

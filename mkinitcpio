@@ -195,7 +195,7 @@ while :; do
             SHOW_AUTOMODS=1 ;;
         -t|--builddir)
             shift
-            TMPDIR=$1 ;;
+            export TMPDIR=$1 ;;
         -z|--compress)
             shift
             optcompress=$1 ;;
@@ -231,24 +231,6 @@ readonly NC BOLD BLUE GREEN RED YELLOW
 # use in mkinitcpio. Avoids issues like FS#26344.
 [[ -e /proc/self/mountinfo ]] || die "/proc must be mounted!"
 [[ -e /dev/fd ]] || die "/dev must be mounted!"
-
-KERNELVERSION=$(resolve_kernver "$optkver") || cleanup 1
-
-if [[ $TMPDIR ]]; then
-    if [[ ! -d $TMPDIR ]]; then
-        error "Temporary directory does not exist or is not a directory: \`%s'" "$TMPDIR"
-        cleanup 1
-    fi
-    if [[ ! -w $TMPDIR ]]; then
-        error "Temporary directory is not writeable: \`%s'" "$TMPDIR"
-        cleanup 1
-    fi
-fi
-workdir=$(TMPDIR=$TMPDIR mktemp -d --tmpdir mkinitcpio.XXXXXX)
-BUILDROOT=$workdir/root
-
-# explicitly create the buildroot
-mkdir -p "$BUILDROOT/usr/lib/modules/$KERNELVERSION/kernel"
 
 # use preset $PRESET
 if [[ $PRESET ]]; then
@@ -304,10 +286,14 @@ if [[ $PRESET ]]; then
     fi
 fi
 
-if [[ ! -f $CONFIG ]]; then
-    die "Config file does not exist: \`%s'" "$CONFIG"
-fi
-. "$CONFIG"
+KERNELVERSION=$(resolve_kernver "$optkver") || cleanup 1
+MODULEDIR=$(find_moduledir "$KERNELVERSION") || cleanup 1
+
+# initialize the working directory and buildroot
+workdir=$(initialize_buildroot "$KERNELVERSION") || cleanup 1
+BUILDROOT=$workdir/root
+
+. "$CONFIG" || die "Failed to read configuration \`%s'" "$CONFIG"
 
 # after returning, hooks are populated into the array 'hooks'
 # HOOKS should not be referenced from here on
@@ -316,8 +302,6 @@ compute_hookset
 if (( ${#hooks[*]} == 0 )); then
     die "Invalid config: No hooks found"
 fi
-
-MODULEDIR=$(find_moduledir "$KERNELVERSION") || cleanup 1
 
 if [[ ! -d $MODULEDIR ]]; then
     die "'$MODULEDIR' is not a valid kernel module directory"
@@ -331,7 +315,6 @@ if (( SHOW_AUTOMODS )); then
     cat "$MODULE_FILE"
     cleanup 0
 fi
-
 
 if [[ -z $GENIMG ]]; then
     msg "Starting dry run: %s" "$KERNELVERSION"

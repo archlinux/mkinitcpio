@@ -1,16 +1,7 @@
 #!/bin/bash
 
 build() {
-    local dir applet
-
-    for dir in new_root proc sys dev run tmp usr/bin; do
-        add_dir "/$dir"
-    done
-
-    add_symlink /lib usr/lib
-    add_symlink /sbin usr/bin
-    add_symlink /bin usr/bin
-    add_symlink /usr/sbin bin
+    local applet
 
     add_binary /usr/lib/initcpio/busybox /bin/busybox
 
