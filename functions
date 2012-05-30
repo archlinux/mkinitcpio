@@ -346,9 +346,12 @@ add_full_dir() {
 
     if [[ -n $1 && -d $1 ]]; then
         for f in "$1"/*; do
-            if [[ -d "$f" ]]; then
+            if [[ -L $f ]]; then
+                add_symlink "$f" "$(readlink "$f")"
+            elif [[ -d $f ]]; then
+                add_dir "$f"
                 add_full_dir "$f"
-            else
+            elif [[ -f $f ]]; then
                 add_file "$f"
             fi
         done
