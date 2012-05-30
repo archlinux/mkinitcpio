@@ -1,13 +1,6 @@
 #!/bin/bash
-# mkinitcpio - modular tool for building an init ramfs cpio image
 #
-# IMPORTANT: We need to keep a common base syntax here because
-# some of these hooks/scripts need to run under busybox's ash -
-# therefore, the following constraints should be enforced:
-#   variables should be quoted and bracketed "${SOMEVAR}"
-#   inline execution should be done with $() instead of backticks
-#   use -z "${var}" to test for nulls/empty strings
-#   in case of embedded spaces, quote all path names and string comparisons
+# mkinitcpio - modular tool for building an initramfs images
 #
 
 declare -r version=%VERSION%
