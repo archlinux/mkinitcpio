@@ -513,7 +513,13 @@ add_binary() {
     # resolve sodeps
     regex='(/.+) \(0x[a-fA-F0-9]+\)'
     while read line; do
-        [[ $line =~ $regex ]] && sodep=${BASH_REMATCH[1]} || continue
+        if [[ $line =~ $regex ]]; then
+            sodep=${BASH_REMATCH[1]}
+        elif [[ $line = *'not found' ]]; then
+            error "binary dependency \`%s' not found for \`%s'" "${line%% *}" "$1"
+            (( ++builderrors ))
+            continue
+        fi
 
         if [[ -f $sodep && ! -e $BUILDROOT$sodep ]]; then
             if [[ ! -L $sodep ]]; then
