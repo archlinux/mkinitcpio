@@ -430,7 +430,7 @@ if [[ $GENIMG ]]; then
     if [[ $errmsg ]]; then
         error "Image generation FAILED: %s" "$errmsg"
         status=1
-    else
+    elif (( builderrors == 0 )); then
         msg "Image generation successful"
     fi
 
