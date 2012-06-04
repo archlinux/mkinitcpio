@@ -615,6 +615,7 @@ run_build_hook() {
     fi
 
     # source
+    unset -f build
     if ! . "$script"; then
         error 'Failed to read %s' "$script"
         return 1
