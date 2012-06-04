@@ -160,8 +160,7 @@ if (( analyze )); then
     foundhooks=("$workdir"/hooks/*)
     [[ -f ${foundhooks[0]} ]] && foundhooks=("${foundhooks[@]##*/}") || unset foundhooks
 
-    binaries=("$workdir"/usr/bin/*)
-    binaries=("${binaries[@]##*/}")
+    mapfile -t binaries < <(find "$workdir/usr/bin" -type f -printf %f\\n)
 
     read -r version < "$workdir/VERSION"
 
