@@ -178,7 +178,7 @@ while :; do
             shift
             if script=$(find_in_dirs "$1" "${INSTDIR[@]}"); then
                 . "$script"
-                if [[ $(type -t help) != function ]]; then
+                if ! declare -f help >/dev/null; then
                     error "No help for hook $1"
                     exit 1
                 fi

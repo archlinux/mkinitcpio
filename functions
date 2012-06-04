@@ -633,7 +633,7 @@ run_build_hook() {
         return 1
     fi
 
-    if [[ $(type -t build) != function ]]; then
+    if ! declare -f build >/dev/null; then
         error 'Hook '$script' has no build function'
         return 1
     fi
