@@ -122,10 +122,11 @@ functions exist to facilitate this.
 
 	Adds a directory and its parents to the image.
 
-*add_full_path* 'path'::
+*add_full_dir* 'directory'::
 
-	Recursively adds a path to the image. This will inherently call *add_file*
-	and *add_dir* accordingly.
+	Recursively adds a directory to the image by walking the given path and
+	calling *add_file*, *add_dir*, and *add_symlink* accordingly. This function
+	will not follow symlinks, nor will it add the targets of symlinks.
 
 *add_all_modules* [ '-f filter' ] *pattern*::
 
