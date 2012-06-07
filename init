@@ -49,6 +49,9 @@ fsck_root
 # Mount root at /new_root
 ${mount_handler:-default_mount_handler} /new_root
 
+run_hookfunctions 'run_latehook' 'late hook' $LATEHOOKS
+run_hookfunctions 'run_cleanuphook' 'cleanup hook' $CLEANUPHOOKS
+
 init=${init:-/sbin/init}
 if [ "$(stat -c %D /)" = "$(stat -c %D /new_root)" ]; then
     # Nothing got mounted on /new_root. This is the end, we don't know what to do anymore
@@ -66,10 +69,6 @@ elif [ ! -x "/new_root${init}" ]; then
     echo
     launch_interactive_shell --exec
 fi
-
-run_hookfunctions 'run_latehook' 'late hook' $LATEHOOKS
-
-run_hookfunctions 'run_cleanuphook' 'cleanup hook' $CLEANUPHOOKS
 
 if [ "${break}" = "postmount" ]; then
     echo ":: Post-mount break requested, type 'exit' to resume operation"
