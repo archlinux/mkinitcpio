@@ -55,6 +55,8 @@ EOF
 }
 
 cleanup() {
+    local err=${1:-$?}
+
     if [[ $workdir ]]; then
         # when PRESET is set, we're in the main loop, not a worker process
         if (( SAVELIST )) && [[ -z $PRESET ]]; then
@@ -64,7 +66,7 @@ cleanup() {
         fi
     fi
 
-    exit ${1:0}
+    exit $err
 }
 
 resolve_kernver() {
