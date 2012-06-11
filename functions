@@ -590,7 +590,7 @@ write_image_config() {
         . "$CONFIG"
 
         # sanitize of any extra whitespace
-        read -ra modules <<< "$MODULES"
+        read -ra modules <<<"${MODULES//-/_}"
         for mod in "${modules[@]}"; do
             in_array "${mod%\?}" "${ADDED_MODULES[@]}" || continue
             add+=("${mod%\?}")
