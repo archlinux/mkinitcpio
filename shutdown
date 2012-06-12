@@ -25,7 +25,7 @@ stop_device() {
             read devname <"$1/dm/name"
             lvm lvdisplay -c "/dev/mapper/$devname" | {
                 IFS=: read _ vgname _
-                lvm vgchange -an "$vgname"
+                lvm vgchange --noudevsync -an "$vgname"
             }
             ;;
         raid*)
