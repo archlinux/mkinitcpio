@@ -141,7 +141,9 @@ if (( analyze )); then
         ratio=.$(( zsize * 1000 / fullsize % 1000 ))
     fi
 
-    # decompress the image since we need to read from it multiple times
+    # decompress the image since we need to read from it multiple times. we
+    # have to pass this through decomp() since the image might be lzop which
+    # bsdtar can't read.
     decomp "$image" | bsdtar -C "$workdir" -xf -
 
     # collect stats
