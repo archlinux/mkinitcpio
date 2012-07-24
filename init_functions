@@ -10,7 +10,7 @@ err () {
 poll_device() {
     local device=$1 seconds=${2//[!0-9]}
 
-    [ -z "$seconds" ] && seconds=5
+    [ -z "$seconds" ] && seconds=10
 
     [ -b "$device" ] && return 0
 
