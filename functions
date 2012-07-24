@@ -618,7 +618,7 @@ initialize_buildroot() {
     fi
 
     # base directory structure
-    install -dm755 "$workdir/root"/{new_root,proc,sys,dev,run,tmp,usr/{local,lib,bin}}
+    install -dm755 "$workdir/root"/{new_root,proc,sys,dev,run,tmp,etc,usr/{local,lib,bin}}
     ln -s "usr/lib" "$workdir/root/lib"
     ln -s "../lib"  "$workdir/root/usr/local/lib"
     ln -s "bin"     "$workdir/root/usr/sbin"
@@ -628,6 +628,9 @@ initialize_buildroot() {
 
     # kernel module dir
     install -dm755 "$workdir/root/usr/lib/modules/$kernver/kernel"
+
+    # indicate that this is an initramfs
+    >"$workdir/root/etc/initrd-release"
 
     printf '%s' "$workdir"
 }
