@@ -35,7 +35,7 @@ mkinitcpio $version
 usage: ${0##*/} [options]
 
   Options:
-   -A, --add <hooks>            Add specified hooks, comma separated, to image
+   -A, --addhooks <hooks>       Add specified hooks, comma separated, to image
    -c, --config <config>        Use alternate config file. (default: /etc/mkinitcpio.conf)
    -g, --generate <path>        Generate cpio image and write to specified path
    -H, --hookhelp <hookname>    Display help for given hook and exit
@@ -125,18 +125,18 @@ trap 'cleanup 130' INT
 trap 'cleanup 143' TERM
 
 OPT_SHORT='A:c:g:H:hk:mnLMp:r:S:st:vz:'
-OPT_LONG=('add:' 'config:' 'generate:' 'hookhelp:' 'help' 'kernel:' 'listhooks' 'automods'
-          'moduleroot:' 'nocolor' 'preset:' 'skiphooks:' 'save' 'builddir:' 'verbose' 'compress:')
+OPT_LONG=('add:' 'addhooks:' 'config:' 'generate:' 'hookhelp:' 'help'
+          'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor'
+          'preset:' 'skiphooks:' 'save' 'builddir:' 'verbose' 'compress:')
 
-if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
-    exit 1
-fi
+parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@" || exit 1
 set -- "${OPTRET[@]}"
 unset OPT_SHORT OPT_LONG OPTRET
 
 while :; do
     case $1 in
-        -A|--add)
+        # --add remains for backwards compat
+        -A|--add|--addhooks)
             shift
             IFS=, read -r -a add <<< "$1"
             ADDHOOKS+=("${add[@]}")

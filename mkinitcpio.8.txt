@@ -24,7 +24,7 @@ other features.
 
 Options
 -------
-*-A, \--add* 'hooks'::
+*-A, \--addhooks* 'hooks'::
 	Add the additional 'hooks' to the image. These will be processed in order
 	after all other hooks from the config file. Multiple hooks should be
 	comma-separated. This option can be specified multiple times.

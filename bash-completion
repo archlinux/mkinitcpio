@@ -54,7 +54,7 @@ _files_from_dirs() {
 
 _mkinitcpio() {
     local action cur prev opts
-    opts=(-A --add -c --config -g --generate -H --hookhelp -h --help -k --kernel
+    opts=(-A --addhooks -c --config -g --generate -H --hookhelp -h --help -k --kernel
           -L --listhooks -M --automods -n --nocolor -p --preset -r --moduleroot
           -S --skiphooks -s --save -t --builddir -v --verbose -z --compress)
 
