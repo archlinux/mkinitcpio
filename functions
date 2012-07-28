@@ -212,7 +212,7 @@ auto_modules() {
     IFS=$'\n' read -rd '' -a mods < \
         <(find /sys/devices -name modalias -exec sort -u {} + |
         # delimit each input by a newline, expanded in place
-        xargs -d $'\n' modprobe -qaRS "$KERNELVERSION" |
+        xargs -d $'\n' modprobe -d "$MODULEROOT" -qaRS "$KERNELVERSION" |
         sort -u)
 
     printf "%s\n" "${mods[@]//-/_}"
@@ -332,7 +332,7 @@ add_module() {
                 fi
                 ;;
         esac
-    done < <(modinfo -k "$KERNELVERSION" -0 "$module" 2>/dev/null)
+    done < <(modinfo -b "$MODULEROOT" -k "$KERNELVERSION" -0 "$module" 2>/dev/null)
 
     if [[ -z $path ]]; then
         (( ign_errors )) && return 0

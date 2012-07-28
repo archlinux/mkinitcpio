@@ -62,6 +62,9 @@ Options
 	/etc/mkinitcpio.d (without the .preset extension) or a full, absolute path to a
 	file.
 
+*-r, \--moduleroot* 'root'::
+	Specifies the root directory to find modules in, defaulting to '/'.
+
 *-S, \--skiphooks* 'hooks'::
 	Skip 'hooks' when generating the image. Multiple hooks should be comma-separated.
 	This option can be specified multiple times.

@@ -45,6 +45,7 @@ usage: ${0##*/} [options]
    -M, --automods               Display modules found via autodetection
    -n, --nocolor                Disable colorized output messages
    -p, --preset <file>          Build specified preset from /etc/mkinitcpio.d
+   -r, --moduleroot <dir>       Root directory for modules (default: /)
    -S, --skiphooks <hooks>      Skip specified hooks, comma-separated, during build
    -s, --save                   Save build directory. (default: no)
    -t, --builddir <dir>         Use DIR as the temporary build directory
@@ -99,7 +100,7 @@ resolve_kernver() {
 find_moduledir() {
     local d
 
-    for d in {/usr,}/lib/modules; do
+    for d in "$MODULEROOT"{/usr,}/lib/modules; do
         if [[ -d $d/$1/ ]]; then
             printf '%s' "$d/$1/"
             return 0
@@ -123,9 +124,9 @@ compute_hookset() {
 trap 'cleanup 130' INT
 trap 'cleanup 143' TERM
 
-OPT_SHORT='A:c:g:H:hk:mnLMp:S:st:vz:'
+OPT_SHORT='A:c:g:H:hk:mnLMp:r:S:st:vz:'
 OPT_LONG=('add:' 'config:' 'generate:' 'hookhelp:' 'help' 'kernel:' 'listhooks' 'automods'
-          'nocolor' 'preset:' 'skiphooks:' 'save' 'builddir:' 'verbose' 'compress:')
+          'moduleroot:' 'nocolor' 'preset:' 'skiphooks:' 'save' 'builddir:' 'verbose' 'compress:')
 
 if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
     exit 1
@@ -199,6 +200,9 @@ while :; do
         -z|--compress)
             shift
             optcompress=$1 ;;
+        -r|--moduleroot)
+            shift
+            MODULEROOT=$1 ;;
         --)
             shift
             break 2 ;;
