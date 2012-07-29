@@ -10,7 +10,7 @@ build() {
 
         # treat this as an alias, since ext3 might be aliased to ext4.
         IFS=$'\n' read -rd '' -a resolved < \
-            <(modprobe -M "$MODULEROOT" -S "$KERNELVERSION" -R "$1" 2>/dev/null)
+            <(modprobe -d "$MODULEROOT" -S "$KERNELVERSION" -R "$1" 2>/dev/null)
 
         if (( ${#resolved[*]} )); then
             printf '%s\n' "${resolved[@]}" >>"$MODULE_FILE"
