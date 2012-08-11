@@ -10,9 +10,9 @@ build() {
         [[ $FONT ]] && CONSOLEFONT=$FONT
 
         if [[ $CONSOLEFONT ]]; then
-            for file in "/usr/share/kbd/consolefonts/$CONSOLEFONT".psf?(u)?(.gz); do
+            for file in "/usr/share/kbd/consolefonts/$CONSOLEFONT".@(fnt|psf?(u))?(.gz); do
                 if [[ -e $file ]]; then
-                    [[ $file =~ \.(psfu?)(\.gz)?$ ]] && ext=${BASH_REMATCH[1]}
+                    [[ $file =~ (\.(fnt|psfu?))(\.gz)?$ ]] && ext=${BASH_REMATCH[2]}
                     if [[ $file = *.gz ]]; then
                         gzip -cd "$file" > "$BUILDROOT/consolefont.$ext"
                     else
