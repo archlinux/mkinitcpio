@@ -55,6 +55,10 @@ disassemble() {
     done
 }
 
+# XXX: Discourage libdevmapper from thinking that udev
+# might be in a useful state. FS#30995.
+rm -rf /run/udev
+
 printf '%s\n' 'Detaching loop devices.'
 
 for loop in loop*/loop; do
