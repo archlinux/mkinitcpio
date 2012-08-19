@@ -1,5 +1,4 @@
 #!/usr/bin/ash
-PATH=/usr/bin
 udevd_running=0
 
 if [ -x /usr/bin/systemd-timestamp ]; then
