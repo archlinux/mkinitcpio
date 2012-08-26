@@ -163,7 +163,7 @@ run in reverse.
 
 *run_earlyhook*::
 
-	Functions of this name will be run once the API mounts have been setup the
+	Functions of this name will be run once the API mounts have been setup and the
 	kernel command line has been parsed. Daemons needed for early userspace should
 	be started from this hook point.
 
