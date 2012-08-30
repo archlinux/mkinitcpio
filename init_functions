@@ -183,7 +183,7 @@ resolve_device() {
     # usage of tags without udev and "slow" devices like root on
     # USB, which might not immediately show up.
     case $device in
-        UUID=*|LABEL=*|PARTUUID=*)
+        UUID=*|LABEL=*|PARTUUID=*|PARTLABEL=*)
             dev=$(blkid -lt "$device" -o device)
             if [ -z "$dev" -a "$udevd_running" -eq 1 ]; then
                 tag=$(awk -v t="${device%%=*}" 'BEGIN { print tolower(t) }')
