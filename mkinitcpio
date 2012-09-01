@@ -323,6 +323,13 @@ fi
 if [[ -z $GENIMG ]]; then
     msg "Starting dry run: %s" "$KERNELVERSION"
 else
+    # check for permissions. if the image doesn't already exist,
+    # then check the directory
+    if [[ ( -e $GENIMG && ! -w $GENIMG ) ||
+            ( ! -d ${GENIMG%/*} || ! -w ${GENIMG%/*} ) ]]; then
+        die 'Unable to write to %s' "$GENIMG"
+    fi
+
     COMPRESSION=${optcompress:-$COMPRESSION}
     if ! type -P "$COMPRESSION" >/dev/null; then
         die "Unable to locate compression method: %s" "$COMPRESSION"
