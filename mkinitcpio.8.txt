@@ -131,6 +131,11 @@ functions exist to facilitate this.
 	calling *add_file*, *add_dir*, and *add_symlink* accordingly. This function
 	will not follow symlinks, nor will it add the targets of symlinks.
 
+*add_symlink* 'path' 'link-target'::
+
+	Adds a symlink to the image at the specified `path`, pointing to the specified
+	`link-target`.
+
 *add_all_modules* [ '-f filter' ] *pattern*::
 
 	add modules to the image, without regard for the autodetect whitelist. *pattern*
