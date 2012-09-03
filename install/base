@@ -19,11 +19,6 @@ build() {
     add_binary mount
     add_binary switch_root
 
-    add_symlink "/etc/mtab" "/proc/self/mounts"
-
-    # Add an empty fstab for mount and fsck
-    >"$BUILDROOT/etc/fstab"
-
     add_file "/usr/lib/initcpio/init_functions" "/init_functions"
     add_file "/usr/lib/initcpio/init" "/init"
     add_file "/usr/lib/modprobe.d/usb-load-ehci-first.conf"

@@ -630,6 +630,10 @@ initialize_buildroot() {
     # kernel module dir
     install -dm755 "$workdir/root/usr/lib/modules/$kernver/kernel"
 
+    # mount tables
+    ln -s /proc/self/mounts "$workdir/root/etc/mtab"
+    >"$workdir/root/etc/fstab"
+
     # indicate that this is an initramfs
     >"$workdir/root/etc/initrd-release"
 
