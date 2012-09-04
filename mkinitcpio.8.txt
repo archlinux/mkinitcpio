@@ -131,10 +131,13 @@ functions exist to facilitate this.
 	calling *add_file*, *add_dir*, and *add_symlink* accordingly. This function
 	will not follow symlinks, nor will it add the targets of symlinks.
 
-*add_symlink* 'path' 'link-target'::
+*add_symlink* 'path' [ 'link-target' ]::
 
-	Adds a symlink to the image at the specified `path`, pointing to the specified
-	`link-target`.
+	Adds a symlink to the image at the specified `path`, optionally pointing to
+	the specified `link-target`. If the `link-target` is not provided, it is assumed
+	that this symlink exists in the real filesystem, and the target will be read
+	using readlink. There is no checking done to ensure that the target of the
+	symlink exists, and symlinks will not be followed recursively.
 
 *add_all_modules* [ '-f filter' ] *pattern*::
 

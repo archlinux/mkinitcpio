@@ -402,22 +402,33 @@ add_dir() {
 }
 
 add_symlink() {
-    # Add a symlink to the initcpio image.
+    # Add a symlink to the initcpio image. There is no checking done
+    # to ensure that the target of the symlink exists.
     #   $1: pathname of symlink on image
-    #   $2: absolute path to target of symlink
+    #   $2: absolute path to target of symlink (optional, can be read from $1)
 
-    (( $# == 2 )) || return 1
+    local name_=$1 target_=$2
 
-    add_dir "${1%/*}"
+    (( $# == 1 || $# == 2 )) || return 1
+
+    if [[ -z $target_ ]]; then
+        target_=$(readlink -f "$name_")
+        if [[ -z $target_ ]]; then
+            error 'invalid symlink: %s' "$name_"
+            return 1
+        fi
+    fi
+
+    add_dir "${name_%/*}"
 
     if (( ! QUIET )); then
         if [[ -L $BUILDROOT$1 ]]; then
-            plain "overwriting symlink %s -> %s" "$1" "$2"
+            plain "overwriting symlink %s -> %s" "$name_" "$target_"
         else
-            plain "adding symlink: %s -> %s" "$1" "$2"
+            plain "adding symlink: %s -> %s" "$name_" "$target_"
         fi
     fi
-    ln -sfn "$2" "$BUILDROOT$1"
+    ln -sfn "$target_" "$BUILDROOT$name_"
 }
 
 add_file() {
