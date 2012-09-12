@@ -26,8 +26,8 @@ build() {
 
 help() {
     cat <<HELPEOF
-This hook sets up all initial directories and installs base utilities. DO NOT
-remove this one unless you know what you're doing.
+This hook provides crucial runtime necessities for booting. DO NOT
+remove this hook unless you know what you're doing.
 HELPEOF
 }
 
