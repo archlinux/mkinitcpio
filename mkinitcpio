@@ -405,7 +405,7 @@ if [[ $GENIMG ]]; then
 
     pushd "$BUILDROOT" >/dev/null
     find . -print0 |
-            bsdcpio "${cpio_opts[@]}" |
+            LANG=C bsdcpio "${cpio_opts[@]}" |
             $COMPRESSION $COMPRESSION_OPTIONS > "$GENIMG"
     pipesave=("${PIPESTATUS[@]}") # save immediately
     popd >/dev/null
