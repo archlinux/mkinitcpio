@@ -362,7 +362,7 @@ write_image_config
 trap -- RETURN
 trap '(( ++builderrors ))' ERR
 
-if (( ${#ADDED_MODULES[*]} )); then
+if (( ${#MODPATHS[*]} )); then
     printf '%s\0' "${MODPATHS[@]}" | sort -zu |
         xargs -0 cp -t "$BUILDROOT/usr/lib/modules/$KERNELVERSION/kernel"
 
