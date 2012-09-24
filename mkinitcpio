@@ -371,7 +371,13 @@ if (( ${#MODPATHS[*]} )); then
 
     msg "Generating module dependencies"
     install -m644 -t "$BUILDROOT/usr/lib/modules/$KERNELVERSION" \
-        "$MODULEDIR"/modules.{builtin,order}
+        "$MODULEDIR"/modules.builtin
+
+    # we install all modules into kernel/, making the .order file incorrect
+    # for the module tree. munge it, so that we have an accurate index.
+    awk -F'/' '{ print "kernel/" $NF }' \
+        "$MODULEDIR"/modules.order >"$BUILDROOT/lib/modules/$KERNELVERSION/modules.order"
+
     depmod -b "$BUILDROOT" "$KERNELVERSION"
 
     # remove all non-binary module.* files (except devname for on-demand module loading)
