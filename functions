@@ -594,11 +594,11 @@ find_in_dirs() {
 }
 
 write_image_config() {
-    # write a config file. re-source the config as we can't guarantee the
-    # environment hasn't been modified, but subshell it so it doesn't disturb
-    # anyone else.
-    (
-        . "$CONFIG"
+    # write the config as runtime config and as a pristine build config
+    # (for audting purposes) to the image.
+
+    tee "$BUILDROOT/buildconfig" < "$CONFIG" | {
+        . /dev/stdin
 
         # sanitize of any extra whitespace
         read -ra modules <<<"${MODULES//-/_}"
@@ -613,8 +613,7 @@ write_image_config() {
             'HOOKS' "${RUNHOOKS['hooks']# }" \
             'LATEHOOKS' "${RUNHOOKS['late']# }" \
             'CLEANUPHOOKS' "${RUNHOOKS['cleanup']% }"
-
-    ) >"$BUILDROOT/config"
+    } >"$BUILDROOT/config"
 }
 
 initialize_buildroot() {
