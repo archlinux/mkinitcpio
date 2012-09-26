@@ -313,7 +313,7 @@ add_module() {
     module=${1%.ko*}
 
     # skip expensive stuff if this module has already been added
-    (( ${ADDED_MODULES["$module"]} )) && return
+    (( ADDED_MODULES["${module//-/_}"] )) && return
 
     while IFS=':= ' read -r -d '' field value; do
         case "$field" in
@@ -602,9 +602,9 @@ write_image_config() {
 
         # sanitize of any extra whitespace
         read -ra modules <<<"${MODULES//-/_}"
-        for mod in "${modules[@]}"; do
-            in_array "${mod%\?}" "${ADDED_MODULES[@]}" || continue
-            add+=("${mod%\?}")
+        for mod in "${modules[@]%\?}"; do
+            # only add real modules (2 == builtin)
+            (( ADDED_MODULES["$mod"] == 1 )) && add+=("$mod")
         done
         (( ${#add[*]} )) && printf 'MODULES="%s"\n' "${add[*]}"
 

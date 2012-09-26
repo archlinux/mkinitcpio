@@ -346,7 +346,7 @@ trap '(( $? )) && [[ $FUNCNAME = add_* ]] && (( ++builderrors ))' RETURN
 # prime the ADDED_MODULES list with the builtins for this kernel
 if [[ -r $MODULEDIR/modules.builtin ]]; then
     while read -a path; do
-        ADDED_MODULES["${path[-1]%.ko}"]=1
+        ADDED_MODULES["${path[-1]%.ko}"]=2
     done <"$MODULEDIR/modules.builtin"
 fi
 
