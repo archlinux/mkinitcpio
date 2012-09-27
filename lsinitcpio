@@ -59,72 +59,9 @@ size_to_human() {
     }'
 }
 
-OPT_SHORT='ahnvx'
-OPT_LONG=('analyze' 'help' 'nocolor' 'verbose' 'extract')
-
-if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
-    exit 1
-fi
-set -- "${OPTRET[@]}"
-unset OPT_SHORT OPT_LONG OPTRET
-
-while :; do
-    case $1 in
-        -a|--analyze)
-            analyze=1 ;;
-        -h|--help)
-            usage
-            exit 0 ;;
-        -n|--nocolor)
-            color=0 ;;
-        -v|--verbose)
-            verbose='--verbose' ;;
-        -x|--extract)
-            unset list ;;
-        --)
-            shift
-            break 2 ;;
-    esac
-    shift
-done
-
-declare image=$1
-
-if [[ -t 1 ]] && (( color )); then
-    # prefer terminal safe colored and bold text when tput is supported
-    if tput setaf 0 &>/dev/null; then
-        NC="$(tput sgr0)"
-        BOLD="$(tput bold)"
-        BLUE="$BOLD$(tput setaf 4)"
-        GREEN="$BOLD$(tput setaf 2)"
-        RED="$BOLD$(tput setaf 1)"
-        YELLOW="$BOLD$(tput setaf 3)"
-    else
-        NC="\e[1;0m"
-        BOLD="\e[1;1m"
-        BLUE="$BOLD\e[1;34m"
-        GREEN="$BOLD\e[1;32m"
-        RED="$BOLD\e[1;31m"
-        YELLOW="$BOLD\e[1;33m"
-    fi
-fi
-readonly NC BOLD BLUE GREEN RED YELLOW
-
-[[ $image ]] || die "No image specified (use -h for help)"
-[[ -f $image ]] || die "No such file: $image"
-
-# read compression type
-case "$(file -Lb "$image")" in
-    @(data|LZMA)*) compress=lzma ;;
-    gzip*) compress=gzip ;;
-    bzip2*) compress=bzip2 ;;
-    lzop*) compress=lzop ;;
-    XZ*) compress=xz ;;
-esac
-
-if (( analyze )); then
-    declare -a binaries explicitmod modules foundhooks hooks
-    declare kernver ratio columns=$(tput cols)
+analyze_image() {
+    local -a binaries explicitmod modules foundhooks hooks
+    local kernver ratio columns=$(tput cols) image=$1
 
     workdir=$(mktemp -d --tmpdir="$TMPDIR" lsinitcpio.XXXXXX)
     trap 'rm -rf "$workdir"' EXIT
@@ -223,6 +160,73 @@ if (( analyze )); then
         printf '  %s\n' $CLEANUPHOOKS
         printf '\n'
     fi
+}
+
+OPT_SHORT='ahnvx'
+OPT_LONG=('analyze' 'help' 'nocolor' 'verbose' 'extract')
+
+if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
+    exit 1
+fi
+set -- "${OPTRET[@]}"
+unset OPT_SHORT OPT_LONG OPTRET
+
+while :; do
+    case $1 in
+        -a|--analyze)
+            analyze=1 ;;
+        -h|--help)
+            usage
+            exit 0 ;;
+        -n|--nocolor)
+            color=0 ;;
+        -v|--verbose)
+            verbose='--verbose' ;;
+        -x|--extract)
+            unset list ;;
+        --)
+            shift
+            break 2 ;;
+    esac
+    shift
+done
+
+declare image=$1
+
+if [[ -t 1 ]] && (( color )); then
+    # prefer terminal safe colored and bold text when tput is supported
+    if tput setaf 0 &>/dev/null; then
+        NC="$(tput sgr0)"
+        BOLD="$(tput bold)"
+        BLUE="$BOLD$(tput setaf 4)"
+        GREEN="$BOLD$(tput setaf 2)"
+        RED="$BOLD$(tput setaf 1)"
+        YELLOW="$BOLD$(tput setaf 3)"
+    else
+        NC="\e[1;0m"
+        BOLD="\e[1;1m"
+        BLUE="$BOLD\e[1;34m"
+        GREEN="$BOLD\e[1;32m"
+        RED="$BOLD\e[1;31m"
+        YELLOW="$BOLD\e[1;33m"
+    fi
+fi
+readonly NC BOLD BLUE GREEN RED YELLOW
+
+[[ $image ]] || die "No image specified (use -h for help)"
+[[ -f $image ]] || die "No such file: $image"
+
+# read compression type
+case "$(file -Lb "$image")" in
+    @(data|LZMA)*) compress=lzma ;;
+    gzip*) compress=gzip ;;
+    bzip2*) compress=bzip2 ;;
+    lzop*) compress=lzop ;;
+    XZ*) compress=xz ;;
+esac
+
+if (( analyze )); then
+    analyze_image "$image"
 else
     decomp "$image" | bsdcpio -i --quiet $verbose $list
 fi
