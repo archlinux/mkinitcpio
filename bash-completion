@@ -3,7 +3,7 @@
 
 _lsinitcpio() {
     local cur opts
-    opts=(-a --analyze -h --help -n --nocolor -v --verbose -x --extract)
+    opts=(-a --analyze -c --config -h --help -n --nocolor -v --verbose -x --extract)
 
     _get_comp_words_by_ref cur
 

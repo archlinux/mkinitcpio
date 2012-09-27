@@ -17,7 +17,8 @@ lsinitcpio %VERSION%
 usage: ${0##*/} [options] <initramfs>
 
   Options:
-   -a, --analyze        analyze contents
+   -a, --analyze        analyze contents of image
+   -c, --config         show configuration file image was built with
    -h, --help           display this help
    -n, --nocolor        disable colorized output
    -v, --verbose        more verbose output
@@ -162,8 +163,8 @@ analyze_image() {
     fi
 }
 
-OPT_SHORT='ahnvx'
-OPT_LONG=('analyze' 'help' 'nocolor' 'verbose' 'extract')
+OPT_SHORT='achnvx'
+OPT_LONG=('analyze' 'help' 'nocolor' 'showconfig' 'verbose' 'extract')
 
 if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
     exit 1
@@ -175,6 +176,8 @@ while :; do
     case $1 in
         -a|--analyze)
             analyze=1 ;;
+        -c|--config)
+            showconfig=1 ;;
         -h|--help)
             usage
             exit 0 ;;
@@ -227,6 +230,9 @@ esac
 
 if (( analyze )); then
     analyze_image "$image"
+elif (( showconfig )); then
+    decomp "$1" | bsdtar xOf - buildconfig 2>/dev/null ||
+        die 'Failed to extract config from image (mkinitcpio too old?)'
 else
     decomp "$image" | bsdcpio -i --quiet $verbose $list
 fi

@@ -23,6 +23,9 @@ Options
 	Analyze the contents of the specified image and print output in human
 	readable form.
 
+*-c, \--config*::
+	Show the configuration file the given image was built with.
+
 *-h, \--help*::
 	Output a short overview of available command-line switches.
 
