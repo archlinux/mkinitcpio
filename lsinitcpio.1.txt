@@ -10,14 +10,14 @@ lsinitcpio - Examine an initramfs
 
 Synopsis
 --------
-'lsinitcpio' [options] 'image'
+'lsinitcpio' [action] [options] 'image'
 
 Description
 -----------
 Examines the contents of an initcpio image. Without any options, 'lsinitcpio'
 simply lists the contents of an image.
 
-Options
+Actions
 -------
 *-a, \--analyze*::
 	Analyze the contents of the specified image and print output in human
@@ -25,6 +25,16 @@ Options
 
 *-c, \--config*::
 	Show the configuration file the given image was built with.
+
+*-l, \--list*::
+	List the contents of the archive. This is the default action. Pass the *-v*
+	flag for more detailed results.
+
+*-x, \--extract*::
+	Extract the given image to the current working directory.
+
+Options
+-------
 
 *-h, \--help*::
 	Output a short overview of available command-line switches.
@@ -36,9 +46,6 @@ Options
 	Be more verbose. In particular, show long style output when listing
 	the contents of an image, and show files as they are extracted when
 	the *-x* option is given.
-
-*-x, \--extract*::
-	Extract the given image to the current working directory.
 
 Bugs
 ----

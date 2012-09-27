@@ -14,15 +14,18 @@ declare FUNCTIONS=functions
 usage() {
     cat<<USAGE
 lsinitcpio %VERSION%
-usage: ${0##*/} [options] <initramfs>
+usage: ${0##*/} [action] [options] <initramfs>
 
-  Options:
+  Actions:
    -a, --analyze        analyze contents of image
    -c, --config         show configuration file image was built with
+   -l, --list           list contents of the image (default)
+   -x, --extract        extract image to disk
+
+  Options:
    -h, --help           display this help
    -n, --nocolor        disable colorized output
    -v, --verbose        more verbose output
-   -x, --extract        extract image to disk
 
 USAGE
 }
@@ -163,8 +166,8 @@ analyze_image() {
     fi
 }
 
-OPT_SHORT='achnvx'
-OPT_LONG=('analyze' 'help' 'nocolor' 'showconfig' 'verbose' 'extract')
+OPT_SHORT='achlnvx'
+OPT_LONG=('analyze' 'help' 'list' 'nocolor' 'showconfig' 'verbose' 'extract')
 
 if ! parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
     exit 1
@@ -181,6 +184,8 @@ while :; do
         -h|--help)
             usage
             exit 0 ;;
+        -l|--list)
+            listcontents=1 ;;
         -n|--nocolor)
             color=0 ;;
         -v|--verbose)
@@ -218,6 +223,14 @@ readonly NC BOLD BLUE GREEN RED YELLOW
 
 [[ $image ]] || die "No image specified (use -h for help)"
 [[ -f $image ]] || die "No such file: $image"
+
+case $(( analyze + listcontents + showconfig )) in
+    0)
+        # default action when none specified
+        listcontents=1 ;;
+    [!1])
+        die "Only one action may be specified at a time" ;;
+esac
 
 # read compression type
 case "$(file -Lb "$image")" in
