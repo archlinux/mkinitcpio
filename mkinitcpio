@@ -7,19 +7,22 @@ declare -r version=%VERSION%
 
 shopt -s extglob
 
-# Settings
-FUNCTIONS=functions
-CONFIG=mkinitcpio.conf
-HOOKDIR=(hooks /usr/lib/initcpio/hooks /lib/initcpio/hooks)
-INSTDIR=(install /usr/lib/initcpio/install /lib/initcpio/install)
-PRESETDIR=mkinitcpio.d
-COMPRESSION=gzip
+### globals within mkinitcpio, but not intended to be used by hooks
 
-declare MODULE_FILE= GENIMG= PRESET= COMPRESSION_OPTIONS= BUILDROOT=
-declare NC= BOLD= BLUE= GREEN= RED= YELLOW=
-declare -i QUIET=1 SHOW_AUTOMODS=0 SAVELIST=0 COLOR=1
-declare -a SKIPHOOKS MODPATHS
-declare -A RUNHOOKS ADDED_MODULES
+# needed files/directories
+_f_functions=functions
+_f_config=mkinitcpio.conf
+_d_hooks=(hooks /usr/lib/initcpio/hooks /lib/initcpio/hooks)
+_d_install=(install /usr/lib/initcpio/install /lib/initcpio/install)
+_d_presets=mkinitcpio.d
+
+# options and runtime data
+_optmoduleroot= _optkver= _f_autodetect_cache= _optgenimg= _optpreset=
+_optcompress=
+_optshowautomods=0 _optsavetree=0 _optshowmods=0
+_optquiet=1 _optcolor=1
+_optskiphooks=() _optaddhooks=() _modpaths=() _hooks=()
+declare -A _runhooks=() _addedmodules=()
 
 # export a sane PATH
 export PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
@@ -58,12 +61,12 @@ EOF
 cleanup() {
     local err=${1:-$?}
 
-    if [[ $workdir ]]; then
-        # when PRESET is set, we're in the main loop, not a worker process
-        if (( SAVELIST )) && [[ -z $PRESET ]]; then
-            msg "build directory saved in %s" "$workdir"
+    if [[ $_d_workdir ]]; then
+        # when _optpreset is set, we're in the main loop, not a worker process
+        if (( _optsavetree )) && [[ -z $_optpreset ]]; then
+            msg "build directory saved in %s" "$_d_workdir"
         else
-            rm -rf "$workdir"
+            rm -rf "$_d_workdir"
         fi
     fi
 
@@ -71,7 +74,7 @@ cleanup() {
 }
 
 resolve_kernver() {
-    local kernver= kernel=$1
+    local kernel=$1
 
     if [[ -z $kernel ]]; then
         uname -r
@@ -92,7 +95,7 @@ resolve_kernver() {
         return 0
     fi
 
-    error "invalid kernel specified: \`%s'" "$optkver"
+    error "invalid kernel specified: \`%s'" "$_optkver"
 
     return 1
 }
@@ -100,7 +103,7 @@ resolve_kernver() {
 find_moduledir() {
     local d
 
-    for d in "$MODULEROOT"{/usr,}/lib/modules; do
+    for d in "$_optmoduleroot"{/usr,}/lib/modules; do
         if [[ -d $d/$1/ ]]; then
             printf '%s' "$d/$1/"
             return 0
@@ -113,25 +116,27 @@ find_moduledir() {
 }
 
 compute_hookset() {
-    for h in $HOOKS "${ADDHOOKS[@]}"; do
-        in_array "$h" "${SKIPHOOKS[@]}" && continue
-        hooks+=("$h")
+    local h
+
+    for h in $HOOKS "${_optaddhooks[@]}"; do
+        in_array "$h" "${_optskiphooks[@]}" && continue
+        _hooks+=("$h")
     done
 }
 
-. "$FUNCTIONS"
+. "$_f_functions"
 
 trap 'cleanup 130' INT
 trap 'cleanup 143' TERM
 
-OPT_SHORT='A:c:g:H:hk:mnLMp:r:S:st:vz:'
-OPT_LONG=('add:' 'addhooks:' 'config:' 'generate:' 'hookhelp:' 'help'
+_opt_short='A:c:g:H:hk:nLMp:r:S:st:vz:'
+_opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookhelp:' 'help'
           'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor'
           'preset:' 'skiphooks:' 'save' 'builddir:' 'verbose' 'compress:')
 
-parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@" || exit 1
+parseopts "$_opt_short" "${_opt_long[@]}" -- "$@" || exit 1
 set -- "${OPTRET[@]}"
-unset OPT_SHORT OPT_LONG OPTRET
+unset _opt_short _opt_long OPTRET
 
 while :; do
     case $1 in
@@ -139,20 +144,20 @@ while :; do
         -A|--add|--addhooks)
             shift
             IFS=, read -r -a add <<< "$1"
-            ADDHOOKS+=("${add[@]}")
+            _optaddhooks+=("${add[@]}")
             unset add ;;
         -c|--config)
             shift
-            CONFIG=$1 ;;
+            _f_config=$1 ;;
         -k|--kernel)
             shift
-            optkver=$1 ;;
+            _optkver=$1 ;;
         -s|--save)
-            SAVELIST=1 ;;
+            _optsavetree=1 ;;
         -g|--generate)
             shift
             [[ -d $1 ]] && die "Invalid image path -- must not be a directory"
-            if ! GENIMG=$(readlink -f "$1") || [[ ! -e ${GENIMG%/*} ]]; then
+            if ! _optgenimg=$(readlink -f "$1") || [[ ! -e ${_optgenimg%/*} ]]; then
                 die "Unable to write to path: \`%s'" "$1"
             fi ;;
         -h|--help)
@@ -160,19 +165,19 @@ while :; do
             cleanup 0 ;;
         -p|--preset)
             shift
-            PRESET=$1 ;;
+            _optpreset=$1 ;;
         -n|--nocolor)
-            COLOR=0 ;;
+            _optcolor=0 ;;
         -v|--verbose)
-            QUIET=0 ;;
+            _optquiet=0 ;;
         -S|--skiphooks)
             shift
             IFS=, read -r -a skip <<< "$1"
-            SKIPHOOKS+=("${skip[@]}")
+            _optskiphooks+=("${skip[@]}")
             unset skip ;;
         -H|--hookhelp)
             shift
-            if script=$(find_in_dirs "$1" "${INSTDIR[@]}"); then
+            if script=$(find_in_dirs "$1" "${_d_install[@]}"); then
                 . "$script"
                 if ! declare -f help >/dev/null; then
                     error "No help for hook $1"
@@ -188,21 +193,21 @@ while :; do
             exit 0 ;;
         -L|--listhooks)
             msg "Available hooks"
-            for dir in "${INSTDIR[@]}"; do
+            for dir in "${_d_install[@]}"; do
                 ( cd "$dir" &>/dev/null && printf '   %s\n' * )
             done | sort -u | column -c$(tput cols)
             exit 0 ;;
         -M|--automods)
-            SHOW_AUTOMODS=1 ;;
+            _optshowautomods=1 ;;
         -t|--builddir)
             shift
             export TMPDIR=$1 ;;
         -z|--compress)
             shift
-            optcompress=$1 ;;
+            _optcompress=$1 ;;
         -r|--moduleroot)
             shift
-            MODULEROOT=$1 ;;
+            _optmoduleroot=$1 ;;
         --)
             shift
             break 2 ;;
@@ -210,25 +215,24 @@ while :; do
     shift
 done
 
-if [[ -t 1 ]] && (( COLOR )); then
+if [[ -t 1 ]] && (( _optcolor )); then
     # prefer terminal safe colored and bold text when tput is supported
     if tput setaf 0 &>/dev/null; then
-        NC="$(tput sgr0)"
-        BOLD="$(tput bold)"
-        BLUE="$BOLD$(tput setaf 4)"
-        GREEN="$BOLD$(tput setaf 2)"
-        RED="$BOLD$(tput setaf 1)"
-        YELLOW="$BOLD$(tput setaf 3)"
+        _color_none="$(tput sgr0)"
+        _color_bold="$(tput bold)"
+        _color_blue="$_color_bold$(tput setaf 4)"
+        _color_green="$_color_bold$(tput setaf 2)"
+        _color_red="$_color_bold$(tput setaf 1)"
+        _color_yellow="$_color_bold$(tput setaf 3)"
     else
-        NC="\e[1;0m"
-        BOLD="\e[1;1m"
-        BLUE="$BOLD\e[1;34m"
-        GREEN="$BOLD\e[1;32m"
-        RED="$BOLD\e[1;31m"
-        YELLOW="$BOLD\e[1;33m"
+        _color_none="\e[1;0m"
+        _color_bold="\e[1;1m"
+        _color_blue="$_color_bold\e[1;34m"
+        _color_green="$_color_bold\e[1;32m"
+        _color_red="$_color_bold\e[1;31m"
+        _color_yellow="$_color_bold\e[1;33m"
     fi
 fi
-readonly NC BOLD BLUE GREEN RED YELLOW
 
 # insist that /proc and /dev be mounted (important for chroots)
 # NOTE: avoid using mountpoint for this -- look for the paths that we actually
@@ -236,18 +240,18 @@ readonly NC BOLD BLUE GREEN RED YELLOW
 [[ -e /proc/self/mountinfo ]] || die "/proc must be mounted!"
 [[ -e /dev/fd ]] || die "/dev must be mounted!"
 
-# use preset $PRESET
-if [[ $PRESET ]]; then
+# use preset $_optpreset
+if [[ $_optpreset ]]; then
     # allow absolute path to preset file, else resolve it
-    if [[ ${PRESET:0:1} != '/' ]]; then
-        printf -v PRESET '%s/%s.preset' "$PRESETDIR" "$PRESET"
+    if [[ ${_optpreset:0:1} != '/' ]]; then
+        printf -v _optpreset '%s/%s.preset' "$_d_presets" "$_optpreset"
     fi
-    if [[ -f $PRESET ]]; then
+    if [[ -f $_optpreset ]]; then
         # Use -b, -m and -v options specified earlier
         declare -a preset_mkopts preset_cmd
-        (( QUIET )) || preset_mkopts+=(-v)
+        (( _optquiet )) || preset_mkopts+=(-v)
         # Build all images
-        . "$PRESET"
+        . "$_optpreset"
         for p in "${PRESETS[@]}"; do
             msg "Building image from preset: '$p'"
             preset_cmd=("${preset_mkopts[@]}")
@@ -286,53 +290,52 @@ if [[ $PRESET ]]; then
         done
         cleanup 0
     else
-        die "Preset not found: \`%s'" "$PRESET"
+        die "Preset not found: \`%s'" "$_optpreset"
     fi
 fi
 
-KERNELVERSION=$(resolve_kernver "$optkver") || cleanup 1
-MODULEDIR=$(find_moduledir "$KERNELVERSION") || cleanup 1
+KERNELVERSION=$(resolve_kernver "$_optkver") || cleanup 1
+_d_kmoduledir=$(find_moduledir "$KERNELVERSION") || cleanup 1
 
-# initialize the working directory and buildroot
-workdir=$(initialize_buildroot "$KERNELVERSION") || cleanup 1
-BUILDROOT=$workdir/root
+_d_workdir=$(initialize_buildroot "$KERNELVERSION") || cleanup 1
+BUILDROOT=$_d_workdir/root
 
-. "$CONFIG" || die "Failed to read configuration \`%s'" "$CONFIG"
+. "$_f_config" || die "Failed to read configuration \`%s'" "$_f_config"
 
-# after returning, hooks are populated into the array 'hooks'
+# after returning, hooks are populated into the array '_hooks'
 # HOOKS should not be referenced from here on
 compute_hookset
 
-if (( ${#hooks[*]} == 0 )); then
+if (( ${#_hooks[*]} == 0 )); then
     die "Invalid config: No hooks found"
 fi
 
-if [[ ! -d $MODULEDIR ]]; then
-    die "'$MODULEDIR' is not a valid kernel module directory"
+if [[ ! -d $_d_kmoduledir ]]; then
+    die "'$_d_kmoduledir' is not a valid kernel module directory"
 fi
 
-if (( SHOW_AUTOMODS )); then
+if (( _optshowautomods )); then
     msg "Modules autodetected"
-    autodetect=$(find_in_dirs 'autodetect' "${INSTDIR[@]}")
-    . "$autodetect"
+    _f_autodetect_hook=$(find_in_dirs 'autodetect' "${_d_install[@]}")
+    . "$_f_autodetect_hook"
     build
-    cat "$MODULE_FILE"
+    cat "$_f_autodetect_cache"
     cleanup 0
 fi
 
-if [[ -z $GENIMG ]]; then
+if [[ -z $_optgenimg ]]; then
     msg "Starting dry run: %s" "$KERNELVERSION"
 else
     # check for permissions. if the image doesn't already exist,
     # then check the directory
-    if [[ ( -e $GENIMG && ! -w $GENIMG ) ||
-            ( ! -d ${GENIMG%/*} || ! -w ${GENIMG%/*} ) ]]; then
-        die 'Unable to write to %s' "$GENIMG"
+    if [[ ( -e $_optgenimg && ! -w $_optgenimg ) ||
+            ( ! -d ${_optgenimg%/*} || ! -w ${_optgenimg%/*} ) ]]; then
+        die 'Unable to write to %s' "$_optgenimg"
     fi
 
-    COMPRESSION=${optcompress:-$COMPRESSION}
-    if ! type -P "$COMPRESSION" >/dev/null; then
-        die "Unable to locate compression method: %s" "$COMPRESSION"
+    _optcompress=${_optcompress:-${COMPRESSION:-gzip}}
+    if ! type -P "$_optcompress" >/dev/null; then
+        die "Unable to locate compression method: %s" "$_optcompress"
     fi
 
     msg "Starting build: %s" "$KERNELVERSION"
@@ -343,14 +346,14 @@ declare -i builderrors=0
 set -o functrace
 trap '(( $? )) && [[ $FUNCNAME = add_* ]] && (( ++builderrors ))' RETURN
 
-# prime the ADDED_MODULES list with the builtins for this kernel
-if [[ -r $MODULEDIR/modules.builtin ]]; then
+# prime the _addedmodules list with the builtins for this kernel
+if [[ -r $_d_kmoduledir/modules.builtin ]]; then
     while read -a path; do
-        ADDED_MODULES["${path[-1]%.ko}"]=2
-    done <"$MODULEDIR/modules.builtin"
+        _addedmodules["${path[-1]%.ko}"]=2
+    done <"$_d_kmoduledir/modules.builtin"
 fi
 
-for hook in "${hooks[@]}"; do
+for hook in "${_hooks[@]}"; do
     run_build_hook "$hook" || (( ++builderrors ))
 done
 
@@ -362,8 +365,8 @@ write_image_config
 trap -- RETURN
 trap '(( ++builderrors ))' ERR
 
-if (( ${#MODPATHS[*]} )); then
-    printf '%s\0' "${MODPATHS[@]}" | sort -zu |
+if (( ${#_modpaths[*]} )); then
+    printf '%s\0' "${_modpaths[@]}" | sort -zu |
         xargs -0 cp -t "$BUILDROOT/usr/lib/modules/$KERNELVERSION/kernel"
 
     # unzip modules prior to recompression
@@ -371,12 +374,12 @@ if (( ${#MODPATHS[*]} )); then
 
     msg "Generating module dependencies"
     install -m644 -t "$BUILDROOT/usr/lib/modules/$KERNELVERSION" \
-        "$MODULEDIR"/modules.builtin
+        "$_d_kmoduledir"/modules.builtin
 
     # we install all modules into kernel/, making the .order file incorrect
     # for the module tree. munge it, so that we have an accurate index.
     awk -F'/' '{ print "kernel/" $NF }' \
-        "$MODULEDIR"/modules.order >"$BUILDROOT/lib/modules/$KERNELVERSION/modules.order"
+        "$_d_kmoduledir"/modules.order >"$BUILDROOT/lib/modules/$KERNELVERSION/modules.order"
 
     depmod -b "$BUILDROOT" "$KERNELVERSION"
 
@@ -392,17 +395,17 @@ set +o functrace
 trap -- ERR
 
 declare -i status=0
-if [[ $GENIMG ]]; then
-    msg "Creating $COMPRESSION initcpio image: %s" "$GENIMG"
+if [[ $_optgenimg ]]; then
+    msg "Creating $_optcompress initcpio image: %s" "$_optgenimg"
 
-    case $COMPRESSION in
+    case $_optcompress in
         xz)
             COMPRESSION_OPTIONS+=' --check=crc32'
             ;;
     esac
 
     cpio_opts=('-R' '0:0' '-0' '-o' '-H' 'newc')
-    if (( QUIET )); then
+    if (( _optquiet )); then
         cpio_opts+=('--quiet')
     fi
 
@@ -412,7 +415,7 @@ if [[ $GENIMG ]]; then
     pushd "$BUILDROOT" >/dev/null
     find . -print0 |
             LANG=C bsdcpio "${cpio_opts[@]}" |
-            $COMPRESSION $COMPRESSION_OPTIONS > "$GENIMG"
+            $_optcompress $COMPRESSION_OPTIONS > "$_optgenimg"
     pipesave=("${PIPESTATUS[@]}") # save immediately
     popd >/dev/null
 
@@ -421,7 +424,7 @@ if [[ $GENIMG ]]; then
     elif (( pipesave[1] )); then
         errmsg="bsdcpio reported an error"
     elif (( pipesave[2] )); then
-        errmsg="$COMPRESSION reported an error"
+        errmsg="$_optcompress reported an error"
     fi
 
     if (( builderrors )); then

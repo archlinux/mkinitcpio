@@ -139,27 +139,31 @@ parseopts() {
 
 plain() {
     local mesg=$1; shift
-    printf "$BOLD    $mesg$NC\n" "$@" >&1
+    printf "    $_color_bold$mesg$_color_none\n" "$@" >&1
+}
+
+quiet() {
+    (( _optquiet )) || plain "$@"
 }
 
 msg() {
     local mesg=$1; shift
-    printf "$GREEN==>$NC$BOLD $mesg$NC\n" "$@" >&1
+    printf "$_color_green==>$_color_none $_color_bold$mesg$_color_none\n" "$@" >&1
 }
 
 msg2() {
     local mesg=$1; shift
-    printf "$BLUE  ->$NC$BOLD $mesg$NC\n" "$@" >&1
+    printf "  $_color_blue->$_color_none $_color_bold$mesg$_color_none\n" "$@" >&1
 }
 
 warning() {
     local mesg=$1; shift
-    printf "$YELLOW==> WARNING:$NC$BOLD $mesg$NC\n" "$@" >&2
+    printf "$_color_yellow==> WARNING:$_color_none $_color_bold$mesg$_color_none\n" "$@" >&2
 }
 
 error() {
     local mesg=$1; shift
-    printf "$RED==> ERROR:$NC$BOLD $mesg$NC\n" "$@" >&2
+    printf "$_color_red==> ERROR:$_color_none $_color_bold$mesg$_color_none\n" "$@" >&2
     return 1
 }
 
@@ -242,7 +246,7 @@ all_modules() {
         mod=${mod##*/}
         mod="${mod%.ko*}"
         printf '%s\n' "${mod//-/_}"
-    done < <(find "$MODULEDIR" -name '*.ko*' -print0 2>/dev/null | grep -EZz "$@")
+    done < <(find "$_d_kmoduledir" -name '*.ko*' -print0 2>/dev/null | grep -EZz "$@")
 
     (( count ))
 }
@@ -269,8 +273,8 @@ add_checked_modules() {
 
     local mod mods
 
-    if [[ -s $MODULE_FILE ]]; then
-        mapfile -t mods < <(all_modules "$@" | grep -xFf "$MODULE_FILE")
+    if [[ -s $_f_autodetect_cache ]]; then
+        mapfile -t mods < <(all_modules "$@" | grep -xFf "$_f_autodetect_cache")
     else
         mapfile -t mods < <(all_modules "$@")
     fi
@@ -289,8 +293,8 @@ checked_modules() {
     # DEPRECATED: Use add_checked_modules instead
     #
 
-    if [[ -s $MODULE_FILE ]]; then
-        grep -xFf "$MODULE_FILE" <(all_modules "$@")
+    if [[ -s $_f_autodetect_cache ]]; then
+        grep -xFf "$_f_autodetect_cache" <(all_modules "$@")
         return 1
     else
         all_modules "$@"
@@ -313,7 +317,7 @@ add_module() {
     module=${1%.ko*}
 
     # skip expensive stuff if this module has already been added
-    (( ADDED_MODULES["${module//-/_}"] )) && return
+    (( _addedmodules["${module//-/_}"] )) && return
 
     while IFS=':= ' read -r -d '' field value; do
         case "$field" in
@@ -341,9 +345,9 @@ add_module() {
     fi
 
     # aggregate modules and add them all at once to save some forks
-    (( QUIET )) || plain "adding module: %s" "$1"
-    MODPATHS+=("$path")
-    ADDED_MODULES["${module//-/_}"]=1
+    quiet "adding module: %s" "$1"
+    _modpaths+=("$path")
+    _addedmodules["${module//-/_}"]=1
 
     # handle module quirks
     case $module in
@@ -397,7 +401,7 @@ add_dir() {
         return 0
     fi
 
-    (( QUIET )) || plain "adding dir: %s" "$path"
+    quiet "adding dir: %s" "$path"
     command install -dm$mode "$BUILDROOT$path"
 }
 
@@ -407,28 +411,26 @@ add_symlink() {
     #   $1: pathname of symlink on image
     #   $2: absolute path to target of symlink (optional, can be read from $1)
 
-    local name_=$1 target_=$2
+    local name=$1 target=$2
 
     (( $# == 1 || $# == 2 )) || return 1
 
-    if [[ -z $target_ ]]; then
-        target_=$(readlink -f "$name_")
-        if [[ -z $target_ ]]; then
-            error 'invalid symlink: %s' "$name_"
+    if [[ -z $target ]]; then
+        target=$(readlink -f "$name")
+        if [[ -z $target ]]; then
+            error 'invalid symlink: %s' "$name"
             return 1
         fi
     fi
 
-    add_dir "${name_%/*}"
+    add_dir "${name%/*}"
 
-    if (( ! QUIET )); then
-        if [[ -L $BUILDROOT$1 ]]; then
-            plain "overwriting symlink %s -> %s" "$name_" "$target_"
-        else
-            plain "adding symlink: %s -> %s" "$name_" "$target_"
-        fi
+    if [[ -L $BUILDROOT$1 ]]; then
+        quiet "overwriting symlink %s -> %s" "$name" "$target"
+    else
+        quiet "adding symlink: %s -> %s" "$name" "$target"
     fi
-    ln -sfn "$target_" "$BUILDROOT$name_"
+    ln -sfn "$target" "$BUILDROOT$name"
 }
 
 add_file() {
@@ -454,12 +456,10 @@ add_file() {
         return 1
     fi
 
-    if (( ! QUIET )); then
-        if [[ -e $BUILDROOT$dest ]]; then
-            plain "overwriting file: %s" "$dest"
-        else
-            plain "adding file: %s" "$dest"
-        fi
+    if [[ -e $BUILDROOT$dest ]]; then
+        quiet "overwriting file: %s" "$dest"
+    else
+        quiet "adding file: %s" "$dest"
     fi
     command install -Dm$mode "$src" "$BUILDROOT$dest"
 }
@@ -473,7 +473,7 @@ add_runscript() {
 
     local funcs fn script hookname=${SCRIPT:-${BASH_SOURCE[1]##*/}}
 
-    if ! script=$(find_in_dirs "$hookname" "${HOOKDIR[@]}"); then
+    if ! script=$(find_in_dirs "$hookname" "${_d_hooks[@]}"); then
         error "runtime script for \`%s' not found" "$hookname"
         return
     fi
@@ -485,16 +485,16 @@ add_runscript() {
     for fn in "${funcs[@]}"; do
         case $fn in
             run_earlyhook)
-                RUNHOOKS['early']+=" $hookname"
+                _runhooks['early']+=" $hookname"
                 ;;
             run_hook)
-                RUNHOOKS['hooks']+=" $hookname"
+                _runhooks['hooks']+=" $hookname"
                 ;;
             run_latehook)
-                RUNHOOKS['late']+=" $hookname"
+                _runhooks['late']+=" $hookname"
                 ;;
             run_cleanuphook)
-                RUNHOOKS['cleanup']="$hookname ${RUNHOOKS['cleanup']}"
+                _runhooks['cleanup']="$hookname ${_runhooks['cleanup']}"
                 ;;
         esac
     done
@@ -595,22 +595,22 @@ write_image_config() {
     # write the config as runtime config and as a pristine build config
     # (for audting purposes) to the image.
 
-    tee "$BUILDROOT/buildconfig" < "$CONFIG" | {
+    tee "$BUILDROOT/buildconfig" < "$_f_config" | {
         . /dev/stdin
 
         # sanitize of any extra whitespace
         read -ra modules <<<"${MODULES//-/_}"
         for mod in "${modules[@]%\?}"; do
             # only add real modules (2 == builtin)
-            (( ADDED_MODULES["$mod"] == 1 )) && add+=("$mod")
+            (( _addedmodules["$mod"] == 1 )) && add+=("$mod")
         done
         (( ${#add[*]} )) && printf 'MODULES="%s"\n' "${add[*]}"
 
         printf '%s="%s"\n' \
-            'EARLYHOOKS' "${RUNHOOKS['early']# }" \
-            'HOOKS' "${RUNHOOKS['hooks']# }" \
-            'LATEHOOKS' "${RUNHOOKS['late']# }" \
-            'CLEANUPHOOKS' "${RUNHOOKS['cleanup']% }"
+            'EARLYHOOKS' "${_runhooks['early']# }" \
+            'HOOKS' "${_runhooks['hooks']# }" \
+            'LATEHOOKS' "${_runhooks['late']# }" \
+            'CLEANUPHOOKS' "${_runhooks['cleanup']% }"
     } >"$BUILDROOT/config"
 }
 
@@ -653,7 +653,7 @@ run_build_hook() {
     local MODULES= BINARIES= FILES= SCRIPT=
 
     # find script in install dirs
-    if ! script=$(find_in_dirs "$hook" "${INSTDIR[@]}"); then
+    if ! script=$(find_in_dirs "$hook" "${_d_install[@]}"); then
         error "Hook '$hook' cannot be found"
         return 1
     fi

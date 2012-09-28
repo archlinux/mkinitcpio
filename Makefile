@@ -22,15 +22,15 @@ install: all
 	mkdir -p ${DESTDIR}
 	$(foreach dir,${DIRS},install -dm755 ${DESTDIR}${dir};)
 
-	sed -e 's|^CONFIG=.*|CONFIG=/etc/mkinitcpio.conf|' \
-	    -e 's|^FUNCTIONS=.*|FUNCTIONS=/usr/lib/initcpio/functions|' \
-	    -e 's|^HOOKDIR=.*|HOOKDIR=({/usr,}/lib/initcpio/hooks)|' \
-	    -e 's|^INSTDIR=.*|INSTDIR=({/usr,}/lib/initcpio/install)|' \
-	    -e 's|^PRESETDIR=.*|PRESETDIR=/etc/mkinitcpio.d|' \
+	sed -e 's|^_f_config=.*|_f_config=/etc/mkinitcpio.conf|' \
+	    -e 's|^_f_functions=.*|_f_functions=/usr/lib/initcpio/functions|' \
+	    -e 's|^_d_hooks=.*|_d_hooks=({/usr,}/lib/initcpio/hooks)|' \
+	    -e 's|^_d_install=.*|_d_install=({/usr,}/lib/initcpio/install)|' \
+	    -e 's|^_d_presets=.*|_d_presets=/etc/mkinitcpio.d|' \
 	    -e 's|%VERSION%|${VERSION}|g' \
 	    < mkinitcpio > ${DESTDIR}/usr/bin/mkinitcpio
 
-	sed -e 's|\(^declare FUNCTIONS\)=.*|\1=/usr/lib/initcpio/functions|' \
+	sed -e 's|\(^_f_functions\)=.*|\1=/usr/lib/initcpio/functions|' \
 	    -e 's|%VERSION%|${VERSION}|g' \
 	    < lsinitcpio > ${DESTDIR}/usr/bin/lsinitcpio
 
