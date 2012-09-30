@@ -246,52 +246,54 @@ if [[ $_optpreset ]]; then
     if [[ ${_optpreset:0:1} != '/' ]]; then
         printf -v _optpreset '%s/%s.preset' "$_d_presets" "$_optpreset"
     fi
-    if [[ -f $_optpreset ]]; then
-        # Use -b, -m and -v options specified earlier
-        declare -a preset_mkopts preset_cmd
-        (( _optquiet )) || preset_mkopts+=(-v)
-        # Build all images
-        . "$_optpreset"
-        for p in "${PRESETS[@]}"; do
-            msg "Building image from preset: '$p'"
-            preset_cmd=("${preset_mkopts[@]}")
 
-            preset_kver=${p}_kver
-            if [[ ${!preset_kver:-$ALL_kver} ]]; then
-                preset_cmd+=(-k "${!preset_kver:-$ALL_kver}")
-            else
-                warning "No kernel version specified. Skipping image \`%s'" "$p"
-                continue
-            fi
-
-            preset_config=${p}_config
-            if [[ ${!preset_config:-$ALL_config} ]]; then
-              preset_cmd+=(-c "${!preset_config:-$ALL_config}")
-            else
-                warning "No configuration file specified. Skipping image \`%s'" "$p"
-                continue
-            fi
-
-            preset_image=${p}_image
-            if [[ ${!preset_image} ]]; then
-                preset_cmd+=(-g "${!preset_image}")
-            else
-                warning "No image file specified. Skipping image \`%s'" "$p"
-                continue
-            fi
-
-            preset_options=${p}_options
-            if [[ ${!preset_options} ]]; then
-                preset_cmd+=(${!preset_options}) # intentional word splitting
-            fi
-
-            msg2 "${preset_cmd[*]}"
-            "$0" "${preset_cmd[@]}"
-        done
-        cleanup 0
-    else
+    if ! . "$_optpreset"; then
         die "Preset not found: \`%s'" "$_optpreset"
     fi
+
+    # Use -m and -v options specified earlier
+    declare -a preset_mkopts preset_cmd
+    (( _optquiet )) || preset_mkopts+=(-v)
+
+    ret=0
+    for p in "${PRESETS[@]}"; do
+        msg "Building image from preset: '$p'"
+        preset_cmd=("${preset_mkopts[@]}")
+
+        preset_kver=${p}_kver
+        if [[ ${!preset_kver:-$ALL_kver} ]]; then
+            preset_cmd+=(-k "${!preset_kver:-$ALL_kver}")
+        else
+            warning "No kernel version specified. Skipping image \`%s'" "$p"
+            continue
+        fi
+
+        preset_config=${p}_config
+        if [[ ${!preset_config:-$ALL_config} ]]; then
+          preset_cmd+=(-c "${!preset_config:-$ALL_config}")
+        else
+            warning "No configuration file specified. Skipping image \`%s'" "$p"
+            continue
+        fi
+
+        preset_image=${p}_image
+        if [[ ${!preset_image} ]]; then
+            preset_cmd+=(-g "${!preset_image}")
+        else
+            warning "No image file specified. Skipping image \`%s'" "$p"
+            continue
+        fi
+
+        preset_options=${p}_options
+        if [[ ${!preset_options} ]]; then
+            preset_cmd+=(${!preset_options}) # intentional word splitting
+        fi
+
+        msg2 "${preset_cmd[*]}"
+        "$0" "${preset_cmd[@]}"
+        (( $? )) && ret=1
+    done
+    exit $ret
 fi
 
 KERNELVERSION=$(resolve_kernver "$_optkver") || cleanup 1
