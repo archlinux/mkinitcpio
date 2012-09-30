@@ -100,21 +100,6 @@ resolve_kernver() {
     return 1
 }
 
-find_moduledir() {
-    local d
-
-    for d in "$_optmoduleroot"{/usr,}/lib/modules; do
-        if [[ -d $d/$1/ ]]; then
-            printf '%s' "$d/$1/"
-            return 0
-        fi
-    done
-
-    error "unable to locate module directory for kernel \`%s'" "$1"
-
-    return 1
-}
-
 compute_hookset() {
     local h
 
@@ -372,7 +357,8 @@ fi
 [[ $_optpreset ]] && process_preset "$_optpreset"
 
 KERNELVERSION=$(resolve_kernver "$_optkver") || cleanup 1
-_d_kmoduledir=$(find_moduledir "$KERNELVERSION") || cleanup 1
+_d_kmoduledir=$_optmoduleroot/lib/modules/$KERNELVERSION
+[[ -d $_d_kmoduledir ]] || die "'$_d_kmoduledir' is not a valid kernel module directory"
 
 _d_workdir=$(initialize_buildroot "$KERNELVERSION") || cleanup 1
 BUILDROOT=$_d_workdir/root
@@ -385,10 +371,6 @@ compute_hookset
 
 if (( ${#_hooks[*]} == 0 )); then
     die "Invalid config: No hooks found"
-fi
-
-if [[ ! -d $_d_kmoduledir ]]; then
-    die "'$_d_kmoduledir' is not a valid kernel module directory"
 fi
 
 if (( _optshowautomods )); then
