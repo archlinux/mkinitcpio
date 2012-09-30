@@ -124,6 +124,134 @@ compute_hookset() {
     done
 }
 
+build_image() {
+    local out=$1 compress=$2 errmsg=
+    local -a pipesave cpio_opts
+
+    msg "Creating $compress initcpio image: %s" "$out"
+
+    case $compress in
+        xz)
+            COMPRESSION_OPTIONS+=' --check=crc32'
+            ;;
+    esac
+
+    cpio_opts=('-R' '0:0' '-0' '-o' '-H' 'newc')
+    (( _optquiet )) && cpio_opts+=('--quiet')
+
+    # write version stamp
+    printf '%s' "$version" > "$BUILDROOT/VERSION"
+
+    pushd "$BUILDROOT" >/dev/null
+    find . -print0 |
+            LANG=C bsdcpio "${cpio_opts[@]}" |
+            $compress $COMPRESSION_OPTIONS > "$out"
+    pipesave=("${PIPESTATUS[@]}") # save immediately
+    popd >/dev/null
+
+    if (( pipesave[0] )); then
+        errmsg="find reported an error"
+    elif (( pipesave[1] )); then
+        errmsg="bsdcpio reported an error"
+    elif (( pipesave[2] )); then
+        errmsg="$compress reported an error"
+    fi
+
+    if (( _builderrors )); then
+        warning "errors were encountered during the build. The image may not be complete."
+    fi
+
+    if [[ $errmsg ]]; then
+        error "Image generation FAILED: %s" "$errmsg"
+    elif (( _builderrors == 0 )); then
+        msg "Image generation successful"
+    fi
+}
+
+process_preset() {
+    local preset=$1 preset_image= preset_options=
+    local -a preset_mkopts preset_cmd
+
+    # allow path to preset file, else resolve it in $_d_presets
+    if [[ $preset != */* ]]; then
+        printf -v preset '%s/%s.preset' "$_d_presets" "$preset"
+    fi
+
+    . "$preset" || die "Preset not found: \`%s'" "$preset"
+
+    # Use -m and -v options specified earlier
+    (( _optquiet )) || preset_mkopts+=(-v)
+    (( _optcolor )) || preset_mkopts+=(-n)
+
+    ret=0
+    for p in "${PRESETS[@]}"; do
+        msg "Building image from preset: '$p'"
+        preset_cmd=("${preset_mkopts[@]}")
+
+        preset_kver=${p}_kver
+        if [[ ${!preset_kver:-$ALL_kver} ]]; then
+            preset_cmd+=(-k "${!preset_kver:-$ALL_kver}")
+        else
+            warning "No kernel version specified. Skipping image \`%s'" "$p"
+            continue
+        fi
+
+        preset_config=${p}_config
+        if [[ ${!preset_config:-$ALL_config} ]]; then
+            preset_cmd+=(-c "${!preset_config:-$ALL_config}")
+        else
+            warning "No configuration file specified. Skipping image \`%s'" "$p"
+            continue
+        fi
+
+        preset_image=${p}_image
+        if [[ ${!preset_image} ]]; then
+            preset_cmd+=(-g "${!preset_image}")
+        else
+            warning "No image file specified. Skipping image \`%s'" "$p"
+            continue
+        fi
+
+        preset_options=${p}_options
+        if [[ ${!preset_options} ]]; then
+            preset_cmd+=(${!preset_options}) # intentional word splitting
+        fi
+
+        msg2 "${preset_cmd[*]}"
+        "$0" "${preset_cmd[@]}"
+        (( $? )) && ret=1
+    done
+
+    exit $ret
+}
+
+install_modules() {
+    if (( $# == 0 )); then
+        warning "No modules were added to the image. This is probably not what you want."
+        return 0
+    fi
+
+    printf '%s\0' "$@" | sort -zu |
+        xargs -0 cp -t "$BUILDROOT/usr/lib/modules/$KERNELVERSION/kernel"
+
+    # unzip modules prior to recompression
+    gzip -dr "$BUILDROOT/usr/lib/modules/$KERNELVERSION/kernel"
+
+    msg "Generating module dependencies"
+    install -m644 -t "$BUILDROOT/usr/lib/modules/$KERNELVERSION" \
+        "$_d_kmoduledir"/modules.builtin
+
+    # we install all modules into kernel/, making the .order file incorrect
+    # for the module tree. munge it, so that we have an accurate index.
+    awk -F'/' '{ print "kernel/" $NF }' \
+        "$_d_kmoduledir"/modules.order >"$BUILDROOT/lib/modules/$KERNELVERSION/modules.order"
+
+    depmod -b "$BUILDROOT" "$KERNELVERSION"
+
+    # remove all non-binary module.* files (except devname for on-demand module loading)
+    rm "$BUILDROOT/usr/lib/modules/$KERNELVERSION"/modules.!(*.bin|devname)
+}
+
 . "$_f_functions"
 
 trap 'cleanup 130' INT
@@ -240,62 +368,8 @@ fi
 [[ -e /proc/self/mountinfo ]] || die "/proc must be mounted!"
 [[ -e /dev/fd ]] || die "/dev must be mounted!"
 
-# use preset $_optpreset
-if [[ $_optpreset ]]; then
-    # allow absolute path to preset file, else resolve it
-    if [[ ${_optpreset:0:1} != '/' ]]; then
-        printf -v _optpreset '%s/%s.preset' "$_d_presets" "$_optpreset"
-    fi
-
-    if ! . "$_optpreset"; then
-        die "Preset not found: \`%s'" "$_optpreset"
-    fi
-
-    # Use -m and -v options specified earlier
-    declare -a preset_mkopts preset_cmd
-    (( _optquiet )) || preset_mkopts+=(-v)
-    (( _optcolor )) || preset_mkopts+=(-n)
-
-    ret=0
-    for p in "${PRESETS[@]}"; do
-        msg "Building image from preset: '$p'"
-        preset_cmd=("${preset_mkopts[@]}")
-
-        preset_kver=${p}_kver
-        if [[ ${!preset_kver:-$ALL_kver} ]]; then
-            preset_cmd+=(-k "${!preset_kver:-$ALL_kver}")
-        else
-            warning "No kernel version specified. Skipping image \`%s'" "$p"
-            continue
-        fi
-
-        preset_config=${p}_config
-        if [[ ${!preset_config:-$ALL_config} ]]; then
-          preset_cmd+=(-c "${!preset_config:-$ALL_config}")
-        else
-            warning "No configuration file specified. Skipping image \`%s'" "$p"
-            continue
-        fi
-
-        preset_image=${p}_image
-        if [[ ${!preset_image} ]]; then
-            preset_cmd+=(-g "${!preset_image}")
-        else
-            warning "No image file specified. Skipping image \`%s'" "$p"
-            continue
-        fi
-
-        preset_options=${p}_options
-        if [[ ${!preset_options} ]]; then
-            preset_cmd+=(${!preset_options}) # intentional word splitting
-        fi
-
-        msg2 "${preset_cmd[*]}"
-        "$0" "${preset_cmd[@]}"
-        (( $? )) && ret=1
-    done
-    exit $ret
-fi
+# use preset $_optpreset (exits after processing)
+[[ $_optpreset ]] && process_preset "$_optpreset"
 
 KERNELVERSION=$(resolve_kernver "$_optkver") || cleanup 1
 _d_kmoduledir=$(find_moduledir "$KERNELVERSION") || cleanup 1
@@ -345,9 +419,9 @@ else
 fi
 
 # set functrace and trap to catch errors in add_* functions
-declare -i builderrors=0
+declare -i _builderrors=0
 set -o functrace
-trap '(( $? )) && [[ $FUNCNAME = add_* ]] && (( ++builderrors ))' RETURN
+trap '(( $? )) && [[ $FUNCNAME = add_* ]] && (( ++_builderrors ))' RETURN
 
 # prime the _addedmodules list with the builtins for this kernel
 if [[ -r $_d_kmoduledir/modules.builtin ]]; then
@@ -357,7 +431,7 @@ if [[ -r $_d_kmoduledir/modules.builtin ]]; then
 fi
 
 for hook in "${_hooks[@]}"; do
-    run_build_hook "$hook" || (( ++builderrors ))
+    run_build_hook "$hook" || (( ++_builderrors ))
 done
 
 # process config file
@@ -366,86 +440,20 @@ write_image_config
 
 # switch out the error handler to catch all errors
 trap -- RETURN
-trap '(( ++builderrors ))' ERR
+trap '(( ++_builderrors ))' ERR
 
-if (( ${#_modpaths[*]} )); then
-    printf '%s\0' "${_modpaths[@]}" | sort -zu |
-        xargs -0 cp -t "$BUILDROOT/usr/lib/modules/$KERNELVERSION/kernel"
-
-    # unzip modules prior to recompression
-    gzip -dr "$BUILDROOT/usr/lib/modules/$KERNELVERSION/kernel"
-
-    msg "Generating module dependencies"
-    install -m644 -t "$BUILDROOT/usr/lib/modules/$KERNELVERSION" \
-        "$_d_kmoduledir"/modules.builtin
-
-    # we install all modules into kernel/, making the .order file incorrect
-    # for the module tree. munge it, so that we have an accurate index.
-    awk -F'/' '{ print "kernel/" $NF }' \
-        "$_d_kmoduledir"/modules.order >"$BUILDROOT/lib/modules/$KERNELVERSION/modules.order"
-
-    depmod -b "$BUILDROOT" "$KERNELVERSION"
-
-    # remove all non-binary module.* files (except devname for on-demand module loading)
-    rm "$BUILDROOT/usr/lib/modules/$KERNELVERSION"/modules.!(*.bin|devname)
-
-else
-    warning "No modules were added to the image. This is probably not what you want."
-fi
+install_modules "${_modpaths[@]}"
 
 # unset errtrace and trap
 set +o functrace
 trap -- ERR
 
-declare -i status=0
 if [[ $_optgenimg ]]; then
-    msg "Creating $_optcompress initcpio image: %s" "$_optgenimg"
-
-    case $_optcompress in
-        xz)
-            COMPRESSION_OPTIONS+=' --check=crc32'
-            ;;
-    esac
-
-    cpio_opts=('-R' '0:0' '-0' '-o' '-H' 'newc')
-    if (( _optquiet )); then
-        cpio_opts+=('--quiet')
-    fi
-
-    # write version stamp
-    printf '%s' "$version" > "$BUILDROOT/VERSION"
-
-    pushd "$BUILDROOT" >/dev/null
-    find . -print0 |
-            LANG=C bsdcpio "${cpio_opts[@]}" |
-            $_optcompress $COMPRESSION_OPTIONS > "$_optgenimg"
-    pipesave=("${PIPESTATUS[@]}") # save immediately
-    popd >/dev/null
-
-    if (( pipesave[0] )); then
-        errmsg="find reported an error"
-    elif (( pipesave[1] )); then
-        errmsg="bsdcpio reported an error"
-    elif (( pipesave[2] )); then
-        errmsg="$_optcompress reported an error"
-    fi
-
-    if (( builderrors )); then
-        warning "errors were encountered during the build. The image may not be complete."
-        status=1
-    fi
-
-    if [[ $errmsg ]]; then
-        error "Image generation FAILED: %s" "$errmsg"
-        status=1
-    elif (( builderrors == 0 )); then
-        msg "Image generation successful"
-    fi
-
+    build_image "$_optgenimg" "$_optcompress"
 else
     msg "Dry run complete, use -g IMAGE to generate a real image"
 fi
 
-cleanup $status
+cleanup $(( !!_builderrors ))
 
 # vim: set ft=sh ts=4 sw=4 et:
