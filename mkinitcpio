@@ -254,6 +254,7 @@ if [[ $_optpreset ]]; then
     # Use -m and -v options specified earlier
     declare -a preset_mkopts preset_cmd
     (( _optquiet )) || preset_mkopts+=(-v)
+    (( _optcolor )) || preset_mkopts+=(-n)
 
     ret=0
     for p in "${PRESETS[@]}"; do
