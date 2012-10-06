@@ -273,8 +273,8 @@ add_checked_modules() {
 
     local mod mods
 
-    if [[ -s $_f_autodetect_cache ]]; then
-        mapfile -t mods < <(all_modules "$@" | grep -xFf "$_f_autodetect_cache")
+    if (( ${#_autodetect_cache[*]} )); then
+        mapfile -t mods < <(all_modules "$@" | grep -xFf <(printf '%s\n' "${!_autodetect_cache[@]}"))
     else
         mapfile -t mods < <(all_modules "$@")
     fi
@@ -293,8 +293,8 @@ checked_modules() {
     # DEPRECATED: Use add_checked_modules instead
     #
 
-    if [[ -s $_f_autodetect_cache ]]; then
-        grep -xFf "$_f_autodetect_cache" <(all_modules "$@")
+    if (( ${#_autodetect_cache[*]} )); then
+        all_modules "$@" | grep -xFf <(printf '%s\n' "${!_autodetect_cache[@]}")
         return 1
     else
         all_modules "$@"

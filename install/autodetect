@@ -1,20 +1,19 @@
 #!/bin/bash
 
 build() {
-    local -a md_devs
-
-    _f_autodetect_cache=$_d_workdir/autodetect_modules
+    local m=
+    local -a md_devs mods
 
     add_if_avail() {
-        local resolved
+        local r= resolved=
 
         # treat this as an alias, since ext3 might be aliased to ext4.
         IFS=$'\n' read -rd '' -a resolved < \
             <(modprobe -d "$_optmoduleroot" -S "$KERNELVERSION" -R "$1" 2>/dev/null)
 
-        if (( ${#resolved[*]} )); then
-            printf '%s\n' "${resolved[@]}" >>"$_f_autodetect_cache"
-        fi
+        for r in "${resolved[@]}"; do
+            _autodetect_cache["$r"]=1
+        done
     }
 
     if [[ ! -d /sys/devices ]]; then
@@ -22,7 +21,10 @@ build() {
         return 1
     fi
 
-    auto_modules >"$_f_autodetect_cache"
+    mapfile -t mods < <(auto_modules)
+    for m in "${mods[@]}"; do
+        _autodetect_cache["$m"]=1
+    done
 
     # detect filesystem for root
     if rootfstype=$(findmnt -uno fstype '/'); then
@@ -41,22 +43,24 @@ build() {
     md_devs=(/sys/class/block/md*/md/level)
     if [[ -e $md_devs ]]; then
         quiet "found %d mdadm arrays to scan" "${#md_devs[*]}"
-        awk '{ gsub(/raid[456]/, "raid456"); print; }' "${md_devs[@]}" |
-                sort -u >>"$_f_autodetect_cache"
+        mapfile -t mods < <(awk '{ gsub(/raid[456]/, "raid456"); print; }' "${md_devs[@]}")
+        for m in "${mods[@]}"; do
+            _autodetect_cache["$m"]=1
+        done
     fi
 
-    if [[ -s $_f_autodetect_cache ]]; then
-        quiet "caching %d modules" $(wc -l < "$_f_autodetect_cache")
+    if (( ${#_autodetect_cache[*]} )); then
+        quiet "caching %d modules" "${#_autodetect_cache[*]}"
     fi
 }
 
 help() {
     cat <<HELPEOF
-This hook shrinks your initramdisk to a smaller size by autodetecting your
-needed modules. Be sure to verify included modules are correct and none are
-missing.  This hook must be run before other subsystem hooks in order to take
-advantage of auto-detection.  Any hooks placed before 'autodetect' will be
-installed in full.
+This hook shrinks your initramfs to a smaller size by autodetecting the needed
+modules. Be sure to verify included modules are correct and none are missing.
+This hook must be run before other subsystem hooks in order to take advantage
+of auto-detection.  Any hooks placed before 'autodetect' will be installed in
+full.
 HELPEOF
 }
 

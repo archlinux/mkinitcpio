@@ -17,12 +17,12 @@ _d_install=(install /usr/lib/initcpio/install /lib/initcpio/install)
 _d_presets=mkinitcpio.d
 
 # options and runtime data
-_optmoduleroot= _optkver= _f_autodetect_cache= _optgenimg= _optpreset=
+_optmoduleroot= _optkver= _optgenimg= _optpreset=
 _optcompress=
 _optshowautomods=0 _optsavetree=0 _optshowmods=0
 _optquiet=1 _optcolor=1
 _optskiphooks=() _optaddhooks=() _modpaths=() _hooks=()
-declare -A _runhooks=() _addedmodules=()
+declare -A _runhooks=() _addedmodules=() _autodetect_cache=()
 
 # export a sane PATH
 export PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
@@ -64,6 +64,7 @@ cleanup() {
     if [[ $_d_workdir ]]; then
         # when _optpreset is set, we're in the main loop, not a worker process
         if (( _optsavetree )) && [[ -z $_optpreset ]]; then
+            printf '%s\n' "${!_autodetect_cache[@]}" > "$_d_workdir/autodetect_modules"
             msg "build directory saved in %s" "$_d_workdir"
         else
             rm -rf "$_d_workdir"
@@ -378,7 +379,7 @@ if (( _optshowautomods )); then
     _f_autodetect_hook=$(find_in_dirs 'autodetect' "${_d_install[@]}")
     . "$_f_autodetect_hook"
     build
-    cat "$_f_autodetect_cache"
+    printf '%s\n' "${!_autodetect_cache[@]}" | sort
     cleanup 0
 fi
 
