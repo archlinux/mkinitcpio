@@ -1,0 +1,45 @@
+#!/bin/bash
+
+build() {
+    local filter
+    local -A blockdevs
+
+    # pata, sata, scsi
+    for filter in 'scsi/.*ata' '/(block|scsi|fusion)/' 'ata/[ps]ata_' \
+            'ata/(ahci|pdc_adma|ata_piix|ata_generic)'; do
+        add_checked_modules "$filter" && blockdevs['sd_mod']=1
+    done
+
+    # usb
+    if add_checked_modules -f '(_cs|sl811_hcd|isp116x_hcd)' '/usb/host'; then
+        blockdevs+=(['usb_storage?']=1 ['sd_mod?']=1 ['sr_mod?']=1)
+        add_checked_modules 'drivers/usb/storage/ums-*'
+    fi
+
+    # firewire
+    if add_checked_modules '/drivers/firewire/'; then
+        blockdevs+=(['firewire-sbp2?']=1 ['sd_mod?']=1 ['sr_mod?']=1)
+    fi
+
+    # mmc
+    if add_checked_modules '/mmc'; then
+        blockdevs+=(['tifm_7xx1?']=1 ['mmc_block?']=1)
+    fi
+
+    # virtio
+    if add_checked_modules 'virtio'; then
+        blockdevs['virtio_blk?']=1
+    fi
+
+    map add_module "${!blockdevs[@]}"
+}
+
+help() {
+    cat <<HELPEOF
+This hook loads the necessary modules for most block devices using pata, sata,
+scsi, firewire, usb, or mmc. Detection will take place at runtime. To minimize
+the modules in the image, add the autodetect hook too.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
