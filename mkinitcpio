@@ -415,9 +415,7 @@ if [[ -r $_d_kmoduledir/modules.builtin ]]; then
     unset modname path
 fi
 
-for hook in "${_hooks[@]}"; do
-    run_build_hook "$hook" || (( ++_builderrors ))
-done
+map run_build_hook "${_hooks[@]}" || (( ++_builderrors ))
 
 # process config file
 parse_hook

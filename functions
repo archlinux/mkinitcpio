@@ -172,6 +172,14 @@ die() {
     cleanup 1
 }
 
+map() {
+    local r=0
+    for _ in "${@:2}"; do
+        "$1" "$_" || r=1
+    done
+    return $r
+}
+
 in_array() {
     # Search for an element in an array.
     #   $1: needle
@@ -258,10 +266,7 @@ add_all_modules() {
     local mod mods
 
     mapfile -t mods < <(all_modules "$@")
-
-    for mod in "${mods[@]}"; do
-        add_module "$mod"
-    done
+    map add_module "${mods[@]}"
 
     return $(( !${#mods[*]} ))
 }
@@ -279,9 +284,7 @@ add_checked_modules() {
         mapfile -t mods < <(all_modules "$@")
     fi
 
-    for mod in "${mods[@]}"; do
-        add_module "$mod"
-    done
+    map add_module "${mods[@]}"
 
     return $(( !${#mods[*]} ))
 }
@@ -306,7 +309,7 @@ add_module() {
     # discovered and added.
     #   $1: module name
 
-    local module= path= dep= deps= field= value=
+    local module= path= deps= field= value=
     local ign_errors=0
 
     if [[ $1 = *\? ]]; then
@@ -326,9 +329,7 @@ add_module() {
                 ;;
             depends)
                 IFS=',' read -r -a deps <<< "$value"
-                for dep in "${deps[@]}"; do
-                    add_module "$dep"
-                done
+                map add_module "${deps[@]}"
                 ;;
             firmware)
                 if [[ -e /usr/lib/firmware/$value ]]; then
@@ -559,19 +560,9 @@ parse_hook() {
     # prior to the start of hook processing, and after each hook's build
     # function is run.
 
-    local item=
-
-    for item in $MODULES; do
-        add_module "$item"
-    done
-
-    for item in $BINARIES; do
-        add_binary "$item"
-    done
-
-    for item in $FILES; do
-        add_file "$item"
-    done
+    map add_module $MODULES
+    map add_binary $BINARIES
+    map add_file $FILES
 
     if [[ $SCRIPT ]]; then
         add_runscript "$SCRIPT"
