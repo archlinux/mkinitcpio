@@ -1,4 +1,5 @@
 mkinitcpio.8
+mkinitcpio.conf.5
 lsinitcpio.1
 *~
 *.bak

@@ -17,6 +17,7 @@ all: doc
 
 MANPAGES = \
 	mkinitcpio.8 \
+	mkinitcpio.conf.5 \
 	lsinitcpio.1
 
 install: all
@@ -47,6 +48,7 @@ install: all
 	cp -at $(DESTDIR)/etc/mkinitcpio.d mkinitcpio.d/*
 
 	install -m644 mkinitcpio.8 $(DESTDIR)/usr/share/man/man8/mkinitcpio.8
+	install -m644 mkinitcpio.conf.5 $(DESTDIR)/usr/share/man/man5/mkinitcpio.conf.5
 	install -m644 lsinitcpio.1 $(DESTDIR)/usr/share/man/man1/lsinitcpio.1
 	install -m644 bash-completion $(DESTDIR)/usr/share/bash-completion/completions/mkinitcpio
 	ln -s mkinitcpio $(DESTDIR)/usr/share/bash-completion/completions/lsinitcpio
