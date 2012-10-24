@@ -79,6 +79,9 @@ Options
 	must exist. The 'TMPDIR' environment variable is also honored to set this
 	location, but the command line option will take precedence.
 
+*-V, \--version*::
+        Display version information.
+
 *-v, \--verbose*::
 	Verbose output. Outputs more information about what's happening during
 	creation of the ramdisk.

@@ -42,6 +42,9 @@ Options
 *-n, \--nocolor*::
 	Disable color output.
 
+*-V, \--version*::
+        Display version information.
+
 *-v, \--verbose*::
 	Be more verbose. In particular, show long style output when listing
 	the contents of an image, and show files as they are extracted when
