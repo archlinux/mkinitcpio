@@ -23,9 +23,16 @@ usage: ${0##*/} [action] [options] <initramfs>
   Options:
    -h, --help           display this help
    -n, --nocolor        disable colorized output
+   -V, --version        display version information
    -v, --verbose        more verbose output
 
 USAGE
+}
+
+version() {
+    cat<<EOF
+lsinitcpio %VERSION%
+EOF
 }
 
 decomp() {
@@ -164,8 +171,8 @@ analyze_image() {
     fi
 }
 
-_opt_short='achlnvx'
-_opt_long=('analyze' 'help' 'list' 'nocolor' 'showconfig' 'verbose' 'extract')
+_opt_short='achlnVvx'
+_opt_long=('analyze' 'help' 'list' 'nocolor' 'showconfig' 'version' 'verbose' 'extract')
 
 if ! parseopts "$_opt_short" "${_opt_long[@]}" -- "$@"; then
     exit 1
@@ -186,6 +193,9 @@ while :; do
             _optlistcontents=1 ;;
         -n|--nocolor)
             _optcolor=0 ;;
+        -V|--version)
+            version
+            exit 0 ;;
         -v|--verbose)
             _optverbose='--verbose' ;;
         -x|--extract)
