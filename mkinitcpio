@@ -52,9 +52,16 @@ usage: ${0##*/} [options]
    -S, --skiphooks <hooks>      Skip specified hooks, comma-separated, during build
    -s, --save                   Save build directory. (default: no)
    -t, --builddir <dir>         Use DIR as the temporary build directory
+   -V, --version                Display version information and exit
    -v, --verbose                Verbose output (default: no)
    -z, --compress <program>     Use an alternate compressor on the image
 
+EOF
+}
+
+version() {
+    cat <<EOF
+mkinitcpio $version
 EOF
 }
 
@@ -243,10 +250,10 @@ install_modules() {
 trap 'cleanup 130' INT
 trap 'cleanup 143' TERM
 
-_opt_short='A:c:g:H:hk:nLMp:r:S:st:vz:'
+_opt_short='A:c:g:H:hk:nLMp:r:S:st:Vvz:'
 _opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookhelp:' 'help'
           'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor'
-          'preset:' 'skiphooks:' 'save' 'builddir:' 'verbose' 'compress:')
+          'preset:' 'skiphooks:' 'save' 'builddir:' 'version' 'verbose' 'compress:')
 
 parseopts "$_opt_short" "${_opt_long[@]}" -- "$@" || exit 1
 set -- "${OPTRET[@]}"
@@ -276,6 +283,9 @@ while :; do
             fi ;;
         -h|--help)
             usage
+            cleanup 0 ;;
+        -V|--version)
+            version
             cleanup 0 ;;
         -p|--preset)
             shift
