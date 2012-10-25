@@ -4,7 +4,7 @@
 _lsinitcpio() {
     local cur opts
     opts=(-a --analyze -c --config -h --help -l --list
-          -n --nocolor -v --verbose -x --extract)
+          -n --nocolor -V --version -v --verbose -x --extract)
 
     _get_comp_words_by_ref cur
 
@@ -57,7 +57,7 @@ _mkinitcpio() {
     local action cur prev opts
     opts=(-A --addhooks -c --config -g --generate -H --hookhelp -h --help -k --kernel
           -L --listhooks -M --automods -n --nocolor -p --preset -r --moduleroot
-          -S --skiphooks -s --save -t --builddir -v --verbose -z --compress)
+          -S --skiphooks -s --save -t --builddir -V --version -v --verbose -z --compress)
 
     _get_comp_words_by_ref cur prev
 
