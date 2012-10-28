@@ -280,7 +280,7 @@ Examples
 See also
 --------
 A more thorough article on configuring mkinitcpio:
-<http://wiki.archlinux.org/index.php/Configuring_mkinitcpio>
+<http://wiki.archlinux.org/index.php/Mkinitcpio>
 
 *initrd*(4), *lsinitcpio*(1), *mkinitcpio.conf*(5)
 
