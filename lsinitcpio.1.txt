@@ -43,7 +43,7 @@ Options
 	Disable color output.
 
 *-V, \--version*::
-        Display version information.
+	Display version information.
 
 *-v, \--verbose*::
 	Be more verbose. In particular, show long style output when listing

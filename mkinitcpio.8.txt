@@ -80,7 +80,7 @@ Options
 	location, but the command line option will take precedence.
 
 *-V, \--version*::
-        Display version information.
+	Display version information.
 
 *-v, \--verbose*::
 	Verbose output. Outputs more information about what's happening during
@@ -114,7 +114,7 @@ functions exist to facilitate this.
 	path and, if needed, a lookup will be performed. If the binary is a dynamically
 	linked ELF binary, dependencies will be automatically added. Optionally, a
 	destination within the initramfs image as well as a file mode can be specified.
-	By default, the desintation and mode be taken from the source derived from
+	By default, the destintation and mode be taken from the source derived from
 	'binary'.
 
 *add_file* 'path' [ 'destination' ] [ 'mode' ]::
@@ -144,7 +144,7 @@ functions exist to facilitate this.
 
 *add_all_modules* [ '-f filter' ] *pattern*::
 
-	add modules to the image, without regard for the autodetect whitelist. *pattern*
+	Adds modules to the image, without regard for the autodetect whitelist. *pattern*
 	should be a subdirectory within the kernel tree describing a subset of modules to
 	be included. Further refinement can be provided via the -f flag with an extended
 	regular expression.
@@ -159,9 +159,9 @@ functions exist to facilitate this.
 *add_runscript* [ 'scriptname' ]::
 
 	Adds a runtime hook to the image, which is a busybox ash compatible shell
-	script. The name of the script is guarenteed to match the name of the hook the
-	script is called. It *can* be overriden, but this is not recommended, as this
-	only exists for legacy compatability.
+	script. The name of the script is guaranteed to match the name of the hook the
+	script is called from. It *can* be overriden, but this is not recommended, as
+	this only exists for legacy compatibility.
 
 About Runtime Hooks
 -------------------
@@ -233,8 +233,8 @@ the kernel command line:
 	This variable describes the root partition which early init will mount
 	before passing control to the real init. mkinitcpio understands a variety of
 	formats, the most basic of which is the path to the block device, either
-	directly, such as '/dev/sda2', or using a udev symlink such as
-	'/dev/disk/by-label/CorsairF80-root'.  Support for identification by LABEL or
+	directly such as '/dev/sda2', or using a udev symlink such as
+	'/dev/disk/by-label/CorsairF80-root'. Support for identification by LABEL or
 	UUID tags are also supported, such as, 'LABEL=CorsairF80-root'. As of
 	util-linux 2.22, PARTUUID is also supported.  Identification via hex encoded
 	major/minor device ID is supported for legacy reasons, but should not be used.
