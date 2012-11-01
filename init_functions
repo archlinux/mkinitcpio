@@ -11,14 +11,24 @@ poll_device() {
     local device=$1 seconds=${2//[!0-9]}
 
     [ -z "$seconds" ] && seconds=10
+    deciseconds=$(( seconds * 10 ))
+
+    # tenths of a second
+    sleepinterval=1
 
     [ -b "$device" ] && return 0
 
     if [ "$udevd_running" -eq 1 ]; then
         msg "Waiting $seconds seconds for device $device ..." >&2
-        while [ ! -b "$device" -a "$seconds" -gt 0 ]; do
-            sleep 1
-            seconds=$(( $seconds - 1 ))
+        while [ ! -b "$device" -a "$deciseconds" -gt 0 ]; do
+            if [ "$sleepinterval" -ge 10 ]; then
+                sleep 1
+                deciseconds=$(( deciseconds - 10 ))
+            else
+                sleep .$sleepinterval
+                deciseconds=$(( deciseconds - sleepinterval ))
+                sleepinterval=$(( sleepinterval * 2 ))
+            fi
         done
     fi
 
