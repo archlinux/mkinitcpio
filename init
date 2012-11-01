@@ -24,8 +24,9 @@ done
 
 run_hookfunctions 'run_earlyhook' 'early hook' $EARLYHOOKS
 
-[ -n "${earlymodules//[[:space:]]}" ] && modprobe -qab ${earlymodules//,/ }
-[ -n "${MODULES//[[:space:]]}" ] && modprobe -qab $MODULES
+if [ -n "$earlymodules$MODULES" ]; then
+    modprobe -qab ${earlymodules//,/ } $MODULES
+fi
 
 # If rootdelay is empty or not a non-negative integer, set it to 10
 if [ -z "${rootdelay}" ] || ! [ "${rootdelay}" -ge 0 ]; then
