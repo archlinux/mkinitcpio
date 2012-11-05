@@ -29,6 +29,14 @@ stop_device() {
             }
             ;;
         raid*)
+            # wait for arrays with external metadata to be marked as
+            # clean. unfortunately, there isn't a whole lot we can do
+            # if this fails, and the array may need a full rebuild on
+            # the next reboot.
+            IFS=: read metadata _ < "/sys/class/block/$1/md/metadata_version"
+            if [ "$metdata" = external ]; then
+                mdadm --wait-clean "/dev/$1"
+            fi
             mdadm --stop "/dev/$1"
             ;;
         dmraid)
