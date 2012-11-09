@@ -53,12 +53,7 @@ disassemble() {
     local holder=
 
     for holder in "$1"/holders/*; do
-        if [ ! -e "$holder" ]; then
-            # end of the chain, recurse back up
-            stop_device "$1"
-            return
-        fi
-        disassemble "${holder##*/}"
+        [ -e "$holder" ] && disassemble "${holder##*/}"
         stop_device "$1"
     done
 }
