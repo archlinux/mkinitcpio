@@ -227,8 +227,7 @@ auto_modules() {
         xargs -d $'\n' modprobe -d "$MODULEROOT" -qaRS "$KERNELVERSION" |
         sort -u)
 
-    printf "%s\n" "${mods[@]//-/_}"
-    (( ${#mods[*]} ))
+    (( ${#mods[*]} )) && printf "%s\n" "${mods[@]//-/_}"
 }
 
 all_modules() {
