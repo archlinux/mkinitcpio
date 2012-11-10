@@ -62,6 +62,9 @@ disassemble() {
 # might be in a useful state. FS#30995.
 rm -rf /run/udev
 
+# chdir, so that we can avoid a lot of path chopping
+cd /sys/class/block
+
 printf '%s\n' 'Detaching loop devices.'
 
 for loop in loop*/loop; do
@@ -87,9 +90,6 @@ END {
 done
 
 printf '%s\n' "Disassembling stacked devices."
-
-# chdir, so that we can avoid a lot of path chopping
-cd /sys/class/block
 
 # iterate over devices with holders
 for part in */holders/*; do
