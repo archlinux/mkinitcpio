@@ -1,9 +1,20 @@
 #!/bin/bash
 
 build() {
+    local major minor
+
     add_checked_modules -f '(_cs|sl811_hcd|isp116x_hcd)' '/usb/host'
-    add_all_modules '/hid/hid-'
-    add_module 'usbhid?'
+
+    # As of 3.5, modaliases seem to be exported for HID
+    # devices, so we can leverage autodetection.
+    IFS=.- read major minor _ <<<"$KERNELVERSION"
+    if (( major > 3 || (major == 3 && minor >= 5) )); then
+        add_checked_modules '/hid/hid'
+    else
+        add_all_modules '/hid/hid'
+    fi
+
+    add_module 'usbhid'
 }
 
 help() {
