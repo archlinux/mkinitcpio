@@ -6,7 +6,7 @@
 shopt -s extglob
 
 _list='--list'
-_optcolor=1 _optverbose=0
+_optcolor=1 _optverbose=
 _f_functions=functions
 
 usage() {
