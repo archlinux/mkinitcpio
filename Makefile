@@ -61,7 +61,6 @@ doc: $(MANPAGES)
 		-a manmanual="mkinitcpio manual" $<
 
 clean:
-	$(RM) -r build mkinitcpio-$(VERSION)
 	$(RM) mkinitcpio-${VERSION}.tar.gz $(MANPAGES)
 
 dist: doc
