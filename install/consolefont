@@ -3,11 +3,7 @@
 build() {
     # subshell to avoid namespace pollution
     (
-        for cfg in /etc/{rc,vconsole}.conf; do
-            [[ -s $cfg ]] && . "$cfg"
-        done
-
-        [[ $FONT ]] && CONSOLEFONT=$FONT
+        [[ -s /etc/vconsole.conf ]] && . /etc/vconsole.conf
 
         if [[ $CONSOLEFONT ]]; then
             for file in "/usr/share/kbd/consolefonts/$CONSOLEFONT".@(fnt|psf?(u))?(.gz); do
@@ -32,8 +28,7 @@ build() {
 
 help() {
     cat <<HELPEOF
-This hook loads consolefont specified in locale.conf or rc.conf during early
-userspace.
+This hook loads consolefont specified in locale.conf during early userspace.
 HELPEOF
 }
 
