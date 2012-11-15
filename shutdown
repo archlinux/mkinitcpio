@@ -16,17 +16,9 @@ stop_device() {
             read devname <"$1/dm/name"
             cryptsetup remove "$devname"
             ;;
-        dm)
+        lvm|dm)
             read devname <"$1/dm/name"
             dmsetup remove "$devname"
-            ;;
-        lvm)
-            # disassemble the parent VG
-            read devname <"$1/dm/name"
-            lvm lvdisplay -c "/dev/mapper/$devname" | {
-                IFS=: read _ vgname _
-                lvm vgchange --noudevsync -an "$vgname"
-            }
             ;;
         raid*)
             # wait for arrays with external metadata to be marked as
