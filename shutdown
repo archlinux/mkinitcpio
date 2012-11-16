@@ -50,9 +50,27 @@ disassemble() {
     done
 }
 
+copy_binary_from_host() {
+    local bin=$1
+
+    # hardcode a sane PATH
+    for p in '/usr/sbin' '/usr/bin' '/sbin' '/bin'; do
+        if [ -e "/oldroot/$p/$bin" ]; then
+            cp "/oldroot/$p/$bin" "/usr/bin/$1"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 # XXX: Discourage libdevmapper from thinking that udev
 # might be in a useful state. FS#30995.
 rm -rf /run/udev
+
+if [ "$1" = kexec ] && ! command -v kexec >/dev/null; then
+    copy_binary_from_host kexec
+fi
 
 # chdir, so that we can avoid a lot of path chopping
 cd /sys/class/block
