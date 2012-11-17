@@ -18,7 +18,7 @@ stop_device() {
             ;;
         lvm|dm)
             read devname <"$1/dm/name"
-            dmsetup remove "$devname"
+            dmsetup --noudevsync remove "$devname"
             ;;
         raid*)
             # wait for arrays with external metadata to be marked as
