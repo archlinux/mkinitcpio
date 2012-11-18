@@ -10,7 +10,7 @@ err () {
 poll_device() {
     local device=$1 seconds=${2//[!0-9]}
 
-    [ -z "$seconds" ] && seconds=10
+    [ "${seconds:-x}" = x ] && seconds=10
     deciseconds=$(( seconds * 10 ))
 
     # tenths of a second

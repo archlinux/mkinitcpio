@@ -1,4 +1,5 @@
 #!/usr/bin/ash
+
 udevd_running=0
 
 if [ -x /usr/bin/systemd-timestamp ]; then
@@ -26,11 +27,6 @@ run_hookfunctions 'run_earlyhook' 'early hook' $EARLYHOOKS
 
 if [ -n "$earlymodules$MODULES" ]; then
     modprobe -qab ${earlymodules//,/ } $MODULES
-fi
-
-# If rootdelay is empty or not a non-negative integer, set it to 10
-if [ -z "${rootdelay}" ] || ! [ "${rootdelay}" -ge 0 ]; then
-    rootdelay=10
 fi
 
 run_hookfunctions 'run_hook' 'hook' $HOOKS
