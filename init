@@ -1,6 +1,8 @@
 #!/usr/bin/ash
 
 udevd_running=0
+mount_handler=default_mount_handler
+init=/sbin/init
 
 if [ -x /usr/bin/systemd-timestamp ]; then
     RD_TIMESTAMP=$(systemd-timestamp)
@@ -43,12 +45,11 @@ unset rootdev
 fsck_root
 
 # Mount root at /new_root
-${mount_handler:-default_mount_handler} /new_root
+"$mount_handler" /new_root
 
 run_hookfunctions 'run_latehook' 'late hook' $LATEHOOKS
 run_hookfunctions 'run_cleanuphook' 'cleanup hook' $CLEANUPHOOKS
 
-init=${init:-/sbin/init}
 if [ "$(stat -c %D /)" = "$(stat -c %D /new_root)" ]; then
     # Nothing got mounted on /new_root. This is the end, we don't know what to do anymore
     # We fall back into a shell, but the shell has now PID 1
