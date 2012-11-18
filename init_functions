@@ -143,7 +143,7 @@ fsck_root() {
     fsck_ret() {
         [ -z "$fsckret" ] && return 1
         [ "$fsckret" -eq "$1" ] && return 0
-        [ "$(( $fsckret & $1 ))" -eq "$1" ]
+        [ "$(( fsckret & $1 ))" -eq "$1" ]
     }
 
     if [ "$fsckret" -ne 255 ]; then
@@ -218,8 +218,8 @@ resolve_device() {
             minor=$(( 0x0$device & 0xff ))
             ;;
         0x[0-9a-fA-F][0-9a-fA-F]*)
-            major=$(( $device >> 8 ))
-            minor=$(( $device & 0xff ))
+            major=$(( device >> 8 ))
+            minor=$(( device & 0xff ))
             ;;
     esac
 
