@@ -428,8 +428,7 @@ fi
 map run_build_hook "${_hooks[@]}" || (( ++_builderrors ))
 
 # process config file
-parse_hook
-write_image_config
+parse_config "$_f_config"
 
 # switch out the error handler to catch all errors
 trap -- RETURN

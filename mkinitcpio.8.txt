@@ -160,8 +160,7 @@ functions exist to facilitate this.
 
 	Adds a runtime hook to the image, which is a busybox ash compatible shell
 	script. The name of the script is guaranteed to match the name of the hook the
-	script is called from. It *can* be overriden, but this is not recommended, as
-	this only exists for legacy compatibility.
+	script is called from.
 
 About Runtime Hooks
 -------------------

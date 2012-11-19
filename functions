@@ -288,21 +288,6 @@ add_checked_modules() {
     return $(( !${#mods[*]} ))
 }
 
-checked_modules() {
-    # Returns a list of modules filtered by the list of autodetected modules.
-    #   $@: arguments to all_modules
-    #
-    # DEPRECATED: Use add_checked_modules instead
-    #
-
-    if (( ${#_autodetect_cache[*]} )); then
-        all_modules "$@" | grep -xFf <(printf '%s\n' "${!_autodetect_cache[@]}")
-        return 1
-    else
-        all_modules "$@"
-    fi
-}
-
 add_module() {
     # Add a kernel module to the initcpio image. Dependencies will be
     # discovered and added.
@@ -466,12 +451,9 @@ add_file() {
 
 add_runscript() {
     # Adds a runtime script to the initcpio image. The name is derived from the
-    # script which calls it, though it can be overriden by passing the name of
-    # the runtime hook as the first argument to the function. This shouldn't be
-    # needed and is only left for legacy compatability reasons. It may not work
-    # in future versions of mkinitcpio.
+    # script which calls it as the basename of the caller.
 
-    local funcs fn script hookname=${SCRIPT:-${BASH_SOURCE[1]##*/}}
+    local funcs fn script hookname=${BASH_SOURCE[1]##*/}
 
     if ! script=$(find_in_dirs "$hookname" "${_d_hooks[@]}"); then
         error "runtime script for \`%s' not found" "$hookname"
@@ -554,38 +536,16 @@ add_binary() {
     return 0
 }
 
-parse_hook() {
-    # parse key global variables set by install hooks. This function is called
-    # prior to the start of hook processing, and after each hook's build
-    # function is run.
+parse_config() {
+    # parse key global variables set by the config file.
 
+    set -f
     map add_module $MODULES
     map add_binary $BINARIES
     map add_file $FILES
+    set +f
 
-    if [[ $SCRIPT ]]; then
-        add_runscript "$SCRIPT"
-    fi
-}
-
-find_in_dirs() {
-    local dir
-
-    for dir in "${@:2}"; do
-        if [[ -e $dir/$1 ]]; then
-            printf '%s' "$dir/$1"
-            return 0
-        fi
-    done
-
-    return 1
-}
-
-write_image_config() {
-    # write the config as runtime config and as a pristine build config
-    # (for audting purposes) to the image.
-
-    tee "$BUILDROOT/buildconfig" < "$_f_config" | {
+    tee "$BUILDROOT/buildconfig" < "$1" | {
         . /dev/stdin
 
         # sanitize of any extra whitespace
@@ -602,6 +562,19 @@ write_image_config() {
             'LATEHOOKS' "${_runhooks['late']# }" \
             'CLEANUPHOOKS' "${_runhooks['cleanup']% }"
     } >"$BUILDROOT/config"
+}
+
+find_in_dirs() {
+    local dir
+
+    for dir in "${@:2}"; do
+        if [[ -e $dir/$1 ]]; then
+            printf '%s' "$dir/$1"
+            return 0
+        fi
+    done
+
+    return 1
 }
 
 initialize_buildroot() {
@@ -673,7 +646,6 @@ run_build_hook() {
     # run
     msg2 "Running build hook: [%s]" "${script##*/}"
     build
-    parse_hook
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
