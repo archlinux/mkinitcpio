@@ -627,7 +627,8 @@ run_build_hook() {
             error "$script is a broken symlink to $(readlink "$script")"
             return 1
         fi
-        warning "Hook '%s' is deprecated. Replace it with '%s' in your config" "$script" "${realscript##*/}"
+        warning "Hook '%s' is deprecated. Replace it with '%s' in your config" \
+            "${script##*/}" "${realscript##*/}"
         script=$realscript
     fi
 
