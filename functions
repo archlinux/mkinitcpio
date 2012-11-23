@@ -331,7 +331,7 @@ add_module() {
 
     # aggregate modules and add them all at once to save some forks
     quiet "adding module: %s" "$1"
-    _modpaths+=("$path")
+    _modpaths["$path"]=1
     _addedmodules["${module//-/_}"]=1
 
     # handle module quirks

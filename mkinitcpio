@@ -21,8 +21,8 @@ _optmoduleroot= _optkver= _optgenimg= _optpreset=
 _optcompress=
 _optshowautomods=0 _optsavetree=0 _optshowmods=0
 _optquiet=1 _optcolor=1
-_optskiphooks=() _optaddhooks=() _modpaths=() _hooks=()
-declare -A _runhooks=() _addedmodules=() _autodetect_cache=()
+_optskiphooks=() _optaddhooks=() _hooks=()
+declare -A _runhooks _addedmodules _modpaths _autodetect_cache
 
 # export a sane PATH
 export PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
@@ -224,25 +224,26 @@ install_modules() {
         return 0
     fi
 
-    printf '%s\0' "$@" | sort -zu |
-        xargs -0 cp -t "$BUILDROOT/usr/lib/modules/$KERNELVERSION/kernel"
+    cp "$@" "$BUILDROOT/lib/modules/$KERNELVERSION/kernel"
 
     # unzip modules prior to recompression
-    gzip -dr "$BUILDROOT/usr/lib/modules/$KERNELVERSION/kernel"
+    gzip -dr "$BUILDROOT/lib/modules/$KERNELVERSION/kernel"
 
     msg "Generating module dependencies"
-    install -m644 -t "$BUILDROOT/usr/lib/modules/$KERNELVERSION" \
+    install -m644 -t "$BUILDROOT/lib/modules/$KERNELVERSION" \
         "$_d_kmoduledir"/modules.builtin
 
-    # we install all modules into kernel/, making the .order file incorrect
-    # for the module tree. munge it, so that we have an accurate index.
+    # we install all modules into kernel/, making the .order file incorrect for
+    # the module tree. munge it, so that we have an accurate index. This avoids
+    # some rare and subtle issues with module loading choices when an alias
+    # resolves to multiple modules, only one of which can claim a device.
     awk -F'/' '{ print "kernel/" $NF }' \
         "$_d_kmoduledir"/modules.order >"$BUILDROOT/lib/modules/$KERNELVERSION/modules.order"
 
     depmod -b "$BUILDROOT" "$KERNELVERSION"
 
     # remove all non-binary module.* files (except devname for on-demand module loading)
-    rm "$BUILDROOT/usr/lib/modules/$KERNELVERSION"/modules.!(*.bin|devname)
+    rm "$BUILDROOT/lib/modules/$KERNELVERSION"/modules.!(*.bin|devname)
 }
 
 . "$_f_functions"
@@ -434,7 +435,7 @@ parse_config "$_f_config"
 trap -- RETURN
 trap '(( ++_builderrors ))' ERR
 
-install_modules "${_modpaths[@]}"
+install_modules "${!_modpaths[@]}"
 
 # unset errtrace and trap
 set +o functrace
