@@ -12,8 +12,8 @@ shopt -s extglob
 # needed files/directories
 _f_functions=functions
 _f_config=mkinitcpio.conf
-_d_hooks=(hooks /usr/lib/initcpio/hooks /lib/initcpio/hooks)
-_d_install=(install /usr/lib/initcpio/install /lib/initcpio/install)
+_d_hooks="$PWD/hooks:/usr/lib/initcpio/hooks:/lib/initcpio/hooks"
+_d_install="$PWD/install:/usr/lib/initcpio/install:/lib/initcpio/install"
 _d_presets=mkinitcpio.d
 
 # options and runtime data
@@ -315,8 +315,7 @@ while :; do
             unset skip ;;
         -H|--hookhelp)
             shift
-            if script=$(find_in_dirs "$1" "${_d_install[@]}"); then
-                . "$script"
+            if PATH=$_d_install . "$1"; then
                 if ! declare -f help >/dev/null; then
                     error "No help for hook $1"
                     exit 1
@@ -327,11 +326,12 @@ while :; do
             fi
             msg "Help for hook '$1':"
             help
-            list_hookpoints "$script"
+            list_hookpoints "$1"
             exit 0 ;;
         -L|--listhooks)
             msg "Available hooks"
-            for dir in "${_d_install[@]}"; do
+            IFS=: read -ra _dirs <<<"$_d_install"
+            for dir in "${_dirs[@]}"; do
                 ( cd "$dir" &>/dev/null && printf '   %s\n' * )
             done | sort -u | column -c$(tput cols)
             exit 0 ;;
@@ -400,8 +400,7 @@ fi
 
 if (( _optshowautomods )); then
     msg "Modules autodetected"
-    _f_autodetect_hook=$(find_in_dirs 'autodetect' "${_d_install[@]}")
-    . "$_f_autodetect_hook"
+    PATH=$_d_install . 'autodetect'
     build
     printf '%s\n' "${!_autodetect_cache[@]}" | sort
     cleanup 0

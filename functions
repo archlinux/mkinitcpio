@@ -202,11 +202,11 @@ funcgrep() {
 }
 
 list_hookpoints() {
-    local funcs
+    local funcs script
 
-    [[ -e ${1/install/hooks} ]] || return 0
+    script=$(PATH=$_d_hooks type -p "$1") || return 0
 
-    mapfile -t funcs < <(funcgrep '^run_[[:alnum:]_]+' "${1/install/hooks}")
+    mapfile -t funcs < <(funcgrep '^run_[[:alnum:]_]+' "$script")
 
     echo
     msg "This hook has runtime scripts:"
@@ -455,7 +455,7 @@ add_runscript() {
 
     local funcs fn script hookname=${BASH_SOURCE[1]##*/}
 
-    if ! script=$(find_in_dirs "$hookname" "${_d_hooks[@]}"); then
+    if ! script=$(PATH=$_d_hooks type -p "$hookname"); then
         error "runtime script for \`%s' not found" "$hookname"
         return
     fi
@@ -564,19 +564,6 @@ parse_config() {
     } >"$BUILDROOT/config"
 }
 
-find_in_dirs() {
-    local dir
-
-    for dir in "${@:2}"; do
-        if [[ -e $dir/$1 ]]; then
-            printf '%s' "$dir/$1"
-            return 0
-        fi
-    done
-
-    return 1
-}
-
 initialize_buildroot() {
     # creates a temporary directory for the buildroot and initialize it with a
     # basic set of necessary directories and symlinks
@@ -616,7 +603,7 @@ run_build_hook() {
     local MODULES= BINARIES= FILES= SCRIPT=
 
     # find script in install dirs
-    if ! script=$(find_in_dirs "$hook" "${_d_install[@]}"); then
+    if ! script=$(PATH=$_d_install type -p "$hook"); then
         error "Hook '$hook' cannot be found"
         return 1
     fi

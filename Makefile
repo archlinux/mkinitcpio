@@ -26,8 +26,8 @@ install: all
 
 	sed -e 's|^_f_config=.*|_f_config=/etc/mkinitcpio.conf|' \
 	    -e 's|^_f_functions=.*|_f_functions=/usr/lib/initcpio/functions|' \
-	    -e 's|^_d_hooks=.*|_d_hooks=({/usr,}/lib/initcpio/hooks)|' \
-	    -e 's|^_d_install=.*|_d_install=({/usr,}/lib/initcpio/install)|' \
+	    -e 's|^_d_hooks=.*|_d_hooks=/usr/lib/initcpio/hooks:/lib/initcpio/hooks|' \
+	    -e 's|^_d_install=.*|_d_install=/usr/lib/initcpio/install:/lib/initcpio/install|' \
 	    -e 's|^_d_presets=.*|_d_presets=/etc/mkinitcpio.d|' \
 	    -e 's|%VERSION%|$(VERSION)|g' \
 	    < mkinitcpio > $(DESTDIR)/usr/bin/mkinitcpio
