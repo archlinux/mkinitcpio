@@ -108,6 +108,81 @@ resolve_kernver() {
     return 1
 }
 
+hook_help() {
+    local resolved script=$(PATH=$_d_install type -p "$1")
+
+    # this will be true for broken symlinks as well
+    if [[ -z $script ]]; then
+        error "Hook '%s' not found" "$1"
+        return 1
+    fi
+
+    if [[ -L $script ]]; then
+        resolved=$(readlink -e "$script")
+        msg "This hook is deprecated. See the '%s' hook" "${resolved##*/}"
+        return 0
+    fi
+
+    . "$script"
+    if ! declare -f help >/dev/null; then
+        error "No help for hook $1"
+        return 1
+    fi
+
+    msg "Help for hook '$1':"
+    help
+
+    list_hookpoints "$1"
+}
+
+hook_list() {
+    local n p hook resolved
+    local -a paths hooklist depr
+
+    IFS=: read -ra paths <<<"$_d_install"
+
+    for path in "${paths[@]}"; do
+        for hook in "$path"/*; do
+            [[ -e $hook || -L $hook ]] || continue
+
+            # handle deprecated hooks and point to replacement
+            if [[ -L $hook ]]; then
+                resolved=$(readlink -e "$hook")
+
+                if [[ -z $resolved ]]; then
+                    error "found broken symlink '%s'" "$hook"
+                    continue
+                fi
+
+                resolved=${resolved##*/}
+
+                index_of "$resolved" "${depr[@]}"
+
+                n=$?
+                if (( n == 255 )); then
+                    # deprecated hook
+                    depr+=("$resolved")
+                    n=$(( ${#depr[*]} - 1 ))
+                fi
+
+                hook=$hook[$n]
+            fi
+
+            hooklist+=("${hook##*/}")
+        done
+    done
+
+    msg "Available hooks"
+    printf '%s\n' "${hooklist[@]}" | sort -u | column -c$(tput cols)
+
+    if (( ${#depr[*]} )); then
+        echo
+        for p in "${!depr[@]}"; do
+            printf "[%s]: This hook is deprecated in favor of '%s'\n" "$p" "${depr[p]}"
+        done
+    fi
+}
+
 compute_hookset() {
     local h
 
@@ -315,25 +390,10 @@ while :; do
             unset skip ;;
         -H|--hookhelp)
             shift
-            if PATH=$_d_install . "$1"; then
-                if ! declare -f help >/dev/null; then
-                    error "No help for hook $1"
-                    exit 1
-                fi
-            else
-                error "No hook '$1'"
-                exit 1
-            fi
-            msg "Help for hook '$1':"
-            help
-            list_hookpoints "$1"
-            exit 0 ;;
+            hook_help "$1"
+            exit ;;
         -L|--listhooks)
-            msg "Available hooks"
-            IFS=: read -ra _dirs <<<"$_d_install"
-            for dir in "${_dirs[@]}"; do
-                ( cd "$dir" &>/dev/null && printf '   %s\n' * )
-            done | sort -u | column -c$(tput cols)
+            hook_list
             exit 0 ;;
         -M|--automods)
             _optshowautomods=1 ;;

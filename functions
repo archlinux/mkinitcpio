@@ -193,6 +193,18 @@ in_array() {
     return 1 # Not Found
 }
 
+index_of() {
+    # get the array index of an item. size limit of 254 items!
+    local item=$1; shift
+
+    for (( i=1; i <= $#; i++ )); do
+        [[ $item = ${!i} ]] && return $(( --i ))
+    done
+
+    # not found
+    return 255
+}
+
 funcgrep() {
     awk -v funcmatch="$1" '
         /^[[:space:]]*[[:alnum:]_]+[[:space:]]*\([[:space:]]*\)/ {
