@@ -174,9 +174,7 @@ analyze_image() {
 _opt_short='achlnVvx'
 _opt_long=('analyze' 'help' 'list' 'nocolor' 'showconfig' 'version' 'verbose' 'extract')
 
-if ! parseopts "$_opt_short" "${_opt_long[@]}" -- "$@"; then
-    exit 1
-fi
+parseopts "$_opt_short" "${_opt_long[@]}" -- "$@" || exit
 set -- "${OPTRET[@]}"
 unset _opt_short _opt_long OPTRET
 
