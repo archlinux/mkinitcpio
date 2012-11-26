@@ -646,6 +646,11 @@ run_build_hook() {
     # run
     msg2 "Running build hook: [%s]" "${script##*/}"
     build
+
+    # if we made it this far, return successfully. Hooks can
+    # do their own error catching if it's severe enough, and
+    # we already capture errors from the add_* functions.
+    return 0
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
