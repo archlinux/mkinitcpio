@@ -13,6 +13,8 @@ stop_device() {
     devtype=$(lsblk -drno TYPE "/dev/$1" 2>/dev/null) || return 1
     case $devtype in
         crypt)
+            # dmsetup could be used here, but we don't know that it
+            # exists.
             read devname <"$1/dm/name"
             cryptsetup remove "$devname"
             ;;
