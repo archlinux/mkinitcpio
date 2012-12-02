@@ -138,6 +138,7 @@ hook_help() {
 hook_list() {
     local n p hook resolved
     local -a paths hooklist depr
+    local ss_ordinals=(¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹)
 
     IFS=: read -ra paths <<<"$_d_install"
 
@@ -165,7 +166,7 @@ hook_list() {
                     n=$(( ${#depr[*]} - 1 ))
                 fi
 
-                hook=$hook[$n]
+                hook=$hook${ss_ordinals[n]}
             fi
 
             hooklist+=("${hook##*/}")
@@ -178,7 +179,8 @@ hook_list() {
     if (( ${#depr[*]} )); then
         echo
         for p in "${!depr[@]}"; do
-            printf "[%s]: This hook is deprecated in favor of '%s'\n" "$p" "${depr[p]}"
+            printf "%s This hook is deprecated in favor of '%s'\n" \
+                "${ss_ordinals[p]}" "${depr[p]}"
         done
     fi
 }
