@@ -5,8 +5,8 @@ build() {
     (
         [[ -s /etc/vconsole.conf ]] && . /etc/vconsole.conf
 
-        if [[ $CONSOLEFONT ]]; then
-            for file in "/usr/share/kbd/consolefonts/$CONSOLEFONT".@(fnt|psf?(u))?(.gz); do
+        if [[ $FONT ]]; then
+            for file in "/usr/share/kbd/consolefonts/$FONT".@(fnt|psf?(u))?(.gz); do
                 if [[ -e $file ]]; then
                     [[ $file =~ (\.(fnt|psfu?))(\.gz)?$ ]] && ext=${BASH_REMATCH[2]}
                     if [[ $file = *.gz ]]; then
@@ -17,7 +17,7 @@ build() {
                     exit 0
                 fi
             done
-            error "consolefont: requested font not found: \`%s'" "$CONSOLEFONT"
+            error "consolefont: requested font not found: \`%s'" "$FONT"
             exit 1
         else
             warning "consolefont: no font found in configuration"
@@ -28,7 +28,7 @@ build() {
 
 help() {
     cat <<HELPEOF
-This hook loads consolefont specified in locale.conf during early userspace.
+This hook loads consolefont specified in vconsole.conf during early userspace.
 HELPEOF
 }
 
