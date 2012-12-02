@@ -64,8 +64,9 @@ clean:
 
 dist: doc
 	echo $(VERSION) > VERSION
-	git ls-files -z | xargs -0 \
-		bsdtar -czf mkinitcpio-$(VERSION).tar.gz -s ,^,mkinitcpio-$(VERSION)/, VERSION $(MANPAGES)
+	git archive --format=tar --prefix=mkinitcpio-$(VERSION)/ -o mkinitcpio-$(VERSION).tar HEAD
+	bsdtar -rf mkinitcpio-$(VERSION).tar -s ,^,mkinitcpio-$(VERSION)/, $(MANPAGES) VERSION
+	gzip -9 mkinitcpio-$(VERSION).tar
 	$(RM) VERSION
 
 version:
