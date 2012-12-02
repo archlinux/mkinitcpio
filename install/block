@@ -22,8 +22,8 @@ build() {
     fi
 
     # mmc
-    if add_checked_modules '/mmc'; then
-        blockdevs+=(['tifm_7xx1?']=1 ['mmc_block?']=1)
+    if add_checked_modules '/(mmc|tifm_)'; then
+        blockdevs+=(['mmc_block?']=1)
     fi
 
     # virtio
