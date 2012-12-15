@@ -72,7 +72,7 @@ analyze_image() {
     local -a binaries explicitmod modules foundhooks hooks
     local kernver ratio columns=$(tput cols) image=$1
 
-    workdir=$(mktemp -d --tmpdir="$TMPDIR" lsinitcpio.XXXXXX)
+    workdir=$(mktemp -d --tmpdir lsinitcpio.XXXXXX)
     trap 'rm -rf "$workdir"' EXIT
 
     # fallback in case tput failed us
@@ -83,7 +83,7 @@ analyze_image() {
     # calculate compression ratio
     TIMEFORMAT=%R decomptime=$({ time decomp "$_image" >/dev/null; } 2>&1)
     if [[ $_compress ]]; then
-        fullsize=$(decomp "$_image" | bsdtar xOf - | wc -c)
+        fullsize=$(decomp "$_image" | wc -c)
         ratio=.$(( zsize * 1000 / fullsize % 1000 ))
     fi
 
