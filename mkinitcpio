@@ -432,7 +432,7 @@ done
 
 if [[ -t 1 ]] && (( _optcolor )); then
     # prefer terminal safe colored and bold text when tput is supported
-    if tput setaf 0 &>/dev/null; then
+    if type -P tput >/dev/null; then
         _color_none="$(tput sgr0)"
         _color_bold="$(tput bold)"
         _color_blue="$_color_bold$(tput setaf 4)"
