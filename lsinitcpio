@@ -81,7 +81,7 @@ analyze_image() {
     zsize=$(stat -c %s "$_image")
 
     # calculate compression ratio
-    TIMEFORMAT=%R decomptime=$({ time decomp "$_image" >/dev/null; } 2>&1 )
+    TIMEFORMAT=%R decomptime=$({ time decomp "$_image" >/dev/null; } 2>&1)
     if [[ $_compress ]]; then
         fullsize=$(decomp "$_image" | bsdtar xOf - | wc -c)
         ratio=.$(( zsize * 1000 / fullsize % 1000 ))
@@ -90,7 +90,9 @@ analyze_image() {
     # decompress the image since we need to read from it multiple times. we
     # have to pass this through decomp() since the image might be lzop which
     # bsdtar can't read.
-    decomp "$_image" | bsdtar -C "$workdir" -xf -
+    if ! decomp "$_image" | bsdtar -C "$workdir" -xf -; then
+        die 'Failed to decompress image'
+    fi
 
     # collect stats
     kernver=("$workdir"/usr/lib/modules/*/)
