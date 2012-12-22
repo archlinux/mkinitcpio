@@ -71,49 +71,49 @@ run_hookfunctions() {
 }
 
 parse_cmdline() {
-    local w in_quotes lhs rhs
-    in_quotes=0
-    for w in $(cat /proc/cmdline); do
-        if [ "$in_quotes" = 0 ]; then
-            case "$w" in
+    local _w _quoted _lhs _rhs _cmdline
+    read -r _cmdline </proc/cmdline
+    for _w in $_cmdline; do
+        if [ -z "$_quoted" ]; then
+            case $_w in
                 # ignore everything after a # in the commandline
                 \#*) break ;;
                 # special cases
-                rw|ro) rwopt=$w ;;
+                rw|ro) rwopt=$_w ;;
                 fsck.mode=*)
-                    case ${w#*=} in
+                    case ${_w#*=} in
                         force) forcefsck=y ;;
                         skip) fastboot=y ;;
                     esac
                     ;;
                 # abide by shell variable naming rules
                 [[:alpha:]_]*=*)
-                    rhs=${w#*=}
-                    lhs=${w%%=*}
-                    lhs=${lhs//[-.]/_}
-                    if [ '"' = "${rhs:0:1}" ]; then
-                        if [ '"' = "${rhs:$((${#rhs}-1))}" ]; then
-                            rhs="${rhs:1:$((${#rhs}-2))}"
+                    _rhs=${_w#*=}
+                    _lhs=${_w%%=*}
+                    _lhs=${_lhs//[-.]/_}
+                    if [ '"' = "${_rhs:0:1}" ]; then
+                        if [ '"' = "${_rhs:$((${#_rhs}-1))}" ]; then
+                            _rhs="${_rhs:1:$((${#_rhs}-2))}"
                         else
-                            rhs=${rhs:1}
-                            in_quotes=1
+                            _rhs=${_rhs:1}
+                            _quoted=1
                             continue
                         fi
                     fi
-                    eval $lhs=\$rhs
+                    eval $_lhs=\$_rhs
                     ;;
                 [[:alpha:]_]*)
-                    lhs=${w//[-.]/_}
-                    eval $lhs=y
+                    _lhs=${_w//[-.]/_}
+                    eval $_lhs=y
                     ;;
             esac
         else
-            if [ '"' = "${w:$((${#w}-1))}" ]; then
-                rhs="$rhs ${w%\"}"
-                in_quotes=0
-                eval $lhs=\$rhs
+            if [ '"' = "${_w:$((${#_w}-1))}" ]; then
+                _rhs="$_rhs ${_w%\"}"
+                unset _quoted
+                eval $_lhs=\$_rhs
             else
-                rhs="$rhs $w"
+                _rhs="$_rhs $_w"
             fi
         fi
     done
