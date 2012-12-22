@@ -241,11 +241,16 @@ esac
 
 # read compression type
 case $(file -Lb "$_image") in
-    @(data|LZMA)*) _compress=lzma ;;
+    'Linux kernel'*)
+        die '%s is a kernel image, not an initramfs image!' "$_image" ;;
+    data*|LZMA*) _compress=lzma ;;
     gzip*) _compress=gzip ;;
     bzip2*) _compress=bzip2 ;;
     lzop*) _compress=lzop ;;
     XZ*) _compress=xz ;;
+    'ASCII cpio'*) : ;;
+    *)
+        die 'Unexpected file type. Are you sure this is an initramfs?' "$_image" ;;
 esac
 
 if (( _optanalyze )); then
