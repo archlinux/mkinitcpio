@@ -212,15 +212,20 @@ in_array() {
 }
 
 index_of() {
-    # get the array index of an item. size limit of 254 items!
+    # get the array index of an item. sets the global var _idx with
+    # index and returns 0 if found, otherwise returns 1.
     local item=$1; shift
 
-    for (( i=1; i <= $#; i++ )); do
-        [[ $item = ${!i} ]] && return $(( --i ))
+    for (( _idx=1; _idx <= $#; _idx++ )); do
+        if [[ $item = ${!_idx} ]]; then
+            (( --_idx ))
+            return 0
+        fi
     done
 
     # not found
-    return 255
+    unset _idx
+    return 1
 }
 
 funcgrep() {

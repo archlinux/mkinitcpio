@@ -135,7 +135,7 @@ hook_help() {
 }
 
 hook_list() {
-    local n p hook resolved
+    local p hook resolved
     local -a paths hooklist depr
     local ss_ordinals=(¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹)
 
@@ -156,16 +156,13 @@ hook_list() {
 
                 resolved=${resolved##*/}
 
-                index_of "$resolved" "${depr[@]}"
-
-                n=$?
-                if (( n == 255 )); then
+                if ! index_of "$resolved" "${depr[@]}"; then
                     # deprecated hook
                     depr+=("$resolved")
-                    n=$(( ${#depr[*]} - 1 ))
+                    _idx=$(( ${#depr[*]} - 1 ))
                 fi
 
-                hook=$hook${ss_ordinals[n]}
+                hook+=${ss_ordinals[_idx]}
             fi
 
             hooklist+=("${hook##*/}")
