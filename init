@@ -17,7 +17,7 @@ mount -t tmpfs run /run -o nosuid,nodev,mode=0755
 mkdir -m755 /run/initramfs
 
 # parse the kernel command line
-parse_cmdline
+parse_cmdline </proc/cmdline
 
 for d in ${disablehooks//,/ }; do
     [ -e "/hooks/$d" ] && chmod 644 "/hooks/$d"

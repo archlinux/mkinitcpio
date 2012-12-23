@@ -72,7 +72,7 @@ run_hookfunctions() {
 
 parse_cmdline() {
     local _w _quoted _lhs _rhs _cmdline
-    read -r _cmdline </proc/cmdline
+    read -r _cmdline
     for _w in $_cmdline; do
         if [ -z "$_quoted" ]; then
             case $_w in
