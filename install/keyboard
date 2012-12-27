@@ -1,0 +1,31 @@
+#!/bin/bash
+
+build() {
+    local major minor
+
+    add_checked_modules -f '(_cs|sl811_hcd|isp116x_hcd)' '/usb/host'
+
+    # As of 3.5, modaliases seem to be exported for HID
+    # devices, so we can leverage autodetection.
+    IFS=.- read major minor _ <<<"$KERNELVERSION"
+    if (( major > 3 || (major == 3 && minor >= 5) )); then
+        add_checked_modules '/hid/hid'
+    else
+        add_all_modules '/hid/hid'
+    fi
+
+    add_module 'usbhid'
+
+    add_checked_modules '/input/keyboard'
+}
+
+help() {
+    cat <<HELPEOF
+This hook loads the necessary modules for keyboard devices. As a side-effect
+modules for some non-keyboard input devices might be added to, but this should
+not be relied on. Detection will take place at runtime. To minimize the modules
+in the image, add the autodetect hook too.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
