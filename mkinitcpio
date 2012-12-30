@@ -291,47 +291,6 @@ process_preset() (
     exit $ret
 )
 
-install_modules() {
-    local m moduledest=$BUILDROOT/lib/modules/$KERNELVERSION
-    local -a xz_comp gz_comp
-
-    if (( $# == 0 )); then
-        warning "No modules were added to the image. This is probably not what you want."
-        return 0
-    fi
-
-    cp "$@" "$moduledest/kernel"
-
-    # unzip modules prior to recompression
-    for m in "$@"; do
-        case $m in
-            *.xz)
-                xz_comp+=("$moduledest/kernel/${m##*/}")
-                ;;
-            *.gz)
-                gz_comp+=("$moduledest/kernel/${m##*/}")
-                ;;
-        esac
-    done
-    (( ${#xz_comp[*]} )) && xz -d "${xz_comp[@]}"
-    (( ${#gz_comp[*]} )) && gzip -d "${gz_comp[@]}"
-
-    msg "Generating module dependencies"
-    install -m644 -t "$moduledest" "$_d_kmoduledir"/modules.builtin
-
-    # we install all modules into kernel/, making the .order file incorrect for
-    # the module tree. munge it, so that we have an accurate index. This avoids
-    # some rare and subtle issues with module loading choices when an alias
-    # resolves to multiple modules, only one of which can claim a device.
-    awk -F'/' '{ print "kernel/" $NF }' \
-        "$_d_kmoduledir"/modules.order >"$moduledest/modules.order"
-
-    depmod -b "$BUILDROOT" "$KERNELVERSION"
-
-    # remove all non-binary module.* files (except devname for on-demand module loading)
-    rm "$moduledest"/modules.!(*.bin|devname)
-}
-
 . "$_f_functions"
 
 trap 'cleanup 130' INT
