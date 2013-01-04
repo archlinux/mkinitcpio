@@ -82,7 +82,13 @@ cleanup() {
 }
 
 resolve_kernver() {
-    local kernel=$1
+    local kernel=$1 offset kver
+
+    # this is intentionally very loose. only ensure that we're
+    # dealing with some sort of string that starts with something
+    # resembling dotted decimal notation. remember that there's no
+    # requirement for CONFIG_LOCALVERSION to be set.
+    local kver_validator='^[[:digit:]]+(\.[[:digit:]]+)+'
 
     if [[ -z $kernel ]]; then
         uname -r
@@ -99,7 +105,16 @@ resolve_kernver() {
         return 1
     fi
 
-    if file -Lb "$kernel" | grep -oP '(?<=version )[^ ]+'; then
+    # scrape the version out of the kernel image. locate the offset
+    # to the version string by reading 2 bytes out of image at at
+    # address 0x20E. this leads us to a string of, at most, 128 bytes.
+    # read the first word from this string as the kernel version.
+    offset=$(hexdump -s 526 -n 2 -e '"%0d"' "$kernel")
+    read kver _ < \
+        <(dd if="$kernel" bs=1 count=127 skip=$(( offset + 0x200 )) 2>/dev/null)
+
+    if [[ $kver =~ $kver_validator ]]; then
+        printf '%s' "$kver"
         return 0
     fi
 

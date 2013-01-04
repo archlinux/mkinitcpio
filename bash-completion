@@ -1,6 +1,14 @@
 #!/bin/bash
 # mkinitcpio bash completion by Seblu <seblu@seblu.net>
 
+detect_kver() {
+    local kver_validator='^[[:digit:]]+(\.[[:digit:]]+)+'
+    offset=$(hexdump -s 526 -n 2 -e '"%0d"' "$1" 2>/dev/null) || return 1
+    read kver _ < \
+        <(dd if="$1" bs=1 count=127 skip=$(( offset + 0x200 )) 2>/dev/null)
+    [[ $kver =~ $kver_validator ]] && printf "$kver"
+}
+
 _lsinitcpio() {
     local cur opts
     opts=(-a --analyze -c --config -h --help -l --list
@@ -18,14 +26,14 @@ _lsinitcpio() {
 
 _find_kernel_versions() {
     local -a matches
-    local dir regex
+    local dir f
 
-    # add completions from kernels in /boot
-    regex="Linux kernel.*version"
-    while IFS=':' read -r file metadata; do
-        [[ $metadata =~ $regex ]] || continue
-        matches+=("$file")
-    done < <(file -e ascii /boot/*)
+    for f in /boot/*; do
+        # only match regular files which pass validation
+        if [[ ! -L $f && -f $f ]] && kver=$(detect_kver "$f"); then
+            matches+=("$f")
+        fi
+    done
 
     # add completions based on kernel versions in /lib/modules
     for dir in /lib/modules/*/kernel; do
