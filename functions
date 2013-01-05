@@ -622,10 +622,7 @@ run_build_hook() {
 
     # check for deprecation
     if [[ -L $script ]]; then
-        if ! realscript=$(readlink -e "$script"); then
-            error "$script is a broken symlink to $(readlink "$script")"
-            return 1
-        fi
+        realscript=$(readlink -e "$script")
         warning "Hook '%s' is deprecated. Replace it with '%s' in your config" \
             "${script##*/}" "${realscript##*/}"
         script=$realscript
