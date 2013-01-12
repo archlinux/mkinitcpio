@@ -68,6 +68,57 @@ size_to_human() {
     }'
 }
 
+detect_filetype() {
+    local offt
+    local kver_validator='^[[:digit:]]+(\.[[:digit:]]+)+'
+
+    case $(hexdump -n 6 -e '"%c"' "$1") in 
+        '070701')
+            # no compression
+            return
+            ;;
+        $'\xfd7zXZ')
+            echo 'xz'
+            return
+            ;;
+    esac
+
+    if [[ $(hexdump -n 4 -e '"%c"' "$1") = $'\x89LZO' ]]; then
+        echo 'lzop'
+        return
+    fi
+
+    if [[ $(hexdump -n 2 -e '"%x"' "$1") = '8b1f' ]]; then
+        echo 'gzip'
+        return
+    fi
+
+    if [[ $(hexdump -n 3 -e '"%c"' "$1") == 'BZh' ]]; then
+        echo 'bzip2'
+        return
+    fi
+
+    # lzma detection sucks and there's really no good way to
+    # do it without reading large portions of the stream. this
+    # check is good enough for GNU tar, apparently, so it's good
+    # enough for me.
+    if [[ $(hexdump -n 3 -e '"%x"' "$1") = '5d' ]]; then
+        echo 'lzma'
+        return
+    fi
+
+    # still nothing? hrmm, maybe the user goofed and it's a kernel
+    offt=$(hexdump -s 526 -n 2 -e '"%0d"' "$1")
+    read kver _ < \
+        <(dd if="$1" bs=1 count=127 skip=$(( offt + 0x200 )) 2>/dev/null)
+    if [[ $kver =~ $kver_validator ]]; then
+        die '%s is a kernel image, not an initramfs image!' "$1"
+    fi
+
+    # out of ideas, we're done here.
+    die 'Unexpected file type. Are you sure %s is an initramfs?' "$1"
+}
+
 analyze_image() {
     local -a binaries explicitmod modules foundhooks hooks
     local kernver ratio columns=$(tput cols) image=$1
@@ -240,18 +291,7 @@ case $(( _optanalyze + _optlistcontents + _optshowconfig )) in
 esac
 
 # read compression type
-case $(file -Lb "$_image") in
-    'Linux kernel'*)
-        die '%s is a kernel image, not an initramfs image!' "$_image" ;;
-    data*|LZMA*) _compress=lzma ;;
-    gzip*) _compress=gzip ;;
-    bzip2*) _compress=bzip2 ;;
-    lzop*) _compress=lzop ;;
-    XZ*) _compress=xz ;;
-    'ASCII cpio'*) : ;;
-    *)
-        die 'Unexpected file type. Are you sure this is an initramfs?' "$_image" ;;
-esac
+_compress=$(detect_filetype "$_image") || exit
 
 if (( _optanalyze )); then
     analyze_image "$_image"
