@@ -235,8 +235,9 @@ the kernel command line:
 	directly such as '/dev/sda2', or using a udev symlink such as
 	'/dev/disk/by-label/CorsairF80-root'. Support for identification by LABEL or
 	UUID tags are also supported, such as, 'LABEL=CorsairF80-root'. As of
-	util-linux 2.22, PARTUUID is also supported.  Identification via hex encoded
-	major/minor device ID is supported for legacy reasons, but should not be used.
+	util-linux 2.22, PARTUUID and PARTLABEL are also supported. Identification
+	via hex encoded major/minor device ID is supported for legacy reasons, but
+	should be avoided as it tends to be fragile.
 
 *rootdelay=*'seconds'::
 	Sets the delay, in seconds, that mkinitcpio is willing to wait for the root
