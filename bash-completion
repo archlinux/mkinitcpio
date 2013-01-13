@@ -1,5 +1,4 @@
 #!/bin/bash
-# mkinitcpio bash completion by Seblu <seblu@seblu.net>
 
 detect_kver() {
     local kver_validator='^[[:digit:]]+(\.[[:digit:]]+)+'

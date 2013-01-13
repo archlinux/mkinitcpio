@@ -108,10 +108,7 @@ detect_filetype() {
     fi
 
     # still nothing? hrmm, maybe the user goofed and it's a kernel
-    offt=$(hexdump -s 526 -n 2 -e '"%0d"' "$1")
-    read kver _ < \
-        <(dd if="$1" bs=1 count=127 skip=$(( offt + 0x200 )) 2>/dev/null)
-    if [[ $kver =~ $kver_validator ]]; then
+    if kver "$1" >/dev/null; then
         die '%s is a kernel image, not an initramfs image!' "$1"
     fi
 
