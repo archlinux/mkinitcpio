@@ -668,4 +668,22 @@ run_build_hook() {
     return 0
 }
 
+try_enable_color() {
+    local colors
+
+    if ! colors=$(tput colors 2>/dev/null); then
+        warning "Failed to enable color. Check your TERM environment variable"
+        return
+    fi
+
+    if (( colors > 0 )) && tput setaf 0 &>/dev/null; then
+        _color_none=$(tput sgr0)
+        _color_bold=$(tput bold)
+        _color_blue=$_color_bold$(tput setaf 4)
+        _color_green=$_color_bold$(tput setaf 2)
+        _color_red=$_color_bold$(tput setaf 1)
+        _color_yellow=$_color_bold$(tput setaf 3)
+    fi
+}
+
 # vim: set ft=sh ts=4 sw=4 et:

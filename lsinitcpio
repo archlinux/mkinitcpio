@@ -258,22 +258,7 @@ done
 _image=$1
 
 if [[ -t 1 ]] && (( _optcolor )); then
-    # prefer terminal safe colored and bold text when tput is supported
-    if type -P tput >/dev/null; then
-        _color_none="$(tput sgr0)"
-        _color_bold="$(tput bold)"
-        _color_blue="$_color_bold$(tput setaf 4)"
-        _color_green="$_color_bold$(tput setaf 2)"
-        _color_red="$_color_bold$(tput setaf 1)"
-        _color_yellow="$_color_bold$(tput setaf 3)"
-    else
-        _color_none="\e[1;0m"
-        _color_bold="\e[1;1m"
-        _color_blue="$_color_bold\e[1;34m"
-        _color_green="$_color_bold\e[1;32m"
-        _color_red="$_color_bold\e[1;31m"
-        _color_yellow="$_color_bold\e[1;33m"
-    fi
+    try_enable_color
 fi
 
 [[ $_image ]] || die "No image specified (use -h for help)"
