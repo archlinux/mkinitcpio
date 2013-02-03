@@ -79,21 +79,7 @@ cd /sys/class/block
 
 printf '%s\n' "Unmounting all devices."
 
-# unmount everything in /oldroot
-findmnt -Rruno TARGET /oldroot | awk '
-BEGIN { i = 0 }
-{
-    i++
-    mounts[i] = $0
-}
-END {
-    for (j = i; j > 0; j--) {
-        print mounts[j]
-    }
-}
-' | while read -r mount; do
-    umount "$mount"
-done
+umount --recursive /oldroot
 
 printf '%s\n' 'Detaching loop devices.'
 
