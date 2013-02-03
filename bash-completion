@@ -1,6 +1,6 @@
 #!/bin/bash
 
-detect_kver() {
+_detect_kver() {
     local kver_validator='^[[:digit:]]+(\.[[:digit:]]+)+'
     offset=$(hexdump -s 526 -n 2 -e '"%0d"' "$1" 2>/dev/null) || return 1
     read kver _ < \
@@ -29,7 +29,7 @@ _find_kernel_versions() {
 
     for f in /boot/*; do
         # only match regular files which pass validation
-        if [[ ! -L $f && -f $f ]] && kver=$(detect_kver "$f"); then
+        if [[ ! -L $f && -f $f ]] && kver=$(_detect_kver "$f"); then
             matches+=("$f")
         fi
     done
