@@ -135,12 +135,8 @@ analyze_image() {
         ratio=.$(( zsize * 1000 / fullsize % 1000 ))
     fi
 
-    # decompress the image since we need to read from it multiple times. we
-    # have to pass this through decomp() since the image might be lzop which
-    # bsdtar can't read.
-    if ! decomp "$_image" | bsdtar -C "$workdir" -xf -; then
-        die 'Failed to decompress image'
-    fi
+    # decompress the image since we need to read from it multiple times.
+    bsdtar -C "$workdir" -xf "$_image" || die 'Failed to decompress image'
 
     # collect stats
     kernver=("$workdir"/usr/lib/modules/*/)
@@ -278,10 +274,10 @@ _compress=$(detect_filetype "$_image") || exit
 if (( _optanalyze )); then
     analyze_image "$_image"
 elif (( _optshowconfig )); then
-    decomp "$_image" | bsdtar xOf - buildconfig 2>/dev/null ||
+    bsdtar xOf "$_image" buildconfig 2>/dev/null ||
         die 'Failed to extract config from image (mkinitcpio too old?)'
 else
-    decomp "$_image" | bsdcpio -i --quiet $_optverbose $_list
+    bsdcpio -i --quiet $_optverbose $_list <"$_image"
 fi
 
 # vim: set ft=sh ts=4 sw=4 et:
