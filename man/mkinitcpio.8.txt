@@ -57,10 +57,14 @@ Options
 *-n, \--nocolor*::
 	Disable color output.
 
+*-P, \--allpresets*::
+	Process all presets contained in '/etc/mkinitcpio.d'. See the '-p' option for
+	more detail about presets.
+
 *-p, \--preset* 'preset'::
 	Build initramfs image(s) according to specified 'preset'. This may be a file in
 	/etc/mkinitcpio.d (without the .preset extension) or a full, absolute path to a
-	file.
+	file. This option may be specified multiple times to process multiple presets.
 
 *-r, \--moduleroot* 'root'::
 	Specifies the root directory to find modules in, defaulting to '/'.
@@ -254,7 +258,7 @@ Files
 	Default configuration file for mkinitcpio.
 
 '/etc/mkinitcpio.d'::
-	Folder containing mkinitcpio presets.
+	Directory containing mkinitcpio presets.
 
 '/usr/lib/initcpio/install'::
 '/lib/initcpio/install'::

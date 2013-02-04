@@ -17,11 +17,11 @@ _d_install="$PWD/install:/usr/lib/initcpio/install:/lib/initcpio/install"
 _d_presets=mkinitcpio.d
 
 # options and runtime data
-_optmoduleroot= _optkver= _optgenimg= _optpreset=
+_optmoduleroot= _optkver= _optgenimg=
 _optcompress=
 _optshowautomods=0 _optsavetree=0 _optshowmods=0
 _optquiet=1 _optcolor=1
-_optskiphooks=() _optaddhooks=() _hooks=()
+_optskiphooks=() _optaddhooks=() _hooks=()  _optpreset=()
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
 
 # export a sane PATH
@@ -236,7 +236,7 @@ build_image() {
     fi
 }
 
-process_preset() {
+process_preset() (
     local preset=$1 preset_image= preset_options=
     local -a preset_mkopts preset_cmd
 
@@ -245,7 +245,7 @@ process_preset() {
         printf -v preset '%s/%s.preset' "$_d_presets" "$preset"
     fi
 
-    . "$preset" || die "Preset not found: \`%s'" "$preset"
+    . "$preset" 2>/dev/null || die "Preset not found: \`%s'" "$preset"
 
     # Use -m and -v options specified earlier
     (( _optquiet )) || preset_mkopts+=(-v)
@@ -253,7 +253,7 @@ process_preset() {
 
     ret=0
     for p in "${PRESETS[@]}"; do
-        msg "Building image from preset: '$p'"
+        msg "Building image from preset: $preset: '$p'"
         preset_cmd=("${preset_mkopts[@]}")
 
         preset_kver=${p}_kver
@@ -291,7 +291,7 @@ process_preset() {
     done
 
     exit $ret
-}
+)
 
 install_modules() {
     local m moduledest=$BUILDROOT/lib/modules/$KERNELVERSION
@@ -339,9 +339,9 @@ install_modules() {
 trap 'cleanup 130' INT
 trap 'cleanup 143' TERM
 
-_opt_short='A:c:g:H:hk:nLMp:r:S:st:Vvz:'
+_opt_short='A:c:g:H:hk:nLMPp:r:S:st:Vvz:'
 _opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookhelp:' 'help'
-          'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor'
+          'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets'
           'preset:' 'skiphooks:' 'save' 'builddir:' 'version' 'verbose' 'compress:')
 
 parseopts "$_opt_short" "${_opt_long[@]}" -- "$@" || exit 1
@@ -378,7 +378,7 @@ while :; do
             cleanup 0 ;;
         -p|--preset)
             shift
-            _optpreset=$1 ;;
+            _optpreset+=("$1") ;;
         -n|--nocolor)
             _optcolor=0 ;;
         -v|--verbose)
@@ -397,6 +397,10 @@ while :; do
             exit 0 ;;
         -M|--automods)
             _optshowautomods=1 ;;
+        -P|--allpresets)
+            _optpreset=("$_d_presets"/*.preset)
+            [[ -e ${_optpreset[0]} ]] || die "No presets found in $_d_presets"
+            ;;
         -t|--builddir)
             shift
             export TMPDIR=$1 ;;
@@ -424,7 +428,10 @@ fi
 [[ -e /dev/fd ]] || die "/dev must be mounted!"
 
 # use preset $_optpreset (exits after processing)
-[[ $_optpreset ]] && process_preset "$_optpreset"
+if (( ${#_optpreset[*]} )); then
+    map process_preset "${_optpreset[@]}"
+    exit
+fi
 
 KERNELVERSION=$(resolve_kernver "$_optkver") || cleanup 1
 _d_kmoduledir=$_optmoduleroot/lib/modules/$KERNELVERSION

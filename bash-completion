@@ -63,7 +63,7 @@ _files_from_dirs() {
 _mkinitcpio() {
     local action cur prev opts
     opts=(-A --addhooks -c --config -g --generate -H --hookhelp -h --help -k --kernel
-          -L --listhooks -M --automods -n --nocolor -p --preset -r --moduleroot
+          -L --listhooks -M --automods -n --nocolor -P --allpresets -p --preset -r --moduleroot
           -S --skiphooks -s --save -t --builddir -V --version -v --verbose -z --compress)
 
     _get_comp_words_by_ref cur prev
