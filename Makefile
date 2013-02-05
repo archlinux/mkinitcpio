@@ -11,7 +11,8 @@ DIRS = \
 	/usr/lib/initcpio/udev \
 	/usr/share/man/man8 \
 	/usr/share/man/man5 \
-	/usr/share/man/man1
+	/usr/share/man/man1 \
+	/usr/share/mkinitcpio
 
 all: doc
 
@@ -44,7 +45,7 @@ install: all
 	install -m644 01-memdisk.rules $(DESTDIR)/usr/lib/initcpio/udev/01-memdisk.rules
 
 	cp -at $(DESTDIR)/usr/lib/initcpio hooks install
-	cp -at $(DESTDIR)/etc mkinitcpio.d
+	install -m644 -t $(DESTDIR)/usr/share/mkinitcpio mkinitcpio.d/*
 
 	install -m644 man/mkinitcpio.8 $(DESTDIR)/usr/share/man/man8/mkinitcpio.8
 	install -m644 man/mkinitcpio.conf.5 $(DESTDIR)/usr/share/man/man5/mkinitcpio.conf.5
