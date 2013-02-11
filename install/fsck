@@ -27,11 +27,16 @@ build() {
         done
     fi
 
-    if (( added )); then
-        add_binary fsck
-    else
+    if (( ! added )); then
         warning "No fsck helpers found. fsck will not be run on boot."
+        return
     fi
+
+    add_binary fsck
+    if [[ -e /etc/e2fsck.conf ]]; then
+        add_file /etc/e2fsck.conf
+    fi
+
 }
 
 help() {
