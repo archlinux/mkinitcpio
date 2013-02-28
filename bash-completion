@@ -25,19 +25,13 @@ _lsinitcpio() {
 
 _find_kernel_versions() {
     local -a matches
-    local dir f
+    local dir f kver
 
     for f in /boot/*; do
         # only match regular files which pass validation
         if [[ ! -L $f && -f $f ]] && kver=$(_detect_kver "$f"); then
-            matches+=("$f")
+            matches+=("$f" "$kver")
         fi
-    done
-
-    # add completions based on kernel versions in /lib/modules
-    for dir in /lib/modules/*/kernel; do
-        dir=${dir%/kernel}
-        matches+=("${dir#/lib/modules/}")
     done
 
     COMPREPLY=($(compgen -W "${matches[*]}" -- $cur))
