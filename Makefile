@@ -5,6 +5,7 @@ VERSION = $(shell if test -f VERSION; then cat VERSION; else git describe | sed 
 DIRS = \
 	/usr/bin \
 	/usr/share/bash-completion/completions \
+	/usr/share/zsh/site-functions \
 	/etc/mkinitcpio.d \
 	/usr/lib/initcpio/hooks \
 	/usr/lib/initcpio/install \
@@ -52,6 +53,7 @@ install: all
 	install -m644 man/lsinitcpio.1 $(DESTDIR)/usr/share/man/man1/lsinitcpio.1
 	install -m644 bash-completion $(DESTDIR)/usr/share/bash-completion/completions/mkinitcpio
 	ln -s mkinitcpio $(DESTDIR)/usr/share/bash-completion/completions/lsinitcpio
+	install -m644 zsh-completion $(DESTDIR)/usr/share/zsh/site-functions/_mkinitcpio
 
 doc: $(MANPAGES)
 man/%: man/%.txt Makefile

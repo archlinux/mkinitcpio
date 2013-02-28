@@ -1,0 +1,63 @@
+#compdef lsinitcpio mkinitcpio
+
+_detect_kver() {
+    local __ kver_validator='^[[:digit:]]+(\.[[:digit:]]+)+'
+    offset=$(hexdump -s 526 -n 2 -e '"%0d"' "$1" 2>/dev/null) || return 1
+    read kver __ < \
+        <(dd if="$1" bs=1 count=127 skip=$(( offset + 0x200 )) 2>/dev/null)
+    [[ $kver =~ $kver_validator ]] && printf "$kver"
+}
+
+_find_kernel_versions() {
+    local -a version
+    local filedata
+
+    for f in /boot/*; do
+        # only match regular files which pass validation
+        if [[ ! -L $f && -f $f ]] && kver=$(_detect_kver "$f"); then
+            version+=("$kver" "$f")
+        fi
+    done
+
+    compadd ${(u)version}
+}
+
+case $service in
+    lsinitcpio)
+        _arguments : \
+            '(-a --analyze)'{-a,--analyze}'[analyze contents of image]' \
+            '(-c --config)'{-c,--config}'[show configuration file image was built with]' \
+            '(-l --list)'{-l,--list}'[list contents of the image (default)]' \
+            '(-x --extract)'{-x,--extract}'[extract image to disk]' \
+            '(-h --help)'{-h,--help}'[display this help]' \
+            '(-n --nocolor)'{-n,--nocolor}'[disable colorized output]' \
+            '(-V --version)'{-V,--version}'[display version information]' \
+            '(-v --verbose)'{-v,--verbose}'[more verbose output]' \
+            ':files:_files'
+        ;;
+    mkinitcpio)
+        _arguments : \
+            '(-A --addhooks)'{-A,--addhooks}'[Add specified hooks, comma separated, to image]::usr hooks:_path_files -W /usr/lib/initcpio/install::lib hooks:_path_files -W /lib/initcpio/install' \
+            '(-c --config)'{-c,--config}'[Use alternate config file. (default: /etc/mkinitcpio.conf)]:config files:_files' \
+            '(-g --generate)'{-g,--generate}'[Generate cpio image and write to specified path]:config files:_files' \
+            '(-H --hookhelp)'{-H,--hookhelp}'[Display help for given hook and exit]::usr hooks:_path_files -W /usr/lib/initcpio/install::lib hooks:_path_files -W /lib/initcpio/install' \
+            '(-h --help)'{-h,--help}'[Display this message and exit]' \
+            '(-k --kernel)'{-k,--kernel}'[Use specified kernel version]:kernel versions:_find_kernel_versions' \
+            '(-L --listhooks)'{-L,--listhooks}'[List all available hooks]' \
+            '(-M --automods)'{-M,--automods}'[Display modules found via autodetection]' \
+            '(-n --nocolor)'{-n,--nocolor}'[Disable colorized output messages]' \
+            '(-p --preset)'{-p,--preset}'[Build specified preset from /etc/mkinitcpio.d]:presets:_files -g "*(\:r)" -W /etc/mkinitcpio.d' \
+            '(-r --moduleroot)'{-r,--moduleroot}'[Root directory for modules (default: /)]:directories:_files -/' \
+            '(-S --skiphooks)'{-S,--skiphooks}'[Skip specified hooks, comma-separated, during build]::usr hooks:_path_files -W /usr/lib/initcpio/install::lib hooks:_path_files -W /lib/initcpio/install' \
+            '(-s --save)'{-s,--save}'[Save build directory. (default: no)]' \
+            '(-t --builddir)'{-t,--builddir}'[Use DIR as the temporary build directory]:directories:_files -/' \
+            '(-V --version)'{-V,--version}'[Display version information and exit]' \
+            '(-v --verbose)'{-v,--verbose}'[Verbose output (default: no)]' \
+            '(-z --compress)'{-z,--compress}'[Use an alternate compressor on the image]'
+        ;;
+    *)
+        return 1;
+        ;;
+esac
+
+# vim: set et ts=4 sw=4 ft=zsh:
