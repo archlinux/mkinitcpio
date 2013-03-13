@@ -14,6 +14,7 @@ _f_functions=functions
 _f_config=mkinitcpio.conf
 _d_hooks="$PWD/hooks:/usr/lib/initcpio/hooks:/lib/initcpio/hooks"
 _d_install="$PWD/install:/usr/lib/initcpio/install:/lib/initcpio/install"
+_d_firmware=/usr/lib/firmware
 _d_presets=mkinitcpio.d
 
 # options and runtime data

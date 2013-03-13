@@ -346,8 +346,11 @@ add_module() {
                 map add_module "${deps[@]}"
                 ;;
             firmware)
-                if [[ -e /usr/lib/firmware/$value ]]; then
-                    add_file "/usr/lib/firmware/$value" "/usr/lib/firmware/$value" 644
+                # ensure that we favor updated firmware files
+                if [[ -f $_d_firmware/updates/$value ]]; then
+                    add_file "$_d_firmware/updates/$value" "$_d_firmware/updates/$value" 644
+                else
+                    add_file "$_d_firmware/$value" "$_d_firmware/$value" 644
                 fi
                 ;;
         esac
