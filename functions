@@ -351,7 +351,7 @@ add_module() {
                 fi
                 ;;
         esac
-    done < <(modinfo -b "$MODULEROOT" -k "$KERNELVERSION" -0 "$module" 2>/dev/null)
+    done < <(modinfo -b "$_optmoduleroot" -k "$KERNELVERSION" -0 "$module" 2>/dev/null)
 
     if [[ -z $path ]]; then
         (( ign_errors )) && return 0
