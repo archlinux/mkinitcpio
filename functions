@@ -318,12 +318,30 @@ add_checked_modules() {
     return $(( !${#mods[*]} ))
 }
 
+add_firmware() {
+    # add a firmware file to the image.
+    #   $1: firmware path fragment
+
+    local fw fwpath r=1
+
+    for fw; do
+        for fwpath in "${_d_firmware[@]}"; do
+            if [[ -f $fwpath/$fw ]]; then
+                add_file "$fwpath/$fw" "$fwpath/$fw" 644 && r=0
+                break
+            fi
+        done
+    done
+
+    return $r
+}
+
 add_module() {
     # Add a kernel module to the initcpio image. Dependencies will be
     # discovered and added.
     #   $1: module name
 
-    local module= path= deps= field= value=
+    local module= path= deps= field= value= firmware=()
     local ign_errors=0
 
     if [[ $1 = *\? ]]; then
@@ -346,12 +364,7 @@ add_module() {
                 map add_module "${deps[@]}"
                 ;;
             firmware)
-                # ensure that we favor updated firmware files
-                if [[ -f $_d_firmware/updates/$value ]]; then
-                    add_file "$_d_firmware/updates/$value" "$_d_firmware/updates/$value" 644
-                else
-                    add_file "$_d_firmware/$value" "$_d_firmware/$value" 644
-                fi
+                firmware+=("$value")
                 ;;
         esac
     done < <(modinfo -b "$_optmoduleroot" -k "$KERNELVERSION" -0 "$module" 2>/dev/null)
@@ -360,6 +373,11 @@ add_module() {
         (( ign_errors )) && return 0
         error "module not found: \`%s'" "$module"
         return 1
+    fi
+
+    if (( ${#firmware[*]} )); then
+        add_firmware "${firmware[@]}" ||
+            warning 'Possibly missing firmware for module: %s' "$module"
     fi
 
     # aggregate modules and add them all at once to save some forks
