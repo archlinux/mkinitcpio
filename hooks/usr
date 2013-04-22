@@ -1,12 +1,18 @@
 #!/usr/bin/ash
 
 run_latehook() {
-    local realtab=/new_root/etc/fstab
+    local usr_source mountopts passno realtab=/new_root/etc/fstab
 
     if [ -f "$realtab" ]; then
         if usr_source=$(findmnt -snero source --tab-file="$realtab" /usr); then
             mountopts=$(findmnt -snero options --tab-file="$realtab" /usr)
-            fsck_device "$usr_source"
+
+            # returning the passno column requires util-linux >= 2.23. for
+            # older versions which do not support this column, always fsck.
+            passno=$(findmnt -snero passno --tab-file="$realtab" /usr 2>/dev/null)
+            if [ -z "$passno" ] || [ "$passno" -gt 0 ]; then
+                fsck_device "$usr_source"
+            fi
             msg ":: mounting '$usr_source' on /usr"
             mount "$usr_source" /new_root/usr -o "$mountopts"
         fi
