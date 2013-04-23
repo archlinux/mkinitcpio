@@ -1,11 +1,14 @@
-# vim:set ft=sh:
-run_hook ()
-{
-    MEMDISK=$(memdiskfind)
-    if [ $? -eq 0 ]; then
+#!/usr/bin/ash
+
+run_hook() {
+    local disk
+
+    if disk=$(memdiskfind); then
         # We found a memdisk, set up phram
-        modprobe phram phram=memdisk,${MEMDISK}
+        modprobe phram phram="memdisk,$disk"
         # Load mtdblock, the memdisk will be /dev/mtdblock0
         modprobe mtdblock
     fi
 }
+
+# vim: set ft=sh ts=4 sw=4 et:
