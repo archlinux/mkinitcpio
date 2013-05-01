@@ -517,11 +517,13 @@ parse_config "$_f_config"
 # switch out the error handler to catch all errors
 trap -- RETURN
 trap '(( ++_builderrors ))' ERR
+set -o errtrace
 
 install_modules "${!_modpaths[@]}"
 
 # unset errtrace and trap
 set +o functrace
+set +o errtrace
 trap -- ERR
 
 if [[ $_optgenimg ]]; then
