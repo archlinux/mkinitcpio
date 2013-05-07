@@ -69,9 +69,6 @@ size_to_human() {
 }
 
 detect_filetype() {
-    local offt
-    local kver_validator='^[[:digit:]]+(\.[[:digit:]]+)+'
-
     case $(hexdump -n 6 -e '"%c"' "$1") in 
         '070701')
             # no compression
