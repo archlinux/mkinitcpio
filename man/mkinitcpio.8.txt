@@ -248,6 +248,31 @@ the kernel command line:
 	device to show up, if it is not available immediately. This defaults to 5
 	seconds. If an invalid integer is passed, this variable will have no effect.
 
+*rd.debug*::
+	Enables shell debug (xtrace). If 'rd.log' is not also a parameter on the kernel
+	command line, this parameter implies 'rd.log=console'.
+
+*rd.log*['=<console|file|kmsg|all>']::
+	Enables logging of early userspace messages. If specified, the optional
+	parameter describes where this information is logged. Multiple options can be
+	OR'd together using the pipe (|) character. Messages are always logged to
+	the console unless the 'quiet' parameter is passed. If the optional parameter
+	is not specified, 'kmsg|console' is assumed. If 'rd.log' is not present on the
+	kernel command line, no logging will take place.
+
+	*console*;;
+		Writes output to '/dev/console'.
+
+	*file*;;
+		Writes output to '/run/initramfs/init.log'.
+
+	*kmsg*;;
+		Writes output to the '/dev/kmsg' device (introduced in Linux 3.5). This
+		option is a no-op if your kernel lacks support for '/dev/kmsg'.
+
+	*all*;;
+		Writes output to all known log targets.
+
 These are only the variables that the core of mkinitcpio honor. Additional
 hooks may look for other environment variables and should be documented by the
 help output for the hook.

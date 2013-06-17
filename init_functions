@@ -1,10 +1,21 @@
 # This file contains common functions used in init and in hooks
 
+# logging targets
+_rdlog_file=$(( 1 << 0 ))
+_rdlog_kmsg=$(( 1 << 1 ))
+_rdlog_cons=$(( 1 << 2 ))
+_rdlog_all=$(( (1 << 3) - 1 ))
+
 msg () {
     [ "${quiet}" != "y" ] && echo $@
 }
 err () {
     echo "ERROR: $@"
+}
+
+log_kmsg() {
+    local fmt=$1; shift
+    printf "<31>initramfs: $fmt\n" "$@"
 }
 
 poll_device() {
@@ -37,8 +48,17 @@ poll_device() {
 
 launch_interactive_shell() {
     export PS1='[rootfs \W]\$ '
-    [ "$1" = "--exec" ] && exec sh -i
-    sh -i
+
+    # explicitly redirect to /dev/console in case we're logging. note that
+    # anything done in the rescue shell will NOT be logged.
+    {
+        [ "$1" = "--exec" ] && exec sh -i
+        sh -i
+    } 0</dev/console 1>/dev/console 2>/dev/console
+}
+
+bitfield_has_bit() {
+    [ $(( $1 & $2 )) -eq $2 ]
 }
 
 major_minor_to_device() {
@@ -70,6 +90,30 @@ run_hookfunctions() {
     done
 }
 
+set_log_option() {
+    local opt
+
+    for opt in ${1//|/ }; do
+        case $opt in
+            all)
+                rd_logmask=$_rdlog_all
+                ;;
+            kmsg)
+                rd_logmask=$(( rd_logmask | _rdlog_kmsg ))
+                ;;
+            file)
+                rd_logmask=$(( rd_logmask | _rdlog_file ))
+                ;;
+            console)
+                rd_logmask=$(( rd_logmask | _rdlog_cons ))
+                ;;
+            *)
+                err "unknown rd.log parameter: '$opt'"
+                ;;
+        esac
+    done
+}
+
 parse_cmdline() {
     local _w _quoted _lhs _rhs _cmdline
     read -r _cmdline
@@ -90,6 +134,19 @@ parse_cmdline() {
                             ;;
                         *)
                             err "unknown fsck.mode parameter: '${_w#*=}'"
+                            ;;
+                    esac
+                    ;;
+                rd.*)
+                    case ${_w#rd.} in
+                        debug)
+                            rd_debug=y
+                            ;;
+                        log)
+                            rd_logmask=$(( _rdlog_kmsg | _rdlog_cons ))
+                            ;;
+                        log=*)
+                            set_log_option "${_w#rd.log=}"
                             ;;
                     esac
                     ;;
@@ -259,6 +316,92 @@ default_mount_handler() {
         launch_interactive_shell
         msg "Trying to continue (this will most likely fail) ..."
     fi
+}
+
+rdlogger_start() {
+    # rd.debug implies rd.log=console if rd.log(=.*)? isn't present
+    if [ "$rd_logmask" -eq 0 ] && [ -n "$rd_debug" ]; then
+        rd_logmask=$_rdlog_cons
+    fi
+
+    [ "$rd_logmask" -gt 0 ] || return
+
+    mkfifo /run/initramfs/rdlogger.pipe
+
+    rdlogger </run/initramfs/rdlogger.pipe >/dev/console 2>&1 &
+    printf %s $! >/run/initramfs/rdlogger.pid
+
+    exec >/run/initramfs/rdlogger.pipe 2>&1
+    [ -n "$rd_debug" ] && set -x
+}
+
+rdlogger_stop() {
+    local i=0 pid
+
+    [ -e /run/initramfs/rdlogger.pipe ] || return
+
+    [ -n "$rd_debug" ] && { set +x; } 2>/dev/null
+
+    # this nudges rdlogger to exit
+    exec 0<>/dev/console 1<>/dev/console 2<>/dev/console
+
+    # wait up to 1 second for a graceful shutdown
+    until [ ! -e /run/initramfs/rdlogger.pipe ] || [ $i -eq 10 ]; do
+        sleep 0.1
+        i=$(( i + 1 ))
+    done
+
+    if [ $i -eq 10 ]; then
+        # racy! the logger might still go away on its own
+        read -r pid </run/initramfs/rdlogger.pid 2>/dev/null
+        if [ -n "$pid" ]; then
+            kill "$pid" 2>/dev/null
+        fi
+    fi
+}
+
+rdlogger() {
+    local line
+
+    # establish logging FDs. Either redirect to an appropriate target or to
+    # /dev/null. This way, log methods can simply write and the associated FD
+    # will Do The Right Thing™.
+
+    # rd.log=console
+    if [ -z "$quiet" ] && bitfield_has_bit "$rd_logmask" "$_rdlog_cons"; then
+        exec 4>/dev/console
+    else
+        exec 4>/dev/null
+    fi
+
+    # rd.log=kmsg
+    if [ -c /dev/kmsg ] && bitfield_has_bit "$rd_logmask" "$_rdlog_kmsg"; then
+        exec 5>/dev/kmsg
+    else
+        exec 5>/dev/null
+    fi
+
+    # rd.log=file
+    if bitfield_has_bit "$rd_logmask" "$_rdlog_file"; then
+        exec 6>/run/initramfs/init.log
+    else
+        exec 6>/dev/null
+    fi
+
+    while read -r line; do
+        # rd.log=console
+        printf '%s\n' "$line" >&4
+
+        # rd.log=kmsg
+        log_kmsg '%s' "$line" >&5
+
+        # rd.log=file
+        printf '%s\n' "$line" >&6
+    done
+
+    # EOF, shutting down...
+    exec 4>&- 5>&- 6>&-
+    rm -f /run/initramfs/rdlogger.pipe /run/initramfs/rdlogger.pid
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
