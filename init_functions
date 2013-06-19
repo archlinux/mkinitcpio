@@ -82,8 +82,15 @@ parse_cmdline() {
                 rw|ro) rwopt=$_w ;;
                 fsck.mode=*)
                     case ${_w#*=} in
-                        force) forcefsck=y ;;
-                        skip) fastboot=y ;;
+                        force)
+                            forcefsck=y
+                            ;;
+                        skip)
+                            fastboot=y
+                            ;;
+                        *)
+                            err "unknown fsck.mode parameter: '${_w#*=}'"
+                            ;;
                     esac
                     ;;
                 # abide by shell variable naming rules
