@@ -204,16 +204,10 @@ fsck_root() {
     fsck_device "$root"
     fsckret=$?
 
-    fsck_ret() {
-        [ -z "$fsckret" ] && return 1
-        [ "$fsckret" -eq "$1" ] && return 0
-        [ "$(( fsckret & $1 ))" -eq "$1" ]
-    }
-
-    if [ "$fsckret" -ne 255 ]; then
-        if [ "$fsckret" = '0' ] || fsck_ret 1; then
+    if [ -n "$fsckret" ] && [ "$fsckret" -ne 255 ]; then
+        if [ "$fsckret" -eq 0 ] || bitfield_has_bit $fsckret 1; then
             echo "$fsckret" > /run/initramfs/root-fsck
-        elif fsck_ret 4; then
+        elif bitfield_has_bit "$fsckret" 4; then
             err "Bailing out. Run 'fsck $root' manually"
             printf '%s\n' \
                 "********** FILESYSTEM CHECK FAILED **********" \
@@ -227,7 +221,7 @@ fsck_root() {
             echo ":: Automatic reboot in progress"
             sleep 2
             reboot -f
-        elif fsck_ret 2; then
+        elif bitfield_has_bit "$fsckret" 2; then
             printf '%s\n' \
                 "************** REBOOT REQUIRED **************" \
                 "*                                           *" \
@@ -236,13 +230,13 @@ fsck_root() {
                 "*********************************************"
             sleep 10
             reboot -f
-        elif fsck_ret 8; then
+        elif bitfield_has_bit "$fsckret" 8; then
             err "fsck failed on '$root'"
-        elif fsck_ret 16; then
+        elif bitfield_has_bit "$fsckret" 16; then
             err "Failed to invoke fsck: usage or syntax error"
-        elif fsck_ret 32; then
+        elif bitfield_has_bit "$fsckret" 32; then
             echo ":: fsck cancelled on user request"
-        elif fsck_ret 128; then
+        elif bitfield_has_bit "$fsckret" 128; then
             err "fatal error invoking fsck"
         fi
     fi
