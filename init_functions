@@ -243,7 +243,7 @@ fsck_root() {
 }
 
 resolve_device() {
-    local major minor dev tag tagval device=$1
+    local major minor dev tag device=$1
 
     # attempt to resolve devices immediately. if this fails
     # and udev is running, fall back on lazy resolution using
@@ -255,8 +255,7 @@ resolve_device() {
             dev=$(blkid -lt "$device" -o device)
             if [ -z "$dev" -a "$udevd_running" -eq 1 ]; then
                 tag=$(awk -v t="${device%%=*}" 'BEGIN { print tolower(t) }')
-                tagval=${device#*=}
-                dev=/dev/disk/by-$tag/$tagval
+                dev=/dev/disk/by-$tag/${device#*=}
             fi
     esac
 
