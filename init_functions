@@ -326,6 +326,11 @@ rdlogger_start() {
 
     exec >/run/initramfs/rdlogger.pipe 2>&1
     [ -n "$rd_debug" ] && set -x
+
+    # messages would be otherwise lost if we don't unset quiet. this does,
+    # however, mean that passing rd.log=console will negate the effects of
+    # 'quiet' for initramfs console output.
+    unset quiet
 }
 
 rdlogger_stop() {
@@ -361,7 +366,7 @@ rdlogger() {
     # will Do The Right Thing™.
 
     # rd.log=console
-    if [ -z "$quiet" ] && bitfield_has_bit "$rd_logmask" "$_rdlog_cons"; then
+    if bitfield_has_bit "$rd_logmask" "$_rdlog_cons"; then
         exec 4>/dev/console
     else
         exec 4>/dev/null

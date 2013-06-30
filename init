@@ -76,6 +76,7 @@ if [ "${break}" = "postmount" ]; then
     launch_interactive_shell
 fi
 
+# this should always be the last thing we do before the switch_root.
 rdlogger_stop
 
 exec env -i \
