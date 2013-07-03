@@ -482,6 +482,9 @@ set +o functrace
 set +o errtrace
 trap -- ERR
 
+# this is simply a nice-to-have -- it doesn't matter if it fails.
+ldconfig -r "$BUILDROOT" &>/dev/null
+
 if [[ $_optgenimg ]]; then
     build_image "$_optgenimg" "$_optcompress"
 else

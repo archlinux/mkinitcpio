@@ -658,6 +658,9 @@ initialize_buildroot() {
     # indicate that this is an initramfs
     >"$workdir/root/etc/initrd-release"
 
+    # add a blank ld.so.conf to keep ldconfig happy
+    >"$workdir/root/etc/ld.so.conf"
+
     printf '%s' "$workdir"
 }
 
