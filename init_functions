@@ -205,9 +205,8 @@ fsck_root() {
     fsckret=$?
 
     if [ -n "$fsckret" ] && [ "$fsckret" -ne 255 ]; then
-        if [ "$fsckret" -eq 0 ] || bitfield_has_bit $fsckret 1; then
-            echo "$fsckret" > /run/initramfs/root-fsck
-        elif bitfield_has_bit "$fsckret" 4; then
+        # handle error conditions; do nothing on success.
+        if bitfield_has_bit "$fsckret" 4; then
             err "Bailing out. Run 'fsck $root' manually"
             printf '%s\n' \
                 "********** FILESYSTEM CHECK FAILED **********" \
@@ -238,6 +237,17 @@ fsck_root() {
             echo ":: fsck cancelled on user request"
         elif bitfield_has_bit "$fsckret" 128; then
             err "fatal error invoking fsck"
+        fi
+
+        # ensure that root is going to be mounted rw. Otherwise, systemd
+        # might fsck the device again. Annoy the user so that they fix this.
+        if [ "${rwopt:-ro}" != 'rw' ]; then
+            echo "********************** WARNING **********************"
+            echo "*                                                   *"
+            echo "*  The root device is not configured to be mounted  *"
+            echo "*  read-write! It may be fsck'd again later.        *"
+            echo "*                                                   *"
+            echo "*****************************************************"
         fi
     fi
 }
