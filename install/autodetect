@@ -37,7 +37,7 @@ build() {
     fi
 
     # detect filesystem for separate /usr
-    if usrfstype=$(findmnt -snero fstype --tab-file '/etc/fstab' -T '/usr'); then
+    if usrfstype=$(findmnt -snero fstype -T '/usr'); then
         add_if_avail "$usrfstype"
     fi
 

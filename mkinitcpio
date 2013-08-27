@@ -31,7 +31,8 @@ export PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 # Sanitize environment further
 # GREP_OPTIONS="--color=always" will break everything
 # CDPATH can affect cd and pushd
-unset GREP_OPTIONS CDPATH
+# LIBMOUNT_* options can affect findmnt and other tools
+unset GREP_OPTIONS CDPATH "${!LIBMOUNT_@}"
 
 usage() {
     cat <<EOF
