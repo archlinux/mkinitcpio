@@ -203,8 +203,12 @@ build_image() {
             ;;
     esac
 
-    cpio_opts=('-R' '0:0' '-0' '-o' '-H' 'newc')
+    cpio_opts=('-0' '-o' '-H' 'newc')
     (( _optquiet )) && cpio_opts+=('--quiet')
+    if (( EUID != 0 )); then
+        warning 'Not building as root, ownership cannot be preserved'
+        cpio_opts+=('-R' '0:0')
+    fi
 
     # write version stamp
     printf '%s' "$version" > "$BUILDROOT/VERSION"
