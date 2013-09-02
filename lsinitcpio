@@ -72,6 +72,7 @@ detect_filetype() {
     case $(hexdump -n 6 -e '"%c"' "$1") in
         '070701')
             # no compression
+            echo
             return
             ;;
         $'\xfd7zXZ')
