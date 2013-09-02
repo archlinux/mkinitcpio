@@ -14,6 +14,7 @@ makedepends=('asciidoc' 'git' 'sed')
 optdepends=('xz: Use lzma or xz compression for the initramfs image'
             'bzip2: Use bzip2 compression for the initramfs image'
             'lzop: Use lzo compression for the initramfs image'
+            'lz4: Use lz4 compression for the initramfs image'
             'mkinitcpio-nfs-utils: Support for root filesystem on NFS')
 backup=(etc/mkinitcpio.conf)
 

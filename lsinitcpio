@@ -69,7 +69,7 @@ size_to_human() {
 }
 
 detect_filetype() {
-    case $(hexdump -n 6 -e '"%c"' "$1") in 
+    case $(hexdump -n 6 -e '"%c"' "$1") in
         '070701')
             # no compression
             return
@@ -87,6 +87,11 @@ detect_filetype() {
 
     if [[ $(hexdump -n 2 -e '"%x"' "$1") = '8b1f' ]]; then
         echo 'gzip'
+        return
+    fi
+
+    if [[ $(hexdump -n 4 -e '"%x"' "$1") == '184d2204' ]]; then
+        echo 'lz4'
         return
     fi
 
