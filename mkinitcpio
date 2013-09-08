@@ -210,9 +210,6 @@ build_image() {
         cpio_opts+=('-R' '0:0')
     fi
 
-    # write version stamp
-    printf '%s' "$version" > "$BUILDROOT/VERSION"
-
     pushd "$BUILDROOT" >/dev/null
     find . -print0 |
             LANG=C bsdcpio "${cpio_opts[@]}" |

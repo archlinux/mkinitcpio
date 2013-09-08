@@ -648,6 +648,9 @@ initialize_buildroot() {
             ;;
     esac
 
+    # mkinitcpio version stamp
+    printf '%s' "$version" >"$workdir/root/VERSION"
+
     # kernel module dir
     install -dm755 "$workdir/root/usr/lib/modules/$kernver/kernel"
 
