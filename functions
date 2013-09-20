@@ -413,11 +413,12 @@ add_full_dir() {
     local f=
 
     if [[ -n $1 && -d $1 ]]; then
+        add_dir "$1"
+
         for f in "$1"/*; do
             if [[ -L $f ]]; then
                 add_symlink "$f" "$(readlink "$f")"
             elif [[ -d $f ]]; then
-                add_dir "$f"
                 add_full_dir "$f"
             elif [[ -f $f ]]; then
                 add_file "$f"
