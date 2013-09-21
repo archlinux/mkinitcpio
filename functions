@@ -251,16 +251,18 @@ list_hookpoints() {
     in_array run_cleanuphook "${funcs[@]}" && msg2 "cleanup hook"
 }
 
+modprobe() {
+    command modprobe -d "$_optmoduleroot" -S "$KERNELVERSION" "$@"
+}
+
 auto_modules() {
     # Perform auto detection of modules via sysfs.
 
     local mods=
 
-    IFS=$'\n' read -rd '' -a mods < \
-        <(find /sys/devices -name modalias -exec sort -u {} + |
-        # delimit each input by a newline, expanded in place
-        xargs -d $'\n' modprobe -d "$MODULEROOT" -qaRS "$KERNELVERSION" |
-        sort -u)
+    mapfile -t mods < <(find /sys/devices -name uevent \
+        -exec sort -u {} + | awk -F= '$1 == "MODALIAS" && !_[$0]++')
+    mapfile -t mods < <(modprobe -qaR "${mods[@]#MODALIAS=}")
 
     (( ${#mods[*]} )) && printf "%s\n" "${mods[@]//-/_}"
 }

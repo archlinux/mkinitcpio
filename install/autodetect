@@ -10,8 +10,7 @@ build() {
         # treat this as an alias, since ext3 might be aliased to ext4. also, as
         # of linux 3.9, we can find any filesystem by the alias "fs-$name"
         # rather than having to guess at the corresponding module name.
-        IFS=$'\n' read -rd '' -a resolved < \
-            <(modprobe -d "$_optmoduleroot" -S "$KERNELVERSION" -Ra {fs-,}"$1" 2>/dev/null)
+        mapfile -t resolved < <(modprobe -Ra {fs-,}"$1" 2>/dev/null)
 
         for r in "${resolved[@]}"; do
             _autodetect_cache["$r"]=1
