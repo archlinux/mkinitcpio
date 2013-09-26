@@ -1,0 +1,12 @@
+#!/bin/sh
+
+case $1 in
+    add)
+        mkinitcpio -k "$2" -g "$3"/initrd
+        ;;
+    remove)
+        rm -f -- "$3"/initrd
+        ;;
+esac
+
+# vim: set ft=sh ts=4 sw=4 et:

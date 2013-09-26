@@ -10,6 +10,7 @@ DIRS = \
 	/usr/lib/initcpio/hooks \
 	/usr/lib/initcpio/install \
 	/usr/lib/initcpio/udev \
+	/usr/lib/kernel/install.d \
 	/usr/share/man/man8 \
 	/usr/share/man/man5 \
 	/usr/share/man/man1 \
@@ -47,6 +48,8 @@ install: all
 
 	cp -at $(DESTDIR)/usr/lib/initcpio hooks install
 	install -m644 -t $(DESTDIR)/usr/share/mkinitcpio mkinitcpio.d/*
+
+	install -m755 50-mkinitcpio.install $(DESTDIR)/usr/lib/kernel/install.d/50-mkinitcpio.install
 
 	install -m644 man/mkinitcpio.8 $(DESTDIR)/usr/share/man/man8/mkinitcpio.8
 	install -m644 man/mkinitcpio.conf.5 $(DESTDIR)/usr/share/man/man5/mkinitcpio.conf.5
