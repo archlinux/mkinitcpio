@@ -252,6 +252,16 @@ fsck_root() {
     fi
 }
 
+# TODO: this really needs to follow the logic of systemd's encode_devnode_name
+# function more closely.
+tag_to_udev_path() {
+    awk -v "tag=$1" -v "value=$2" '
+    BEGIN {
+        gsub(/\//, "\\x2f", value)
+        printf "/dev/disk/by-%s/%s\n", tolower(tag), value
+    }'
+}
+
 resolve_device() {
     local major minor dev tag device=$1
 
@@ -264,8 +274,7 @@ resolve_device() {
         UUID=*|LABEL=*|PARTUUID=*|PARTLABEL=*)
             dev=$(blkid -lt "$device" -o device)
             if [ -z "$dev" -a "$udevd_running" -eq 1 ]; then
-                tag=$(awk -v t="${device%%=*}" 'BEGIN { print tolower(t) }')
-                dev=/dev/disk/by-$tag/${device#*=}
+                dev=$(tag_to_udev_path "${device%%=*}" "${device#*=}")
             fi
     esac
 
