@@ -627,45 +627,46 @@ initialize_buildroot() {
     # creates a temporary directory for the buildroot and initialize it with a
     # basic set of necessary directories and symlinks
 
-    local workdir= kernver=$1 arch=$(uname -m)
+    local workdir= kernver=$1 arch=$(uname -m) buildroot
 
     if ! workdir=$(mktemp -d --tmpdir mkinitcpio.XXXXXX); then
         error 'Failed to create temporary working directory in %s' "${TMPDIR:-/tmp}"
         return 1
     fi
+    buildroot=${2:-$workdir/root}
 
     # base directory structure
-    install -dm755 "$workdir/root"/{new_root,proc,sys,dev,run,tmp,etc,usr/{local,lib,bin}}
-    ln -s "usr/lib" "$workdir/root/lib"
-    ln -s "../lib"  "$workdir/root/usr/local/lib"
-    ln -s "bin"     "$workdir/root/usr/sbin"
-    ln -s "usr/bin" "$workdir/root/bin"
-    ln -s "usr/bin" "$workdir/root/sbin"
-    ln -s "../bin"  "$workdir/root/usr/local/bin"
-    ln -s "../bin"  "$workdir/root/usr/local/sbin"
+    install -dm755 "$buildroot"/{new_root,proc,sys,dev,run,tmp,etc,usr/{local,lib,bin}}
+    ln -s "usr/lib" "$buildroot/lib"
+    ln -s "../lib"  "$buildroot/usr/local/lib"
+    ln -s "bin"     "$buildroot/usr/sbin"
+    ln -s "usr/bin" "$buildroot/bin"
+    ln -s "usr/bin" "$buildroot/sbin"
+    ln -s "../bin"  "$buildroot/usr/local/bin"
+    ln -s "../bin"  "$buildroot/usr/local/sbin"
 
     case $arch in
         x86_64)
-            ln -s "lib"     "$workdir/root/usr/lib64"
-            ln -s "usr/lib" "$workdir/root/lib64"
+            ln -s "lib"     "$buildroot/usr/lib64"
+            ln -s "usr/lib" "$buildroot/lib64"
             ;;
     esac
 
     # mkinitcpio version stamp
-    printf '%s' "$version" >"$workdir/root/VERSION"
+    printf '%s' "$version" >"$buildroot/VERSION"
 
     # kernel module dir
-    install -dm755 "$workdir/root/usr/lib/modules/$kernver/kernel"
+    install -dm755 "$buildroot/usr/lib/modules/$kernver/kernel"
 
     # mount tables
-    ln -s /proc/self/mounts "$workdir/root/etc/mtab"
-    >"$workdir/root/etc/fstab"
+    ln -s /proc/self/mounts "$buildroot/etc/mtab"
+    >"$buildroot/etc/fstab"
 
     # indicate that this is an initramfs
-    >"$workdir/root/etc/initrd-release"
+    >"$buildroot/etc/initrd-release"
 
     # add a blank ld.so.conf to keep ldconfig happy
-    >"$workdir/root/etc/ld.so.conf"
+    >"$buildroot/etc/ld.so.conf"
 
     printf '%s' "$workdir"
 }
