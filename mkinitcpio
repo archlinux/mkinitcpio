@@ -440,9 +440,7 @@ if (( _optshowautomods )); then
     cleanup 0
 fi
 
-if [[ -z $_optgenimg ]]; then
-    msg "Starting dry run: %s" "$KERNELVERSION"
-else
+if [[ $_optgenimg ]]; then
     # check for permissions. if the image doesn't already exist,
     # then check the directory
     if [[ ( -e $_optgenimg && ! -w $_optgenimg ) ||
@@ -456,6 +454,10 @@ else
     fi
 
     msg "Starting build: %s" "$KERNELVERSION"
+elif [[ $_opttargetdir ]]; then
+    msg "Starting build: %s" "$KERNELVERSION"
+else
+    msg "Starting dry run: %s" "$KERNELVERSION"
 fi
 
 # set functrace and trap to catch errors in add_* functions
@@ -494,6 +496,8 @@ ldconfig -r "$BUILDROOT" &>/dev/null
 
 if [[ $_optgenimg ]]; then
     build_image "$_optgenimg" "$_optcompress"
+elif [[ $_opttargetdir ]]; then
+    msg "Build complete."
 else
     msg "Dry run complete, use -g IMAGE to generate a real image"
 fi
