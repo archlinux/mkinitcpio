@@ -14,7 +14,8 @@ DIRS = \
 	/usr/share/man/man8 \
 	/usr/share/man/man5 \
 	/usr/share/man/man1 \
-	/usr/share/mkinitcpio
+	/usr/share/mkinitcpio \
+	/usr/lib/systemd/system
 
 all: doc
 
@@ -48,6 +49,7 @@ install: all
 
 	cp -at $(DESTDIR)/usr/lib/initcpio hooks install
 	install -m644 -t $(DESTDIR)/usr/share/mkinitcpio mkinitcpio.d/*
+	install -m644 mkinitcpio-generate-shutdown-ramfs.service $(DESTDIR)/usr/lib/systemd/system/mkinitcpio-generate-shutdown-ramfs.service
 
 	install -m755 50-mkinitcpio.install $(DESTDIR)/usr/lib/kernel/install.d/50-mkinitcpio.install
 
