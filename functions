@@ -635,6 +635,11 @@ initialize_buildroot() {
     fi
     buildroot=${2:-$workdir/root}
 
+    if [[ ! -w ${2:-$workdir} ]]; then
+        error 'Unable to write to build root: %s' "$buildroot"
+        return 1
+    fi
+
     # base directory structure
     install -dm755 "$buildroot"/{new_root,proc,sys,dev,run,tmp,etc,usr/{local,lib,bin}}
     ln -s "usr/lib" "$buildroot/lib"
