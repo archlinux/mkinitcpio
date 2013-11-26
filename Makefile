@@ -45,20 +45,21 @@ install: all
 	install -m644 mkinitcpio.conf $(DESTDIR)/etc/mkinitcpio.conf
 	install -m755 -t $(DESTDIR)/usr/lib/initcpio init shutdown
 	install -m644 -t $(DESTDIR)/usr/lib/initcpio init_functions functions
-	install -m644 01-memdisk.rules $(DESTDIR)/usr/lib/initcpio/udev/01-memdisk.rules
+	install -m644 udev/01-memdisk.rules $(DESTDIR)/usr/lib/initcpio/udev/01-memdisk.rules
 
 	cp -at $(DESTDIR)/usr/lib/initcpio hooks install
 	install -m644 -t $(DESTDIR)/usr/share/mkinitcpio mkinitcpio.d/*
-	install -m644 mkinitcpio-generate-shutdown-ramfs.service $(DESTDIR)/usr/lib/systemd/system/mkinitcpio-generate-shutdown-ramfs.service
+	install -m644 systemd/mkinitcpio-generate-shutdown-ramfs.service \
+			$(DESTDIR)/usr/lib/systemd/system/mkinitcpio-generate-shutdown-ramfs.service
 
 	install -m755 50-mkinitcpio.install $(DESTDIR)/usr/lib/kernel/install.d/50-mkinitcpio.install
 
 	install -m644 man/mkinitcpio.8 $(DESTDIR)/usr/share/man/man8/mkinitcpio.8
 	install -m644 man/mkinitcpio.conf.5 $(DESTDIR)/usr/share/man/man5/mkinitcpio.conf.5
 	install -m644 man/lsinitcpio.1 $(DESTDIR)/usr/share/man/man1/lsinitcpio.1
-	install -m644 bash-completion $(DESTDIR)/usr/share/bash-completion/completions/mkinitcpio
+	install -m644 shell/bash-completion $(DESTDIR)/usr/share/bash-completion/completions/mkinitcpio
 	ln -s mkinitcpio $(DESTDIR)/usr/share/bash-completion/completions/lsinitcpio
-	install -m644 zsh-completion $(DESTDIR)/usr/share/zsh/site-functions/_mkinitcpio
+	install -m644 shell/zsh-completion $(DESTDIR)/usr/share/zsh/site-functions/_mkinitcpio
 
 doc: $(MANPAGES)
 man/%: man/%.txt Makefile
