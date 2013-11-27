@@ -17,7 +17,7 @@ DIRS = \
 	/usr/share/man/man5 \
 	/usr/share/man/man1 \
 	/usr/share/mkinitcpio \
-	/usr/lib/systemd/system \
+	/usr/lib/systemd/system/shutdown.target.wants \
 	/usr/lib/tmpfiles.d
 
 all: doc
@@ -54,6 +54,8 @@ install: all
 	install -m644 -t $(DESTDIR)/usr/share/mkinitcpio mkinitcpio.d/*
 	install -m644 systemd/mkinitcpio-generate-shutdown-ramfs.service \
 			$(DESTDIR)/usr/lib/systemd/system/mkinitcpio-generate-shutdown-ramfs.service
+	ln -s ../mkinitcpio-generate-shutdown-ramfs.service \
+			$(DESTDIR)/usr/lib/systemd/system/shutdown.target.wants/mkinitcpio-generate-shutdown-ramfs.service
 	install -m644 tmpfiles/mkinitcpio.conf $(DESTDIR)/usr/lib/tmpfiles.d/mkinitcpio.conf
 
 	install -m755 50-mkinitcpio.install $(DESTDIR)/usr/lib/kernel/install.d/50-mkinitcpio.install

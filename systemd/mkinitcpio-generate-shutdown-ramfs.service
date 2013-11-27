@@ -10,6 +10,3 @@ Type=oneshot
 # use /run as temporary directory
 Environment=TMPDIR=/run
 ExecStart=/usr/bin/mkinitcpio -A sd-shutdown -k none -c /dev/null -d /run/initramfs
-
-[Install]
-WantedBy=shutdown.target
