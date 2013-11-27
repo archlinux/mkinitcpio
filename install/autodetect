@@ -4,6 +4,8 @@ build() {
     local m=
     local -a md_devs mods
 
+    [[ $KERNELVERSION == none ]] && return 0
+
     add_if_avail() {
         local r= resolved=()
 

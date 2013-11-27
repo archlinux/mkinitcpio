@@ -351,6 +351,8 @@ add_module() {
     local module= path= deps= field= value= firmware=()
     local ign_errors=0
 
+    [[ $KERNELVERSION == none ]] && return 0
+
     if [[ $1 = *\? ]]; then
         ign_errors=1
         set -- "${1%?}"
@@ -661,7 +663,7 @@ initialize_buildroot() {
     printf '%s' "$version" >"$buildroot/VERSION"
 
     # kernel module dir
-    install -dm755 "$buildroot/usr/lib/modules/$kernver/kernel"
+    [[ $kernver != none ]] && install -dm755 "$buildroot/usr/lib/modules/$kernver/kernel"
 
     # mount tables
     ln -s /proc/self/mounts "$buildroot/etc/mtab"
@@ -737,6 +739,8 @@ try_enable_color() {
 install_modules() {
     local m moduledest=$BUILDROOT/lib/modules/$KERNELVERSION
     local -a xz_comp gz_comp
+
+    [[ $KERNELVERSION == none ]] && return 0
 
     if (( $# == 0 )); then
         warning "No modules were added to the image. This is probably not what you want."

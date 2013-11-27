@@ -417,7 +417,7 @@ fi
 
 KERNELVERSION=$(resolve_kernver "$_optkver") || cleanup 1
 _d_kmoduledir=$_optmoduleroot/lib/modules/$KERNELVERSION
-[[ -d $_d_kmoduledir ]] || die "'$_d_kmoduledir' is not a valid kernel module directory"
+[[ $KERNELVERSION == none || -d $_d_kmoduledir ]] || die "'$_d_kmoduledir' is not a valid kernel module directory"
 
 _d_workdir=$(initialize_buildroot "$KERNELVERSION" $_opttargetdir) || cleanup 1
 BUILDROOT=${_opttargetdir:-$_d_workdir/root}
