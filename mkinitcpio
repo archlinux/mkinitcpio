@@ -18,7 +18,7 @@ _d_firmware=({/usr,}/lib/firmware/updates {/usr,}/lib/firmware)
 _d_presets=mkinitcpio.d
 
 # options and runtime data
-_optmoduleroot= _optkver= _optgenimg=
+_optmoduleroot= _optgenimg=
 _optcompress= _opttargetdir=
 _optshowautomods=0 _optsavetree=0 _optshowmods=0
 _optquiet=1 _optcolor=1
@@ -104,7 +104,7 @@ resolve_kernver() {
 
     kver "$kernel" && return
 
-    error "invalid kernel specified: \`%s'" "$_optkver"
+    error "invalid kernel specified: \`%s'" "$1"
 
     return 1
 }
@@ -323,7 +323,7 @@ while :; do
             ;;
         -k|--kernel)
             shift
-            _optkver=$1
+            KERNELVERSION=$1
             ;;
         -s|--save)
             _optsavetree=1
@@ -415,9 +415,11 @@ if (( ${#_optpreset[*]} )); then
     exit
 fi
 
-KERNELVERSION=$(resolve_kernver "$_optkver") || cleanup 1
-_d_kmoduledir=$_optmoduleroot/lib/modules/$KERNELVERSION
-[[ $KERNELVERSION == none || -d $_d_kmoduledir ]] || die "'$_d_kmoduledir' is not a valid kernel module directory"
+if [[ $KERNELVERSION != 'none' ]]; then
+    KERNELVERSION=$(resolve_kernver "$KERNELVERSION") || cleanup 1
+    _d_kmoduledir=$_optmoduleroot/lib/modules/$KERNELVERSION
+    [[ -d $_d_kmoduledir ]] || die "'$_d_kmoduledir' is not a valid kernel module directory"
+fi
 
 _d_workdir=$(initialize_buildroot "$KERNELVERSION" $_opttargetdir) || cleanup 1
 BUILDROOT=${_opttargetdir:-$_d_workdir/root}
