@@ -293,12 +293,10 @@ Files
 
 '/etc/initcpio/install'::
 '/usr/lib/initcpio/install'::
-'/lib/initcpio/install'::
 	Search path for build time hooks.
 
 '/etc/initcpio/hooks'::
 '/usr/lib/initcpio/hooks'::
-'/lib/initcpio/hooks'::
 	Search path for early userspace runtime hooks.
 
 Examples
