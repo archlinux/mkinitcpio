@@ -709,7 +709,11 @@ run_build_hook() {
     fi
 
     # run
-    msg2 "Running build hook: [%s]" "${script##*/}"
+    if (( _optquiet )); then
+        msg2 "Running build hook: [%s]" "${script##*/}"
+    else
+        msg2 "Running build hook: [%s]" "$script"
+    fi
     build
 
     # if we made it this far, return successfully. Hooks can
