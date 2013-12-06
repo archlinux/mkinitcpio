@@ -241,6 +241,11 @@ process_preset() (
     local preset=$1 preset_image= preset_options=
     local -a preset_mkopts preset_cmd
 
+    if (( MKINITCPIO_PROCESS_PRESET )); then
+        error "You appear to be calling a preset from a preset. This is a configuration error."
+        cleanup 1
+    fi
+
     # allow path to preset file, else resolve it in $_d_presets
     if [[ $preset != */* ]]; then
         printf -v preset '%s/%s.preset' "$_d_presets" "$preset"
@@ -287,7 +292,7 @@ process_preset() (
         fi
 
         msg2 "${preset_cmd[*]}"
-        "$0" "${preset_cmd[@]}"
+        MKINITCPIO_PROCESS_PRESET=1 "$0" "${preset_cmd[@]}"
         (( $? )) && ret=1
     done
 
