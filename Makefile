@@ -1,6 +1,6 @@
 # Makefile for mkinitcpio
 
-VERSION = $(shell if test -f VERSION; then cat VERSION; else git describe | sed 's/-/./g'; fi)
+VERSION = $(shell if test -f VERSION; then cat VERSION; else git describe | sed 's/-/./g;s/^v//;'; fi)
 
 DIRS = \
 	/usr/bin \
