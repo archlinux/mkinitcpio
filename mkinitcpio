@@ -202,6 +202,9 @@ build_image() {
         xz)
             COMPRESSION_OPTIONS+=' --check=crc32'
             ;;
+        lz4)
+            COMPRESSION_OPTIONS+=' -l'
+            ;;
     esac
 
     cpio_opts=('-0' '-o' '-H' 'newc')

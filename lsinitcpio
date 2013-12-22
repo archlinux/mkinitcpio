@@ -91,10 +91,17 @@ detect_filetype() {
         return
     fi
 
-    if [[ $(hexdump -n 4 -e '"%x"' "$1") == '184d2204' ]]; then
-        echo 'lz4'
-        return
-    fi
+    case $(hexdump -n 4 -e '"%x"' "$1") in
+        184d2204)
+            error 'Newer lz4 stream format detected! This may not boot!'
+            echo 'lz4'
+            return
+            ;;
+        184c2102)
+            echo 'lz4 -l'
+            return
+            ;;
+    esac
 
     if [[ $(hexdump -n 3 -e '"%c"' "$1") == 'BZh' ]]; then
         echo 'bzip2'
