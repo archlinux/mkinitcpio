@@ -2,6 +2,10 @@
 
 build() {
     add_binary /usr/lib/systemd/systemd-shutdown /shutdown
+
+    if type -P kexec >/dev/null; then
+        add_binary kexec
+    fi
 }
 
 help() {
