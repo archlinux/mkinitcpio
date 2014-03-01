@@ -30,7 +30,7 @@ build() {
     done
 
     # detect filesystem for root
-    if rootfstype=$(findmnt -uno fstype '/'); then
+    if rootfstype=$(findmnt -uno fstype -T '/'); then
         add_if_avail "$rootfstype"
     else
         error "failed to detect root filesystem"
