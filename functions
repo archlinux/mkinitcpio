@@ -402,7 +402,7 @@ add_module() {
         ocfs2)
             add_module "configfs?"
             ;;
-        libcrc32c)
+        btrfs|libcrc32c)
             add_module "crc32c_intel?"
             add_module "crc32c?"
             ;;
