@@ -4,21 +4,21 @@ get_decompressor() {
     case "$1" in
         *.gz)
             cat=zcat
-            of=${f%.gz}
+            of=${1%.gz}
             ;;
         *.bz2)
             cat=bzcat
-            of=${f%.bz2}
+            of=${1%.bz2}
             ;;
         *)
             cat=cat
-            of=$f
+            of=$1
             ;;
     esac
 }
 
 add_keymap_file() {
-    local cat cmd file rest f of
+    local cat cmd rest f of
 
     while read f; do
         get_decompressor "$f"
