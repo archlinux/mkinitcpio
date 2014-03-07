@@ -5,10 +5,6 @@ mount_handler=default_mount_handler
 init=/sbin/init
 rd_logmask=0
 
-if [ -x /usr/bin/systemd-timestamp ]; then
-    RD_TIMESTAMP=$(systemd-timestamp)
-fi
-
 . /init_functions
 
 mount -t proc proc /proc -o nosuid,noexec,nodev
