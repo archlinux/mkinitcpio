@@ -584,13 +584,7 @@ add_binary() {
         fi
 
         if [[ -f $sodep && ! -e $BUILDROOT$sodep ]]; then
-            if [[ ! -L $sodep ]]; then
-                add_file "$sodep" "$sodep" "$(stat -c %a "$sodep")"
-            else
-                resolved=$(readlink -e "$sodep")
-                add_symlink "$sodep" "$(readlink "$sodep")"
-                add_file "$resolved" "$resolved" 755
-            fi
+            add_file "$sodep" "$sodep" "$(stat -Lc %a "$sodep")"
         fi
     done <<< "$lddout"
 
