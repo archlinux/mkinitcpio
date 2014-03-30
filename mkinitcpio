@@ -196,9 +196,16 @@ build_image() {
     local out=$1 compress=$2 errmsg=
     local -a pipesave cpio_opts
 
-    msg "Creating $compress initcpio image: %s" "$out"
+    if [[ $compress = cat ]]; then
+        msg "Creating uncompressed initcpio image: %s" "$out"
+    else
+        msg "Creating %s-compressed initcpio image: %s" "$compress" "$out"
+    fi
 
     case $compress in
+        cat)
+            unset COMPRESSION_OPTIONS
+            ;;
         xz)
             COMPRESSION_OPTIONS+=' --check=crc32'
             ;;
@@ -460,7 +467,8 @@ if [[ $_optgenimg ]]; then
 
     _optcompress=${_optcompress:-${COMPRESSION:-gzip}}
     if ! type -P "$_optcompress" >/dev/null; then
-        die "Unable to locate compression method: %s" "$_optcompress"
+        warning "Unable to locate compression method: %s" "$_optcompress"
+        _optcompress=cat
     fi
 
     msg "Starting build: %s" "$KERNELVERSION"
