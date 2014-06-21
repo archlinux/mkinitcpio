@@ -414,19 +414,20 @@ add_full_dir() {
     # Add a directory and all its contents, recursively, to the initcpio image.
     # No parsing is performed and the contents of the directory is added as is.
     #   $1: path to directory
+    #   $2: glob pattern to filter file additions (optional)
 
-    local f=
+    local f= filter=${2:-*}
 
     if [[ -n $1 && -d $1 ]]; then
         add_dir "$1"
 
         for f in "$1"/*; do
             if [[ -L $f ]]; then
-                add_symlink "$f" "$(readlink "$f")"
+                [[ $f = $filter ]] && add_symlink "$f" "$(readlink "$f")"
             elif [[ -d $f ]]; then
                 add_full_dir "$f"
             elif [[ -f $f ]]; then
-                add_file "$f"
+                [[ $f = $filter ]] && add_file "$f"
             fi
         done
     fi

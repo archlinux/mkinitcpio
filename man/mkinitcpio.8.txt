@@ -138,11 +138,14 @@ functions exist to facilitate this.
 
 	Adds a directory and its parents to the image.
 
-*add_full_dir* 'directory'::
+*add_full_dir* 'directory' [ 'glob' ]::
 
 	Recursively adds a directory to the image by walking the given path and
 	calling *add_file*, *add_dir*, and *add_symlink* accordingly. This function
 	will not follow symlinks, nor will it add the targets of symlinks.
+
+	If the 'glob' argument is passed, only files and symlinks matching this glob
+	will be added.
 
 *add_symlink* 'path' [ 'link-target' ]::
 

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 build() {
-  add_full_dir /etc/modprobe.d
-  add_full_dir /usr/lib/modprobe.d
+  add_full_dir /etc/modprobe.d '*.conf'
+  add_full_dir /usr/lib/modprobe.d '*.conf'
 }
 
 help() {
