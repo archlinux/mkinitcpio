@@ -13,7 +13,7 @@ build() {
     # usb
     if add_checked_modules -f '(_cs|sl811_hcd|isp116x_hcd)' '/usb/host'; then
         blockdevs+=(['usb_storage?']=1 ['sd_mod?']=1 ['sr_mod?']=1)
-        add_checked_modules 'drivers/usb/storage/ums-*'
+        add_checked_modules '/drivers/usb/storage/'
     fi
 
     # firewire
