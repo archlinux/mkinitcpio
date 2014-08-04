@@ -423,11 +423,15 @@ add_full_dir() {
 
         for f in "$1"/*; do
             if [[ -L $f ]]; then
-                [[ $f = $filter ]] && add_symlink "$f" "$(readlink "$f")"
+                if [[ $f = $filter ]]; then
+                    add_symlink "$f" "$(readlink "$f")"
+                fi
             elif [[ -d $f ]]; then
                 add_full_dir "$f"
             elif [[ -f $f ]]; then
-                [[ $f = $filter ]] && add_file "$f"
+                if [[ $f = $filter ]]; then
+                    add_file "$f"
+                fi
             fi
         done
     fi
