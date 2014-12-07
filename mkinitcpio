@@ -222,7 +222,7 @@ build_image() {
     fi
 
     pushd "$BUILDROOT" >/dev/null
-    find . -print0 |
+    find -mindepth 1 -printf '%P\0' |
             LANG=C bsdcpio "${cpio_opts[@]}" |
             $compress $COMPRESSION_OPTIONS > "$out"
     pipesave=("${PIPESTATUS[@]}") # save immediately
