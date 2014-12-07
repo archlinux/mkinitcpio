@@ -139,7 +139,7 @@ analyze_image() {
     zsize=$(stat -c %s "$_image")
 
     # calculate compression ratio
-    TIMEFORMAT=%R decomptime=$({ time decomp "$_image" >/dev/null; } 2>&1)
+    decomptime=$(TIMEFORMAT=%R; { time decomp "$_image" >/dev/null; } 2>&1)
     if [[ $_compress ]]; then
         fullsize=$(decomp "$_image" | wc -c)
         ratio=.$(( zsize * 1000 / fullsize % 1000 ))
