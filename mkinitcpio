@@ -261,7 +261,7 @@ process_preset() (
         printf -v preset '%s/%s.preset' "$_d_presets" "$preset"
     fi
 
-    . "$preset" 2>/dev/null || die "Preset not found: \`%s'" "$preset"
+    . "$preset" || die "Failed to load preset: \`%s'" "$preset"
 
     # Use -m and -v options specified earlier
     (( _optquiet )) || preset_mkopts+=(-v)
