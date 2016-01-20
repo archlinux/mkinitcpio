@@ -4,8 +4,8 @@ build() {
     local filter
     local -A blockdevs
 
-    # pata, sata, scsi
-    for filter in 'scsi/.*ata' '/(block|scsi|fusion)/' 'ata/[ps]ata_' \
+    # pata, sata, scsi, nvme
+    for filter in 'scsi/.*ata' '/(block|scsi|fusion|nvme)/' 'ata/[ps]ata_' \
             'ata/(ahci|pdc_adma|ata_piix|ata_generic)'; do
         add_checked_modules "$filter" && blockdevs['sd_mod']=1
     done
