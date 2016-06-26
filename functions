@@ -348,8 +348,8 @@ add_module() {
     # discovered and added.
     #   $1: module name
 
-    local module= path= softdeps= deps= field= value= firmware=()
-    local ign_errors=0
+    local target= module= softdeps= deps= field= value= firmware=()
+    local ign_errors=0 found=0
 
     [[ $KERNELVERSION == none ]] && return 0
 
@@ -358,15 +358,19 @@ add_module() {
         set -- "${1%?}"
     fi
 
-    module=${1%.ko*}
+    target=${1%.ko*} target=${target//-/_}
 
     # skip expensive stuff if this module has already been added
-    (( _addedmodules["${module//-/_}"] )) && return
+    (( _addedmodules["$target"] )) && return
 
     while IFS=':= ' read -r -d '' field value; do
         case "$field" in
             filename)
-                path=$value
+                found=1
+                module=${value##*/} module=${module%.ko*}
+                quiet "adding module: %s" "$module"
+                _modpaths["$value"]=1
+                _addedmodules["${module//-/_}"]=1
                 ;;
             depends)
                 IFS=',' read -r -a deps <<< "$value"
@@ -383,26 +387,21 @@ add_module() {
                 done
                 ;;
         esac
-    done < <(modinfo -b "$_optmoduleroot" -k "$KERNELVERSION" -0 "$module" 2>/dev/null)
+    done < <(modinfo -b "$_optmoduleroot" -k "$KERNELVERSION" -0 "$target" 2>/dev/null)
 
-    if [[ -z $path ]]; then
+    if (( !found )); then
         (( ign_errors )) && return 0
-        error "module not found: \`%s'" "$module"
+        error "module not found: \`%s'" "$target"
         return 1
     fi
 
     if (( ${#firmware[*]} )); then
         add_firmware "${firmware[@]}" ||
-            warning 'Possibly missing firmware for module: %s' "$module"
+            warning 'Possibly missing firmware for module: %s' "$target"
     fi
 
-    # aggregate modules and add them all at once to save some forks
-    quiet "adding module: %s" "$1"
-    _modpaths["$path"]=1
-    _addedmodules["${module//-/_}"]=1
-
     # handle module quirks
-    case $module in
+    case $target in
         fat)
             add_module "nls_cp437?"
             add_module "nls_iso8859-1?"
