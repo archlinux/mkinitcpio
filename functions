@@ -348,7 +348,7 @@ add_module() {
     # discovered and added.
     #   $1: module name
 
-    local module= path= deps= field= value= firmware=()
+    local module= path= softdeps= deps= field= value= firmware=()
     local ign_errors=0
 
     [[ $KERNELVERSION == none ]] && return 0
@@ -374,6 +374,13 @@ add_module() {
                 ;;
             firmware)
                 firmware+=("$value")
+                ;;
+            softdep)
+                read -ra softdeps <<<"$value"
+                for module in "${softdeps[@]}"; do
+                    [[ $module == *: ]] && continue
+                    add_module "$module?"
+                done
                 ;;
         esac
     done < <(modinfo -b "$_optmoduleroot" -k "$KERNELVERSION" -0 "$module" 2>/dev/null)
@@ -403,9 +410,8 @@ add_module() {
         ocfs2)
             add_module "configfs?"
             ;;
-        btrfs|libcrc32c)
-            add_module "crc32c_intel?"
-            add_module "crc32c?"
+        btrfs)
+            add_module "libcrc32c?"
             ;;
     esac
 }
@@ -780,7 +786,7 @@ install_modules() {
     depmod -b "$BUILDROOT" "$KERNELVERSION"
 
     # remove all non-binary module.* files (except devname for on-demand module loading)
-    rm "$moduledest"/modules.!(*.bin|devname)
+    rm "$moduledest"/modules.!(*.bin|devname|softdep)
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
