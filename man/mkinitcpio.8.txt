@@ -49,8 +49,9 @@ Options
 
 *-k, \--kernel* 'kernelversion'::
 	Use 'kernelversion', instead of the current running kernel. This may be a
-	path to a kernel image, a specific kernel version or the special keyword
-	'none'. In the latter case, no kernel modules are added to the image.
+	path to a kernel image (only supported for x86-based architectures), a specific
+	kernel version or the special keyword 'none'. In the latter case, no kernel
+	modules are added to the image.
 
 *-L, \--listhooks*::
 	List all available hooks.

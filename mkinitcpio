@@ -85,7 +85,7 @@ cleanup() {
 }
 
 resolve_kernver() {
-    local kernel=$1 offset kver
+    local kernel=$1 arch= offset kver
 
     if [[ -z $kernel ]]; then
         uname -r
@@ -95,6 +95,12 @@ resolve_kernver() {
     if [[ ${kernel:0:1} != / ]]; then
         echo "$kernel"
         return 0
+    fi
+
+    arch=$(uname -m)
+    if [[ $arch != @(i686|x86_64) ]]; then
+        error "kernel version extraction from image not supported for \`%s' architecture" "$arch"
+        return 1
     fi
 
     if [[ ! -e $kernel ]]; then
