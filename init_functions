@@ -124,6 +124,7 @@ parse_cmdline() {
                 \#*) break ;;
                 # special cases
                 rw|ro) rwopt=$_w ;;
+                fstype) rootfstype=$_w ;;
                 fsck.mode=*)
                     case ${_w#*=} in
                         force)
@@ -323,7 +324,7 @@ default_mount_handler() {
     fi
 
     msg ":: mounting '$root' on real root"
-    if ! mount ${fstype:+-t $fstype} -o ${rwopt:-ro}${rootflags:+,$rootflags} "$root" "$1"; then
+    if ! mount ${rootfstype:+-t $rootfstype} -o ${rwopt:-ro}${rootflags:+,$rootflags} "$root" "$1"; then
         echo "You are now being dropped into an emergency shell."
         launch_interactive_shell
         msg "Trying to continue (this will most likely fail) ..."
