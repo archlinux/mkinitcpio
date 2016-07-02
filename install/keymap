@@ -14,16 +14,11 @@ build() {
         [[ $LANG ]] && LOCALE=$LANG
         LANG=$l
 
-        if [[ $KEYMAP ]]; then
-            if [[ $LOCALE = *[Uu][Tt][Ff]?(-)8 ]]; then
-                touch "$BUILDROOT/keymap.utf8"
-                uc=-u
-            fi
-            loadkeys -q $uc $KEYMAP -b > "$BUILDROOT/keymap.bin"
-        else
-            warning "keymap: hook specified, but no KEYMAP found in configuration"
-            return 1
+        if [[ $LOCALE = *[Uu][Tt][Ff]?(-)8 ]]; then
+            touch "$BUILDROOT/keymap.utf8"
+            uc=-u
         fi
+        loadkeys -q $uc ${KEYMAP:-us} -b > "$BUILDROOT/keymap.bin"
     ) && add_runscript
 }
 
