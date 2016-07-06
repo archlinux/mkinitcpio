@@ -130,19 +130,19 @@ test_parse 'foo="bar baz"' \
   'foo' 'bar baz'
 
 # single quoting
-test_parse --expect-fail "foo='bar'" \
+test_parse "foo='bar'" \
   'foo' 'bar'
-test_parse --expect-parse-fail "foo='bar baz'" \
+test_parse "foo='bar baz'" \
   'foo' 'bar baz'
 
 # dangling quotes
-test_parse --expect-fail 'foo="bar' \
+test_parse 'foo="bar' \
   'foo' '"bar'
 test_parse 'foo=bar"' \
   'foo' 'bar"'
 
 # nested quotes
-test_parse --expect-parse-fail "foo='\"bar baz\"' herp='\"de\"rp'" \
+test_parse "foo='\"bar baz\"' herp='\"de\"rp'" \
   'foo' '"bar baz"' \
   'herp' '"de"rp'
 
@@ -174,9 +174,9 @@ test_parse 'foo="bar #baz" parse=this' \
 # shell metachars
 test_parse 'foo=*' \
   'foo' '\*'
-test_parse --expect-fail 'Make*' \
+test_parse 'Make*' \
   'Makefile' ''
-test_parse --expect-fail '[Makefile]*' \
+test_parse '[Makefile]*' \
   'Makefile' '' \
   'init' '' \
   'functions' ''
@@ -184,7 +184,7 @@ test_parse --expect-fail '[Makefile]*' \
 # invalid names
 test_parse 'in-valid=name'
 test_parse '6foo=bar'
-test_parse --expect-parse-fail '"gar bage"' \
+test_parse '"gar bage"' \
   'gar' '' \
   'bage' ''
 
@@ -197,7 +197,7 @@ test_parse 'ro' \
   'ro' '' \
   'rw' '' \
   'rwopt' 'ro'
-test_parse --expect-fail 'fstype=btrfs' \
+test_parse 'fstype=btrfs' \
   'rootfstype' 'btrfs'
 test_parse 'fsck.mode=force' \
   'forcefsck' 'y' \

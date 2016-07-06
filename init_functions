@@ -114,74 +114,133 @@ set_log_option() {
     done
 }
 
-parse_cmdline() {
-    local _w _quoted _lhs _rhs _cmdline
-    read -r _cmdline
-    for _w in $_cmdline; do
-        if [ -z "$_quoted" ]; then
-            case $_w in
-                # ignore everything after a # in the commandline
-                \#*) break ;;
-                # special cases
-                rw|ro) rwopt=$_w ;;
-                fstype) rootfstype=$_w ;;
-                fsck.mode=*)
-                    case ${_w#*=} in
-                        force)
-                            forcefsck=y
-                            ;;
-                        skip)
-                            fastboot=y
-                            ;;
-                        *)
-                            err "unknown fsck.mode parameter: '${_w#*=}'"
-                            ;;
-                    esac
+startswith() {
+    local word=$1 prefix=$2
+
+    case $word in
+        $prefix*)
+            return 0
+            ;;
+    esac
+
+    return 1
+}
+
+endswith() {
+    local word=$1 suffix=$2
+
+    case $word in
+        *$suffix)
+            return 0
+            ;;
+    esac
+
+    return 1
+}
+
+parse_cmdline_item() {
+    local key=$1 value=$2
+
+    case $key in
+        rw|ro)
+            rwopt=$key
+            ;;
+        fstype)
+            # The kernel understands 'rootfstype', but mkinitcpio has (without
+            # documentation) supported 'fstype' instead. Ensure we support both
+            # for backwards compat, but make fstype legacy.
+            rootfstype=$value
+            ;;
+        fsck.mode)
+            case $value in
+                force)
+                    forcefsck=y
                     ;;
-                rd.*)
-                    case ${_w#rd.} in
-                        debug)
-                            rd_debug=y
-                            ;;
-                        log)
-                            rd_logmask=$(( _rdlog_kmsg | _rdlog_cons ))
-                            ;;
-                        log=*)
-                            set_log_option "${_w#rd.log=}"
-                            ;;
-                    esac
+                skip)
+                    fastboot=y
                     ;;
-                # abide by shell variable naming rules
-                [[:alpha:]_]*=*)
-                    _rhs=${_w#*=}
-                    _lhs=${_w%%=*}
-                    _lhs=${_lhs//[-.]/_}
-                    if [ '"' = "${_rhs:0:1}" ]; then
-                        if [ '"' = "${_rhs:$((${#_rhs}-1))}" ]; then
-                            _rhs="${_rhs:1:$((${#_rhs}-2))}"
-                        else
-                            _rhs=${_rhs:1}
-                            _quoted=1
-                            continue
-                        fi
-                    fi
-                    eval $_lhs=\$_rhs
-                    ;;
-                [[:alpha:]_]*)
-                    _lhs=${_w//[-.]/_}
-                    eval $_lhs=y
+                *)
+                    err "unknown fsck.mode parameter: '$value'"
                     ;;
             esac
-        else
-            if [ '"' = "${_w:$((${#_w}-1))}" ]; then
-                _rhs="$_rhs ${_w%\"}"
-                unset _quoted
-                eval $_lhs=\$_rhs
+            ;;
+        rd.debug)
+            rd_debug=y
+            ;;
+        rd.log)
+            if [ -n "$value" ]; then
+                set_log_option "$value"
             else
-                _rhs="$_rhs $_w"
+                rd_logmask=$(( _rdlog_kmsg | _rdlog_cons ))
+            fi
+            ;;
+        [![:alpha:]_]*|[[:alpha:]_]*[![:alnum:]_]*)
+            # invalid shell variable, ignore it
+            ;;
+        *)
+            # valid shell variable
+            eval "$key"='${value:-y}'
+            ;;
+    esac
+}
+
+process_cmdline_param() {
+    local item_callback=$1 key=$2 value=$3
+
+    # maybe unquote the value
+    if startswith "$value" "[\"']" && endswith "$value" "${value:0:1}"; then
+        value=${value#?} value=${value%?}
+    fi
+
+    "$item_callback" "$key" "$value"
+}
+
+parse_cmdline() {
+    local item_callback=${1:-parse_cmdline_item}
+    local cmdline word quoted key value
+
+    set -f
+    read -r cmdline
+    set -- $cmdline
+    set +f
+
+    for word; do
+        if [ -n "$quoted" ]; then
+            value="$value $word"
+        else
+            case $word in
+                *=*)
+                    key=${word%%=*}
+                    value=${word#*=}
+
+                    if startswith "$value" "[\"']"; then
+                        quoted=${value:0:1}
+                    fi
+                    ;;
+                '#'*)
+                    break
+                    ;;
+                *)
+                    key=$word
+                    ;;
+            esac
+        fi
+
+        if [ -n "$quoted" ]; then
+            if endswith "$value" "$quoted"; then
+                unset quoted
+            else
+                continue
             fi
         fi
+
+        process_cmdline_param "$item_callback" "$key" "$value"
+        unset key value
     done
+
+    if [ -n "$key" ]; then
+        process_cmdline_param "$item_callback" "$key" "$value"
+    fi
 }
 
 fsck_device() {
