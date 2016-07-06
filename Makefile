@@ -74,6 +74,9 @@ man/%: man/%.txt Makefile
 		-a manversion=$(VERSION) \
 		-a manmanual="mkinitcpio manual" $<
 
+check:
+	@r=0; for t in test/test_*; do $$t || { echo $$t fail; r=1; }; done; exit $$r
+
 clean:
 	$(RM) mkinitcpio-${VERSION}.tar.gz $(MANPAGES)
 
