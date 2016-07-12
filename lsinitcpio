@@ -6,8 +6,14 @@
 shopt -s extglob
 
 _list='--list'
-_optcolor=1 _optverbose=
+_optcolor=1
 _f_functions=functions
+
+declare -A bsdcpio_options=(
+    [list]='--list'
+    [input]='-i'
+    [quiet]='--quiet'
+)
 
 usage() {
     cat<<USAGE
@@ -237,26 +243,35 @@ unset _opt_short _opt_long OPTRET
 while :; do
     case $1 in
         -a|--analyze)
-            _optanalyze=1 ;;
+            _optanalyze=1
+            ;;
         -c|--config)
-            _optshowconfig=1 ;;
+            _optshowconfig=1
+            ;;
         -h|--help)
             usage
-            exit 0 ;;
+            exit 0
+            ;;
         -l|--list)
-            _optlistcontents=1 ;;
+            _optlistcontents=1
+            ;;
         -n|--nocolor)
-            _optcolor=0 ;;
+            _optcolor=0
+            ;;
         -V|--version)
             version
-            exit 0 ;;
+            exit 0
+            ;;
         -v|--verbose)
-            _optverbose='--verbose' ;;
+            bsdcpio_options['verbose']='--verbose'
+            ;;
         -x|--extract)
-            unset _list ;;
+            unset 'bsdcpio_options[list]'
+            ;;
         --)
             shift
-            break 2 ;;
+            break 2
+            ;;
     esac
     shift
 done
@@ -287,7 +302,7 @@ elif (( _optshowconfig )); then
     decomp "$_image" | bsdtar xOf - buildconfig 2>/dev/null ||
         die 'Failed to extract config from image (mkinitcpio too old?)'
 else
-    decomp "$_image" | bsdcpio -i --quiet $_optverbose $_list
+    decomp "$_image" | bsdcpio "${bsdcpio_options[@]}"
 fi
 
 # vim: set ft=sh ts=4 sw=4 et:
