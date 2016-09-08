@@ -56,6 +56,12 @@ build() {
             done
         fi
     )
+
+    # Set up the console only after any manually loaded GPU drivers (e.g. i915)
+    add_systemd_drop_in systemd-vconsole-setup.service after-modules <<EOF
+[Unit]
+After=systemd-modules-load.service
+EOF
 }
 
 help() {
