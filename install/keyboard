@@ -7,7 +7,7 @@ build() {
 
     # As of 3.5, modaliases seem to be exported for HID
     # devices, so we can leverage autodetection.
-    IFS=.- read major minor _ <<<"$KERNELVERSION"
+    IFS=.- read -r major minor _ <<<"$KERNELVERSION"
     if (( major > 3 || (major == 3 && minor >= 5) )); then
         add_checked_modules '/hid/hid'
     else
@@ -16,7 +16,7 @@ build() {
 
     add_module 'usbhid'
 
-    map add_checked_modules '/input/keyboard' '/input/serio'
+    add_checked_modules '/input/(serio|keyboard)'
 }
 
 help() {
