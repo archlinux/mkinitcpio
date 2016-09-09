@@ -16,7 +16,7 @@ build() {
 
     add_module 'usbhid'
 
-    map add_checked_modules '/input/keyboard' 'input/serio'
+    map add_checked_modules '/input/keyboard' '/input/serio'
 }
 
 help() {
