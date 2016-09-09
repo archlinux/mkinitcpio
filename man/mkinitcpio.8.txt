@@ -255,8 +255,17 @@ the kernel command line:
 
 *rootdelay=*'seconds'::
 	Sets the delay, in seconds, that mkinitcpio is willing to wait for the root
-	device to show up, if it is not available immediately. This defaults to 5
+	device to show up, if it is not available immediately. This defaults to 10
 	seconds. If an invalid integer is passed, this variable will have no effect.
+
+*rootflags=*'flaglist'::
+	A comma-separated list of flags which will be passed onto the *mount*(8)
+	command when mounting the root filesystem. Acceptable values are filesystem
+	specific.
+
+*rootfstype=*'fstype'::
+	Overrides the type of filesystem being mounted as root. This should almost never
+	be needed as *mount*(8) usually detects this on its own.
 
 *rd.debug*::
 	Enables shell debug (xtrace). If 'rd.log' is not also a parameter on the kernel
