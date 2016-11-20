@@ -442,7 +442,7 @@ if [[ $KERNELVERSION != 'none' ]]; then
     [[ -d $_d_kmoduledir ]] || die "'$_d_kmoduledir' is not a valid kernel module directory"
 fi
 
-_d_workdir=$(initialize_buildroot "$KERNELVERSION" $_opttargetdir) || cleanup 1
+_d_workdir=$(initialize_buildroot "$KERNELVERSION" "$_opttargetdir") || cleanup 1
 BUILDROOT=${_opttargetdir:-$_d_workdir/root}
 
 . "$_f_config" || die "Failed to read configuration \`%s'" "$_f_config"
