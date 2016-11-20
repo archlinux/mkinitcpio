@@ -409,8 +409,11 @@ add_module() {
         ocfs2)
             add_module "configfs?"
             ;;
-        btrfs|f2fs)
+        btrfs)
             add_module "libcrc32c?"
+            ;;
+        f2fs)
+            add_module "crc32?"
             ;;
     esac
 }
