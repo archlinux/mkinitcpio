@@ -21,7 +21,7 @@ build() {
             add_fsck $usrfstype && (( ++added ))
         fi
     else
-        for fsck in /{usr/,}{s,}bin/fsck.*; do
+        for fsck in /usr/bin/fsck.*; do
             [[ -f $fsck ]] || continue
             add_binary "$fsck" && (( ++added ))
         done
