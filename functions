@@ -590,7 +590,7 @@ add_binary() {
             sodep=${BASH_REMATCH[1]}
         elif [[ $line = *'not found' ]]; then
             error "binary dependency \`%s' not found for \`%s'" "${line%% *}" "$1"
-            (( ++builderrors ))
+            (( ++_builderrors ))
             continue
         fi
 
