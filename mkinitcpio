@@ -50,6 +50,7 @@ usage: ${0##*/} [options]
    -M, --automods               Display modules found via autodetection
    -n, --nocolor                Disable colorized output messages
    -p, --preset <file>          Build specified preset from /etc/mkinitcpio.d
+   -P, --allpresets             Process all preset files in /etc/mkinitcpio.d
    -r, --moduleroot <dir>       Root directory for modules (default: /)
    -S, --skiphooks <hooks>      Skip specified hooks, comma-separated, during build
    -s, --save                   Save build directory. (default: no)
