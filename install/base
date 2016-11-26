@@ -21,7 +21,6 @@ build() {
 
     add_file "/usr/lib/initcpio/init_functions" "/init_functions"
     add_file "/usr/lib/initcpio/init" "/init"
-    add_file "/usr/lib/modprobe.d/usb-load-ehci-first.conf"
 }
 
 help() {
