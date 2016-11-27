@@ -20,6 +20,10 @@ DIRS = \
 	/usr/lib/systemd/system/shutdown.target.wants \
 	/usr/lib/tmpfiles.d
 
+BASH_SCRIPTS = \
+	mkinitcpio \
+	lsinitcpio
+
 all: doc
 
 MANPAGES = \
@@ -28,14 +32,13 @@ MANPAGES = \
 	man/lsinitcpio.1
 
 install: all
-	mkdir -p $(DESTDIR)
-	$(foreach dir,$(DIRS),install -dm755 $(DESTDIR)$(dir);)
+	install -dm755 $(addprefix $(DESTDIR),$(DIRS))
 
-	sed -e 's|^_f_config=.*|_f_config=/etc/mkinitcpio.conf|' \
-	    -e 's|^_f_functions=.*|_f_functions=/usr/lib/initcpio/functions|' \
-	    -e 's|^_d_hooks=.*|_d_hooks=/etc/initcpio/hooks:/usr/lib/initcpio/hooks|' \
-	    -e 's|^_d_install=.*|_d_install=/etc/initcpio/install:/usr/lib/initcpio/install|' \
-	    -e 's|^_d_presets=.*|_d_presets=/etc/mkinitcpio.d|' \
+	sed -e 's|\(^_f_config\)=.*|\1=/etc/mkinitcpio.conf|' \
+	    -e 's|\(^_f_functions\)=.*|\1=/usr/lib/initcpio/functions|' \
+	    -e 's|\(^_d_hooks\)=.*|\1=/etc/initcpio/hooks:/usr/lib/initcpio/hooks|' \
+	    -e 's|\(^_d_install\)=.*|\1=/etc/initcpio/install:/usr/lib/initcpio/install|' \
+	    -e 's|\(^_d_presets\)=.*|\1=/etc/mkinitcpio.d|' \
 	    -e 's|%VERSION%|$(VERSION)|g' \
 	    < mkinitcpio > $(DESTDIR)/usr/bin/mkinitcpio
 
@@ -76,16 +79,24 @@ man/%: man/%.txt Makefile
 
 check:
 	@r=0; for t in test/test_*; do $$t || { echo $$t fail; r=1; }; done; exit $$r
+	@r=0; for s in $(BASH_SCRIPTS); do bash -O extglob -n $$s || r=1; done; exit $$r
 
 clean:
-	$(RM) mkinitcpio-${VERSION}.tar.gz $(MANPAGES)
+	$(RM) mkinitcpio-$(VERSION).tar.gz.sig mkinitcpio-$(VERSION).tar.gz $(MANPAGES)
 
-dist: doc
+dist: doc mkinitcpio-$(VERSION).tar.gz
+mkinitcpio-$(VERSION).tar.gz:
 	echo $(VERSION) > VERSION
 	git archive --format=tar --prefix=mkinitcpio-$(VERSION)/ -o mkinitcpio-$(VERSION).tar HEAD
 	bsdtar -rf mkinitcpio-$(VERSION).tar -s ,^,mkinitcpio-$(VERSION)/, $(MANPAGES) VERSION
 	gzip -9 mkinitcpio-$(VERSION).tar
 	$(RM) VERSION
+
+mkinitcpio-$(VERSION).tar.gz.sig: mkinitcpio-$(VERSION).tar.gz
+	gpg --detach-sign $<
+
+upload: mkinitcpio-$(VERSION).tar.gz mkinitcpio-$(VERSION).tar.gz.sig
+	scp $^ repos.archlinux.org:/srv/ftp/other/mkinitcpio
 
 version:
 	@echo $(VERSION)
