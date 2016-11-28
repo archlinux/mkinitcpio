@@ -361,7 +361,7 @@ add_module() {
     target=${1%.ko*} target=${target//-/_}
 
     # skip expensive stuff if this module has already been added
-    (( _addedmodules["$target"] )) && return
+    (( _addedmodules["$target"] == 1 )) && return
 
     while IFS=':= ' read -r -d '' field value; do
         case "$field" in
@@ -413,7 +413,7 @@ add_module() {
             add_module "libcrc32c?"
             ;;
         f2fs)
-            add_module "crc32?"
+            add_module "crypto-crc32?"
             ;;
     esac
 }
