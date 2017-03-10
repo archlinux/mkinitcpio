@@ -7,11 +7,7 @@ rd_logmask=0
 
 . /init_functions
 
-mount -t proc proc /proc -o nosuid,noexec,nodev
-mount -t sysfs sys /sys -o nosuid,noexec,nodev
-mount -t devtmpfs dev /dev -o mode=0755,nosuid
-mount -t tmpfs run /run -o nosuid,nodev,mode=0755
-mkdir -m755 /run/initramfs
+mount_setup
 
 # parse the kernel command line
 parse_cmdline </proc/cmdline

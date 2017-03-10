@@ -481,4 +481,16 @@ rdlogger() {
     rm -f /run/initramfs/rdlogger.pipe /run/initramfs/rdlogger.pid
 }
 
+mount_setup() {
+    mount -t proc proc /proc -o nosuid,noexec,nodev
+    mount -t sysfs sys /sys -o nosuid,noexec,nodev
+    mount -t devtmpfs dev /dev -o mode=0755,nosuid
+    mount -t tmpfs run /run -o nosuid,nodev,mode=0755
+    mkdir -m755 /run/initramfs
+
+    if [ -e /sys/firmware/efi ]; then
+        mount -t efivarfs efivarfs /sys/firmware/efi/efivars -o nosuid,nodev,noexec
+    fi
+}
+
 # vim: set ft=sh ts=4 sw=4 et:
