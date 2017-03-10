@@ -75,7 +75,10 @@ size_to_human() {
 }
 
 detect_filetype() {
-    case $(hexdump -n 6 -e '"%c"' "$1") in
+    local bytes
+
+    read -rd '' bytes < <(hexdump -n 6 -e '"%c"' "$1")
+    case $bytes in
         '070701')
             # no compression
             echo
@@ -87,17 +90,20 @@ detect_filetype() {
             ;;
     esac
 
-    if [[ $(hexdump -n 4 -e '"%c"' "$1") = $'\x89LZO' ]]; then
+    read -rd '' bytes < <(hexdump -n 4 -e '"%c"' "$1")
+    if [[ $bytes = $'\x89LZO' ]]; then
         echo 'lzop'
         return
     fi
 
-    if [[ $(hexdump -n 2 -e '"%x"' "$1") = '8b1f' ]]; then
+    read -rd '' bytes < <(hexdump -n 2 -e '"%x"' "$1")
+    if [[ $bytes = '8b1f' ]]; then
         echo 'gzip'
         return
     fi
 
-    case $(hexdump -n 4 -e '"%x"' "$1") in
+    read -rd '' bytes < <(hexdump -n 4 -e '"%x"' "$1")
+    case $bytes in
         184d2204)
             error 'Newer lz4 stream format detected! This may not boot!'
             echo 'lz4'
@@ -109,7 +115,8 @@ detect_filetype() {
             ;;
     esac
 
-    if [[ $(hexdump -n 3 -e '"%c"' "$1") == 'BZh' ]]; then
+    read -rd '' bytes < <(hexdump -n 3 -e '"%c"' "$1")
+    if [[ $bytes == 'BZh' ]]; then
         echo 'bzip2'
         return
     fi
@@ -118,7 +125,8 @@ detect_filetype() {
     # do it without reading large portions of the stream. this
     # check is good enough for GNU tar, apparently, so it's good
     # enough for me.
-    if [[ $(hexdump -n 3 -e '"%x"' "$1") = '5d' ]]; then
+    read -rd '' bytes < <(hexdump -n 3 -e '"%x"' "$1")
+    if [[ $bytes = '5d' ]]; then
         echo 'lzma'
         return
     fi
