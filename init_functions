@@ -374,14 +374,6 @@ resolve_device() {
 }
 
 default_mount_handler() {
-    if [ ! -b "$root" ]; then
-        err "Unable to find root device '$root'."
-        echo "You are being dropped to a recovery shell"
-        echo "    Type 'exit' to try and continue booting"
-        launch_interactive_shell
-        msg "Trying to continue (this will most likely fail) ..."
-    fi
-
     msg ":: mounting '$root' on real root"
     if ! mount ${rootfstype:+-t $rootfstype} -o ${rwopt:-ro}${rootflags:+,$rootflags} "$root" "$1"; then
         echo "You are now being dropped into an emergency shell."
