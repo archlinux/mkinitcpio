@@ -390,7 +390,7 @@ add_module() {
     done < <(modinfo -b "$_optmoduleroot" -k "$KERNELVERSION" -0 "$target" 2>/dev/null)
 
     if (( !found )); then
-        (( ign_errors )) && return 0
+        (( ign_errors || _addedmodules["$target"] )) && return 0
         error "module not found: \`%s'" "$target"
         return 1
     fi
