@@ -274,6 +274,8 @@ process_preset() (
     (( _optquiet )) || preset_mkopts+=(-v)
     (( _optcolor )) || preset_mkopts+=(-n)
 
+    (( _optsavetree )) && preset_mkopts+=(-s)
+
     ret=0
     for p in "${PRESETS[@]}"; do
         msg "Building image from preset: $preset: '$p'"
