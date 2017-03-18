@@ -193,7 +193,7 @@ hook_list() {
 compute_hookset() {
     local h
 
-    for h in $HOOKS "${_optaddhooks[@]}"; do
+    for h in "${HOOKS[@]}" "${_optaddhooks[@]}"; do
         in_array "$h" "${_optskiphooks[@]}" && continue
         _hooks+=("$h")
     done
@@ -214,10 +214,10 @@ build_image() {
             unset COMPRESSION_OPTIONS
             ;;
         xz)
-            COMPRESSION_OPTIONS+=' --check=crc32'
+            COMPRESSION_OPTIONS+=(--check=crc32)
             ;;
         lz4)
-            COMPRESSION_OPTIONS+=' -l'
+            COMPRESSION_OPTIONS+=(-l)
             ;;
     esac
 
@@ -231,7 +231,7 @@ build_image() {
     pushd "$BUILDROOT" >/dev/null
     find -mindepth 1 -printf '%P\0' |
             LANG=C bsdcpio "${cpio_opts[@]}" |
-            $compress $COMPRESSION_OPTIONS > "$out"
+            $compress "${COMPRESSION_OPTIONS[@]}" > "$out"
     pipesave=("${PIPESTATUS[@]}") # save immediately
     popd >/dev/null
 
@@ -449,6 +449,8 @@ _d_workdir=$(initialize_buildroot "$KERNELVERSION" "$_opttargetdir") || cleanup 
 BUILDROOT=${_opttargetdir:-$_d_workdir/root}
 
 . "$_f_config" || die "Failed to read configuration \`%s'" "$_f_config"
+
+arrayize_config
 
 # after returning, hooks are populated into the array '_hooks'
 # HOOKS should not be referenced from here on

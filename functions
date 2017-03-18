@@ -198,6 +198,16 @@ map() {
     return $r
 }
 
+arrayize_config() {
+    set -f
+    [[ ${MODULES@a} != *a* ]] && MODULES=($MODULES)
+    [[ ${BINARIES@a} != *a* ]] && BINARIES=($BINARIES)
+    [[ ${FILES@a} != *a* ]] && FILES=($FILES)
+    [[ ${HOOKS@a} != *a* ]] && HOOKS=($HOOKS)
+    [[ ${COMPRESSION_OPTIONS@a} != *a* ]] && COMPRESSION_OPTIONS=($COMPRESSION_OPTIONS)
+    set +f
+}
+
 in_array() {
     # Search for an element in an array.
     #   $1: needle
@@ -608,18 +618,15 @@ add_binary() {
 parse_config() {
     # parse key global variables set by the config file.
 
-    set -f
-    map add_module $MODULES
-    map add_binary $BINARIES
-    map add_file $FILES
-    set +f
+    map add_module "${MODULES[@]}"
+    map add_binary "${BINARIES[@]}"
+    map add_file "${FILES[@]}"
 
     tee "$BUILDROOT/buildconfig" < "$1" | {
         . /dev/stdin
 
-        # sanitize of any extra whitespace
-        read -ra modules <<<"${MODULES//-/_}"
         for mod in "${modules[@]%\?}"; do
+            mod=${mod//-/_}
             # only add real modules (2 == builtin)
             (( _addedmodules["$mod"] == 1 )) && add+=("$mod")
         done
@@ -688,7 +695,7 @@ initialize_buildroot() {
 
 run_build_hook() {
     local hook=$1 script= realscript=
-    local MODULES= BINARIES= FILES= SCRIPT=
+    local MODULES=() BINARIES=() FILES=() SCRIPT=
 
     # find script in install dirs
     if ! script=$(PATH=$_d_install type -P "$hook"); then

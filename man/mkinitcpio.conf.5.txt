@@ -22,21 +22,21 @@ Variables
 ---------
 *MODULES*::
 
-	Defines additional modules, space delimited, which should be added to the
-	image. Dependencies (including other modules and necessary firmware), will
-	also be added to the image. At runtime, the modules in this array which
-	were successfully added to the image will be explicitly loaded.
+	Defines an array of additional modules which should be added to the image.
+	Dependencies (including other modules and necessary firmware), will also be
+	added to the image. At runtime, the modules in this array which were
+	successfully added to the image will be explicitly loaded.
 
 *FILES*::
 
-	Defines additional files, space delimited, which should be added to the image.
+	Defines an array of additional files which should be added to the image.
 	Files are added as is, and parent directories will be added if needed. Files
 	specified in this variable will override previously added files of the same
 	path.
 
 *BINARIES*::
 
-	Defines additional binaries, space delimited, which should be added to the
+	Defines an array of additional binaries which should be added to the
 	image. These are assumed to be dynamic ELF binaries, and necessary shared
 	library dependencies will automatically be added. However, it is not
 	considered an error to specify a non-ELF binary in this variable. Parent
@@ -45,7 +45,7 @@ Variables
 
 *HOOKS*::
 
-	This variable defines the hooks which will be run during the build process.
+	Defines an array of hooks which will be run during the build process.
 	Order is important, as it defines the order in which hooks will be run
 	during bootup. Use mkinitcpio's '-L' flag to list all available hooks,
 	and the '-H' flag to display the help text for a specific hook.
@@ -65,9 +65,9 @@ despite being "valid".
 
 *COMPRESSION_OPTIONS*::
 
-	Defines additional options to be passed to the compression program. This option
-	is generally not used. It can be potentially dangerous and may cause
-	invalid images to be generated without any sign of an error.
+	Defines an array of additional options to be passed to the compression
+	program. This option is generally not used. It can be potentially dangerous
+	and may cause invalid images to be generated without any sign of an error.
 
 See Also
 --------
