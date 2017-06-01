@@ -139,7 +139,7 @@ functions exist to facilitate this.
 
 	Adds a directory and its parents to the image.
 
-*add_full_dir* 'directory' [ 'glob' ]::
+*add_full_dir* 'directory' [ 'glob' ] [ 'strip_prefix' ]::
 
 	Recursively adds a directory to the image by walking the given path and
 	calling *add_file*, *add_dir*, and *add_symlink* accordingly. This function
@@ -147,6 +147,11 @@ functions exist to facilitate this.
 
 	If the 'glob' argument is passed, only files and symlinks matching this glob
 	will be added.
+
+	If the 'strip_prefix' argument is passed, it will be used to strip the
+	destination path (path in the initramfs image) from the prefix specified by
+	the 'strip_prefix' argument. This can be useful when writing rootfs-overlay
+	hooks.
 
 *add_symlink* 'path' [ 'link-target' ]::
 
