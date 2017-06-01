@@ -445,7 +445,7 @@ add_full_dir() {
                     add_symlink "$f" "$(readlink "$f")"
                 fi
             elif [[ -d $f ]]; then
-                add_full_dir "$f"
+                add_full_dir "$f" "$filter"
             elif [[ -f $f ]]; then
                 if [[ $f = $filter ]]; then
                     add_file "$f"
