@@ -125,8 +125,7 @@ hook_help() {
         return 1
     fi
 
-    if [[ -L $script ]]; then
-        resolved=$(readlink -e "$script")
+    if resolved=$(readlink "$script") && [[ ${script##*/} != "${resolved##*/}" ]]; then
         msg "This hook is deprecated. See the '%s' hook" "${resolved##*/}"
         return 0
     fi
@@ -155,14 +154,7 @@ hook_list() {
             [[ -e $hook || -L $hook ]] || continue
 
             # handle deprecated hooks and point to replacement
-            if [[ -L $hook ]]; then
-                resolved=$(readlink -e "$hook")
-
-                if [[ -z $resolved ]]; then
-                    error "found broken symlink '%s'" "$hook"
-                    continue
-                fi
-
+            if resolved=$(readlink "$hook") && [[ ${hook##*/} != "${resolved##*/}" ]]; then
                 resolved=${resolved##*/}
 
                 if ! index_of "$resolved" "${depr[@]}"; then

@@ -695,7 +695,7 @@ initialize_buildroot() {
 }
 
 run_build_hook() {
-    local hook=$1 script= realscript=
+    local hook=$1 script= resolved=
     local MODULES=() BINARIES=() FILES=() SCRIPT=
 
     # find script in install dirs
@@ -705,11 +705,10 @@ run_build_hook() {
     fi
 
     # check for deprecation
-    if [[ -L $script ]]; then
-        realscript=$(readlink -e "$script")
+    if resolved=$(readlink "$script") && [[ ${script##*/} != "${resolved##*/}" ]]; then
         warning "Hook '%s' is deprecated. Replace it with '%s' in your config" \
-            "${script##*/}" "${realscript##*/}"
-        script=$realscript
+            "${script##*/}" "${resolved##*/}"
+        script=$resolved
     fi
 
     # source
