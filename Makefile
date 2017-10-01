@@ -74,7 +74,7 @@ doc: $(MANPAGES)
 man/%: man/%.txt Makefile
 	a2x -d manpage \
 		-f manpage \
-		-a manversion=$(VERSION) \
+		-a manversion="mkinitcpio $(VERSION)" \
 		-a manmanual="mkinitcpio manual" $<
 
 check:
