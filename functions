@@ -425,6 +425,9 @@ add_module() {
         f2fs)
             add_module "crypto-crc32?"
             ;;
+        ext4)
+            add_module "crypto-crc32c?"
+            ;;
     esac
 }
 
