@@ -627,9 +627,18 @@ parse_config() {
     map add_file "${FILES[@]}"
 
     tee "$BUILDROOT/buildconfig" < "$1" | {
+        # When MODULES is not an array (but instead implicitly converted at
+        # startup), sourcing the config causes the string value of MODULES
+        # to be assigned as MODULES[0]. Avoid this by explicitly unsetting
+        # MODULES before re-sourcing the config.
+        unset MODULES
+
         . /dev/stdin
 
-        for mod in "${modules[@]%\?}"; do
+        # arrayize MODULES if necessary.
+        [[ ${MODULES@a} != *a* ]] && read -ra MODULES <<<"${MODULES//-/_}"
+
+        for mod in "${MODULES[@]%\?}"; do
             mod=${mod//-/_}
             # only add real modules (2 == builtin)
             (( _addedmodules["$mod"] == 1 )) && add+=("$mod")
