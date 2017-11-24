@@ -150,11 +150,15 @@ analyze_image() {
     # fallback in case tput failed us
     columns=${columns:-80}
 
-    zsize=$(stat -c %s "$_image")
+    # instead of reading the size from the inode, insist on reading the entire
+    # image to ensure that it's in the cache when we decompress. This avoids
+    # variance in timing and makes the time spent reading from storage roughly
+    # constant.
+    zsize=$(wc -c <"$_image")
 
     # calculate compression ratio
-    decomptime=$(TIMEFORMAT=%R; { time decomp "$_image" >/dev/null; } 2>&1)
     if [[ $_compress ]]; then
+        decomptime=$(TIMEFORMAT=%R; { time decomp "$_image" >/dev/null; } 2>&1)
         fullsize=$(decomp "$_image" | wc -c)
         ratio=.$(( zsize * 1000 / fullsize % 1000 ))
     fi
@@ -162,13 +166,9 @@ analyze_image() {
     # decompress the image since we need to read from it multiple times.
     decomp "$_image" | bsdtar -C "$workdir" -xf - || die 'Failed to decompress image'
 
-    # collect stats
-    kernver=("$workdir"/usr/lib/modules/*/)
-    kernver=${kernver%/}
-    kernver=${kernver##*/}
-
-    modules=("$workdir/usr/lib/modules/$kernver"/kernel/*.ko*)
+    modules=("$workdir/usr/lib/modules"/*/kernel/*.ko*)
     if [[ -f ${modules[0]} ]]; then
+        IFS=/ read -r _ _ _ kernver _ <<<"${modules[0]#$workdir/}"
         modules=("${modules[@]##*/}")
         modules=("${modules[@]%.ko*}")
     else
@@ -182,7 +182,7 @@ analyze_image() {
 
     read -r version < "$workdir/VERSION"
 
-    # source and read config
+    # shellcheck disable=SC1090
     . "$workdir/config"
 
     explicitmod=($MODULES)
@@ -198,8 +198,8 @@ analyze_image() {
     if [[ $_compress ]]; then
         msg 'Compressed with: %s' "$_compress"
         msg2 'Uncompressed size: %s (%s ratio)' "$(size_to_human "$fullsize")" "$ratio"
+        msg2 'Estimated decompression time: %ss' "$decomptime"
     fi
-    msg2 'Estimated extraction time: %ss' "$decomptime"
     printf '\n'
 
     if (( ${#modules[*]} )); then
