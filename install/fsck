@@ -4,6 +4,8 @@ build() {
     local fsck= added=0
 
     add_fsck() {
+        [[ $1 = tmpfs ]] && return
+
         if [[ $1 = ext[234] ]]; then
             add_binary fsck.ext4
             add_symlink /usr/bin/fsck.ext2 fsck.ext4
