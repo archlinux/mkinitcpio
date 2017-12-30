@@ -74,7 +74,7 @@ cleanup() {
 
     if [[ $_d_workdir ]]; then
         # when _optpreset is set, we're in the main loop, not a worker process
-        if (( _optsavetree )) && [[ -z $_optpreset ]]; then
+        if (( _optsavetree )) && [[ -z ${_optpreset[*]} ]]; then
             printf '%s\n' "${!_autodetect_cache[@]}" > "$_d_workdir/autodetect_modules"
             msg "build directory saved in %s" "$_d_workdir"
         else
@@ -82,7 +82,7 @@ cleanup() {
         fi
     fi
 
-    exit $err
+    exit "$err"
 }
 
 resolve_kernver() {
@@ -171,12 +171,12 @@ hook_list() {
     done
 
     msg "Available hooks"
-    printf '%s\n' "${hooklist[@]}" | sort -u | column -c$(tput cols)
+    printf '%s\n' "${hooklist[@]}" | sort -u | column -c"$(tput cols)"
 
     if (( ${#depr[*]} )); then
         echo
         for p in "${!depr[@]}"; do
-            printf "%s This hook is deprecated in favor of '%s'\n" \
+            printf $'%s This hook is deprecated in favor of \'%s\'\n' \
                 "${ss_ordinals[p]}" "${depr[p]}"
         done
     fi
@@ -195,21 +195,19 @@ build_image() {
     local out=$1 compress=$2 errmsg=
     local -a pipesave cpio_opts
 
-    if [[ $compress = cat ]]; then
-        msg "Creating uncompressed initcpio image: %s" "$out"
-    else
-        msg "Creating %s-compressed initcpio image: %s" "$compress" "$out"
-    fi
-
     case $compress in
         cat)
+            msg "Creating uncompressed initcpio image: %s" "$out"
             unset COMPRESSION_OPTIONS
             ;;
+        *)
+            msg "Creating %s-compressed initcpio image: %s" "$compress" "$out"
+            ;;&
         xz)
-            COMPRESSION_OPTIONS+=(--check=crc32)
+            COMPRESSION_OPTIONS+=('--check=crc32')
             ;;
         lz4)
-            COMPRESSION_OPTIONS+=(-l)
+            COMPRESSION_OPTIONS+=('-l')
             ;;
     esac
 
@@ -221,7 +219,7 @@ build_image() {
     fi
 
     pushd "$BUILDROOT" >/dev/null
-    find -mindepth 1 -printf '%P\0' |
+    find . -mindepth 1 -printf '%P\0' |
             LANG=C bsdcpio "${cpio_opts[@]}" |
             $compress "${COMPRESSION_OPTIONS[@]}" > "$out"
     pipesave=("${PIPESTATUS[@]}") # save immediately
