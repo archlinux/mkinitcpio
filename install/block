@@ -2,36 +2,27 @@
 
 build() {
     local filter
-    local -A blockdevs
+
+    map add_module sd_mod? sr_mod? usb_storage? mmc_block? firewire-sbp2? virtio_blk?
 
     # pata, sata, scsi, nvme
     for filter in 'scsi/.*ata' '/(block|scsi|fusion|nvme)/' 'ata/[ps]ata_' \
             'ata/(ahci|pdc_adma|ata_piix|ata_generic)'; do
-        add_checked_modules "$filter" && blockdevs['sd_mod']=1
+        add_checked_modules "$filter"
     done
 
     # usb
-    if add_checked_modules -f '(_cs|sl811_hcd|isp116x_hcd)' '/usb/host'; then
-        blockdevs+=(['usb_storage?']=1 ['sd_mod?']=1 ['sr_mod?']=1)
-        add_checked_modules '/drivers/usb/storage/'
-    fi
+    add_checked_modules -f '(_cs|sl811_hcd|isp116x_hcd)' '/usb/host'
+    add_checked_modules '/drivers/usb/storage/'
 
     # firewire
-    if add_checked_modules '/drivers/firewire/'; then
-        blockdevs+=(['firewire-sbp2?']=1 ['sd_mod?']=1 ['sr_mod?']=1)
-    fi
+    add_checked_modules '/drivers/firewire/'
 
     # mmc
-    if add_checked_modules '/(mmc|tifm_)'; then
-        blockdevs+=(['mmc_block?']=1)
-    fi
+    add_checked_modules '/(mmc|tifm_)'
 
     # virtio
-    if add_checked_modules 'virtio'; then
-        blockdevs['virtio_blk?']=1
-    fi
-
-    map add_module "${!blockdevs[@]}"
+    add_checked_modules 'virtio'
 }
 
 help() {
