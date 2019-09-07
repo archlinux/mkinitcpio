@@ -301,6 +301,22 @@ These are only the variables that the core of mkinitcpio honor. Additional
 hooks may look for other environment variables and should be documented by the
 help output for the hook.
 
+Reproducibility
+---------------
+mkinitcpio aims to create reproducible initramfs images by default.
+
+This means that two subsequent runs of mkinitcpio should produce two files
+that are identical at the binary level.
+
+Timestamps within the initramfs are set to the Unix epoch of 1970-01-01.
+
+Note that in order for the build to be fully reproducible, the compressor
+specified (e.g. gzip, xz) must also produce reproducible archives. At the time
+of writing, as an inexhaustive example, the lzop compressor is incapable of
+producing reproducible archives due to the insertion of a runtime timestamp.
+
+More information can be found at https://reproducible-builds.org.
+
 Files
 -----
 '/etc/mkinitcpio.conf'::
