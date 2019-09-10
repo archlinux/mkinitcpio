@@ -56,6 +56,7 @@ usage: ${0##*/} [options]
    -s, --save                   Save build directory. (default: no)
    -d, --generatedir <dir>      Write generated image into <dir>
    -t, --builddir <dir>         Use DIR as the temporary build directory
+   -D, --hookdir <dir>          Specify where to look for hooks.
    -V, --version                Display version information and exit
    -v, --verbose                Verbose output (default: no)
    -z, --compress <program>     Use an alternate compressor on the image
@@ -407,6 +408,11 @@ while :; do
         -r|--moduleroot)
             shift
             _optmoduleroot=$1
+            ;;
+        -D|--hookdir)
+            shift
+            _d_hooks="$(readlink -f "$1")/hooks"
+            _d_install="$(readlink -f "$1")/install"
             ;;
         --)
             shift
