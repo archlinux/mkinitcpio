@@ -211,25 +211,28 @@ build_image() {
             ;;
     esac
 
-    cpio_opts=('-0' '-o' '-H' 'newc')
-    (( _optquiet )) && cpio_opts+=('--quiet')
-    if (( EUID != 0 )); then
-        warning 'Not building as root, ownership cannot be preserved'
-        cpio_opts+=('-R' '0:0')
-    fi
-
     pushd "$BUILDROOT" >/dev/null
-    find . -mindepth 1 -printf '%P\0' |
-            LANG=C bsdcpio "${cpio_opts[@]}" |
+
+    # Reproducibility: set all timestamps to 0
+    find . -mindepth 1 -execdir touch -hcd "@0" "{}" +
+
+    find . -mindepth 1 -printf '%P\0' | sort -z |
+            LANG=C bsdtar --null -cnf - -T - |
+            LANG=C bsdtar --uid 0 --gid 0 --null -cf - --format=newc @- |
             $compress "${COMPRESSION_OPTIONS[@]}" > "$out"
+
     pipesave=("${PIPESTATUS[@]}") # save immediately
     popd >/dev/null
 
     if (( pipesave[0] )); then
         errmsg="find reported an error"
     elif (( pipesave[1] )); then
-        errmsg="bsdcpio reported an error"
+        errmsg="sort reported an error"
     elif (( pipesave[2] )); then
+        errmsg="bsdtar (step 1) reported an error"
+    elif (( pipesave[3] )); then
+        errmsg="bsdtar (step 2) reported an error"
+    elif (( pipesave[4] )); then
         errmsg="$compress reported an error"
     fi
 
