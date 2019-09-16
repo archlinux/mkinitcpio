@@ -79,4 +79,4 @@ mkinitcpio is created and maintained by the Arch Linux Developer community.
 
 Copyright
 ---------
-Copyright (c) Arch Linux 2006-2012
+Copyright (c) Arch Linux 2006-2019
