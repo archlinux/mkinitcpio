@@ -14,6 +14,8 @@ _f_functions=functions
 _f_config=mkinitcpio.conf
 _d_hooks="$PWD/hooks:/usr/lib/initcpio/hooks:/lib/initcpio/hooks"
 _d_install="$PWD/install:/usr/lib/initcpio/install:/lib/initcpio/install"
+_d_flag_hooks=""
+_d_flag_install=""
 _d_firmware=({/usr,}/lib/firmware/updates {/usr,}/lib/firmware)
 _d_presets=mkinitcpio.d
 
@@ -411,8 +413,8 @@ while :; do
             ;;
         -D|--hookdir)
             shift
-            _d_hooks="$(readlink -f "$1")/hooks"
-            _d_install="$(readlink -f "$1")/install"
+            _d_flag_hooks+="$1/hooks:"
+            _d_flag_install+="$1/install:"
             ;;
         --)
             shift
@@ -424,6 +426,11 @@ done
 
 if [[ -t 1 ]] && (( _optcolor )); then
     try_enable_color
+fi
+
+if [[ -n $_d_flag_hooks && -n $_d_flag_install ]]; then
+    _d_hooks=$_d_flag_hooks
+    _d_install=$_d_flag_install
 fi
 
 # insist that /proc and /dev be mounted (important for chroots)
