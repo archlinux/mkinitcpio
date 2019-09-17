@@ -14,8 +14,7 @@ _f_functions=functions
 _f_config=mkinitcpio.conf
 _d_hooks="$PWD/hooks:/usr/lib/initcpio/hooks:/lib/initcpio/hooks"
 _d_install="$PWD/install:/usr/lib/initcpio/install:/lib/initcpio/install"
-_d_flag_hooks=""
-_d_flag_install=""
+_d_flag_{hooks,install}=
 _d_firmware=({/usr,}/lib/firmware/updates {/usr,}/lib/firmware)
 _d_presets=mkinitcpio.d
 
@@ -429,8 +428,8 @@ if [[ -t 1 ]] && (( _optcolor )); then
 fi
 
 if [[ -n $_d_flag_hooks && -n $_d_flag_install ]]; then
-    _d_hooks=$_d_flag_hooks
-    _d_install=$_d_flag_install
+    _d_hooks=${_d_flag_hooks%:}
+    _d_install=${_d_flag_install%:}
 fi
 
 # insist that /proc and /dev be mounted (important for chroots)
