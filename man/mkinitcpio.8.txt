@@ -36,10 +36,13 @@ Options
 	Set 'directory' as the location where the initramfs is built. This might be
 	useful to generate a shutdown ramfs in '/run/initramfs'.
 
+*-D, \--hookdir* 'directory'::
+	Set 'directory' as the location where hooks will be searched for when
+	generating the image.
+
 *-g, \--generate* 'filename'::
 	Generate a CPIO image as 'filename'. Default: no; this means nothing will be
 	written to the filesystem unless this option is specified.
-
 
 *-H, \--hookhelp* 'hookname'::
 	Output help for hookname 'hookname'.
