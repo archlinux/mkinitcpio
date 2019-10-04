@@ -194,8 +194,7 @@ compute_hookset() {
 }
 
 build_image() {
-    local out=$1 compress=$2 errmsg=
-    local -a pipesave cpio_opts
+    local out=$1 compress=$2 errmsg pipestatus
 
     case $compress in
         cat)
@@ -218,25 +217,24 @@ build_image() {
     # Reproducibility: set all timestamps to 0
     find . -mindepth 1 -execdir touch -hcd "@0" "{}" +
 
-    find . -mindepth 1 -printf '%P\0' | sort -z |
+    # If this pipeline changes, |pipeprogs| below needs to be updated as well.
+    find . -mindepth 1 -printf '%P\0' |
+            sort -z |
             LANG=C bsdtar --null -cnf - -T - |
             LANG=C bsdtar --uid 0 --gid 0 --null -cf - --format=newc @- |
             $compress "${COMPRESSION_OPTIONS[@]}" > "$out"
 
-    pipesave=("${PIPESTATUS[@]}") # save immediately
+    pipestatus=("${PIPESTATUS[@]}")
+    pipeprogs=('find' 'sort' 'bsdtar (step 1)' 'bsdtar (step 2)' "$compress")
+
     popd >/dev/null
 
-    if (( pipesave[0] )); then
-        errmsg="find reported an error"
-    elif (( pipesave[1] )); then
-        errmsg="sort reported an error"
-    elif (( pipesave[2] )); then
-        errmsg="bsdtar (step 1) reported an error"
-    elif (( pipesave[3] )); then
-        errmsg="bsdtar (step 2) reported an error"
-    elif (( pipesave[4] )); then
-        errmsg="$compress reported an error"
-    fi
+    for (( i = 0; i < ${#pipestatus[*]}; ++i )); do
+        if (( pipestatus[i] )); then
+            errmsg="${pipeprogs[i]} reported an error"
+            break
+        fi
+    done
 
     if (( _builderrors )); then
         warning "errors were encountered during the build. The image may not be complete."
