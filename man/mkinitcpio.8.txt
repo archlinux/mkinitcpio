@@ -37,7 +37,7 @@ Options
 	useful to generate a shutdown ramfs in '/run/initramfs'.
 
 *-D, \--hookdir* 'directory'::
-	Set 'directory' as the location where hooks will be searched for when 
+	Set 'directory' as the location where hooks will be searched for when
 	generating the image.
 
 *-g, \--generate* 'filename'::
