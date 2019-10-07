@@ -19,9 +19,9 @@ optdepends=('xz: Use lzma or xz compression for the initramfs image'
 backup=(etc/mkinitcpio.conf)
 
 build() {
-  make -C ..
+  make -C "$startdir"
 }
 
 package() {
-  make -C .. DESTDIR="$pkgdir" install
+  make -C "$startdir" DESTDIR="$pkgdir" install
 }
