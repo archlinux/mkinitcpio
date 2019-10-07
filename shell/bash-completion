@@ -56,7 +56,7 @@ _files_from_dirs() {
 
 _mkinitcpio() {
     local action cur prev opts
-    opts=(-A --addhooks -c --config -g --generate -H --hookhelp -h --help -k --kernel
+    opts=(-A --addhooks -c --config -D --hookdir -g --generate -H --hookhelp -h --help -k --kernel
           -L --listhooks -M --automods -n --nocolor -P --allpresets -p --preset -r --moduleroot
           -S --skiphooks -s --save -t --builddir -V --version -v --verbose -z --compress)
 
@@ -65,7 +65,7 @@ _mkinitcpio() {
     case $prev in
         -[cg]|--config|--generate)
             _filedir ;;
-        -r|--moduleroot|-t|--builddir)
+        -D|--hookdir|-r|--moduleroot|-t|--builddir)
             _filedir -d ;;
         -k|--kernel)
             _find_kernel_versions ;;
