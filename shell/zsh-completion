@@ -39,6 +39,7 @@ case $service in
         _arguments : \
             '(-A --addhooks)'{-A,--addhooks}'[Add specified hooks, comma separated, to image]::usr hooks:_path_files -W /usr/lib/initcpio/install::lib hooks:_path_files -W /lib/initcpio/install' \
             '(-c --config)'{-c,--config}'[Use alternate config file. (default: /etc/mkinitcpio.conf)]:config files:_files' \
+            '(-D --hookdir)'{-D,--hookdir}'[Specify where to look for hooks.]:directories:_files -/' \
             '(-g --generate)'{-g,--generate}'[Generate cpio image and write to specified path]:config files:_files' \
             '(-H --hookhelp)'{-H,--hookhelp}'[Display help for given hook and exit]::usr hooks:_path_files -W /usr/lib/initcpio/install::lib hooks:_path_files -W /lib/initcpio/install' \
             '(-h --help)'{-h,--help}'[Display this message and exit]' \

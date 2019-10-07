@@ -14,7 +14,8 @@ _f_functions=functions
 _f_config=mkinitcpio.conf
 _d_hooks="$PWD/hooks:/usr/lib/initcpio/hooks:/lib/initcpio/hooks"
 _d_install="$PWD/install:/usr/lib/initcpio/install:/lib/initcpio/install"
-_d_flag_{hooks,install}=
+_d_flag_hooks=
+_d_flag_install=
 _d_firmware=({/usr,}/lib/firmware/updates {/usr,}/lib/firmware)
 _d_presets=mkinitcpio.d
 
@@ -316,8 +317,8 @@ process_preset() (
 trap 'cleanup 130' INT
 trap 'cleanup 143' TERM
 
-_opt_short='A:c:g:H:hk:nLMPp:r:S:sd:t:Vvz:'
-_opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookhelp:' 'help'
+_opt_short='A:c:D:g:H:hk:nLMPp:r:S:sd:t:Vvz:'
+_opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
           'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets'
           'preset:' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:')
 
