@@ -7,7 +7,7 @@ url="https://git.archlinux.org/mkinitcpio.git/"
 license=('GPL')
 groups=('base')
 conflicts=('mkinitcpio')
-provides=("mkinitcpio=$pkgver")
+provides=("mkinitcpio=$pkgver" "initramfs")
 depends=('mkinitcpio-busybox>=1.19.4-2' 'kmod' 'util-linux>=2.23' 'libarchive' 'coreutils'
          'awk' 'bash' 'findutils' 'grep' 'filesystem>=2011.10-1' 'systemd' 'gzip')
 makedepends=('asciidoc' 'git' 'sed')
