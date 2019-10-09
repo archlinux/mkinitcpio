@@ -72,8 +72,8 @@ install: all
 	ln -s mkinitcpio $(DESTDIR)/usr/share/bash-completion/completions/lsinitcpio
 	install -m644 shell/zsh-completion $(DESTDIR)/usr/share/zsh/site-functions/_mkinitcpio
 
-	install -m644 libalpm/hooks/90-mkinitcpio.hook $(DESTDIR)/usr/share/libalpm/hooks/90-mkinitcpio.hook
-	install -m755 libalpm/scripts/mkinitcpio.script $(DESTDIR)/usr/share/libalpm/scripts/mkinitcpio.script
+	install -m644 libalpm/hooks/90-mkinitcpio-install.hook $(DESTDIR)/usr/share/libalpm/hooks/90-mkinitcpio-install.hook
+	install -m755 libalpm/scripts/mkinitcpio-install $(DESTDIR)/usr/share/libalpm/scripts/mkinitcpio-install
 
 doc: $(MANPAGES)
 man/%: man/%.txt Makefile
