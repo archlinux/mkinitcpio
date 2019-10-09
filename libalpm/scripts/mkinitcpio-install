@@ -1,19 +1,33 @@
 #!/bin/bash
 
-args=('-p')
+args=()
+all=0
 
 while read -r line; do
-    if [[ $line = usr/lib/modules/+([^/])/pkgbase ]]; then
-        pkgbase=$(< "/$line")
-        if [[ ! -e /etc/mkinitcpio.d/"${pkgbase}".preset ]]; then
-            sed "s|%PKGBASE%|${pkgbase}|g" /usr/share/mkinitcpio/hook.preset | install -Dm644 /dev/stdin \
-              /etc/mkinitcpio.d/"${pkgbase}".preset
-        fi
-        install -Dm644 $(dirname $line)/vmlinuz /boot/vmlinuz-"${pkgbase}"
-    else
-        args=('-P') # all presets
-        break
+    if [[ $line != */vmlinuz ]]; then
+        all=1
+        continue
     fi
+
+    pkgbase=$(<"${line%/vmlinuz}/pkgbase")
+    [[ -n ${pkgbase} ]]
+
+    preset="/etc/mkinitcpio.d/${pkgbase}.preset"
+    if [[ ! -e $preset ]]; then
+        sed "s|%PKGBASE%|${pkgbase}|g" /usr/share/mkinitcpio/hook.preset \
+            | install -Dm644 /dev/stdin "$preset"
+    fi
+
+    install -Dm644 "${line}" "/boot/vmlinuz-${pkgbase}"
+    args+=(-p "${pkgbase}")
 done
 
-mkinitcpio "${args[@]}" "${pkgbase}"
+if (( all )); then
+    args=(-P)
+fi
+
+if ! compgen -G /etc/mkinitcpio.d/*.preset > /dev/null; then
+    exit 0
+fi
+
+mkinitcpio "${args[@]}"
