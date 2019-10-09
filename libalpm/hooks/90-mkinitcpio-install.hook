@@ -8,7 +8,7 @@ Target = mkinitcpio*
 Type = File
 Operation = Install
 Operation = Upgrade
-Target = usr/lib/modules/*/pkgbase
+Target = usr/lib/modules/*/vmlinuz
 
 [Action]
 Description = Updating linux initcpios...
