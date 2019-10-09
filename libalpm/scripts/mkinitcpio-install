@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 args=()
 all=0
@@ -26,7 +26,7 @@ if (( all )); then
     args=(-P)
 fi
 
-if ! compgen -G /etc/mkinitcpio.d/*.preset > /dev/null; then
+if ! compgen -G /etc/mkinitcpio.d/"*.preset" > /dev/null; then
     exit 0
 fi
 
