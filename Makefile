@@ -18,7 +18,9 @@ DIRS = \
 	/usr/share/man/man1 \
 	/usr/share/mkinitcpio \
 	/usr/lib/systemd/system/shutdown.target.wants \
-	/usr/lib/tmpfiles.d
+	/usr/lib/tmpfiles.d \
+	/usr/share/libalpm/hooks \
+	/usr/share/libalpm/scripts
 
 BASH_SCRIPTS = \
 	mkinitcpio \
@@ -69,6 +71,9 @@ install: all
 	install -m644 shell/bash-completion $(DESTDIR)/usr/share/bash-completion/completions/mkinitcpio
 	ln -s mkinitcpio $(DESTDIR)/usr/share/bash-completion/completions/lsinitcpio
 	install -m644 shell/zsh-completion $(DESTDIR)/usr/share/zsh/site-functions/_mkinitcpio
+
+	install -m644 libalpm/hooks/90-mkinitcpio.hook $(DESTDIR)/usr/share/libalpm/hooks/90-mkinitcpio.hook
+	install -m755 libalpm/scripts/mkinitcpio.script $(DESTDIR)/usr/share/libalpm/scripts/mkinitcpio.script
 
 doc: $(MANPAGES)
 man/%: man/%.txt Makefile
