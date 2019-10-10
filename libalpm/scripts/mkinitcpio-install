@@ -5,29 +5,40 @@ all=0
 
 while read -r line; do
     if [[ $line != */vmlinuz ]]; then
+        # triggers when it's a change to usr/lib/initcpio/*
         all=1
         continue
     fi
 
-    pkgbase=$(<"${line%/vmlinuz}/pkgbase")
-    [[ -n ${pkgbase} ]]
+    if ! read -r pkgbase > /dev/null 2>&1 < "${line%/vmlinuz}/pkgbase"; then
+        # if the kernel has no pkgbase, we skip it
+        continue
+    fi
 
     preset="/etc/mkinitcpio.d/${pkgbase}.preset"
     if [[ ! -e $preset ]]; then
-        sed "s|%PKGBASE%|${pkgbase}|g" /usr/share/mkinitcpio/hook.preset \
-            | install -Dm644 /dev/stdin "$preset"
+        if [[ -e $preset.pacsave ]]; then
+            # move the pacsave to the template
+            mv "${preset}.pacsave" "$preset"
+        else
+            # create the preset from the template
+            sed "s|%PKGBASE%|${pkgbase}|g" /usr/share/mkinitcpio/hook.preset \
+                | install -Dm644 /dev/stdin "$preset"
+        fi
     fi
 
+    # always install the kernel
     install -Dm644 "${line}" "/boot/vmlinuz-${pkgbase}"
+
+    # compound args for each kernel
     args+=(-p "${pkgbase}")
 done
 
-if (( all )); then
+if (( all )) && compgen -G /etc/mkinitcpio.d/"*.preset" > /dev/null; then
+    # change to use all presets
     args=(-P)
 fi
 
-if ! compgen -G /etc/mkinitcpio.d/"*.preset" > /dev/null; then
-    exit 0
+if (( ${#args[@]} )); then
+    mkinitcpio "${args[@]}"
 fi
-
-mkinitcpio "${args[@]}"
