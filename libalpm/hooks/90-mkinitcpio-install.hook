@@ -1,14 +1,9 @@
 [Trigger]
-Type = Package
-Operation = Install
-Operation = Upgrade
-Target = mkinitcpio*
-
-[Trigger]
 Type = File
 Operation = Install
 Operation = Upgrade
 Target = usr/lib/modules/*/vmlinuz
+Target = usr/lib/initcpio/*
 
 [Action]
 Description = Updating linux initcpios...
