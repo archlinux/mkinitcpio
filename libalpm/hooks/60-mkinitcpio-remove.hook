@@ -1,0 +1,16 @@
+[Trigger]
+Type = File
+Operation = Remove
+Target = usr/lib/modules/*/vmlinuz
+
+[Trigger]
+Type = Package
+Operation = Remove
+Target = mkinitcpio
+Target = mkinitcpio-git
+
+[Action]
+Description = Removing linux initcpios...
+When = PreTransaction
+Exec = /usr/share/libalpm/scripts/mkinitcpio-remove
+NeedsTargets

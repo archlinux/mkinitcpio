@@ -1,0 +1,39 @@
+#!/bin/bash -e
+
+package=0
+
+while read -r line; do
+    if [[ $line != */vmlinuz ]]; then
+        # triggers when it's a change to usr/lib/initcpio/*
+        package=1
+        continue
+    fi
+
+    if ! read -r pkgbase > /dev/null 2>&1 < "${line%/vmlinuz}/pkgbase"; then
+        # if the kernel has no pkgbase, we skip it
+        continue
+    fi
+
+    # remove the actual kernel and images for the package being removed
+    kernel="/boot/vmlinuz-${pkgbase}"
+    preset="/etc/mkinitcpio.d/${pkgbase}.preset"
+    initramfs="/boot/initramfs-${pkgbase}.img"
+    fallback_initramfs="/boot/initramfs-${pkgbase}-fallback.img"
+    if [[ -e $kernel ]]; then
+        # remove the installed kernel
+        rm $kernel
+    fi
+    if [[ -e $preset ]]; then
+        # remove the preset
+        rm $preset
+    fi
+    if [[ -e $initramfs && -e $fallback_initramfs ]]; then
+        # remove the images
+        rm $initramfs $fallback_initramfs
+    fi
+done
+
+if (( package )) && compgen -G /etc/mkinitcpio.d/"*.preset" > /dev/null; then
+    # remove all presets
+    rm /etc/mkinitcpio.d/*.preset
+fi
