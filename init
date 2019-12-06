@@ -35,6 +35,20 @@ if [ "${break}" = "y" ] || [ "${break}" = "premount" ]; then
     launch_interactive_shell
 fi
 
+#live rootfs detection
+if [ -n "$boot"  ]
+    then
+    list=$(ls /sys/block/ | grep -v loop | grep -v ram | grep -v nbd | sed "s|^|/sys/block/|g" | subdev)
+    for part in $list
+    do
+        if is_file_avaiable "$part" "$boot/filesystem.squashfs"
+        then
+           export root=$part
+        fi
+    done
+fi
+
+#non-live detection
 rootdev=$(resolve_device "$root") && root=$rootdev
 unset rootdev
 
@@ -45,6 +59,32 @@ fsck_root
 
 run_hookfunctions 'run_latehook' 'late hook' $LATEHOOKS
 run_hookfunctions 'run_cleanuphook' 'cleanup hook' $CLEANUPHOOKS
+
+#live-boot feature
+if [ -n "$boot"  ]
+then
+    mkdir -p /tmp/a # upper
+    mkdir -p /tmp/b # workdir
+    mkdir -p /live_root/
+    mkdir -p /source/ # lower
+    mount /new_root/$boot/filesystem.squashfs /source/
+    if [ "$overlay" == "disable" ]
+    then
+        warn "Overlayfs disabled!"
+        mount -t tmpfs -o size=100% none /live_root
+        msg "Copying rootfs files => /live_root"
+        cp -rf /source/* /live_root/
+    else
+        mount -t overlay -o lowerdir=/source/,upperdir=/tmp/a/,workdir=/tmp/b overlay /live_root
+        mount -t tmpfs -o size=100% none /tmp/a
+        mount -t tmpfs -o size=100% none /tmp/b
+    fi
+    mkdir /live_root/cdrom
+    mkdir /live_root/source
+    mount --bind  /new_root/ /live_root/cdrom
+    mount --bind /source/ /live_root/source/
+    mount --bind /live_root /new_root/
+fi
 
 if [ "$(stat -c %D /)" = "$(stat -c %D /new_root)" ]; then
     # Nothing got mounted on /new_root. This is the end, we don't know what to do anymore
@@ -71,6 +111,11 @@ fi
 # this should always be the last thing we do before the switch_root.
 rdlogger_stop
 
+if [ -f /new_root/etc/os-release ]; then
+    msg "Wellcome to $(cat /new_root/etc/os-release | grep '^NAME=' | head -n 1 | sed 's/^.*=//g')"
+else
+    msg "Wellcome to GNU/Linux..."
+fi
 exec env -i \
     "TERM=$TERM" \
     /usr/bin/switch_root /new_root $init "$@"

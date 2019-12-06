@@ -6,11 +6,30 @@ _rdlog_kmsg=$(( 1 << 1 ))
 _rdlog_cons=$(( 1 << 2 ))
 _rdlog_all=$(( (1 << 3) - 1 ))
 
-msg () {
-    [ "${quiet}" != "y" ] && echo $@
+#colorfull
+if [ -t 0 ];then
+    C_BLACK='\e[1;30m'
+    C_RED='\e[1;31m'
+    C_GREEN='\e[1;32m'
+    C_YELLOW='\e[1;33m'
+    C_BLUE='\e[1;34m'
+    C_PURPLE='\e[1;35m'
+    C_CYAN='\e[1;36m'
+    C_WHITE='\e[1;37m'
+    C_CLEAR='\e[m'
+fi
+
+# usefull functions
+msg() {
+    [ "${quiet}" != "y" ] && echo -e " ${C_GREEN}*${C_CLEAR} ${@}"
 }
-err () {
-    echo "ERROR: $@"
+
+warn() {
+    echo -e " ${C_YELLOW}*${C_CLEAR} ${@}"
+}
+
+err() {
+    echo -e " ${C_RED}*${C_CLEAR} ${@}"
 }
 
 log_kmsg() {
@@ -483,6 +502,22 @@ mount_setup() {
     if [ -e /sys/firmware/efi ]; then
         mount -t efivarfs efivarfs /sys/firmware/efi/efivars -o nosuid,nodev,noexec
     fi
+}
+
+is_file_avaiable(){
+    mkdir -p /tmp/disktmp 2> /dev/null || true 
+    mount -t auto "$1" /tmp/disktmp  2> /dev/null || true
+    [ -f "/tmp/disktmp/$2" ]
+    status=$?
+    umount /tmp/disktmp 2> /dev/null || true
+    return $status
+}
+subdev(){
+    while read device
+    do
+        basename $device | sed "s/^/\/dev\//g"
+        ls $device | grep $(basename $device)| sed "s/^/\/dev\//g"
+    done
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
