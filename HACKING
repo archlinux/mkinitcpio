@@ -11,7 +11,7 @@ two are effectively identical. This means always using double braces over
 the inferior '[' and 'test'.
 
 
-Variable usage and naming convetions
+Variable usage and naming conventions
 ------------------------------------
 There are three classifications of variables in mkinitcpio.
 
