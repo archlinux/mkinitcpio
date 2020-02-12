@@ -659,7 +659,7 @@ initialize_buildroot() {
 
     local workdir= kernver=$1 arch=$(uname -m) buildroot
 
-    if ! workdir=$(mktemp -d --tmpdir mkinitcpio.XXXXXX); then
+    if ! workdir=$(umask 077 && mktemp -d --tmpdir mkinitcpio.XXXXXX); then
         error 'Failed to create temporary working directory in %s' "${TMPDIR:-/tmp}"
         return 1
     fi

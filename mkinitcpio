@@ -223,10 +223,11 @@ build_image() {
             sort -z |
             LANG=C bsdtar --null -cnf - -T - |
             LANG=C bsdtar --uid 0 --gid 0 --null -cf - --format=newc @- |
-            $compress "${COMPRESSION_OPTIONS[@]}" > "$out"
+            $compress "${COMPRESSION_OPTIONS[@]}" |
+            (rm -f "$out" && umask 077 && cat > "$out")
 
     pipestatus=("${PIPESTATUS[@]}")
-    pipeprogs=('find' 'sort' 'bsdtar (step 1)' 'bsdtar (step 2)' "$compress")
+    pipeprogs=('find' 'sort' 'bsdtar (step 1)' 'bsdtar (step 2)' "$compress" 'save image')
 
     popd >/dev/null
 
