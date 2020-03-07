@@ -376,11 +376,17 @@ add_module() {
     while IFS=':= ' read -r -d '' field value; do
         case "$field" in
             filename)
-                found=1
-                module=${value##*/} module=${module%.ko*}
-                quiet "adding module: %s" "$module"
-                _modpaths["$value"]=1
-                _addedmodules["${module//-/_}"]=1
+                # Only add modules with filenames that look like paths (e.g.
+                # it might be reported as "(builtin)"). We'll defer actually
+                # checking whether or not the file exists -- any errors can be
+                # handled during module install time.
+                if [[ $value = /* ]]; then
+                    found=1
+                    module=${value##*/} module=${module%.ko*}
+                    quiet "adding module: %s (%s)" "$module" "$value"
+                    _modpaths["$value"]=1
+                    _addedmodules["${module//-/_}"]=1
+                fi
                 ;;
             depends)
                 IFS=',' read -r -a deps <<< "$value"
