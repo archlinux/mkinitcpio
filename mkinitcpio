@@ -16,7 +16,7 @@ _d_hooks="$PWD/hooks:/usr/lib/initcpio/hooks:/lib/initcpio/hooks"
 _d_install="$PWD/install:/usr/lib/initcpio/install:/lib/initcpio/install"
 _d_flag_hooks=
 _d_flag_install=
-_d_firmware=({/usr,}/lib/firmware/updates {/usr,}/lib/firmware)
+_d_firmware=/lib/firmware
 _d_presets=mkinitcpio.d
 
 # options and runtime data
@@ -24,8 +24,9 @@ _optmoduleroot= _optgenimg=
 _optcompress= _opttargetdir=
 _optshowautomods=0 _optsavetree=0 _optshowmods=0
 _optquiet=1 _optcolor=1
-_optskiphooks=() _optaddhooks=() _hooks=()  _optpreset=()
-declare -A _runhooks _addedmodules _modpaths _autodetect_cache
+_optskiphooks=() _optaddhooks=() _hooks=() _optpreset=() _modules=()
+_firmware=() _include_modules=()
+declare -A _runhooks _addedmodules _modpaths _autodetect_cache _addmodule
 
 # export a sane PATH
 export PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
@@ -511,6 +512,9 @@ map run_build_hook "${_hooks[@]}" || (( ++_builderrors ))
 
 # process config file
 parse_config "$_f_config"
+
+_add_modules "${_include_modules[@]}" || cleanup 1
+add_firmware "${_firmware[@]}"
 
 # switch out the error handler to catch all errors
 trap -- RETURN

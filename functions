@@ -336,58 +336,51 @@ add_checked_modules() {
 }
 
 add_firmware() {
-    # add a firmware file to the image.
-    #   $1: firmware path fragment
+    local fw p
 
-    local fw fwpath r=1
+    [[ $KERNELVERSION == none ]] && return
 
+    # "/lib/firmware/updates/" UTS_RELEASE,
+    # "/lib/firmware/updates",
+    # "/lib/firmware/" UTS_RELEASE,
+    # "/lib/firmware"
     for fw; do
-        for fwpath in "${_d_firmware[@]}"; do
-            if [[ -f $fwpath/$fw ]]; then
-                add_file "$fwpath/$fw" "$fwpath/$fw" 644 && r=0
-                break
-            fi
+        for p in "$_d_firmware"{/updates,}{/"$KERNELVERSION",}; do
+            [[ -f "$p/$fw" ]] || continue
+            add_file "$p/$fw" "/usr/lib/firmware/$fw" 0644
+            continue 2
         done
+        warning 'missing firmware: %s' "$fw"
     done
-
-    return $r
 }
 
-add_module() {
-    # Add a kernel module to the initcpio image. Dependencies will be
-    # discovered and added.
-    #   $1: module name
-
-    local target= module= softdeps= deps= field= value= firmware=()
-    local ign_errors=0 found=0
+_add_modules() {
+    local m module softdeps deps field value
 
     [[ $KERNELVERSION == none ]] && return 0
 
-    if [[ $1 = *\? ]]; then
-        ign_errors=1
-        set -- "${1%?}"
-    fi
-
-    target=${1%.ko*} target=${target//-/_}
-
-    # skip expensive stuff if this module has already been added
-    (( _addedmodules["$target"] > 0 )) && return
+    _include_modules=()
 
     while IFS=':= ' read -r -d '' field value; do
         case "$field" in
+            name)
+                quiet "adding module name: %s" "$value"
+                ;;
             filename)
-                found=1
+                quiet "adding module file: %s" "$value"
                 module=${value##*/} module=${module%.ko*}
-                quiet "adding module: %s" "$module"
                 _modpaths["$value"]=1
                 _addedmodules["${module//-/_}"]=1
                 ;;
+            alias)
+                _addedmodules["${value//-/_}"]=3
+                ;;
             depends)
                 IFS=',' read -r -a deps <<< "$value"
-                map add_module "${deps[@]}"
+                add_module "${deps[@]}"
                 ;;
             firmware)
-                firmware+=("$value")
+                _firmware+=("$value")
                 ;;
             softdep)
                 read -ra softdeps <<<"$value"
@@ -397,24 +390,49 @@ add_module() {
                 done
                 ;;
         esac
-    done < <(modinfo -b "$_optmoduleroot" -k "$KERNELVERSION" -0 "$target" 2>/dev/null)
+    done < <(modinfo -b "$_optmoduleroot" -k "$KERNELVERSION" -0 "${@%\?}" 2>/dev/null)
 
-    if (( !found )); then
-        (( ign_errors || _addedmodules["$target"] )) && return 0
-        error "module not found: \`%s'" "$target"
+    for m in "${@//-/_}"; do
+        if [[ $m = *\? ]]; then
+            continue
+        fi
+
+        if (( _addedmodules[$m] )); then
+            continue
+        fi
+
+        error "module not found: %s" "$m"
         return 1
+    done
+
+    if (( ! ${#_include_modules[@]} )); then
+        return
     fi
 
-    if (( ${#firmware[*]} )); then
-        add_firmware "${firmware[@]}" ||
-            warning 'Possibly missing firmware for module: %s' "$target"
-    fi
+    _add_modules "${_include_modules[@]}"
+}
 
-    # handle module quirks
-    case $target in
+# add_module adds $@ as kernel modules with dependencies and firmware to the image.
+# A suffix of '?' causes errors to be ignored.
+add_module() {
+    local target mod
+
+    [[ $KERNELVERSION == none ]] && return 0
+
+    for target; do
+        target=${target%.ko*}
+        target=${target//-/_}
+
+        mod=${target%\?}
+
+        # skip adding modules more than once
+        (( _addmodule[$mod] )) && continue
+        _addmodule[$mod]=1
+
+        # handle module quirks
+        case $mod in
         fat)
-            add_module "nls_cp437?"
-            add_module "nls_iso8859-1?"
+            add_module "nls_cp437?" "nls_iso8859-1?"
             ;;
         ocfs2)
             add_module "configfs?"
@@ -428,7 +446,10 @@ add_module() {
         ext4)
             add_module "crypto-crc32c?"
             ;;
-    esac
+        esac
+
+        _include_modules+=("$target")
+    done
 }
 
 add_full_dir() {
@@ -640,7 +661,10 @@ parse_config() {
 
         for mod in "${MODULES[@]%\?}"; do
             mod=${mod//-/_}
-            # only add real modules (2 == builtin)
+            # Only add modules that are not builtin.
+            #  1 == external/not-builtin
+            #  2 == builtin
+            #  3 == alias
             (( _addedmodules["$mod"] == 1 )) && add+=("$mod")
         done
         (( ${#add[*]} )) && printf 'MODULES="%s"\n' "${add[*]}"
