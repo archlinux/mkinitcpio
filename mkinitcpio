@@ -312,6 +312,31 @@ process_preset() (
     exit $ret
 )
 
+preload_builtin_modules() {
+    local modname field value path
+
+    # Prime the _addedmodules list with the builtins for this kernel. We prefer
+    # the modinfo file if it exists, but this requires a recent enough kernel
+    # and kmod>=27.
+
+    if [[ -r $_d_kmoduledir/modules.builtin.modinfo ]]; then
+        while IFS=.= read -rd '' modname field value; do
+            _addedmodules[${modname//-/_}]=2
+            case $field in
+                alias)
+                    _addedmodules["${value//-/_}"]=2
+                    ;;
+            esac
+        done <"$_d_kmoduledir/modules.builtin.modinfo"
+
+    elif [[ -r $_d_kmoduledir/modules.builtin ]]; then
+        while IFS=/ read -ra path; do
+            modname=${path[-1]%.ko}
+            _addedmodules["${modname//-/_}"]=2
+        done <"$_d_kmoduledir/modules.builtin"
+    fi
+}
+
 . "$_f_functions"
 
 trap 'cleanup 130' INT
@@ -498,14 +523,7 @@ declare -i _builderrors=0
 set -o functrace
 trap '(( $? )) && [[ $FUNCNAME = add_* ]] && (( ++_builderrors ))' RETURN
 
-# prime the _addedmodules list with the builtins for this kernel
-if [[ -r $_d_kmoduledir/modules.builtin ]]; then
-    while IFS=/ read -a path; do
-        modname=${path[-1]%.ko}
-        _addedmodules["${modname//-/_}"]=2
-    done <"$_d_kmoduledir/modules.builtin"
-    unset modname path
-fi
+preload_builtin_modules
 
 map run_build_hook "${_hooks[@]}" || (( ++_builderrors ))
 
