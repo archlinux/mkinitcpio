@@ -508,6 +508,10 @@ if [[ -r $_d_kmoduledir/modules.builtin ]]; then
     unset modname path
 fi
 
+if [[ -r $_d_kmoduledir/modules.builtin.modinfo ]]; then
+    add_builtin_modinfo < "$_d_kmoduledir/modules.builtin.modinfo"
+fi
+
 map run_build_hook "${_hooks[@]}" || (( ++_builderrors ))
 
 # process config file
