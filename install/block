@@ -3,7 +3,7 @@
 build() {
     local filter
 
-    map add_module sd_mod? sr_mod? usb_storage? mmc_block? firewire-sbp2? virtio_blk?
+    add_module sd_mod? sr_mod? usb_storage? mmc_block? firewire-sbp2? virtio_blk?
 
     # pata, sata, scsi, nvme
     for filter in 'scsi/.*ata' '/(block|scsi|fusion|nvme)/' 'ata/[ps]ata_' \

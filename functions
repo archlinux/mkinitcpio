@@ -312,7 +312,7 @@ add_all_modules() {
     local mod mods
 
     mapfile -t mods < <(all_modules "$@")
-    map add_module "${mods[@]}"
+    add_module "${mods[@]}"
 
     return $(( !${#mods[*]} ))
 }
@@ -330,7 +330,7 @@ add_checked_modules() {
         mapfile -t mods < <(all_modules "$@")
     fi
 
-    map add_module "${mods[@]}"
+    add_module "${mods[@]}"
 
     return $(( !${#mods[*]} ))
 }
@@ -676,7 +676,7 @@ add_binary() {
 parse_config() {
     # parse key global variables set by the config file.
 
-    map add_module "${MODULES[@]}"
+    add_module "${MODULES[@]}"
     map add_binary "${BINARIES[@]}"
     map add_file "${FILES[@]}"
 
