@@ -397,6 +397,10 @@ _add_modules() {
                 ;;
             filename)
                 quiet "adding module file: %s" "$value"
+
+                # kmod v27 reports all builtin module filenames as (builtin).
+                [[ "$value" == '(builtin)' ]] && continue
+
                 module=${value##*/} module=${module%.ko*}
                 _modpaths["$value"]=1
                 _addedmodules["${module//-/_}"]=1
