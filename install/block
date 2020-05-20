@@ -19,7 +19,7 @@ build() {
     add_checked_modules '/drivers/firewire/'
 
     # mmc
-    add_checked_modules '/(mmc|tifm_)'
+    add_checked_modules '/(drivers/mmc|tifm_)'
 
     # virtio
     add_checked_modules 'virtio'
