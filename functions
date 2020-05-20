@@ -578,7 +578,7 @@ add_binary() {
     #   $2: destination on initcpio (optional, defaults to same as source)
 
     local -a sodeps
-    local line= regex= binary= dest= mode= sodep= resolved=
+    local line= regex= binary= dest= mode= sodep= resolved= link=
 
     if [[ ${1:0:1} != '/' ]]; then
         binary=$(type -P "$1")
@@ -589,6 +589,19 @@ add_binary() {
     if [[ ! -f $binary ]]; then
         error "file not found: \`%s'" "$1"
         return 1
+    fi
+
+    # ldd fails to resolve libraries for binaries which depend on
+    # rpath/runpath $ORIGIN because it uses the symlink and not what
+    # it points to as the origin.
+    if ! link="$(readlink -f "$binary")"; then
+        return 1
+    fi
+    if [[ $binary != $link ]]; then
+        if ! add_symlink "$binary" "$link"; then
+            return 1
+        fi
+        binary=$link
     fi
 
     dest=${2:-$binary}
