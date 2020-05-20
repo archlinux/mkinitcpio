@@ -144,7 +144,9 @@ kver() {
     # to the version string by reading 2 bytes out of image at at
     # address 0x20E. this leads us to a string of, at most, 128 bytes.
     # read the first word from this string as the kernel version.
-    local offset=$(hexdump -s 526 -n 2 -e '"%0d"' "$1")
+    local offset=$(dd if="$1" bs=1 count=2 skip=526 2>/dev/null)
+    printf -v offset '%02x' "'${offset:1:1}" "'${offset:0:1}"
+    printf -v offset '%d' "0x$offset"
     [[ $offset = +([0-9]) ]] || return 1
 
     read kver _ < \
