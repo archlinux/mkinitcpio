@@ -371,7 +371,7 @@ add_module() {
     target=${1%.ko*} target=${target//-/_}
 
     # skip expensive stuff if this module has already been added
-    (( _addedmodules["$target"] > 0 )) && return
+    (( _addedmodules["$target"] == 1 )) && return
 
     while IFS=':= ' read -r -d '' field value; do
         case "$field" in
