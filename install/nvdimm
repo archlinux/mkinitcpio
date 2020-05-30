@@ -1,0 +1,19 @@
+#!/bin/bash
+
+build() {
+    add_checked_modules '/drivers/nvdimm/'
+}
+
+help() {
+    cat <<HELPEOF
+This hook loads the necessary modules for nvdimm devices.
+Detection will take place at runtime. To minimize the modules
+in the image, add the autodetect hook too.
+
+Kernel Parameters:
+
+memmap=1G!1G
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
