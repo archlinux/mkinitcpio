@@ -133,6 +133,36 @@ parseopts() {
     return 0
 }
 
+kver_x86() {
+    # scrape the version out of the kernel image. locate the offset
+    # to the version string by reading 2 bytes out of image at at
+    # address 0x20E. this leads us to a string of, at most, 128 bytes.
+    # read the first word from this string as the kernel version.
+    local kver offset=$(hexdump -s 526 -n 2 -e '"%0d"' "$1")
+    [[ $offset = +([0-9]) ]] || return 1
+
+    read kver _ < \
+        <(dd if="$1" bs=1 count=127 skip=$(( offset + 0x200 )) 2>/dev/null)
+
+    printf '%s' "$kver"
+}
+
+kver_generic() {
+    # For unknown architectures, we can try to grep the uncompressed
+    # image for the boot banner.
+    # This should work at least for ARM when run on /boot/Image. On
+    # other architectures it may be worth trying rather than bailing,
+    # and inform the user if none was found.
+
+    # Loosely grep for `linux_banner`:
+    # https://elixir.bootlin.com/linux/v5.7.2/source/init/version.c#L46
+    local kver=
+
+    read _ _ kver _ < <(grep -m1 -aoE 'Linux version .(\.[-[:alnum:]]+)+' "$1")
+
+    printf '%s' "$kver"
+}
+
 kver() {
     # this is intentionally very loose. only ensure that we're
     # dealing with some sort of string that starts with something
@@ -140,15 +170,12 @@ kver() {
     # requirement for CONFIG_LOCALVERSION to be set.
     local kver re='^[[:digit:]]+(\.[[:digit:]]+)+'
 
-    # scrape the version out of the kernel image. locate the offset
-    # to the version string by reading 2 bytes out of image at at
-    # address 0x20E. this leads us to a string of, at most, 128 bytes.
-    # read the first word from this string as the kernel version.
-    local offset=$(hexdump -s 526 -n 2 -e '"%0d"' "$1")
-    [[ $offset = +([0-9]) ]] || return 1
-
-    read kver _ < \
-        <(dd if="$1" bs=1 count=127 skip=$(( offset + 0x200 )) 2>/dev/null)
+    local arch=$(uname -m)
+    if [[ $arch == @(i?86|x86_64) ]]; then
+        kver=$(kver_x86 "$1")
+    else
+        kver=$(kver_generic "$1")
+    fi
 
     [[ $kver =~ $re ]] || return 1
 
