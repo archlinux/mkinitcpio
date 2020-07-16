@@ -23,6 +23,9 @@ build() {
 
     # virtio
     add_checked_modules 'virtio'
+
+    # nvdimm
+    add_checked_modules '/drivers/nvdimm/'
 }
 
 help() {
