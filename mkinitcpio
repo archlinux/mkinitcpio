@@ -211,6 +211,9 @@ build_image() {
         lz4)
             COMPRESSION_OPTIONS+=('-l')
             ;;
+        zstd)
+            COMPRESSION_OPTIONS+=('-19')
+            ;;
     esac
 
     pushd "$BUILDROOT" >/dev/null
