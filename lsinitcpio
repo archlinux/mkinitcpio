@@ -113,6 +113,10 @@ detect_filetype() {
             echo 'lz4 -l'
             return
             ;;
+        fd2fb528)
+            echo 'zstd'
+            return
+            ;;
     esac
 
     read -rd '' bytes < <(hexdump -n 3 -e '"%c"' "$1")
