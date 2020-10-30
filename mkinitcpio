@@ -206,13 +206,13 @@ build_image() {
             msg "Creating %s-compressed initcpio image: %s" "$compress" "$out"
             ;;&
         xz)
-            COMPRESSION_OPTIONS+=('--check=crc32')
+            COMPRESSION_OPTIONS=('--check=crc32' "${COMPRESSION_OPTIONS[@]}")
             ;;
         lz4)
-            COMPRESSION_OPTIONS+=('-l')
+            COMPRESSION_OPTIONS=('-l' "${COMPRESSION_OPTIONS[@]}")
             ;;
         zstd)
-            COMPRESSION_OPTIONS+=('-19' '-T0')
+            COMPRESSION_OPTIONS=('-19' '-T0' "${COMPRESSION_OPTIONS[@]}")
             ;;
     esac
 
