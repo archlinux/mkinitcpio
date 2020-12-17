@@ -776,7 +776,7 @@ try_enable_color() {
 
 install_modules() {
     local m moduledest=$BUILDROOT/lib/modules/$KERNELVERSION
-    local -a xz_comp gz_comp
+    local -a xz_comp gz_comp zst_comp
 
     [[ $KERNELVERSION == none ]] && return 0
 
@@ -796,10 +796,14 @@ install_modules() {
             *.gz)
                 gz_comp+=("$moduledest/kernel/${m##*/}")
                 ;;
+            *.zst)
+                zst_comp+=("$moduledest/kernel/${m##*/}")
+                ;;
         esac
     done
     (( ${#xz_comp[*]} )) && xz -d "${xz_comp[@]}"
     (( ${#gz_comp[*]} )) && gzip -d "${gz_comp[@]}"
+    (( ${#zst_comp[*]} )) && zstd -d "${zst_comp[@]}"
 
     msg "Generating module dependencies"
     install -m644 -t "$moduledest" "$_d_kmoduledir"/modules.builtin
