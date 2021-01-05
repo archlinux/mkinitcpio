@@ -212,7 +212,7 @@ build_image() {
             COMPRESSION_OPTIONS=('-l' "${COMPRESSION_OPTIONS[@]}")
             ;;
         zstd)
-            COMPRESSION_OPTIONS=('-19' '-T0' "${COMPRESSION_OPTIONS[@]}")
+            COMPRESSION_OPTIONS=('-15' '-T0' "${COMPRESSION_OPTIONS[@]}")
             ;;
     esac
 
