@@ -65,4 +65,4 @@ lsinitcpio was created by Dave Reisner <dreisner@archlinux.org>
 
 Copyright
 ---------
-Copyright (c) Arch Linux 2011-2019
+Copyright (c) Arch Linux 2011-2021
