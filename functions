@@ -139,6 +139,21 @@ kver() {
     # resembling dotted decimal notation. remember that there's no
     # requirement for CONFIG_LOCALVERSION to be set.
     local kver re='^[[:digit:]]+(\.[[:digit:]]+)+'
+    local arch=$(uname -m)
+
+    if [[ $arch != @(i?86|x86_64) ]]; then
+        # Use the generic way by searching the plaintext string
+        # "Linux version " and use the 3rd item as the kernel version
+        #
+        # This is much slower as we need to read the full uncompressed
+        # kernel to locate its kernel version string, thus this should
+        # be the last resort.
+        kver=$(strings "$1" | grep "Linux version " | cut -d\  -f 3)
+
+        [[ $kver =~ $re ]] || return 1
+        printf '%s' "$kver"
+        return
+    fi
 
     # scrape the version out of the kernel image. locate the offset
     # to the version string by reading 2 bytes out of image at at
