@@ -727,7 +727,6 @@ run_build_hook() {
     if resolved=$(readlink "$script") && [[ ${script##*/} != "${resolved##*/}" ]]; then
         warning "Hook '%s' is deprecated. Replace it with '%s' in your config" \
             "${script##*/}" "${resolved##*/}"
-        script=$resolved
     fi
 
     # source
