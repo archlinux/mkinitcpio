@@ -803,7 +803,7 @@ install_modules() {
     done
     (( ${#xz_comp[*]} )) && xz -d "${xz_comp[@]}"
     (( ${#gz_comp[*]} )) && gzip -d "${gz_comp[@]}"
-    (( ${#zst_comp[*]} )) && zstd -d -q "${zst_comp[@]}"
+    (( ${#zst_comp[*]} )) && zstd -d --rm -q "${zst_comp[@]}"
 
     msg "Generating module dependencies"
     install -m644 -t "$moduledest" "$_d_kmoduledir"/modules.builtin
