@@ -267,7 +267,7 @@ build_uefi(){
     msg "Creating UEFI executable: %s" "$out"
 
     if [[ -z "$uefistub" ]]; then
-        for stub in {/usr,}/lib/systemd/boot/efi/linux{x64,ia32}.efi.stub {/usr,}/lib/gummiboot/linux{x64,ia32}.efi.stub; do
+        for stub in {/usr,}/lib/{systemd/boot/efi,gummiboot}/linux{x64,ia32}.efi.stub; do
             if [[ -f "$stub" ]]; then
                 uefistub="$stub"
                 msg2 "Using UEFI stub: %s" "$uefistub"
@@ -299,7 +299,9 @@ build_uefi(){
         elif [[ -f "/usr/lib/kernel/cmdline" ]]; then
             cmdline="/usr/lib/kernel/cmdline"
         else
+            warning "Note: /etc/kernel/cmdline does not exist and --cmdline is unset!"
             cmdline="/proc/cmdline"
+            warning "Reusing current kernel cmdline from $cmdline"
         fi
         msg2 "Using cmdline file %s" "$cmdline"
     fi
