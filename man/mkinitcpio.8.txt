@@ -32,7 +32,7 @@ Options
 *-C, \--cmdline* 'config'::
 	Use kernel cmdline with UEFI executable. If none is specified it will
 	try find one of the files '/etc/kernel/cmdline', '/usr/share/kernel/cmdline'
-	or `/proc/cmdline`. Only used along with '--uefi'.
+	or '/proc/cmdline'. Only used along with '--uefi'.
 
 *-c, \--config* 'config'::
 	Use 'config' file to generate the ramdisk. Default: '/etc/mkinitcpio.conf'
