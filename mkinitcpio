@@ -61,8 +61,8 @@ usage: ${0##*/} [options]
    -s, --save                   Save build directory. (default: no)
    -d, --generatedir <dir>      Write generated image into <dir>
    -t, --builddir <dir>         Use DIR as the temporary build directory
-   -D, --hookdir <dir>          Specify where to look for hooks.
-   -U, --uefi <path>            Build EFI image
+   -D, --hookdir <dir>          Specify where to look for hooks
+   -U, --uefi <path>            Build an UEFI executable
    -m, --microcode <path>       Location of microcode for UEFI executable
    -R, --osrelease <path>       Include os-release (default: /usr/lib/os-release)
    -l, --splash <path>          Include bitmap splash for UEFI executable
@@ -501,7 +501,7 @@ while :; do
         -U|--uefi)
             shift
             [[ -d $1 ]] && die "Invalid image path -- must not be a directory"
-            if ! _optuefi=$(readlink -f "$1") || [[ ! -e ${_optgenimg%/*} ]]; then
+            if ! _optuefi=$(readlink -f "$1") || [[ ! -e ${_optuefi%/*} ]]; then
                 die "Unable to write to path: \`%s'" "$1"
             fi
             ;;
