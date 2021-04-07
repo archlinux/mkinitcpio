@@ -29,8 +29,13 @@ Options
 	after all other hooks from the config file. Multiple hooks should be
 	comma-separated. This option can be specified multiple times.
 
+*-C, \--cmdline* 'config'::
+	Use kernel cmdline with UEFI executable. If none is specified it will
+	try find one of the files '/etc/kernel/cmdline', '/usr/share/kernel/cmdline'
+	or `/proc/cmdline`. Only used along with '--uefi'.
+
 *-c, \--config* 'config'::
-	Use 'config' file to generate the ramdisk. Default: /etc/mkinitcpio.conf
+	Use 'config' file to generate the ramdisk. Default: '/etc/mkinitcpio.conf'
 
 *-d, \--generatedir* 'directory'::
 	Set 'directory' as the location where the initramfs is built. This might be
@@ -59,13 +64,38 @@ Options
 *-L, \--listhooks*::
 	List all available hooks.
 
+*-l, \--splash* 'filename'::
+	UEFI executables can show a bitmap file on boot.
+
+*-I, \--uefistub* 'filename'::
+	UEFI stub image used for UEFI executable generation. Only used if '--uefi'
+	is specified. Default: Attempts to look for a systemd-boot or gummiboot
+	stub loader.
+
+*-i, \--kernelimage* 'filename'::
+	Include a kernel image for the UEFI executable. This is only used if
+	'--uefi' is specified.  Default: one of
+	'/lib/modules/$KERNELVERSION/vmlinuz', '/boot/vmlinuz-$KERNELVERSION', or
+	'/boot/vmlinuz-linux'.
+
 *-M, \--automods*::
 	Display modules found via autodetection. mkinitcpio will automatically try to
 	determine which kernel modules are needed to start your computer. This option
 	lists which modules were detected.
 
+*-m, \--microcode* 'filename'::
+	Include microcode into the UEFI executable. This option is only used if
+	'--uefi' is specified. Default: no.
+
 *-n, \--nocolor*::
 	Disable color output.
+
+*-U, \--uefi* 'filename'::
+	Generate a UEFI executable as 'filename'. If a CPIO image is successfully
+	built, it will be used to generate a UEFI executable stub image for UEFI
+	booting. This combines the initramfs, the kernel, any specified microcode
+	and the kernel cmdline into one executable. This is useful for boot chain
+	integrity where the file is signed. Default: no.
 
 *-P, \--allpresets*::
 	Process all presets contained in '/etc/mkinitcpio.d'. See the '-p' option for
@@ -78,6 +108,10 @@ Options
 
 *-r, \--moduleroot* 'root'::
 	Specifies the root directory to find modules in, defaulting to '/'.
+
+*-R, \--osrelease* 'filename';;
+	Include a os-release file for the UEFI executable. Only used if '--uefi' is
+	specified. Default: '/etc/os-release' or '/usr/lib/os-release'.
 
 *-S, \--skiphooks* 'hooks'::
 	Skip 'hooks' when generating the image. Multiple hooks should be comma-separated.
