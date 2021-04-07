@@ -41,7 +41,7 @@ unset rootdev
 fsck_root
 
 # Mount root at /new_root
-"$mount_handler" /new_root
+"$mount_handler" /new_root || launch_interactive_shell --exec
 
 run_hookfunctions 'run_latehook' 'late hook' $LATEHOOKS
 run_hookfunctions 'run_cleanuphook' 'cleanup hook' $CLEANUPHOOKS
