@@ -35,7 +35,7 @@ Options
 	or '/proc/cmdline'. Only used along with '--uefi'.
 
 *-c, \--config* 'config'::
-	Use 'config' file to generate the ramdisk. Default: '/etc/mkinitcpio.conf'
+	Use 'config' file to generate the ramdisk. Default: '/etc/mkinitcpio.conf'.
 
 *-d, \--generatedir* 'directory'::
 	Set 'directory' as the location where the initramfs is built. This might be
@@ -109,7 +109,7 @@ Options
 *-r, \--moduleroot* 'root'::
 	Specifies the root directory to find modules in, defaulting to '/'.
 
-*-R, \--osrelease* 'filename';;
+*-R, \--osrelease* 'filename'::
 	Include a os-release file for the UEFI executable. Only used if '--uefi' is
 	specified. Default: '/etc/os-release' or '/usr/lib/os-release'.
 
@@ -382,6 +382,15 @@ Examples
 *mkinitcpio -g /boot/initramfs-linux.img -k /boot/vmlinuz-linux*::
 	Create an initial ramdisk for the kernel at /boot/vmlinuz-linux. The
 	resulting image will be written to /boot/initramfs-linux.img.
+
+*mkinitcpio -g /boot/initramfs-linux.img -k /boot/vmlinuz-linux --uefi /efi/EFI/Linux/systemd-linux.efi*::
+	Create an initial ramdisk for the kernel along with a UEFI executable.
+	The resuling executable will be written to /efi/EFI/Linux/systemd-linux.efi.
+
+*mkinitcpio -g /boot/initramfs-linux.img -k /boot/vmlinuz-linux -U /efi/EFI/Linux/systemd-linux.efi -M /boot/intel-ucode.img -l /usr/share/systemd/bootctl/splash-arch.bmp*::
+	Create an initial ramdisk for the kernel and an UEFI executable. This
+	also includes the Intel CPU microcode and a splash image which will be
+	used during boot.
 
 See also
 --------
