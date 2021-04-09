@@ -349,9 +349,8 @@ build_uefi(){
 }
 
 process_preset() (
-    local preset=$1 preset_image= preset_options=
+    local preset=$1 preset_cli_options=$2 preset_image= preset_options=
     local -a preset_mkopts preset_cmd
-
     if (( MKINITCPIO_PROCESS_PRESET )); then
         error "You appear to be calling a preset from a preset. This is a configuration error."
         cleanup 1
@@ -415,6 +414,8 @@ process_preset() (
                 preset_cmd+=(-m "$mc")
             done
         fi
+
+        preset_cmd+=($OPTREST)
         msg2 "${preset_cmd[*]}"
         MKINITCPIO_PROCESS_PRESET=1 "$0" "${preset_cmd[@]}"
         (( $? )) && ret=1
@@ -591,6 +592,8 @@ while :; do
     esac
     shift
 done
+
+OPTREST="$@"
 
 if [[ -t 1 ]] && (( _optcolor )); then
     try_enable_color
