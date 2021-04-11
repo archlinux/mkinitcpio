@@ -22,7 +22,7 @@ _d_presets=mkinitcpio.d
 # options and runtime data
 _optmoduleroot= _optgenimg=
 _optcompress= _opttargetdir=
-_optosrelease="/etc/os-release"
+_optosrelease=
 _optuefi= _optmicrocode=() _optcmdline= _optsplash= _optkernelimage= _optuefistub=
 _optshowautomods=0 _optsavetree=0 _optshowmods=0
 _optquiet=1 _optcolor=1
@@ -64,7 +64,7 @@ usage: ${0##*/} [options]
    -D, --hookdir <dir>          Specify where to look for hooks
    -U, --uefi <path>            Build an UEFI executable
    -m, --microcode <path>       Location of microcode for UEFI executable
-   -R, --osrelease <path>       Include os-release (default: /usr/lib/os-release)
+   -R, --osrelease <path>       Include os-release (default: /etc/os-release)
    -l, --splash <path>          Include bitmap splash for UEFI executable
    -i, --kernelimage <path>     Kernel image for UEFI executable
    -I, --uefistub <path>        Location of UEFI stub loader
@@ -307,6 +307,19 @@ build_uefi(){
     fi
     if [[ ! -f "$cmdline" ]]; then
         error "Kernel cmdline file '%s' not found" "$cmdline"
+        return 1
+    fi
+
+    if [[ -z "$osrelease" ]]; then
+        if [[ -f "/etc/os-release" ]]; then
+            osrelease="/etc/os-release"
+        elif [[ -f "/usr/lib/os-release" ]]; then
+            osrelease="/usr/lib/os-release"
+        fi
+        msg2 "Using os-release file %s" "$osrelease"
+    fi
+    if [[ ! -f "$osrelease" ]]; then
+        error "os-release file '%s' not found" "$osrelease"
         return 1
     fi
 
