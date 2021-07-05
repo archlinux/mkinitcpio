@@ -453,7 +453,7 @@ preload_builtin_modules() {
 trap 'cleanup 130' INT
 trap 'cleanup 143' TERM
 
-_opt_short='A:C:c:D:g:H:hk:I:i:nLl:Mm:Pp:R:r:S:sd:t:U:Vvz:'
+_opt_short='A:c:D:g:H:hk:nLMPp:r:S:sd:t:U:Vvz:'
 _opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
           'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets'
           'preset:' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:'
