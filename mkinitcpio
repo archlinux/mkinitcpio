@@ -601,6 +601,14 @@ if [[ -n $_d_flag_hooks && -n $_d_flag_install ]]; then
     _d_install=${_d_flag_install%:}
 fi
 
+
+# If we specified --uefi but no -g we want to create a temporary initramfs which will be used with the efi executable.
+if [[ $_optuefi && $_optgenimg == "" ]]; then
+    tmpfile=$(mktemp -t mkinitcpio.XXXXXX)
+    trap "rm $tmpfile" EXIT
+    _optgenimg="$tmpfile"
+fi
+
 # insist that /proc and /dev be mounted (important for chroots)
 # NOTE: avoid using mountpoint for this -- look for the paths that we actually
 # use in mkinitcpio. Avoids issues like FS#26344.
