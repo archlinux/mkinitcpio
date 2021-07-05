@@ -46,7 +46,6 @@ usage: ${0##*/} [options]
   Options:
    -A, --addhooks <hooks>       Add specified hooks, comma separated, to image
    -c, --config <config>        Use alternate config file. (default: /etc/mkinitcpio.conf)
-   -C, --cmdline <cmdline>      Set kernel line. (default content: /etc/kernel/cmdline, /proc/cmdline)
    -g, --generate <path>        Generate cpio image and write to specified path
    -H, --hookhelp <hookname>    Display help for given hook and exit
    -h, --help                   Display this message and exit
@@ -63,14 +62,17 @@ usage: ${0##*/} [options]
    -t, --builddir <dir>         Use DIR as the temporary build directory
    -D, --hookdir <dir>          Specify where to look for hooks
    -U, --uefi <path>            Build an UEFI executable
-   -m, --microcode <path>       Location of microcode for UEFI executable
-   -R, --osrelease <path>       Include os-release (default: /etc/os-release)
-   -l, --splash <path>          Include bitmap splash for UEFI executable
-   -i, --kernelimage <path>     Kernel image for UEFI executable
-   -I, --uefistub <path>        Location of UEFI stub loader
    -V, --version                Display version information and exit
    -v, --verbose                Verbose output (default: no)
    -z, --compress <program>     Use an alternate compressor on the image
+
+  Options for UEFI executable (-U, --uefi):
+   --cmdline <cmdline>          Set kernel line (default content: /etc/kernel/cmdline, /proc/cmdline)
+   --microcode <path>           Location of microcode
+   --osrelease <path>           Include os-release (default: /etc/os-release)
+   --splash <path>              Include bitmap splash
+   --kernelimage <path>         Kernel image
+   --uefistub <path>            Location of UEFI stub loader
 
 EOF
 }
@@ -474,7 +476,7 @@ while :; do
             shift
             _f_config=$1
             ;;
-        -C|--cmdline)
+        --cmdline)
             shift
             _optcmdline=$1
             ;;
@@ -536,23 +538,23 @@ while :; do
             hook_list
             exit 0
             ;;
-        -l|--splash)
+        --splash)
             shift
             [[ -f $1 ]] || die "Invalid file -- must be a file"
             _optsplash=$1
             ;;
-        -i|--kernelimage)
+        --kernelimage)
             shift
              _optkernelimage=$1
             ;;
-        -I|--uefistub)
+        --uefistub)
             shift
              _optkernelimage=$1
             ;;
         -M|--automods)
             _optshowautomods=1
             ;;
-        -m|--microcode)
+        --microcode)
             shift
             _optmicrocode+=($1)
             ;;
@@ -560,7 +562,7 @@ while :; do
             _optpreset=("$_d_presets"/*.preset)
             [[ -e ${_optpreset[0]} ]] || die "No presets found in $_d_presets"
             ;;
-        -R|--osrelease)
+        --osrelease)
             shift
             [[ ! -f $1 ]] && die "Invalid file -- must be a file"
             _optosrelease=$1
