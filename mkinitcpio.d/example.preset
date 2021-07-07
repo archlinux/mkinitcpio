@@ -8,6 +8,7 @@ PRESETS=('default' 'fallback')
 # as the path to an kernel image.
 ALL_kver='/boot/vmlinuz-linux'
 ALL_config='/etc/mkinitcpio.conf'
+ALL_microcode=(/boot/*-ucode.img)
 
 # presetname_kver    - the kernel version (omit if ALL_kver should be used)
 # presetname_config  - the configuration file (omit if ALL_config should be used)
@@ -17,9 +18,11 @@ ALL_config='/etc/mkinitcpio.conf'
 #default_kver="3.0-ARCH"
 #default_config="/etc/mkinitcpio.conf"
 default_image="/tmp/initramfs-linux.img"
+default_efi_image="/efi/EFI/Linux/arch-linux.efi"
 default_options=""
 
 #fallback_kver="3.0-ARCH"
 #fallback_config="/etc/mkinitcpio.conf"
 fallback_image="/tmp/initramfs-linux-fallback.img"
+fallback_efi_image="/efi/EFI/Linux/arch-linux-fallback.efi"
 fallback_options="-S autodetect"

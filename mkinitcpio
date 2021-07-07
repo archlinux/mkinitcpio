@@ -22,6 +22,8 @@ _d_presets=mkinitcpio.d
 # options and runtime data
 _optmoduleroot= _optgenimg=
 _optcompress= _opttargetdir=
+_optosrelease=
+_optuefi= _optmicrocode=() _optcmdline= _optsplash= _optkernelimage= _optuefistub=
 _optshowautomods=0 _optsavetree=0 _optshowmods=0
 _optquiet=1 _optcolor=1
 _optskiphooks=() _optaddhooks=() _hooks=()  _optpreset=()
@@ -58,10 +60,19 @@ usage: ${0##*/} [options]
    -s, --save                   Save build directory. (default: no)
    -d, --generatedir <dir>      Write generated image into <dir>
    -t, --builddir <dir>         Use DIR as the temporary build directory
-   -D, --hookdir <dir>          Specify where to look for hooks.
+   -D, --hookdir <dir>          Specify where to look for hooks
+   -U, --uefi <path>            Build an UEFI executable
    -V, --version                Display version information and exit
    -v, --verbose                Verbose output (default: no)
    -z, --compress <program>     Use an alternate compressor on the image
+
+  Options for UEFI executable (-U, --uefi):
+   --cmdline <cmdline>          Set kernel line (default content: /etc/kernel/cmdline, /proc/cmdline)
+   --microcode <path>           Location of microcode
+   --osrelease <path>           Include os-release (default: /etc/os-release)
+   --splash <path>              Include bitmap splash
+   --kernelimage <path>         Kernel image
+   --uefistub <path>            Location of UEFI stub loader
 
 EOF
 }
@@ -251,6 +262,92 @@ build_image() {
     fi
 }
 
+build_uefi(){
+    local out=$1 initramfs=$2 cmdline=$3 osrelease=$4 splash=$5 kernelimg=$6 uefistub=$7 microcode=(${@:7}) errmsg=
+    OBJCOPYARGS=()
+
+    msg "Creating UEFI executable: %s" "$out"
+
+    if [[ -z "$uefistub" ]]; then
+        for stub in {/usr,}/lib/{systemd/boot/efi,gummiboot}/linux{x64,ia32}.efi.stub; do
+            if [[ -f "$stub" ]]; then
+                uefistub="$stub"
+                msg2 "Using UEFI stub: %s" "$uefistub"
+                break
+            fi
+        done
+    elif [[ ! -f "$uefisub" ]]; then
+        error "UEFI stub '%s' not found" "$uefistub"
+        return 1
+    fi
+
+    if [[ -z "$kernelimg" ]]; then
+        for img in "/lib/modules/$KERNELVERSION/vmlinuz" "/boot/vmlinuz-$KERNELVERSION" "/boot/vmlinuz-linux"; do
+            if [[ -f "$img" ]]; then
+                kernelimg="$img"
+                msg2 "Using kernel image: %s" "$kernelimg"
+                break
+            fi
+        done
+    fi
+    if [[ ! -f "$kernelimg" ]]; then
+        error "Kernel image '%s' not found" "$kernelimage"
+        return 1
+    fi
+
+    if [[ -z "$cmdline" ]]; then
+        if [[ -f "/etc/kernel/cmdline" ]]; then
+            cmdline="/etc/kernel/cmdline"
+        elif [[ -f "/usr/lib/kernel/cmdline" ]]; then
+            cmdline="/usr/lib/kernel/cmdline"
+        else
+            warning "Note: /etc/kernel/cmdline does not exist and --cmdline is unset!"
+            cmdline="/proc/cmdline"
+            warning "Reusing current kernel cmdline from $cmdline"
+        fi
+        msg2 "Using cmdline file %s" "$cmdline"
+    fi
+    if [[ ! -f "$cmdline" ]]; then
+        error "Kernel cmdline file '%s' not found" "$cmdline"
+        return 1
+    fi
+
+    if [[ -z "$osrelease" ]]; then
+        if [[ -f "/etc/os-release" ]]; then
+            osrelease="/etc/os-release"
+        elif [[ -f "/usr/lib/os-release" ]]; then
+            osrelease="/usr/lib/os-release"
+        fi
+        msg2 "Using os-release file %s" "$osrelease"
+    fi
+    if [[ ! -f "$osrelease" ]]; then
+        error "os-release file '%s' not found" "$osrelease"
+        return 1
+    fi
+
+    if [[ -z "$initramfs" ]]; then
+        error "Initramfs '%s' not found" "$initramfs"
+        return 1
+    fi
+
+    if [[ -n "$splash" ]]; then
+        OBJCOPYARGS+=(--add-section .splash="$splash" --change-section-vma .splash=0x40000)
+    fi
+    objcopy \
+        --add-section .osrel="$osrelease" --change-section-vma .osrel=0x20000 \
+        --add-section .cmdline=<(grep '^[^#]' "$cmdline" | tr -s '\n' ' ') --change-section-vma .cmdline=0x30000 \
+        --add-section .linux="$kernelimg" --change-section-vma .linux=0x2000000 \
+        --add-section .initrd=<(cat ${microcode[@]} "$initramfs") --change-section-vma .initrd=0x3000000 \
+        ${OBJCOPYARGS[@]} "$uefistub" "$out"
+
+    status=$?
+    if (( $status )) ; then
+        error "UEFI executable generation FAILED"
+    else
+        msg "UEFI executable generation successful"
+    fi
+}
+
 process_preset() (
     local preset=$1 preset_image= preset_options=
     local -a preset_mkopts preset_cmd
@@ -307,6 +404,17 @@ process_preset() (
             preset_cmd+=(${!preset_options}) # intentional word splitting
         fi
 
+        preset_efi_image=${p}_efi_image
+        if [[ ${!preset_efi_image:-$ALL_efi_image} ]]; then
+            preset_cmd+=(-U "${!preset_efi_image:-$ALL_efi_image}")
+        fi
+
+        preset_microcode=${p}_microcode[@]
+        if [[ ${!preset_microcode:-$ALL_microcode} ]]; then
+            for mc in "${!preset_microcode:-${ALL_microcode[@]}}"; do
+                preset_cmd+=(-m "$mc")
+            done
+        fi
         msg2 "${preset_cmd[*]}"
         MKINITCPIO_PROCESS_PRESET=1 "$0" "${preset_cmd[@]}"
         (( $? )) && ret=1
@@ -345,10 +453,11 @@ preload_builtin_modules() {
 trap 'cleanup 130' INT
 trap 'cleanup 143' TERM
 
-_opt_short='A:c:D:g:H:hk:nLMPp:r:S:sd:t:Vvz:'
+_opt_short='A:c:D:g:H:hk:nLMPp:r:S:sd:t:U:Vvz:'
 _opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
           'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets'
-          'preset:' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:')
+          'preset:' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:'
+          'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:')
 
 parseopts "$_opt_short" "${_opt_long[@]}" -- "$@" || exit 1
 set -- "${OPTRET[@]}"
@@ -366,6 +475,10 @@ while :; do
         -c|--config)
             shift
             _f_config=$1
+            ;;
+        --cmdline)
+            shift
+            _optcmdline=$1
             ;;
         -k|--kernel)
             shift
@@ -400,6 +513,13 @@ while :; do
         -n|--nocolor)
             _optcolor=0
             ;;
+        -U|--uefi)
+            shift
+            [[ -d $1 ]] && die "Invalid image path -- must not be a directory"
+            if ! _optuefi=$(readlink -f "$1") || [[ ! -e ${_optuefi%/*} ]]; then
+                die "Unable to write to path: \`%s'" "$1"
+            fi
+            ;;
         -v|--verbose)
             _optquiet=0
             ;;
@@ -418,12 +538,34 @@ while :; do
             hook_list
             exit 0
             ;;
+        --splash)
+            shift
+            [[ -f $1 ]] || die "Invalid file -- must be a file"
+            _optsplash=$1
+            ;;
+        --kernelimage)
+            shift
+             _optkernelimage=$1
+            ;;
+        --uefistub)
+            shift
+             _optkernelimage=$1
+            ;;
         -M|--automods)
             _optshowautomods=1
+            ;;
+        --microcode)
+            shift
+            _optmicrocode+=($1)
             ;;
         -P|--allpresets)
             _optpreset=("$_d_presets"/*.preset)
             [[ -e ${_optpreset[0]} ]] || die "No presets found in $_d_presets"
+            ;;
+        --osrelease)
+            shift
+            [[ ! -f $1 ]] && die "Invalid file -- must be a file"
+            _optosrelease=$1
             ;;
         -t|--builddir)
             shift
@@ -457,6 +599,14 @@ fi
 if [[ -n $_d_flag_hooks && -n $_d_flag_install ]]; then
     _d_hooks=${_d_flag_hooks%:}
     _d_install=${_d_flag_install%:}
+fi
+
+
+# If we specified --uefi but no -g we want to create a temporary initramfs which will be used with the efi executable.
+if [[ $_optuefi && $_optgenimg == "" ]]; then
+    tmpfile=$(mktemp -t mkinitcpio.XXXXXX)
+    trap "rm $tmpfile" EXIT
+    _optgenimg="$tmpfile"
 fi
 
 # insist that /proc and /dev be mounted (important for chroots)
@@ -554,6 +704,10 @@ elif [[ $_opttargetdir ]]; then
     msg "Build complete."
 else
     msg "Dry run complete, use -g IMAGE to generate a real image"
+fi
+
+if [[ $_optuefi && $_optgenimg ]]; then
+    build_uefi "$_optuefi" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" "${_optmicrocode[@]}"
 fi
 
 cleanup $(( !!_builderrors ))
