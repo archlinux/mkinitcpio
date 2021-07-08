@@ -15,6 +15,10 @@ build() {
                 # Binaries
                 strip --strip-all "$bin"
                 ;;
+            *application/x-pie-executable*)
+                # Binaries
+                strip --strip-all "$bin"
+                ;;
         esac
     done
 }
