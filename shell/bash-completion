@@ -1,8 +1,10 @@
 #!/bin/bash
 
 _detect_kver() {
-    local kver_validator='^[[:digit:]]+(\.[[:digit:]]+)+'
-    offset=$(hexdump -s 526 -n 2 -e '"%0d"' "$1" 2>/dev/null) || return 1
+    local kver_validator='^[[:digit:]]+(\.[[:digit:]]+)+' offset
+    offset=$(dd if="$1" bs=1 count=2 skip=526 2>/dev/null) || return 1
+    printf -v offset '%02x' "'${offset:1:1}" "'${offset:0:1}"
+    printf -v offset '%d' "0x$offset"
     read kver _ < \
         <(dd if="$1" bs=1 count=127 skip=$(( offset + 0x200 )) 2>/dev/null)
     [[ $kver =~ $kver_validator ]] && printf "$kver"

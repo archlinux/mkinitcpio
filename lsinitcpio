@@ -77,71 +77,51 @@ size_to_human() {
 detect_filetype() {
     local bytes
 
-    read -rd '' bytes < <(hexdump -n 6 -e '"%c"' "$1")
+    read -rd '' -n 6 bytes < "$1"
+    printf -v bytes '%02x' "'${bytes:0:1}" "'${bytes:1:1}" "'${bytes:2:1}" \
+                           "'${bytes:3:1}" "'${bytes:4:1}" "'${bytes:5:1}"
     case $bytes in
-        '070701')
+        303730373031)
             # no compression
             echo
-            return
             ;;
-        $'\xfd7zXZ')
+        fd377a585a00)
             echo 'xz'
-            return
             ;;
-    esac
-
-    read -rd '' bytes < <(hexdump -n 4 -e '"%c"' "$1")
-    if [[ $bytes = $'\x89LZO' ]]; then
-        echo 'lzop'
-        return
-    fi
-
-    read -rd '' bytes < <(hexdump -n 2 -e '"%x"' "$1")
-    if [[ $bytes = '8b1f' ]]; then
-        echo 'gzip'
-        return
-    fi
-
-    read -rd '' bytes < <(hexdump -n 4 -e '"%x"' "$1")
-    case $bytes in
-        184d2204)
+        894c5a4f*)
+            echo 'lzop'
+            ;;
+        8b1f*)
+            echo 'gzip'
+            ;;
+        184d2204*)
             error 'Newer lz4 stream format detected! This may not boot!'
             echo 'lz4'
-            return
             ;;
-        184c2102)
+        184c2102*)
             echo 'lz4 -l'
-            return
             ;;
-        fd2fb528)
+        fd2fb528*)
             echo 'zstd'
-            return
             ;;
+        425a68*)
+            echo 'bzip2'
+            ;;
+        5d*)
+            # lzma detection sucks and there's really no good way to
+            # do it without reading large portions of the stream. this
+            # check is good enough for GNU tar, apparently, so it's good
+            # enough for me.
+            echo 'lzma'
+            ;;
+        *)
+            # still nothing? hrmm, maybe the user goofed and it's a kernel
+            if kver "$1" >/dev/null; then
+                die '%s is a kernel image, not an initramfs image!' "$1"
+            fi
+            # out of ideas, we're done here.
+            die 'Unexpected file type. Are you sure %s is an initramfs?' "$1"
     esac
-
-    read -rd '' bytes < <(hexdump -n 3 -e '"%c"' "$1")
-    if [[ $bytes == 'BZh' ]]; then
-        echo 'bzip2'
-        return
-    fi
-
-    # lzma detection sucks and there's really no good way to
-    # do it without reading large portions of the stream. this
-    # check is good enough for GNU tar, apparently, so it's good
-    # enough for me.
-    read -rd '' bytes < <(hexdump -n 3 -e '"%x"' "$1")
-    if [[ $bytes = '5d' ]]; then
-        echo 'lzma'
-        return
-    fi
-
-    # still nothing? hrmm, maybe the user goofed and it's a kernel
-    if kver "$1" >/dev/null; then
-        die '%s is a kernel image, not an initramfs image!' "$1"
-    fi
-
-    # out of ideas, we're done here.
-    die 'Unexpected file type. Are you sure %s is an initramfs?' "$1"
 }
 
 analyze_image() {
