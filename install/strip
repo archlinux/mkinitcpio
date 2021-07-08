@@ -2,16 +2,16 @@
 
 build() {
     find "$BUILDROOT" -type f -perm -u+w -print0 2>/dev/null | while read -d '' bin; do
-        case $(file -bi "$bin") in
-            *application/x-sharedlib*)
+        case $(LC_ALL=C readelf -h "$bin" 2>/dev/null) in
+            *Type:*'DYN '*)
                 # Libraries (.so)
                 strip --strip-unneeded "$bin"
                 ;;
-            *application/x-archive*)
+            *Type:*'REL '*)
                 # Libraries (.a)
                 strip --strip-debug "$bin"
                 ;;
-            *application/x-executable*)
+            *Type:*'EXEC '*)
                 # Binaries
                 strip --strip-all "$bin"
                 ;;
