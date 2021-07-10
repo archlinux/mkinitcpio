@@ -419,6 +419,7 @@ add_module() {
     # handle module quirks
     case $target in
         fat)
+            add_module "nls_ascii?"
             add_module "nls_cp437?"
             add_module "nls_iso8859-1?"
             ;;
