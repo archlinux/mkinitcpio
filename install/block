@@ -26,6 +26,9 @@ build() {
 
     # nvdimm
     add_checked_modules '/drivers/nvdimm/'
+
+	# Intel Volume Management Device
+    add_checked_modules 'vmd'
 }
 
 help() {
