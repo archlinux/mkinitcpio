@@ -38,8 +38,8 @@ case $service in
     mkinitcpio)
         _arguments : \
             '(-A --addhooks)'{-A,--addhooks}'[Add specified hooks, comma separated, to image]::usr hooks:_path_files -W /usr/lib/initcpio/install::lib hooks:_path_files -W /lib/initcpio/install' \
-            '(-c --config)'{-c,--config}'[Use alternate config file. (default: /etc/mkinitcpio.conf)]:config files:_files' \
-            '(-D --hookdir)'{-D,--hookdir}'[Specify where to look for hooks.]:directories:_files -/' \
+            '(-c --config)'{-c,--config}'[Use alternate config file (default: /etc/mkinitcpio.conf)]:config files:_files' \
+            '(-D --hookdir)'{-D,--hookdir}'[Specify where to look for hooks]:directories:_files -/' \
             '(-d --generatedir)'{-d,--generatedir}'[Specify where to build the initramfs]:directories:_files -/' \
             '(-g --generate)'{-g,--generate}'[Generate cpio image and write to specified path]:config files:_files' \
             '(-H --hookhelp)'{-H,--hookhelp}'[Display help for given hook and exit]::usr hooks:_path_files -W /usr/lib/initcpio/install::lib hooks:_path_files -W /lib/initcpio/install' \
@@ -52,7 +52,7 @@ case $service in
             '(-p --preset)'{-p,--preset}'[Build specified preset from /etc/mkinitcpio.d]:presets:_files -g "*(\:r)" -W /etc/mkinitcpio.d' \
             '(-r --moduleroot)'{-r,--moduleroot}'[Root directory for modules (default: /)]:directories:_files -/' \
             '(-S --skiphooks)'{-S,--skiphooks}'[Skip specified hooks, comma-separated, during build]::usr hooks:_path_files -W /usr/lib/initcpio/install::lib hooks:_path_files -W /lib/initcpio/install' \
-            '(-s --save)'{-s,--save}'[Save build directory. (default: no)]' \
+            '(-s --save)'{-s,--save}'[Save build directory (default: no)]' \
             '(-t --builddir)'{-t,--builddir}'[Use DIR as the temporary build directory]:directories:_files -/' \
             '(-V --version)'{-V,--version}'[Display version information and exit]' \
             '(-v --verbose)'{-v,--verbose}'[Verbose output (default: no)]' \
