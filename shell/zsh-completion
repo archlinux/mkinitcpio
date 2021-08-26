@@ -56,7 +56,14 @@ case $service in
             '(-t --builddir)'{-t,--builddir}'[Use DIR as the temporary build directory]:directories:_files -/' \
             '(-V --version)'{-V,--version}'[Display version information and exit]' \
             '(-v --verbose)'{-v,--verbose}'[Verbose output (default: no)]' \
-            '(-z --compress)'{-z,--compress}'[Use an alternate compressor on the image]'
+            '(-z --compress)'{-z,--compress}'[Use an alternate compressor on the image]' \
+            '(-U --uefi)'{-U,--uefi}'[Build an UEFI executable]:files:_files' \
+            '--cmdline[Specify kernel cmdline for the UEFI executable]:files:_files' \
+            '--kernelimage[Include a kernel image for the UEFI executable]:files:_files' \
+            '--microcode[Include microcode into the UEFI executable]:files:_files' \
+            '--osrelease[Include a os-release file for the UEFI executable]:files:_files' \
+            '--splash[Bitmap splash image to include in UEFI executable]:files:_files' \
+            '--uefistub[UEFI stub image used for UEFI executable generation]:files:_files' \
         ;;
     *)
         return 1;
