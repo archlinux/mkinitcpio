@@ -114,8 +114,8 @@ Options
 Options for UEFI executable
 ---------------------------
 
-*--cmdline* 'config'::
-	Use kernel cmdline with UEFI executable. If none is specified it will
+*--cmdline* 'filename'::
+	Use kernel command line with UEFI executable. If none is specified,
 	try one of the files '/etc/kernel/cmdline', '/usr/share/kernel/cmdline'
 	or '/proc/cmdline'.
 

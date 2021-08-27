@@ -67,7 +67,8 @@ usage: ${0##*/} [options]
    -z, --compress <program>     Use an alternate compressor on the image
 
   Options for UEFI executable (-U, --uefi):
-   --cmdline <cmdline>          Set kernel line (default content: /etc/kernel/cmdline, /proc/cmdline)
+   --cmdline <path>             Set kernel command line from file
+                                (default: /etc/kernel/cmdline or /proc/cmdline)
    --microcode <path>           Location of microcode
    --osrelease <path>           Include os-release (default: /etc/os-release)
    --splash <path>              Include bitmap splash
