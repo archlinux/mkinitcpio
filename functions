@@ -655,7 +655,8 @@ parse_config() {
             'EARLYHOOKS' "${_runhooks['early']# }" \
             'HOOKS' "${_runhooks['hooks']# }" \
             'LATEHOOKS' "${_runhooks['late']# }" \
-            'CLEANUPHOOKS' "${_runhooks['cleanup']% }"
+            'CLEANUPHOOKS' "${_runhooks['cleanup']% }" \
+            'DEFAULTROOTFSTYPE' "$_autodetect_rootfstype"
     } >"$BUILDROOT/config"
 }
 

@@ -20,6 +20,7 @@ _d_firmware=({/usr,}/lib/firmware/updates {/usr,}/lib/firmware)
 _d_presets=mkinitcpio.d
 
 # options and runtime data
+_autodetect_rootfstype=
 _optmoduleroot= _optgenimg=
 _optcompress= _opttargetdir=
 _optosrelease=

@@ -261,7 +261,13 @@ fsck_device() {
 }
 
 fsck_root() {
-    fsck_device "$root" "$rootfstype"
+    if [ -n "$rootfstype" ]; then
+        fsck_device "$root" "$rootfstype"
+    elif [ -n "$DEFAULTROOTFSTYPE" ]; then
+        fsck_device "$root" "$DEFAULTROOTFSTYPE"
+    else
+        err "fsck on '$root' is skipped. No filesystem type is provided"
+    fi
     fsckret=$?
 
     if [ -n "$fsckret" ] && [ "$fsckret" -ne 255 ]; then
