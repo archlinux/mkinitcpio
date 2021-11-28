@@ -22,6 +22,8 @@ _find_kernel_versions() {
     compadd ${(u)version}
 }
 
+local -a hookdirs=(/usr/lib/initcpio/install /lib/initcpio/install)
+
 case $service in
     lsinitcpio)
         _arguments : \
@@ -33,28 +35,37 @@ case $service in
             '(-n --nocolor)'{-n,--nocolor}'[disable colorized output]' \
             '(-V --version)'{-V,--version}'[display version information]' \
             '(-v --verbose)'{-v,--verbose}'[more verbose output]' \
-            ':files:_files'
+            ':image file:_files'
         ;;
     mkinitcpio)
         _arguments : \
-            '(-A --addhooks)'{-A,--addhooks}'[Add specified hooks, comma separated, to image]::usr hooks:_path_files -W /usr/lib/initcpio/install::lib hooks:_path_files -W /lib/initcpio/install' \
-            '(-c --config)'{-c,--config}'[Use alternate config file. (default: /etc/mkinitcpio.conf)]:config files:_files' \
-            '(-D --hookdir)'{-D,--hookdir}'[Specify where to look for hooks.]:directories:_files -/' \
-            '(-g --generate)'{-g,--generate}'[Generate cpio image and write to specified path]:config files:_files' \
-            '(-H --hookhelp)'{-H,--hookhelp}'[Display help for given hook and exit]::usr hooks:_path_files -W /usr/lib/initcpio/install::lib hooks:_path_files -W /lib/initcpio/install' \
+            '(-A --addhooks)'{-A,--addhooks}'[Add specified hooks, comma separated, to image]:hook(s):_sequence -s , _path_files -W hookdirs' \
+            '(-c --config)'{-c,--config}'[Use alternate config file (default: /etc/mkinitcpio.conf)]:config file:_files' \
+            '(-D --hookdir)'{-D,--hookdir}'[Specify where to look for hooks]:directory:_files -/' \
+            '(-d --generatedir)'{-d,--generatedir}'[Specify where to build the initramfs]:directory:_files -/' \
+            '(-g --generate)'{-g,--generate}'[Generate cpio image and write to specified path]:output filename:_files' \
+            '(-H --hookhelp)'{-H,--hookhelp}'[Display help for given hook and exit]:hook:_path_files -W hookdirs' \
             '(-h --help)'{-h,--help}'[Display this message and exit]' \
-            '(-k --kernel)'{-k,--kernel}'[Use specified kernel version]:kernel versions:_find_kernel_versions' \
+            '(-k --kernel)'{-k,--kernel}'[Use specified kernel version]:kernel version:_find_kernel_versions' \
             '(-L --listhooks)'{-L,--listhooks}'[List all available hooks]' \
             '(-M --automods)'{-M,--automods}'[Display modules found via autodetection]' \
             '(-n --nocolor)'{-n,--nocolor}'[Disable colorized output messages]' \
+            '(-P --allpresets)'{-P,--allpresets}'[Process all presets in /etc/mkinitcpio.d]' \
             '(-p --preset)'{-p,--preset}'[Build specified preset from /etc/mkinitcpio.d]:presets:_files -g "*(\:r)" -W /etc/mkinitcpio.d' \
-            '(-r --moduleroot)'{-r,--moduleroot}'[Root directory for modules (default: /)]:directories:_files -/' \
-            '(-S --skiphooks)'{-S,--skiphooks}'[Skip specified hooks, comma-separated, during build]::usr hooks:_path_files -W /usr/lib/initcpio/install::lib hooks:_path_files -W /lib/initcpio/install' \
-            '(-s --save)'{-s,--save}'[Save build directory. (default: no)]' \
-            '(-t --builddir)'{-t,--builddir}'[Use DIR as the temporary build directory]:directories:_files -/' \
+            '(-r --moduleroot)'{-r,--moduleroot}'[Root directory for modules (default: /)]:directory:_files -/' \
+            '(-S --skiphooks)'{-S,--skiphooks}'[Skip specified hooks, comma-separated, during build]:hook(s):_sequence -s , _path_files -W hookdirs' \
+            '(-s --save)'{-s,--save}'[Save build directory (default: no)]' \
+            '(-t --builddir)'{-t,--builddir}'[Use DIR as the temporary build directory]:directory:_files -/' \
             '(-V --version)'{-V,--version}'[Display version information and exit]' \
             '(-v --verbose)'{-v,--verbose}'[Verbose output (default: no)]' \
-            '(-z --compress)'{-z,--compress}'[Use an alternate compressor on the image]'
+            '(-z --compress)'{-z,--compress}'[Use an alternate compressor on the image]' \
+            '(-U --uefi)'{-U,--uefi}'[Build an UEFI executable]:path:_files' \
+            '--cmdline[Specify kernel cmdline for the UEFI executable]:path:_files' \
+            '--kernelimage[Include a kernel image for the UEFI executable]:path:_files' \
+            '--microcode[Include microcode into the UEFI executable]:path:_files' \
+            '--osrelease[Include a os-release file for the UEFI executable]:path:_files' \
+            '--splash[Bitmap splash image to include in UEFI executable]:path:_files' \
+            '--uefistub[UEFI stub image used for UEFI executable generation]:path:_files' \
         ;;
     *)
         return 1;
