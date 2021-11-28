@@ -364,7 +364,7 @@ process_preset() (
 
     . "$preset" || die "Failed to load preset: \`%s'" "$preset"
 
-    (( ! ${#PRESETS[@]} )) && warning "Preset file \`%s' does not contain any presets." "$preset"
+    (( ! ${#PRESETS[@]} )) && warning "Preset file \`%s' is empty or does not contain any presets." "$preset"
 
     # Use -m and -v options specified earlier
     (( _optquiet )) || preset_mkopts+=(-v)
