@@ -336,7 +336,7 @@ build_uefi(){
     fi
 
     for image in "${microcode[@]}"; do
-        msg2 "Using microcode image: %s" "$i"
+        msg2 "Using microcode image: %s" "$image"
     done
 
     objcopy \
