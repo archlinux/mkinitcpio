@@ -335,7 +335,7 @@ build_uefi(){
         msg2 "Using splash image: %s" "$splash"
     fi
 
-    for i in "${microcode[@]}"; do
+    for image in "${microcode[@]}"; do
         msg2 "Using microcode image: %s" "$i"
     done
 
