@@ -113,12 +113,6 @@ resolve_kernver() {
         return 0
     fi
 
-    arch=$(uname -m)
-    if [[ $arch != @(i?86|x86_64) ]]; then
-        error "kernel version extraction from image not supported for \`%s' architecture" "$arch"
-        return 1
-    fi
-
     if [[ ! -e $kernel ]]; then
         error "specified kernel image does not exist: \`%s'" "$kernel"
         return 1
@@ -127,6 +121,12 @@ resolve_kernver() {
     kver "$kernel" && return
 
     error "invalid kernel specified: \`%s'" "$1"
+
+    arch=$(uname -m)
+    if [[ $arch != @(i?86|x86_64) ]]; then
+        error "kernel version extraction from image not supported for \`%s' architecture" "$arch"
+        error "there's a chance the generic version extractor may work with a valid uncompressed kernel image"
+    fi
 
     return 1
 }
