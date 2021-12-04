@@ -339,28 +339,40 @@ build_uki() {
     OBJCOPYARGS+=(--add-section ".osrel=${osrelease}" --change-section-vma ".osrel=$(printf 0x%x "$offset")")
     offset="$((offset + $(stat -Lc%s "$osrelease")))"
     offset="$(((offset & mask) + align))"
-
+    
+    cmdline_files=()
+    if [[ -n "$cmdline" ]]; then
+        if [[ -f "$cmdline" ]]; then
+            cmdline_files+=("$cmdline")
+        elif [[ ! -f "$cmdline" ]]; then
+            error "Kernel cmdline file '%s' not found" "$cmdline"
+            return 1
+        fi
+    fi
     if [[ -z "$cmdline" ]]; then
         if [[ -f "/etc/kernel/cmdline" ]]; then
-            cmdline="/etc/kernel/cmdline"
+            cmdline_files+=("/etc/kernel/cmdline")
         elif [[ -f "/usr/lib/kernel/cmdline" ]]; then
-            cmdline="/usr/lib/kernel/cmdline"
+            cmdline_files+=("/usr/lib/kernel/cmdline")
         else
-            warning "Note: /etc/kernel/cmdline does not exist and --cmdline is unset!"
-            cmdline="/proc/cmdline"
-            warning "Reusing current kernel cmdline from $cmdline"
+            warning "Note: /etc/kernel/cmdline does not exist and --cmdline is not set!"
+            cmdline_files+=("/proc/cmdline")
+            warning "Reusing current kernel cmdline from ${cmdline[*]}"
         fi
-        msg2 "Using cmdline file: '%s'" "$cmdline"
+        if [[ -d "/etc/cmdline.d" ]]; then
+            cmdline_files+=(/etc/cmdline.d/*.conf)
+        fi
+        msg2 "Using cmdline files: '%s'" "${cmdline_files[@]}"
     fi
-    if [[ ! -f "$cmdline" ]]; then
-        error "Kernel cmdline file '%s' not found" "$cmdline"
+
+    if (( ${#cmdline_files[@]} )); then
         return 1
     fi
 
     cmdline_tmp="$(mktemp -t mkinitcpio.XXXXXX)"
     _tmpfiles+=("$cmdline_tmp")
 
-    printf "%s\n\0" "$(grep -a '^[^#]' "$cmdline" | tr -s '\n' ' ')" >"$cmdline_tmp"
+    printf "%s\n\0" "$(grep -ha '^[^#]' "${cmdline[@]}" | tr -s '\n' ' ')" >"$cmdline_tmp"
 
     OBJCOPYARGS+=(--add-section ".cmdline=${cmdline_tmp}" --change-section-vma .cmdline="$(printf 0x%x "$offset")")
     offset="$((offset + $(stat -Lc%s "$cmdline_tmp")))"
