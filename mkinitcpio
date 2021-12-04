@@ -264,7 +264,7 @@ build_image() {
 }
 
 build_uefi(){
-    local out=$1 initramfs=$2 cmdline=$3 osrelease=$4 splash=$5 kernelimg=$6 uefistub=$7 microcode=(${@:7}) errmsg=
+    local out=$1 initramfs=$2 cmdline=($3) osrelease=$4 splash=$5 kernelimg=$6 uefistub=$7 microcode=(${@:7}) errmsg=
     OBJCOPYARGS=()
 
     msg "Creating UEFI executable: %s" "$out"
@@ -298,15 +298,18 @@ build_uefi(){
 
     if [[ -z "$cmdline" ]]; then
         if [[ -f "/etc/kernel/cmdline" ]]; then
-            cmdline="/etc/kernel/cmdline"
+            cmdline+=("/etc/kernel/cmdline")
         elif [[ -f "/usr/lib/kernel/cmdline" ]]; then
-            cmdline="/usr/lib/kernel/cmdline"
+            cmdline+=("/usr/lib/kernel/cmdline")
         else
             warning "Note: /etc/kernel/cmdline does not exist and --cmdline is unset!"
-            cmdline="/proc/cmdline"
+            cmdline+=("/proc/cmdline")
             warning "Reusing current kernel cmdline from $cmdline"
         fi
-        msg2 "Using cmdline file: %s" "$cmdline"
+        if [[ -d "/etc/kernel/cmdline.d" ]]; then
+            cmdline+=(/etc/kernel/cmdline.d/*.conf)
+        fi
+        msg2 "Using cmdline file: %s" "${cmdline[@]}"
     fi
     if [[ ! -f "$cmdline" ]]; then
         error "Kernel cmdline file '%s' not found" "$cmdline"
@@ -339,10 +342,9 @@ build_uefi(){
     for image in "${microcode[@]}"; do
         msg2 "Using microcode image: %s" "$image"
     done
-
     objcopy \
         --add-section .osrel="$osrelease" --change-section-vma .osrel=0x20000 \
-        --add-section .cmdline=<(grep '^[^#]' "$cmdline" | tr -s '\n' ' ') --change-section-vma .cmdline=0x30000 \
+        --add-section .cmdline=<(grep -h '^[^#]' "${cmdline[@]}" | tr -s '\n' ' ') --change-section-vma .cmdline=0x30000 \
         --add-section .linux="$kernelimg" --change-section-vma .linux=0x2000000 \
         --add-section .initrd=<(cat ${microcode[@]} "$initramfs") --change-section-vma .initrd=0x3000000 \
         ${OBJCOPYARGS[@]} "$uefistub" "$out"
