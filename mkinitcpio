@@ -399,22 +399,24 @@ process_preset() (
             continue
         fi
 
+        preset_efi_image=${p}_efi_image
+        if [[ ${!preset_efi_image:-$ALL_efi_image} ]]; then
+            preset_cmd+=(-U "${!preset_efi_image:-$ALL_efi_image}")
+        fi
+
         preset_image=${p}_image
         if [[ ${!preset_image} ]]; then
             preset_cmd+=(-g "${!preset_image}")
-        else
-            warning "No image file specified. Skipping image \`%s'" "$p"
+        fi
+
+        if [[ "${!preset_efi_image:-$ALL_efi_image}" == "" && "${!preset_image}" == "" ]]; then
+            warning "No UEFI or CPIO image file specified. Skipping image \`%s'" "$p"
             continue
         fi
 
         preset_options=${p}_options
         if [[ ${!preset_options} ]]; then
             preset_cmd+=(${!preset_options}) # intentional word splitting
-        fi
-
-        preset_efi_image=${p}_efi_image
-        if [[ ${!preset_efi_image:-$ALL_efi_image} ]]; then
-            preset_cmd+=(-U "${!preset_efi_image:-$ALL_efi_image}")
         fi
 
         preset_microcode=${p}_microcode[@]
