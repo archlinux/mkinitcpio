@@ -23,7 +23,7 @@ _d_presets=mkinitcpio.d
 _optmoduleroot= _optgenimg=
 _optcompress= _opttargetdir=
 _optosrelease=
-_optuefi= _optmicrocode=() _optcmdline= _optsplash= _optkernelimage= _optuefistub=
+_optuefi= _optmicrocode=() _optcmdline= _optsplash= _optkernelimage= _optuefistub= _optueficert= _opt_uefikey=
 _optshowautomods=0 _optsavetree=0 _optshowmods=0
 _optquiet=1 _optcolor=1
 _optskiphooks=() _optaddhooks=() _hooks=()  _optpreset=()
@@ -74,6 +74,8 @@ usage: ${0##*/} [options]
    --splash <path>              Include bitmap splash
    --kernelimage <path>         Kernel image
    --uefistub <path>            Location of UEFI stub loader
+   --ueficert <path>            Certificate for signing UEFI executable
+   --uefikey <path>             Key for siging UEFI executables
 
 EOF
 }
@@ -264,7 +266,8 @@ build_image() {
 }
 
 build_uefi(){
-    local out=$1 initramfs=$2 cmdline=$3 osrelease=$4 splash=$5 kernelimg=$6 uefistub=$7 microcode=(${@:8}) errmsg=
+    local out=$1 initramfs=$2 cmdline=$3 osrelease=$4 splash=$5 kernelimg=$6 uefistub=$7 cert=$8 key=$9 \
+        microcode=(${@:10}) errmsg= status=0
     OBJCOPYARGS=()
 
     msg "Creating UEFI executable: %s" "$out"
@@ -336,6 +339,22 @@ build_uefi(){
         msg2 "Using splash image: %s" "$splash"
     fi
 
+    if [[ -n "$cert" && -n "$key" ]]; then
+        if ! type -P sbsign >/dev/null; then
+            error "Unable to locate sbsign for executable signing"
+            return 1
+        elif [[ ! -f "$cert" ]]; then
+            error "Signing certificate '%s' not found" "$cert"
+            return 1
+        elif [[ ! -f "$key" ]]; then
+            error "Signing key '%s' not found" "$key"
+            return 1
+        fi
+    elif [[ -n "$cert$key" ]]; then
+        warning "Only %s given but missing %s. The image will not be signed." \
+            "${cert:+cert}${key:+key}" "${cert:+key}${key:+cert}"
+    fi
+
     for image in "${microcode[@]}"; do
         msg2 "Using microcode image: %s" "$image"
     done
@@ -350,9 +369,19 @@ build_uefi(){
     status=$?
     if (( $status )) ; then
         error "UEFI executable generation FAILED"
-    else
-        msg "UEFI executable generation successful"
+        return 1
     fi
+
+    if [[ -n "$cert" && -n "$key" ]]; then
+        if sbsign --cert "$cert" --key "$key" --output "$out" "$out" >/dev/null 2>&1; then
+            msg2 "Signed UEFI executable"
+        else
+            error "UEFI executable signing FAILED"
+            return 1
+        fi
+    fi
+
+    msg "UEFI executable generation successful"
 }
 
 process_preset() (
@@ -417,6 +446,16 @@ process_preset() (
             preset_cmd+=(-U "${!preset_efi_image:-$ALL_efi_image}")
         fi
 
+        preset_efi_cert=${p}_efi_cert
+        if [[ ${!preset_efi_cert:-$ALL_efi_cert} ]]; then
+            preset_cmd+=(--ueficert "${!preset_efi_cert:-$ALL_efi_cert}")
+        fi
+
+        preset_efi_key=${p}_efi_key
+        if [[ ${!preset_efi_key:-$ALL_efi_key} ]]; then
+            preset_cmd+=(--uefikey "${!preset_efi_key:-$ALL_efi_key}")
+        fi
+
         preset_microcode=${p}_microcode[@]
         if [[ ${!preset_microcode:-$ALL_microcode} ]]; then
             for mc in "${!preset_microcode:-${ALL_microcode[@]}}"; do
@@ -467,7 +506,7 @@ _opt_short='A:c:D:g:H:hk:nLMPp:r:S:sd:t:U:Vvz:'
 _opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
           'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets'
           'preset:' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:'
-          'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:')
+          'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:' 'ueficert:' 'uefikey:')
 
 parseopts "$_opt_short" "${_opt_long[@]}" -- "$@" || exit 1
 set -- "${OPTRET[@]}"
@@ -560,6 +599,14 @@ while :; do
         --uefistub)
             shift
              _optuefistub=$1
+            ;;
+        --ueficert)
+            shift
+            _optueficert="$1"
+            ;;
+        --uefikey)
+            shift
+            _optuefikey="$1"
             ;;
         -M|--automods)
             _optshowautomods=1
@@ -722,7 +769,8 @@ else
 fi
 
 if [[ $_optuefi && $_optgenimg ]]; then
-    build_uefi "$_optuefi" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" "${_optmicrocode[@]}"
+    build_uefi "$_optuefi" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" \
+        "$_optuefistub" "$_optueficert" "$_optuefikey" "${_optmicrocode[@]}"
 fi
 
 cleanup $(( !!_builderrors ))
