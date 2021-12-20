@@ -254,6 +254,13 @@ run in reverse.
 	from a run_earlyhook function should be shut down here in preparation for
 	switching to the real root.
 
+About Post Hooks
+----------------
+Post hooks are executables or scripts that get executed after the image has been
+successfully generated and can be used for further processing (i.e. signing).
+They receive the image as the first argument and optionally the UEFI executable
+as a second.
+
 Early Init Environment
 ----------------------
 mkinitcpio gives special treatment to certain environment variables passed on
@@ -371,6 +378,10 @@ Files
 '/etc/initcpio/hooks'::
 '/usr/lib/initcpio/hooks'::
 	Search path for early userspace runtime hooks.
+
+'/etc/initcpio/post'::
+'/usr/lib/initcpio/post'::
+	Search path for post generation hooks.
 
 Examples
 --------

@@ -14,8 +14,10 @@ _f_functions=functions
 _f_config=mkinitcpio.conf
 _d_hooks="$PWD/hooks:/usr/lib/initcpio/hooks:/lib/initcpio/hooks"
 _d_install="$PWD/install:/usr/lib/initcpio/install:/lib/initcpio/install"
+_d_post="$PWD/post:/usr/lib/initcpio/post:/lib/initcpio/post"
 _d_flag_hooks=
 _d_flag_install=
+_d_flag_post=
 _d_firmware=({/usr,}/lib/firmware/updates {/usr,}/lib/firmware)
 _d_presets=mkinitcpio.d
 
@@ -26,7 +28,7 @@ _optosrelease=
 _optuefi= _optmicrocode=() _optcmdline= _optsplash= _optkernelimage= _optuefistub=
 _optshowautomods=0 _optsavetree=0 _optshowmods=0
 _optquiet=1 _optcolor=1
-_optskiphooks=() _optaddhooks=() _hooks=()  _optpreset=()
+_optskiphooks=() _optaddhooks=() _hooks=()  _optpreset=() _generated=()
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
 
 # export a sane PATH
@@ -458,6 +460,31 @@ preload_builtin_modules() {
     fi
 }
 
+run_post_hooks() {
+    local args=("$@")
+    local hook status
+    local -i count=0
+    local -a paths
+
+    IFS=: read -ra paths <<<"$_d_post"
+
+    for path in "${paths[@]}"; do
+        for hook in "$path"/*; do
+            [[ -x $hook ]] || continue
+
+            (( count++ )) || msg "Running post hooks"
+            msg2 "Running post hook: %s" "$hook"
+
+            KERNELVERSION="$KERNELVERSION" "$hook" "${args[@]}"
+            status=$?
+
+            (( status )) && warning "'%s' failed with exit code %d" "$hook" "$status"
+        done
+    done
+
+    ! (( count )) || msg "Post processing done"
+}
+
 . "$_f_functions"
 
 trap 'cleanup 130' INT
@@ -593,6 +620,7 @@ while :; do
             shift
             _d_flag_hooks+="$1/hooks:"
             _d_flag_install+="$1/install:"
+            _d_flag_post+="$1/post:"
             ;;
         --)
             shift
@@ -608,9 +636,10 @@ if [[ -t 1 ]] && (( _optcolor )); then
     try_enable_color
 fi
 
-if [[ -n $_d_flag_hooks && -n $_d_flag_install ]]; then
+if [[ -n $_d_flag_hooks && -n $_d_flag_install && -n $_d_flag_post ]]; then
     _d_hooks=${_d_flag_hooks%:}
     _d_install=${_d_flag_install%:}
+    _d_post=${_d_flag_post%:}
 fi
 
 
@@ -714,7 +743,8 @@ ldconfig -r "$BUILDROOT" &>/dev/null
 umask 077
 
 if [[ $_optgenimg ]]; then
-    build_image "$_optgenimg" "$_optcompress"
+    build_image "$_optgenimg" "$_optcompress" &&
+        _generated+=("$_optgenimg")
 elif [[ $_opttargetdir ]]; then
     msg "Build complete."
 else
@@ -722,7 +752,12 @@ else
 fi
 
 if [[ $_optuefi && $_optgenimg ]]; then
-    build_uefi "$_optuefi" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" "${_optmicrocode[@]}"
+    build_uefi "$_optuefi" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" "${_optmicrocode[@]}" &&
+        (( ${#_generated[*]} )) && _generated+=("$_optuefi")
+fi
+
+if (( ${#_generated[*]} )); then
+    run_post_hooks "${_generated[@]}"
 fi
 
 cleanup $(( !!_builderrors ))

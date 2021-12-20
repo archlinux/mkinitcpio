@@ -9,8 +9,10 @@ DIRS = \
 	/etc/mkinitcpio.d \
 	/etc/initcpio/hooks \
 	/etc/initcpio/install \
+	/etc/initcpio/post \
 	/usr/lib/initcpio/hooks \
 	/usr/lib/initcpio/install \
+	/usr/lib/initcpio/post \
 	/usr/lib/initcpio/udev \
 	/usr/lib/kernel/install.d \
 	/usr/share/man/man8 \
@@ -40,6 +42,7 @@ install: all
 	    -e 's|\(^_f_functions\)=.*|\1=/usr/lib/initcpio/functions|' \
 	    -e 's|\(^_d_hooks\)=.*|\1=/etc/initcpio/hooks:/usr/lib/initcpio/hooks|' \
 	    -e 's|\(^_d_install\)=.*|\1=/etc/initcpio/install:/usr/lib/initcpio/install|' \
+	    -e 's|\(^_d_post\)=.*|\1=/etc/initcpio/post:/usr/lib/initcpio/post|' \
 	    -e 's|\(^_d_presets\)=.*|\1=/etc/mkinitcpio.d|' \
 	    -e 's|%VERSION%|$(VERSION)|g' \
 	    < mkinitcpio > $(DESTDIR)/usr/bin/mkinitcpio
