@@ -464,16 +464,19 @@ run_post_hooks() {
     local args=("$@")
     local hook status
     local -i count=0
-    local -a paths
+    local -a paths seen
 
     IFS=: read -ra paths <<<"$_d_post"
 
     for path in "${paths[@]}"; do
         for hook in "$path"/*; do
+            [[ -e $hook ]] && ! in_array "${hook##*/}" "${seen[@]}" || continue
+            seen+=("${hook##*/}")
+
             [[ -x $hook ]] || continue
 
             (( count++ )) || msg "Running post hooks"
-            msg2 "Running post hook: %s" "$hook"
+            msg2 "Running post hook: [%s]" "${hook##*/}"
 
             KERNELVERSION="$KERNELVERSION" "$hook" "${args[@]}"
             status=$?
