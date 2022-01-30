@@ -160,6 +160,11 @@ kver_generic() {
 
     read _ _ kver _ < <(grep -m1 -aoE 'Linux version .(\.[-[:alnum:]]+)+' "$1")
 
+    # try if the image is gzip compressed
+    if [[ -z "$kver" ]]; then
+        read _ _ kver _ < <(gzip -c -d "$1" | grep -m1 -aoE 'Linux version .(\.[-[:alnum:]]+)+')
+    fi
+
     printf '%s' "$kver"
 }
 
