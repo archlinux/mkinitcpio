@@ -24,7 +24,7 @@ build() {
         return 1
     fi
 
-    mapfile -t mods < <(auto_modules)
+    mapfile -t mods < <(auto_modules "$KERNELVERSION")
     for m in "${mods[@]}"; do
         _autodetect_cache["$m"]=1
     done
