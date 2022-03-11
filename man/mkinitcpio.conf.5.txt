@@ -69,6 +69,12 @@ despite being "valid".
 	program. This option is generally not used. It can be potentially dangerous
 	and may cause invalid images to be generated without any sign of an error.
 
+*DECOMPRESS_MODULES*::
+
+	Switch (yes/no) to decide wether kernel modules should be compressed or
+	uncompressed during initramfs creation. Enabled by default for faster bootup
+	and smaller initramfs size. Disable it to reduce RAM usage in early userspace.
+
 See Also
 --------
 *mkinitcpio*(8)
@@ -79,4 +85,4 @@ mkinitcpio is created and maintained by the Arch Linux Developer community.
 
 Copyright
 ---------
-Copyright (c) Arch Linux 2006-2021
+Copyright (c) Arch Linux 2006-2022
