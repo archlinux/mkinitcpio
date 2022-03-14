@@ -258,6 +258,7 @@ build_image() {
 
     if [[ $errmsg ]]; then
         error "Image generation FAILED: %s" "$errmsg"
+        return 1
     elif (( _builderrors == 0 )); then
         msg "Image generation successful"
     fi
@@ -714,7 +715,7 @@ ldconfig -r "$BUILDROOT" &>/dev/null
 umask 077
 
 if [[ $_optgenimg ]]; then
-    build_image "$_optgenimg" "$_optcompress"
+    build_image "$_optgenimg" "$_optcompress" || exit 1
 elif [[ $_opttargetdir ]]; then
     msg "Build complete."
 else
