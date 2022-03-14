@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 parseopts() {
-    local opt= optarg= i= shortopts=$1
+    local opt='' optarg='' i='' shortopts="$1"
     local -a longopts=() unused_argv=()
 
     shift
-    while [[ $1 && $1 != '--' ]]; do
+    while [[ -n "$1" && "$1" != '--' ]]; do
         longopts+=("$1")
         shift
     done
@@ -15,18 +15,18 @@ parseopts() {
     longoptmatch() {
         local o longmatch=()
         for o in "${longopts[@]}"; do
-            if [[ ${o%:} = "$1" ]]; then
+            if [[ "${o%:}" == "$1" ]]; then
                 longmatch=("$o")
                 break
             fi
-            [[ ${o%:} = "$1"* ]] && longmatch+=("$o")
+            [[ "${o%:}" == "$1"* ]] && longmatch+=("$o")
         done
 
-        case ${#longmatch[*]} in
+        case "${#longmatch[*]}" in
             1)
                 # success, override with opt and return arg req (0 == none, 1 == required)
-                opt=${longmatch%:}
-                if [[ $longmatch = *: ]]; then
+                opt="${longmatch%:}"
+                if [[ "${longmatch[*]}" == *: ]]; then
                     return 1
                 else
                     return 0
@@ -43,7 +43,7 @@ parseopts() {
     }
 
     while (( $# )); do
-        case $1 in
+        case "$1" in
             --) # explicit end of options
                 shift
                 break
@@ -61,13 +61,13 @@ parseopts() {
 
                     OPTRET+=("-$opt")
                     # option requires optarg
-                    if [[ $shortopts = *$opt:* ]]; then
+                    if [[ "$shortopts" == *"${opt}:"* ]]; then
                         # if we're not at the end of the option chunk, the rest is the optarg
                         if (( i < ${#1} - 1 )); then
                             OPTRET+=("${1:i+1}")
                             break
                         # if we're at the end, grab the the next positional, if it exists
-                        elif (( i == ${#1} - 1 )) && [[ $2 ]]; then
+                        elif (( i == ${#1} - 1 )) && [[ -n "$2" ]]; then
                             OPTRET+=("$2")
                             shift
                             break
@@ -85,7 +85,7 @@ parseopts() {
                 longoptmatch "$opt"
                 case $? in
                     0)
-                        if [[ $optarg ]]; then
+                        if [[ -n "$optarg" ]]; then
                             printf "%s: option '--%s' doesn't allow an argument\n" "${0##*/}" "$opt"
                             OPTRET=(--)
                             return 1
@@ -95,10 +95,10 @@ parseopts() {
                         ;;
                     1)
                         # --longopt=optarg
-                        if [[ $optarg ]]; then
+                        if [[ -n "$optarg" ]]; then
                             OPTRET+=("--$opt" "$optarg")
                         # --longopt optarg
-                        elif [[ $2 ]]; then
+                        elif [[ -n "$2" ]]; then
                             OPTRET+=("--$opt" "$2" )
                             shift
                         else
@@ -143,7 +143,7 @@ kver_x86() {
     # read the first word from this string as the kernel version.
     offset="$(od -An -j0x20E -dN2 "$1")" || return
 
-    read kver _ < \
+    read -r kver _ < \
         <(dd if="$1" bs=1 count=127 skip=$((offset + 0x200)) 2>/dev/null)
 
     printf '%s' "$kver"
@@ -153,7 +153,7 @@ detect_compression() {
     local bytes
 
     bytes="$(od -An -t x1 -N6 "$1" | tr -dc '[:alnum:]')"
-    case $bytes in
+    case "$bytes" in
         'fd377a585a00')
             echo 'xz'
             return
@@ -161,19 +161,19 @@ detect_compression() {
     esac
 
    bytes="$(od -An -t x1 -N4 "$1" | tr -dc '[:alnum:]')"
-    if [[ $bytes == '894c5a4f' ]]; then
+    if [[ "$bytes" == '894c5a4f' ]]; then
         echo 'lzop'
         return
     fi
 
    bytes="$(od -An -t x2 -N2 "$1" | tr -dc '[:alnum:]')"
-    if [[ $bytes == '8b1f' ]]; then
+    if [[ "$bytes" == '8b1f' ]]; then
         echo 'gzip'
         return
     fi
 
     bytes="$(od -An -t x4 -N4 "$1" | tr -dc '[:alnum:]')"
-    case $bytes in
+    case "$bytes" in
         '184d2204')
             error 'Newer lz4 stream format detected! This may not boot!'
             echo 'lz4'
@@ -190,7 +190,7 @@ detect_compression() {
     esac
 
     bytes="$(od -An -c -N3 "$1" | tr -dc '[:alnum:]')"
-    if [[ $bytes == 'BZh' ]]; then
+    if [[ "$bytes" == 'BZh' ]]; then
         echo 'bzip2'
         return
     fi
@@ -200,7 +200,7 @@ detect_compression() {
     # check is good enough for GNU tar, apparently, so it's good
     # enough for me.
     bytes="$(od -An -t x1 -N3 "$1" | tr -dc '[:alnum:]')"
-    if [[ $bytes == '5d0000' ]]; then
+    if [[ "$bytes" == '5d0000' ]]; then
         echo 'lzma'
         return
     fi
@@ -217,11 +217,11 @@ kver_generic() {
 
     # Loosely grep for `linux_banner`:
     # https://elixir.bootlin.com/linux/v5.7.2/source/init/version.c#L46
-    local kver= reader=cat
+    local kver='' reader='cat'
     
-    [[ $(detect_compression "$1") == 'gzip' ]] && reader=zcat
+    [[ "$(detect_compression "$1")" == 'gzip' ]] && reader='zcat'
 
-    read _ _ kver _ < <($reader "$1" | grep -m1 -aoE 'Linux version .(\.[-[:alnum:]+]+)+')
+    read -r _ _ kver _ < <($reader "$1" | grep -m1 -aoE 'Linux version .(\.[-[:alnum:]+]+)+')
 
     printf '%s' "$kver"
 }
@@ -233,44 +233,51 @@ kver() {
     # requirement for CONFIG_LOCALVERSION to be set.
     local kver re='^[[:digit:]]+(\.[[:digit:]]+)+'
 
-    local arch=$(uname -m)
+    local arch
+    arch="$(uname -m)"
     if [[ $arch == @(i?86|x86_64) ]]; then
-        kver=$(kver_x86 "$1")
+        kver="$(kver_x86 "$1")"
     else
-        kver=$(kver_generic "$1")
+        kver="$(kver_generic "$1")"
     fi
 
-    [[ $kver =~ $re ]] || return 1
+    [[ "$kver" =~ $re ]] || return 1
 
     printf '%s' "$kver"
 }
 
 plain() {
-    local mesg=$1; shift
+    # shellcheck disable=SC2059
     printf "    $_color_bold$mesg$_color_none\n" "$@" >&1
 }
 
 quiet() {
+    # _optquiet is assigned in mkinitcpio
+    # shellcheck disable=SC2154
     (( _optquiet )) || plain "$@"
 }
 
 msg() {
-    local mesg=$1; shift
+    local mesg="$1"; shift
+    # shellcheck disable=SC2059
     printf "$_color_green==>$_color_none $_color_bold$mesg$_color_none\n" "$@" >&1
 }
 
 msg2() {
-    local mesg=$1; shift
+    local mesg="$1"; shift
+    # shellcheck disable=SC2059
     printf "  $_color_blue->$_color_none $_color_bold$mesg$_color_none\n" "$@" >&1
 }
 
 warning() {
-    local mesg=$1; shift
+    local mesg="$1"; shift
+    # shellcheck disable=SC2059
     printf "$_color_yellow==> WARNING:$_color_none $_color_bold$mesg$_color_none\n" "$@" >&2
 }
 
 error() {
-    local mesg=$1; shift
+    local mesg="$1"; shift
+    # shellcheck disable=SC2059
     printf "$_color_red==> ERROR:$_color_none $_color_bold$mesg$_color_none\n" "$@" >&2
     return 1
 }
@@ -285,16 +292,16 @@ map() {
     for _ in "${@:2}"; do
         "$1" "$_" || (( $# > 255 ? r=1 : ++r ))
     done
-    return $r
+    return "$r"
 }
 
 arrayize_config() {
     set -f
-    [[ ${MODULES@a} != *a* ]] && MODULES=($MODULES)
-    [[ ${BINARIES@a} != *a* ]] && BINARIES=($BINARIES)
-    [[ ${FILES@a} != *a* ]] && FILES=($FILES)
-    [[ ${HOOKS@a} != *a* ]] && HOOKS=($HOOKS)
-    [[ ${COMPRESSION_OPTIONS@a} != *a* ]] && COMPRESSION_OPTIONS=($COMPRESSION_OPTIONS)
+    [[ ${MODULES@a} != *a* ]] && IFS=' ' read -r -a MODULES <<< "$MODULES"
+    [[ ${BINARIES@a} != *a* ]] && IFS=' ' read -r -a BINARIES <<< "$BINARIES"
+    [[ ${FILES@a} != *a* ]] && IFS=' ' read -r -a FILES <<< "$FILES"
+    [[ ${HOOKS@a} != *a* ]] && IFS=' ' read -r -a HOOKS <<< "$HOOKS"
+    [[ ${COMPRESSION_OPTIONS@a} != *a* ]] && IFS=' ' read -r -a COMPRESSION_OPTIONS <<< "$COMPRESSION_OPTIONS"
     set +f
 }
 
@@ -303,10 +310,10 @@ in_array() {
     #   $1: needle
     #   ${@:2}: haystack
 
-    local item= needle=$1; shift
+    local item='' needle="$1"; shift
 
     for item in "$@"; do
-        [[ $item = $needle ]] && return 0 # Found
+        [[ "$item" == "$needle" ]] && return 0 # Found
     done
     return 1 # Not Found
 }
@@ -314,10 +321,10 @@ in_array() {
 index_of() {
     # get the array index of an item. sets the global var _idx with
     # index and returns 0 if found, otherwise returns 1.
-    local item=$1; shift
+    local item="$1"; shift
 
     for (( _idx=1; _idx <= $#; _idx++ )); do
-        if [[ $item = ${!_idx} ]]; then
+        if [[ "$item" == "${!_idx}" ]]; then
             (( --_idx ))
             return 0
         fi
@@ -339,7 +346,9 @@ funcgrep() {
 list_hookpoints() {
     local funcs script
 
-    script=$(PATH=$_d_hooks type -P "$1") || return 0
+    # _d_hooks is assigned in mkinitcpio
+    # shellcheck disable=SC2154
+    script="$(PATH="$_d_hooks" type -P "$1")" || return 0
 
     mapfile -t funcs < <(funcgrep '^run_[[:alnum:]_]+' "$script")
 
@@ -352,13 +361,15 @@ list_hookpoints() {
 }
 
 modprobe() {
+    # _optmoduleroot is assigned in mkinitcpio
+    # shellcheck disable=SC2154
     command modprobe -d "$_optmoduleroot" -S "$KERNELVERSION" "$@"
 }
 
 auto_modules() {
     # Perform auto detection of modules via sysfs.
 
-    local mods=
+    local mods=()
 
     mapfile -t mods < <(find /sys/devices -name uevent \
         -exec sort -u {} + | awk -F= '$1 == "MODALIAS" && !_[$0]++')
@@ -373,21 +384,23 @@ all_modules() {
     #   -f FILTER: ERE to filter found modules
 
     local -i count=0
-    local mod= OPTIND= OPTARG= filter=()
+    local mod='' OPTIND='' OPTARG='' modfilter=()
 
     while getopts ':f:' flag; do
-        case $flag in f) filter+=("$OPTARG") ;; esac
+        [[ "$flag" = "f" ]] && modfilter+=("$OPTARG")
     done
     shift $(( OPTIND - 1 ))
 
+    # _d_kmoduledir is assigned in mkinitcpio
+    # shellcheck disable=SC2154
     while read -r -d '' mod; do
         (( ++count ))
 
-        for f in "${filter[@]}"; do
-            [[ $mod =~ $f ]] && continue 2
+        for f in "${modfilter[@]}"; do
+            [[ "$mod" =~ $f ]] && continue 2
         done
 
-        mod=${mod##*/}
+        mod="${mod##*/}"
         mod="${mod%.ko*}"
         printf '%s\n' "${mod//-/_}"
     done < <(find "$_d_kmoduledir" -name '*.ko*' -print0 2>/dev/null | grep -EZz "$@")
@@ -399,7 +412,8 @@ add_all_modules() {
     # Add modules to the initcpio.
     #   $@: arguments to all_modules
 
-    local mod mods
+    local mod
+    local -a mods
 
     mapfile -t mods < <(all_modules "$@")
     map add_module "${mods[@]}"
@@ -412,8 +426,11 @@ add_checked_modules() {
     # modules.
     #   $@: arguments to all_modules
 
-    local mod mods
+    local mod
+    local -a mods
 
+    # _autodetect_cache is declared in mkinitcpio and assigned in install/autodetect
+    # shellcheck disable=SC2154
     if (( ${#_autodetect_cache[*]} )); then
         mapfile -t mods < <(all_modules "$@" | grep -xFf <(printf '%s\n' "${!_autodetect_cache[@]}"))
     else
@@ -432,6 +449,8 @@ add_firmware() {
     local fw fwpath r=1
 
     for fw; do
+        # _d_firmware is assigned in mkinitcpio
+        # shellcheck disable=SC2154
         for fwpath in "${_d_firmware[@]}"; do
             if [[ -f $fwpath/$fw.xz ]]; then
                 add_file "$fwpath/$fw.xz" "$fwpath/$fw.xz" 644 && r=0
@@ -446,7 +465,7 @@ add_firmware() {
         done
     done
 
-    return $r
+    return "$r"
 }
 
 add_module() {
@@ -454,17 +473,17 @@ add_module() {
     # discovered and added.
     #   $1: module name
 
-    local target= module= softdeps= deps= field= value= firmware=()
+    local target='' module='' softdeps=() deps=() field='' value='' firmware=()
     local ign_errors=0 found=0
 
-    [[ $KERNELVERSION == none ]] && return 0
+    [[ "$KERNELVERSION" == 'none' ]] && return 0
 
-    if [[ $1 = *\? ]]; then
+    if [[ "$1" == *\? ]]; then
         ign_errors=1
         set -- "${1%?}"
     fi
 
-    target=${1%.ko*} target=${target//-/_}
+    target="${1%.ko*}" target="${target//-/_}"
 
     # skip expensive stuff if this module has already been added
     (( _addedmodules["$target"] == 1 )) && return
@@ -476,9 +495,9 @@ add_module() {
                 # it might be reported as "(builtin)"). We'll defer actually
                 # checking whether or not the file exists -- any errors can be
                 # handled during module install time.
-                if [[ $value = /* ]]; then
+                if [[ "$value" == /* ]]; then
                     found=1
-                    module=${value##*/} module=${module%.ko*}
+                    module="${value##*/}" module="${module%.ko*}"
                     quiet "adding module: %s (%s)" "$module" "$value"
                     _modpaths["$value"]=1
                     _addedmodules["${module//-/_}"]=1
@@ -513,7 +532,7 @@ add_module() {
     fi
 
     # handle module quirks
-    case $target in
+    case "$target" in
         fat)
             add_module "nls_ascii?" # from CONFIG_FAT_DEFAULT_IOCHARSET
             add_module "nls_cp437?" # from CONFIG_FAT_DEFAULT_CODEPAGE
@@ -540,21 +559,21 @@ add_full_dir() {
     #   $2: glob pattern to filter file additions (optional)
     #   $3: path prefix that will be stripped off from the image path (optional)
 
-    local f= filter=${2:-*} strip_prefix=$3
+    local f='' filter="${2:-*}" strip_prefix="$3"
 
-    if [[ -n $1 && -d $1 ]]; then
+    if [[ -n "$1" && -d "$1" ]]; then
         add_dir "$1"
 
         for f in "$1"/*; do
-            if [[ -L $f ]]; then
-                if [[ $f = $filter ]]; then
-                    add_symlink "${f#$strip_prefix}" "$(readlink "$f")"
+            if [[ -L "$f" ]]; then
+                if [[ "$f" == "$filter" ]]; then
+                    add_symlink "${f#"${strip_prefix}"}" "$(readlink "$f")"
                 fi
-            elif [[ -d $f ]]; then
+            elif [[ -d "$f" ]]; then
                 add_full_dir "$f" "$filter" "$strip_prefix"
-            elif [[ -f $f ]]; then
-                if [[ $f = $filter ]]; then
-                    add_file "$f" "${f#$strip_prefix}"
+            elif [[ -f "$f" ]]; then
+                if [[ "$f" == "$filter" ]]; then
+                    add_file "$f" "${f#"${strip_prefix}"}"
                 fi
             fi
         done
@@ -566,19 +585,20 @@ add_dir() {
     #   $1: pathname on initcpio
     #   $2: mode (optional)
 
-    if [[ -z $1 || $1 != /?* ]]; then
+    if [[ -z "$1" || "$1" != /?* ]]; then
         return 1
     fi
 
-    local path=$1 mode=${2:-755}
+    local path="$1" mode="${2:-755}"
 
-    if [[ -d $BUILDROOT$1 ]]; then
+    # shellcheck disable=SC2153
+    if [[ -d "${BUILDROOT}${1}" ]]; then
         # ignore dir already exists
         return 0
     fi
 
     quiet "adding dir: %s" "$path"
-    command install -dm$mode "$BUILDROOT$path"
+    command install -dm"${mode}" "${BUILDROOT}${path}"
 }
 
 add_symlink() {
@@ -611,12 +631,12 @@ add_symlink() {
 
     add_dir "${name%/*}"
 
-    if [[ -L $BUILDROOT$1 ]]; then
+    if [[ -L "${BUILDROOT}${1}" ]]; then
         quiet "overwriting symlink %s -> %s" "$name" "$target"
     else
         quiet "adding symlink: %s -> %s" "$name" "$target"
     fi
-    ln -sfn "$target" "$BUILDROOT$name"
+    ln -sfn "$target" "${BUILDROOT}${name}"
 }
 
 add_file() {
@@ -631,7 +651,7 @@ add_file() {
     # determine source and destination
     local src="$1" dest="${2:-$1}" mode="$3" srcrealpath
 
-    if [[ ! -f $src ]]; then
+    if [[ ! -f "$src" ]]; then
         error "file not found: '%s'" "$src"
         return 1
     fi
@@ -667,9 +687,10 @@ add_runscript() {
     # Adds a runtime script to the initcpio image. The name is derived from the
     # script which calls it as the basename of the caller.
 
-    local funcs fn script hookname=${BASH_SOURCE[1]##*/}
+    local fn script hookname="${BASH_SOURCE[1]##*/}"
+    local -a funcs
 
-    if ! script=$(PATH=$_d_hooks type -P "$hookname"); then
+    if ! script="$(PATH="$_d_hooks" type -P "$hookname")"; then
         error "runtime script for '%s' not found" "$hookname"
         return
     fi
@@ -705,21 +726,20 @@ add_binary() {
     #   $1: path to binary
     #   $2: destination on initcpio (optional, defaults to same as source)
 
-    local -a sodeps
     local line='' regex='' binary='' dest='' mode='' sodep='' resolved='' shebang='' interpreter=''
 
-    if [[ ${1:0:1} != '/' ]]; then
-        binary=$(type -P "$1")
+    if [[ "${1:0:1}" != '/' ]]; then
+        binary="$(type -P "$1")"
     else
-        binary=$1
+        binary="$1"
     fi
 
-    if [[ ! -f $binary ]]; then
+    if [[ ! -f "$binary" ]]; then
         error "file not found: '%s'" "$1"
         return 1
     fi
 
-    dest=${2:-$binary}
+    dest="${2:-$binary}"
 
     add_file "$binary" "$dest"
 
@@ -751,15 +771,15 @@ add_binary() {
     # resolve sodeps
     regex='^(|.+ )(/.+) \(0x[a-fA-F0-9]+\)'
     while read -r line; do
-        if [[ $line =~ $regex ]]; then
-            sodep=${BASH_REMATCH[2]}
-        elif [[ $line = *'not found' ]]; then
+        if [[ "$line" =~ $regex ]]; then
+            sodep="${BASH_REMATCH[2]}"
+        elif [[ "$line" = *'not found' ]]; then
             error "binary dependency '%s' not found for '%s'" "${line%% *}" "$1"
             (( ++_builderrors ))
             continue
         fi
 
-        if [[ -f $sodep && ! -e $BUILDROOT$sodep ]]; then
+        if [[ -f "$sodep" && ! -e "${BUILDROOT}${sodep}" ]]; then
             add_file "$sodep" "$sodep"
         fi
     done <<< "$lddout"
@@ -772,12 +792,12 @@ add_udev_rule() {
     # will be discovered and added.
     #   $1: path to rules file (or name of rules file)
 
-    local rules="$1" rule= key= value= binary=
+    local rules="$1" rule=() key='' value='' binary=''
 
-    if [[ ${rules:0:1} != '/' ]]; then
-        rules=$(PATH=/usr/lib/udev/rules.d:/lib/udev/rules.d type -P "$rules")
+    if [[ "${rules:0:1}" != '/' ]]; then
+        rules="$(PATH='/usr/lib/udev/rules.d:/lib/udev/rules.d' type -P "$rules")"
     fi
-    if [[ -z $rules ]]; then
+    if [[ -z "$rules" ]]; then
         # complain about not found rules
         return 1
     fi
@@ -786,19 +806,19 @@ add_udev_rule() {
 
     while IFS=, read -ra rule; do
         # skip empty lines, comments
-        [[ -z $rule || $rule = @(+([[:space:]])|#*) ]] && continue
+        [[ -z "$rule" || "$rule" == @(+([[:space:]])|#*) ]] && continue
 
         for pair in "${rule[@]}"; do
             IFS=' =' read -r key value <<< "$pair"
-            case $key in
-                RUN{program}|RUN+|IMPORT{program}|ENV{REMOVE_CMD})
+            case "$key" in
+                'RUN{program}'|'RUN+'|'IMPORT{program}'|'ENV{REMOVE_CMD}')
                     # strip quotes
-                    binary=${value//[\"\']/}
+                    binary="${value//[\"\']/}"
                     # just take the first word as the binary name
-                    binary=${binary%% *}
-                    [[ ${binary:0:1} == '$' ]] && continue
-                    if [[ ${binary:0:1} != '/' ]]; then
-                        binary=$(PATH=/usr/lib/udev:/lib/udev type -P "$binary")
+                    binary="${binary%% *}"
+                    [[ "${binary:0:1}" == '$' ]] && continue
+                    if [[ "${binary:0:1}" != '/' ]]; then
+                        binary="$(PATH='/usr/lib/udev:/lib/udev' type -P "$binary")"
                     fi
                     add_binary "$binary"
                     ;;
@@ -821,13 +841,14 @@ parse_config() {
         # MODULES before re-sourcing the config.
         unset MODULES
 
+        # shellcheck disable=SC1091
         . /dev/stdin
 
         # arrayize MODULES if necessary.
         [[ ${MODULES@a} != *a* ]] && read -ra MODULES <<<"${MODULES//-/_}"
 
         for mod in "${MODULES[@]%\?}"; do
-            mod=${mod//-/_}
+            mod="${mod//-/_}"
             # only add real modules (2 == builtin)
             (( _addedmodules["$mod"] == 1 )) && add+=("$mod")
         done
@@ -845,15 +866,16 @@ initialize_buildroot() {
     # creates a temporary directory for the buildroot and initialize it with a
     # basic set of necessary directories and symlinks
 
-    local workdir= kernver=$1 arch=$(uname -m) buildroot osreleasefile
+    local workdir='' kernver="$1" arch buildroot osreleasefile
+    arch="$(uname -m)"
 
-    if ! workdir=$(mktemp -d --tmpdir mkinitcpio.XXXXXX); then
+    if ! workdir="$(mktemp -d --tmpdir mkinitcpio.XXXXXX)"; then
         error 'Failed to create temporary working directory in %s' "${TMPDIR:-/tmp}"
         return 1
     fi
-    buildroot=${2:-$workdir/root}
+    buildroot="${2:-$workdir/root}"
 
-    if [[ ! -w ${2:-$workdir} ]]; then
+    if [[ ! -w "${2:-$workdir}" ]]; then
         error 'Unable to write to build root: %s' "$buildroot"
         return 1
     fi
@@ -866,7 +888,7 @@ initialize_buildroot() {
     ln -s "usr/bin" "$buildroot/sbin"
     ln -s "/run"    "$buildroot/var/run"
 
-    case $arch in
+    case "$arch" in
         x86_64)
             ln -s "lib"     "$buildroot/usr/lib64"
             ln -s "usr/lib" "$buildroot/lib64"
@@ -874,14 +896,15 @@ initialize_buildroot() {
     esac
 
     # mkinitcpio version stamp
+    # shellcheck disable=SC2154
     printf '%s' "$version" >"$buildroot/VERSION"
 
     # kernel module dir
-    [[ $kernver != none ]] && install -dm755 "$buildroot/usr/lib/modules/$kernver/kernel"
+    [[ "$kernver" != 'none' ]] && install -dm755 "$buildroot/usr/lib/modules/$kernver/kernel"
 
     # mount tables
     ln -s ../proc/self/mounts "$buildroot/etc/mtab"
-    >"$buildroot/etc/fstab"
+    : >"$buildroot/etc/fstab"
 
     # add os-release and initrd-release for systemd
     if [[ -e /etc/os-release ]]; then
@@ -895,41 +918,44 @@ initialize_buildroot() {
             ln -sT os-release "${buildroot}/etc/initrd-release"
         fi
     else
-        >"$buildroot/etc/initrd-release"
+        : >"$buildroot/etc/initrd-release"
     fi
 
     # add a blank ld.so.conf to keep ldconfig happy
-    >"$buildroot/etc/ld.so.conf"
+    : >"$buildroot/etc/ld.so.conf"
 
     printf '%s' "$workdir"
 }
 
 run_build_hook() {
-    local hook=$1 script= resolved=
-    local MODULES=() BINARIES=() FILES=() SCRIPT=
+    local hook="$1" script='' resolved=''
+    local MODULES=() BINARIES=() FILES=() SCRIPT=''
 
     # find script in install dirs
-    if ! script=$(PATH=$_d_install type -P "$hook"); then
+    # _d_install is assigned in mkinitcpio
+    # shellcheck disable=SC2154
+    if ! script="$(PATH="$_d_install" type -P "$hook")"; then
         error "Hook '$hook' cannot be found"
         return 1
     fi
 
     # check for deprecation
-    if resolved=$(readlink -e "$script") && [[ ${script##*/} != "${resolved##*/}" ]]; then
+    if resolved="$(readlink -e "$script")" && [[ "${script##*/}" != "${resolved##*/}" ]]; then
         warning "Hook '%s' is deprecated. Replace it with '%s' in your config" \
             "${script##*/}" "${resolved##*/}"
-        script=$resolved
+        script="$resolved"
     fi
 
     # source
     unset -f build
+    # shellcheck disable=SC1090
     if ! . "$script"; then
         error 'Failed to read %s' "$script"
         return 1
     fi
 
     if ! declare -f build >/dev/null; then
-        error 'Hook '$script' has no build function'
+        error "Hook '%s' has no build function" "${script}"
         return 1
     fi
 
@@ -950,18 +976,18 @@ run_build_hook() {
 try_enable_color() {
     local colors
 
-    if ! colors=$(tput colors 2>/dev/null); then
+    if ! colors="$(tput colors 2>/dev/null)"; then
         warning "Failed to enable color. Check your TERM environment variable"
         return
     fi
 
     if (( colors > 0 )) && tput setaf 0 &>/dev/null; then
-        _color_none=$(tput sgr0)
-        _color_bold=$(tput bold)
-        _color_blue=$_color_bold$(tput setaf 4)
-        _color_green=$_color_bold$(tput setaf 2)
-        _color_red=$_color_bold$(tput setaf 1)
-        _color_yellow=$_color_bold$(tput setaf 3)
+        _color_none="$(tput sgr0)"
+        _color_bold="$(tput bold)"
+        _color_blue="$_color_bold$(tput setaf 4)"
+        _color_green="$_color_bold$(tput setaf 2)"
+        _color_red="$_color_bold$(tput setaf 1)"
+        _color_yellow="$_color_bold$(tput setaf 3)"
     fi
 }
 
@@ -969,7 +995,7 @@ install_modules() {
     local m
     local -a xz_comp gz_comp zst_comp
 
-    [[ $KERNELVERSION == none ]] && return 0
+    [[ "$KERNELVERSION" == 'none' ]] && return 0
 
     if (( $# == 0 )); then
         warning "No modules were added to the image. This is probably not what you want."

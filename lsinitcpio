@@ -46,6 +46,7 @@ decomp() {
     ${_compress:-cat} ${_compress:+-cd} "$@"
 }
 
+# shellcheck source=functions
 . "$_f_functions"
 
 # override the die method from functions
@@ -89,7 +90,7 @@ detect_filetype() {
             ;;
     esac
 
-    compression=$(detect_compression "$1")
+    compression="$(detect_compression "$1")"
 
     if [[ -n "$compression" ]]; then
         echo "$compression"
@@ -106,33 +107,34 @@ detect_filetype() {
 }
 
 analyze_image() {
-    local -a binaries explicitmod modules foundhooks hooks
-    local kernver ratio columns=$(tput cols) image=$1
+    local -a binaries explicitmod modules foundhooks hooks imagename
+    local kernver ratio columns image="$1"
+    columns="$(tput cols)"
 
-    workdir=$(mktemp -d --tmpdir lsinitcpio.XXXXXX)
+    workdir="$(mktemp -d --tmpdir lsinitcpio.XXXXXX)"
     trap 'rm -rf "$workdir"' EXIT
 
     # fallback in case tput failed us
-    columns=${columns:-80}
+    columns="${columns:-80}"
 
     # instead of reading the size from the inode, insist on reading the entire
     # image to ensure that it's in the cache when we decompress. This avoids
     # variance in timing and makes the time spent reading from storage roughly
     # constant.
-    zsize=$(wc -c <"$_image")
+    zsize="$(wc -c <"$_image")"
 
     # calculate compression ratio
-    if [[ $_compress ]]; then
-        decomptime=$(TIMEFORMAT=%R; { time decomp "$_image" >/dev/null; } 2>&1)
-        fullsize=$(decomp "$_image" | wc -c)
-        ratio=.$(( zsize * 1000 / fullsize % 1000 ))
+    if [[ -n "$_compress" ]]; then
+        decomptime="$(TIMEFORMAT=%R; { time decomp "$_image" >/dev/null; } 2>&1)"
+        fullsize="$(decomp "$_image" | wc -c)"
+        ratio=".$(( zsize * 1000 / fullsize % 1000 ))"
     fi
 
     # decompress the image since we need to read from it multiple times.
     decomp "$_image" | bsdtar -C "$workdir" -xf - || die 'Failed to decompress image'
 
     modules=("$workdir/usr/lib/modules"/*/kernel/**/*.ko*)
-    if [[ -f ${modules[0]} ]]; then
+    if [[ -f "${modules[0]}" ]]; then
         IFS=/ read -r _ _ _ kernver _ <<<"${modules[0]#$workdir/}"
         modules=("${modules[@]##*/}")
         modules=("${modules[@]%.ko*}")
@@ -141,7 +143,11 @@ analyze_image() {
     fi
 
     foundhooks=("$workdir"/hooks/*)
-    [[ -f ${foundhooks[0]} ]] && foundhooks=("${foundhooks[@]##*/}") || unset foundhooks
+    if [[ -f "${foundhooks[0]}" ]]; then
+        foundhooks=("${foundhooks[@]##*/}")
+    else
+        unset foundhooks
+    fi
 
     mapfile -t binaries < <(find "$workdir/usr/bin" -type f -printf %f\\n)
 
@@ -150,17 +156,17 @@ analyze_image() {
     # shellcheck disable=SC1090
     . "$workdir/config"
 
-    explicitmod=($MODULES)
+    explicitmod=("${MODULES[@]}")
 
     # print results
-    imagename=$_image
-    [[ -L $_image ]] && imagename+=" -> $(readlink -e "$_image")"
-    msg 'Image: %s %s' "$imagename"
-    [[ $version ]] && msg 'Created with mkinitcpio %s' "$version"
+    imagename=("$_image")
+    [[ -L "$_image" ]] && imagename+=(" -> $(readlink -e "$_image")")
+    msg 'Image: %s%s' "${imagename[@]}"
+    [[ -n "$version" ]] && msg 'Created with mkinitcpio %s' "$version"
     msg 'Kernel: %s' "${kernver:-unknown}"
     msg 'Size: %s' "$(size_to_human "$zsize")"
 
-    if [[ $_compress ]]; then
+    if [[ -n "$_compress" ]]; then
         msg 'Compressed with: %s' "$_compress"
         msg2 'Uncompressed size: %s (%s ratio)' "$(size_to_human "$fullsize")" "$ratio"
         msg2 'Estimated decompression time: %ss' "$decomptime"
@@ -173,35 +179,35 @@ analyze_image() {
             printf '  %s' "$mod"
             in_array "${mod//_/-}" "${explicitmod[@]//_/-}" && printf ' [explicit]'
             printf '\n'
-        done | sort | column -c$columns
+        done | sort | column -c"${columns}"
         printf '\n'
     fi
 
     msg 'Included binaries:'
-    printf '  %s\n' "${binaries[@]}" | sort | column -c$columns
+    printf '  %s\n' "${binaries[@]}" | sort | column -c"${columns}"
     printf '\n'
 
-    if [[ $EARLYHOOKS ]]; then
+    if [[ -n "$EARLYHOOKS" ]]; then
         msg 'Early hook run order:'
-        printf '  %s\n' $EARLYHOOKS
+        printf '  %s\n' "$EARLYHOOKS"
         printf '\n'
     fi
 
-    if [[ $HOOKS ]]; then
+    if [[ -n "$HOOKS" ]]; then
         msg 'Hook run order:'
-        printf '  %s\n' $HOOKS
+        printf '  %s\n' "$HOOKS"
         printf '\n'
     fi
 
-    if [[ $LATEHOOKS ]]; then
+    if [[ -n "$LATEHOOKS" ]]; then
         msg 'Late hook run order:'
-        printf '  %s\n' $LATEHOOKS
+        printf '  %s\n' "$LATEHOOKS"
         printf '\n'
     fi
 
-    if [[ $CLEANUPHOOKS ]]; then
+    if [[ -n "$CLEANUPHOOKS" ]]; then
         msg 'Cleanup hook run order:'
-        printf '  %s\n' $CLEANUPHOOKS
+        printf '  %s\n' "$CLEANUPHOOKS"
         printf '\n'
     fi
 }
@@ -249,14 +255,14 @@ while :; do
     shift
 done
 
-_image=$1
+_image="$1"
 
 if [[ -t 1 ]] && (( _optcolor )); then
     try_enable_color
 fi
 
-[[ $_image ]] || die "No image specified (use -h for help)"
-[[ -f $_image ]] || die "No such file: '%s'" "$_image"
+[[ -n "$_image" ]] || die 'No image specified (use -h for help)'
+[[ -f "$_image" ]] || die "No such file: '%s'" "$_image"
 
 case $(( _optanalyze + _optlistcontents + _optshowconfig )) in
     0)
@@ -267,7 +273,7 @@ case $(( _optanalyze + _optlistcontents + _optshowconfig )) in
 esac
 
 # read compression type
-_compress=$(detect_filetype "$_image") || exit
+_compress="$(detect_filetype "$_image")" || exit
 
 if (( _optanalyze )); then
     analyze_image "$_image"

@@ -21,10 +21,10 @@ _d_firmware=({/usr,}/lib/firmware/updates {/usr,}/lib/firmware)
 _d_presets=mkinitcpio.d
 
 # options and runtime data
-_optmoduleroot= _optgenimg=
-_optcompress= _opttargetdir=
-_optosrelease=
-_optuefi= _optmicrocode=() _optcmdline= _optsplash= _optkernelimage= _optuefistub=
+_optmoduleroot='' _optgenimg=''
+_optcompress='' _opttargetdir=''
+_optosrelease=''
+_optuefi='' _optmicrocode=() _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
 _optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0
 _optquiet=1 _optcolor=1
 _optskiphooks=() _optaddhooks=() _hooks=()  _optpreset=()
@@ -83,14 +83,14 @@ EOF
 
 version() {
     cat <<EOF
-mkinitcpio $version
+mkinitcpio "$version"
 EOF
 }
 
 cleanup() {
-    local err=${1:-$?}
+    local err="${1:-$?}"
 
-    if [[ $_d_workdir ]]; then
+    if [[ -n "$_d_workdir" ]]; then
         # when _optpreset is set, we're in the main loop, not a worker process
         if (( _optsavetree )) && [[ -z ${_optpreset[*]} ]]; then
             printf '%s\n' "${!_autodetect_cache[@]}" > "$_d_workdir/autodetect_modules"
@@ -104,19 +104,19 @@ cleanup() {
 }
 
 resolve_kernver() {
-    local kernel=$1 arch=
+    local kernel="$1" arch=''
 
-    if [[ -z $kernel ]]; then
+    if [[ -z "$kernel" ]]; then
         uname -r
         return 0
     fi
 
-    if [[ ${kernel:0:1} != / ]]; then
+    if [[ "${kernel:0:1}" != / ]]; then
         echo "$kernel"
         return 0
     fi
 
-    if [[ ! -e $kernel ]]; then
+    if [[ ! -e "$kernel" ]]; then
         error "specified kernel image does not exist: '%s'" "$kernel"
         return 1
     fi
@@ -125,8 +125,8 @@ resolve_kernver() {
 
     error "invalid kernel specified: '%s'" "$1"
 
-    arch=$(uname -m)
-    if [[ $arch != @(i?86|x86_64) ]]; then
+    arch="$(uname -m)"
+    if [[ "$arch" != @(i?86|x86_64) ]]; then
         error "kernel version extraction from image not supported for '%s' architecture" "$arch"
         error "there's a chance the generic version extractor may work with a valid uncompressed kernel image"
     fi
@@ -135,19 +135,21 @@ resolve_kernver() {
 }
 
 hook_help() {
-    local resolved script=$(PATH=$_d_install type -p "$1")
+    local resolved script
+    script="$(PATH="$_d_install" type -p "$1")"
 
     # this will be true for broken symlinks as well
-    if [[ -z $script ]]; then
+    if [[ -z "$script" ]]; then
         error "Hook '%s' not found" "$1"
         return 1
     fi
 
-    if resolved=$(readlink "$script") && [[ ${script##*/} != "${resolved##*/}" ]]; then
+    if resolved="$(readlink "$script")" && [[ "${script##*/}" != "${resolved##*/}" ]]; then
         msg "This hook is deprecated. See the '%s' hook" "${resolved##*/}"
         return 0
     fi
 
+    # shellcheck disable=SC1090
     . "$script"
     if ! declare -f help >/dev/null; then
         error "No help for hook $1"
@@ -169,11 +171,11 @@ hook_list() {
 
     for path in "${paths[@]}"; do
         for hook in "$path"/*; do
-            [[ -e $hook || -L $hook ]] || continue
+            [[ -e "$hook" || -L "$hook" ]] || continue
 
             # handle deprecated hooks and point to replacement
-            if resolved=$(readlink "$hook") && [[ ${hook##*/} != "${resolved##*/}" ]]; then
-                resolved=${resolved##*/}
+            if resolved="$(readlink "$hook")" && [[ "${hook##*/}" != "${resolved##*/}" ]]; then
+                resolved="${resolved##*/}"
 
                 if ! index_of "$resolved" "${depr[@]}"; then
                     # deprecated hook
@@ -210,9 +212,9 @@ compute_hookset() {
 }
 
 build_image() {
-    local out=$1 compressout=$1 compress=$2 errmsg pipestatus
+    local out="$1" compressout="$1" compress="$2" errmsg pipestatus
 
-    case $compress in
+    case "$compress" in
         cat)
             msg "Creating uncompressed initcpio image: '%s'" "$out"
             unset COMPRESSION_OPTIONS
@@ -239,10 +241,10 @@ build_image() {
 
         # check if there is enough space on the device to write the image to a tempfile, fallback otherwise
         # this assumes that the new image is not more than 1¼ times the size of the old one
-        (( $(($curr_size + ($curr_size/4))) < $space_left_on_device )) && compressout="$out".tmp
+        (( $((curr_size + (curr_size/4))) < space_left_on_device )) && compressout="$out".tmp
     fi
 
-    pushd "$BUILDROOT" >/dev/null
+    pushd "$BUILDROOT" >/dev/null || return
 
     # Reproducibility: set all timestamps to 0
     find . -mindepth 1 -execdir touch -hcd "@0" "{}" +
@@ -257,7 +259,7 @@ build_image() {
     pipestatus=("${PIPESTATUS[@]}")
     pipeprogs=('find' 'sort' 'bsdtar (step 1)' 'bsdtar (step 2)' "$compress")
 
-    popd >/dev/null
+    popd >/dev/null || return
 
     for (( i = 0; i < ${#pipestatus[*]}; ++i )); do
         if (( pipestatus[i] )); then
@@ -270,7 +272,7 @@ build_image() {
         warning "errors were encountered during the build. The image may not be complete."
     fi
 
-    if [[ $errmsg ]]; then
+    if [[ -n "$errmsg" ]]; then
         error "Image generation FAILED: '%s'" "$errmsg"
         return 1
     elif (( _builderrors == 0 )); then
@@ -284,8 +286,8 @@ build_image() {
     fi
 }
 
-build_uki(){
-    local out=$1 initramfs=$2 cmdline=$3 osrelease=$4 splash=$5 kernelimg=$6 uefistub=$7 microcode=(${@:8}) errmsg=
+build_uki() {
+    local out="$1" initramfs="$2" cmdline="$3" osrelease="$4" splash="$5" kernelimg="$6" uefistub="$7" microcode=("${@:8}") errmsg=''
     local -i offset=0
     OBJCOPYARGS=()
 
@@ -323,7 +325,7 @@ build_uki(){
         return 1
     fi
 
-    OBJCOPYARGS+=(--add-section ".osrel=${osrelease}" --change-section-vma ".osrel=$(printf 0x%x $offset)")
+    OBJCOPYARGS+=(--add-section ".osrel=${osrelease}" --change-section-vma ".osrel=$(printf 0x%x "$offset")")
     offset="$((offset + $(stat -Lc%s "$osrelease")))"
 
     if [[ -z "$cmdline" ]]; then
@@ -348,11 +350,11 @@ build_uki(){
 
     printf "%s\n\0" "$(grep -a '^[^#]' "$cmdline" | tr -s '\n' ' ')" > "$cmdline_tmp"
 
-    OBJCOPYARGS+=(--add-section ".cmdline=${cmdline_tmp}" --change-section-vma .cmdline="$(printf 0x%x $offset)")
+    OBJCOPYARGS+=(--add-section ".cmdline=${cmdline_tmp}" --change-section-vma .cmdline="$(printf 0x%x "$offset")")
     offset="$((offset + $(stat -Lc%s "$cmdline_tmp")))"
 
     if [[ -n "$splash" ]]; then
-        OBJCOPYARGS+=(--add-section ".splash=$splash" --change-section-vma ".splash=$(printf 0x%x $offset)")
+        OBJCOPYARGS+=(--add-section ".splash=${splash}" --change-section-vma ".splash=$(printf 0x%x "$offset")")
         offset="$((offset + $(stat -Lc%s "$splash")))"
         msg2 "Using splash image: '%s'" "$splash"
     fi
@@ -371,7 +373,7 @@ build_uki(){
         return 1
     fi
 
-    OBJCOPYARGS+=(--add-section ".linux=$kernelimg" --change-section-vma ".linux=$(printf 0x%x $offset)")
+    OBJCOPYARGS+=(--add-section ".linux=${kernelimg}" --change-section-vma ".linux=$(printf 0x%x "$offset")")
     offset="$((offset + $(stat -Lc%s "$kernelimg")))"
 
     if [[ -z "$initramfs" ]]; then
@@ -388,20 +390,22 @@ build_uki(){
 
     cat -- "${microcode[@]}" "$initramfs" > "$initramfs_tmp"
 
-    OBJCOPYARGS+=(--add-section ".initrd=${initramfs_tmp}" --change-section-vma ".initrd=$(printf 0x%x $offset)")
+    OBJCOPYARGS+=(--add-section ".initrd=${initramfs_tmp}" --change-section-vma ".initrd=$(printf 0x%x "$offset")")
 
     objcopy "${OBJCOPYARGS[@]}" "$uefistub" "$out"
 
-    status=$?
-    if (( $status )) ; then
+    status="$?"
+    if (( status )) ; then
         error 'Unified kernel image generation FAILED'
     else
         msg 'Unified kernel image generation successful'
     fi
 }
 
+# The function is invoked via `map process_preset`
+# shellcheck disable=SC2317
 process_preset() (
-    local preset=$1 preset_cli_options=$2 preset_image= preset_options=
+    local preset="$1" preset_cli_options="$2" preset_image='' preset_options=''
     local -a preset_mkopts preset_cmd preset_remove_cmd
     if (( MKINITCPIO_PROCESS_PRESET )); then
         error "You appear to be calling a preset from a preset. This is a configuration error."
@@ -413,6 +417,7 @@ process_preset() (
         printf -v preset '%s/%s.preset' "$_d_presets" "$preset"
     fi
 
+    # shellcheck disable=SC1090
     . "$preset" || die "Failed to load preset: '%s'" "$preset"
 
     (( ! ${#PRESETS[@]} )) && warning "Preset file '%s' is empty or does not contain any presets." "$preset"
@@ -433,16 +438,16 @@ process_preset() (
         preset_cmd=("${preset_mkopts[@]}")
         preset_remove_cmd=()
 
-        preset_kver=${p}_kver
-        if [[ ${!preset_kver:-$ALL_kver} ]]; then
+        preset_kver="${p}_kver"
+        if [[ -n "${!preset_kver:-$ALL_kver}" ]]; then
             preset_cmd+=(-k "${!preset_kver:-$ALL_kver}")
         else
             warning "No kernel version specified. Skipping image '%s'" "$p"
             continue
         fi
 
-        preset_config=${p}_config
-        if [[ ${!preset_config:-$ALL_config} ]]; then
+        preset_config="${p}_config"
+        if [[ -n "${!preset_config:-$ALL_config}" ]]; then
             preset_cmd+=(-c "${!preset_config:-$ALL_config}")
         else
             warning "No configuration file specified. Skipping image '%s'" "$p"
@@ -460,8 +465,8 @@ process_preset() (
             preset_remove_cmd+=("${!preset_uki}")
         fi
 
-        preset_image=${p}_image
-        if [[ ${!preset_image} ]]; then
+        preset_image="${p}_image"
+        if [[ -n "${!preset_image}" ]]; then
             preset_cmd+=(-g "${!preset_image}")
             preset_remove_cmd+=("${!preset_image}")
         elif [[ -z "${!preset_uki}" ]]; then
@@ -469,9 +474,9 @@ process_preset() (
             continue
         fi
 
-        preset_options=${p}_options
-        if [[ ${!preset_options} ]]; then
-            preset_cmd+=(${!preset_options}) # intentional word splitting
+        preset_options="${p}_options"
+        if [[ -n "${!preset_options}" ]]; then
+            mapfile -d ' ' -O "${#preset_cmd[@]}" -t preset_cmd <<< "${!preset_options}"
         fi
 
         preset_microcode=${p}_microcode[@]
@@ -497,18 +502,19 @@ process_preset() (
                 done
             fi
         else
-            preset_cmd+=($OPTREST)
+            preset_cmd+=("${OPTREST[@]}")
             msg2 "${preset_cmd[*]}"
             MKINITCPIO_PROCESS_PRESET=1 "$0" "${preset_cmd[@]}"
         fi
         (( $? )) && ret=1
     done
 
-    exit $ret
+    exit "$ret"
 )
 
 preload_builtin_modules() {
-    local modname field value path
+    local modname field value
+    local -a path
 
     # Prime the _addedmodules list with the builtins for this kernel. We prefer
     # the modinfo file if it exists, but this requires a recent enough kernel
@@ -517,21 +523,22 @@ preload_builtin_modules() {
     if [[ -r $_d_kmoduledir/modules.builtin.modinfo ]]; then
         while IFS=.= read -rd '' modname field value; do
             _addedmodules[${modname//-/_}]=2
-            case $field in
+            case "$field" in
                 alias)
                     _addedmodules["${value//-/_}"]=2
                     ;;
             esac
         done <"$_d_kmoduledir/modules.builtin.modinfo"
 
-    elif [[ -r $_d_kmoduledir/modules.builtin ]]; then
+    elif [[ -r "$_d_kmoduledir/modules.builtin" ]]; then
         while IFS=/ read -ra path; do
-            modname=${path[-1]%.ko}
+            modname="${path[-1]%.ko}"
             _addedmodules["${modname//-/_}"]=2
         done <"$_d_kmoduledir/modules.builtin"
     fi
 }
 
+# shellcheck source=functions
 . "$_f_functions"
 
 trap 'cleanup 130' INT
@@ -548,7 +555,7 @@ set -- "${OPTRET[@]}"
 unset _opt_short _opt_long OPTRET
 
 while :; do
-    case $1 in
+    case "$1" in
         # --add remains for backwards compat
         -A|--add|--addhooks)
             shift
@@ -558,27 +565,27 @@ while :; do
             ;;
         -c|--config)
             shift
-            _f_config=$1
+            _f_config="$1"
             ;;
         --cmdline)
             shift
-            _optcmdline=$1
+            _optcmdline="$1"
             ;;
         -k|--kernel)
             shift
-            KERNELVERSION=$1
+            KERNELVERSION="$1"
             ;;
         -s|--save)
             _optsavetree=1
             ;;
         -d|--generatedir)
             shift
-            _opttargetdir=$1
+            _opttargetdir="$1"
             ;;
         -g|--generate)
             shift
-            [[ -d $1 ]] && die "Invalid image path -- must not be a directory"
-            if ! _optgenimg=$(readlink -f "$1") || [[ ! -e ${_optgenimg%/*} ]]; then
+            [[ -d "$1" ]] && die 'Invalid image path -- must not be a directory'
+            if ! _optgenimg="$(readlink -f "$1")" || [[ ! -e "${_optgenimg%/*}" ]]; then
                 die "Unable to write to path: '%s'" "$1"
             fi
             ;;
@@ -605,7 +612,7 @@ while :; do
             ;&
         -U|--uki)
             shift
-            [[ -d $1 ]] && die "Invalid image path -- must not be a directory"
+            [[ -d "$1" ]] && die "Invalid image path -- must not be a directory"
             if ! _optuki="$(readlink -f "$1")" || [[ ! -e "${_optuki%/*}" ]]; then
                 die "Unable to write to path: '%s'" "$1"
             fi
@@ -630,44 +637,44 @@ while :; do
             ;;
         --splash)
             shift
-            [[ -f $1 ]] || die "Invalid file -- must be a file"
-            _optsplash=$1
+            [[ -f "$1" ]] || die 'Invalid file -- must be a file'
+            _optsplash="$1"
             ;;
         --kernelimage)
             shift
-             _optkernelimage=$1
+             _optkernelimage="$1"
             ;;
         --uefistub)
             shift
-             _optuefistub=$1
+             _optuefistub="$1"
             ;;
         -M|--automods)
             _optshowautomods=1
             ;;
         --microcode)
             shift
-            _optmicrocode+=($1)
+            _optmicrocode+=("$1")
             ;;
         -P|--allpresets)
             _optpreset=("$_d_presets"/*.preset)
-            [[ -e ${_optpreset[0]} ]] || die "No presets found in $_d_presets"
+            [[ -e "${_optpreset[0]}" ]] || die 'No presets found in %s' "$_d_presets"
             ;;
         --osrelease)
             shift
-            [[ ! -f $1 ]] && die "Invalid file -- must be a file"
-            _optosrelease=$1
+            [[ ! -f "$1" ]] && die 'Invalid file -- must be a file'
+            _optosrelease="$1"
             ;;
         -t|--builddir)
             shift
-            export TMPDIR=$1
+            export TMPDIR="$1"
             ;;
         -z|--compress)
             shift
-            _optcompress=$1
+            _optcompress="$1"
             ;;
         -r|--moduleroot)
             shift
-            _optmoduleroot=$1
+            _optmoduleroot="$1"
             ;;
         -D|--hookdir)
             shift
@@ -682,7 +689,7 @@ while :; do
     shift
 done
 
-OPTREST="$@"
+OPTREST=("$@")
 
 if [[ -t 1 ]] && (( _optcolor )); then
     try_enable_color
@@ -694,16 +701,16 @@ if (( _optremove && ${#_optpreset[*]} )); then
     exit
 fi
 
-if [[ -n $_d_flag_hooks && -n $_d_flag_install ]]; then
-    _d_hooks=${_d_flag_hooks%:}
-    _d_install=${_d_flag_install%:}
+if [[ -n "$_d_flag_hooks" && -n "$_d_flag_install" ]]; then
+    _d_hooks="${_d_flag_hooks%:}"
+    _d_install="${_d_flag_install%:}"
 fi
 
 
 # If we specified --uki but no -g we want to create a temporary initramfs which will be used with the efi executable.
 if [[ -n "$_optuki" && -z "$_optgenimg" ]]; then
-    tmpfile=$(mktemp -t mkinitcpio.XXXXXX)
-    trap "rm $tmpfile" EXIT
+    tmpfile="$(mktemp -t mkinitcpio.XXXXXX)"
+    trap 'rm $tmpfile' EXIT
     _optgenimg="$tmpfile"
 fi
 
@@ -719,17 +726,18 @@ if (( ${#_optpreset[*]} )); then
     exit
 fi
 
-if [[ $KERNELVERSION != 'none' ]]; then
-    KERNELVERSION=$(resolve_kernver "$KERNELVERSION") || cleanup 1
-    _d_kmoduledir=$_optmoduleroot/lib/modules/$KERNELVERSION
-    [[ -d $_d_kmoduledir ]] || die "'$_d_kmoduledir' is not a valid kernel module directory"
+if [[ "$KERNELVERSION" != 'none' ]]; then
+    KERNELVERSION="$(resolve_kernver "$KERNELVERSION")" || cleanup 1
+    _d_kmoduledir="$_optmoduleroot/lib/modules/$KERNELVERSION"
+    [[ -d "$_d_kmoduledir" ]] || die "'$_d_kmoduledir' is not a valid kernel module directory"
 fi
 
-MODULES_DECOMPRESS=${MODULES_DECOMPRESS:-"yes"}
+MODULES_DECOMPRESS="${MODULES_DECOMPRESS:-"yes"}"
 
-_d_workdir=$(initialize_buildroot "$KERNELVERSION" "$_opttargetdir") || cleanup 1
-BUILDROOT=${_opttargetdir:-$_d_workdir/root}
+_d_workdir="$(initialize_buildroot "$KERNELVERSION" "$_opttargetdir")" || cleanup 1
+BUILDROOT="${_opttargetdir:-$_d_workdir/root}"
 
+# shellcheck source=mkinitcpio.conf
 . "$_f_config" || die "Failed to read configuration '%s'" "$_f_config"
 
 arrayize_config
@@ -744,13 +752,14 @@ fi
 
 if (( _optshowautomods )); then
     msg "Modules autodetected"
-    PATH=$_d_install . 'autodetect'
+    # shellcheck source=install/autodetect
+    PATH="$_d_install" . 'autodetect'
     build
     printf '%s\n' "${!_autodetect_cache[@]}" | sort
     cleanup 0
 fi
 
-if [[ $_optgenimg ]]; then
+if [[ -n "$_optgenimg" ]]; then
     # check for permissions. if the image doesn't already exist,
     # then check the directory
     if [[ ( -e $_optgenimg && ! -w $_optgenimg ) ||
@@ -758,14 +767,14 @@ if [[ $_optgenimg ]]; then
         die "Unable to write to '%s'" "$_optgenimg"
     fi
 
-    _optcompress=${_optcompress:-${COMPRESSION:-zstd}}
+    _optcompress="${_optcompress:-"${COMPRESSION:-zstd}"}"
     if ! type -P "$_optcompress" >/dev/null; then
         warning "Unable to locate compression method: '%s'" "$_optcompress"
-        _optcompress=cat
+        _optcompress='cat'
     fi
 
     msg "Starting build: '%s'" "$KERNELVERSION"
-elif [[ $_opttargetdir ]]; then
+elif [[ -n "$_opttargetdir" ]]; then
     msg "Starting build: '%s'" "$KERNELVERSION"
 else
     msg "Starting dry run: '%s'" "$KERNELVERSION"
@@ -774,7 +783,7 @@ fi
 # set functrace and trap to catch errors in add_* functions
 declare -i _builderrors=0
 set -o functrace
-trap '(( $? )) && [[ $FUNCNAME = add_* ]] && (( ++_builderrors ))' RETURN
+trap '(( $? )) && [[ "$FUNCNAME" == add_* ]] && (( ++_builderrors ))' RETURN
 
 preload_builtin_modules
 
@@ -803,9 +812,9 @@ rm -f -- "$BUILDROOT/var/cache/ldconfig/aux-cache"
 # Set umask to create initramfs images and unified kernel images as 600
 umask 077
 
-if [[ $_optgenimg ]]; then
+if [[ -n "$_optgenimg" ]]; then
     build_image "$_optgenimg" "$_optcompress" || exit 1
-elif [[ $_opttargetdir ]]; then
+elif [[ -n "$_opttargetdir" ]]; then
     msg "Build complete."
 else
     msg "Dry run complete, use -g IMAGE to generate a real image"
