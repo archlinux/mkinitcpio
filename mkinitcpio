@@ -277,7 +277,7 @@ build_uefi(){
                 break
             fi
         done
-    elif [[ ! -f "$uefisub" ]]; then
+    elif [[ ! -f "$uefistub" ]]; then
         error "UEFI stub '%s' not found" "$uefistub"
         return 1
     fi
