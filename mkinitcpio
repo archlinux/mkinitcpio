@@ -292,7 +292,7 @@ build_uefi(){
         done
     fi
     if [[ ! -f "$kernelimg" ]]; then
-        error "Kernel image '%s' not found" "$kernelimage"
+        error "Kernel image '%s' not found" "$kernelimg"
         return 1
     fi
 
