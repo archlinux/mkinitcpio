@@ -139,6 +139,16 @@ Options for UEFI executable
 	Include a os-release file for the UEFI executable.
 	Default: '/etc/os-release' or '/usr/lib/os-release'.
 
+*--key* 'filename'::
+	Sign the uefi binary using this key.
+	(PEM-encoded RSA private key) Default: no.
+	Also requires --cert
+
+*--cert* 'filename'::
+	Sign the uefi binary using this certificate.
+	(x509 certificate) Default: no.
+	Also requires --key
+
 About Presets
 -------------
 A preset is a pre-defined definition on how to create an initial ramdisk.

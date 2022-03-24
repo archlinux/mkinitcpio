@@ -66,6 +66,8 @@ case $service in
             '--osrelease[Include a os-release file for the UEFI executable]:path:_files' \
             '--splash[Bitmap splash image to include in UEFI executable]:path:_files' \
             '--uefistub[UEFI stub image used for UEFI executable generation]:path:_files' \
+            '--key[UEFI signing: key (PEM-encoded RSA private key)]:path:_files' \
+            '--cert[UEFI signing: certificate (x509 certificate)]:path:_files' \
         ;;
     *)
         return 1;
