@@ -481,7 +481,10 @@ run_post_hooks() {
             KERNELVERSION="$KERNELVERSION" "$hook" "${args[@]}"
             status=$?
 
-            (( status )) && warning "'%s' failed with exit code %d" "$hook" "$status"
+            if (( status )); then
+                error "'%s' failed with exit code %d" "$hook" "$status"
+                return 1
+            fi
         done
     done
 
@@ -760,7 +763,7 @@ if [[ $_optuefi && $_optgenimg ]]; then
 fi
 
 if (( ${#_generated[*]} )); then
-    run_post_hooks "${_generated[@]}"
+    run_post_hooks "${_generated[@]}" || (( ++_builderrors ))
 fi
 
 cleanup $(( !!_builderrors ))
