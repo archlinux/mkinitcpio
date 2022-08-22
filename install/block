@@ -20,6 +20,9 @@ build() {
 
     # mmc
     add_checked_modules '/(drivers/mmc|tifm_)'
+    
+    # spi
+    add_checked_modules '/drivers/spi/'
 
     # virtio
     add_checked_modules 'virtio'
