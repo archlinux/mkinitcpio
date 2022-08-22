@@ -148,17 +148,19 @@ kver_x86() {
 }
 
 kver_generic() {
-    # For unknown architectures, we can try to grep the uncompressed
+    # For unknown architectures, we can try to grep the uncompressed or gzipped
     # image for the boot banner.
-    # This should work at least for ARM when run on /boot/Image. On
-    # other architectures it may be worth trying rather than bailing,
-    # and inform the user if none was found.
+    # This should work at least for ARM when run on /boot/Image, or RISC-V on
+    # gzipped /boot/vmlinuz-linuz. On other architectures it may be worth trying
+    # rather than bailing, and inform the user if none was found.
 
     # Loosely grep for `linux_banner`:
     # https://elixir.bootlin.com/linux/v5.7.2/source/init/version.c#L46
-    local kver=
+    local kver= reader=cat
+    
+    [[ $(file -b --mime-type "$1") == 'application/gzip' ]] && reader=zcat
 
-    read _ _ kver _ < <(grep -m1 -aoE 'Linux version .(\.[-[:alnum:]+]+)+' "$1")
+    read _ _ kver _ < <($reader "$1" | grep -m1 -aoE 'Linux version .(\.[-[:alnum:]+]+)+')
 
     printf '%s' "$kver"
 }
