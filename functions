@@ -147,6 +147,65 @@ kver_x86() {
     printf '%s' "$kver"
 }
 
+detect_compression() {
+    local bytes
+
+    read -rd '' bytes < <(hexdump -n 6 -e '"%c"' "$1")
+    case $bytes in
+        $'\xfd7zXZ')
+            echo 'xz'
+            return
+            ;;
+    esac
+
+    read -rd '' bytes < <(hexdump -n 4 -e '"%c"' "$1")
+    if [[ $bytes = $'\x89LZO' ]]; then
+        echo 'lzop'
+        return
+    fi
+
+    read -rd '' bytes < <(hexdump -n 2 -e '"%x"' "$1")
+    if [[ $bytes = '8b1f' ]]; then
+        echo 'gzip'
+        return
+    fi
+
+    read -rd '' bytes < <(hexdump -n 4 -e '"%x"' "$1")
+    case $bytes in
+        184d2204)
+            error 'Newer lz4 stream format detected! This may not boot!'
+            echo 'lz4'
+            return
+            ;;
+        184c2102)
+            echo 'lz4 -l'
+            return
+            ;;
+        fd2fb528)
+            echo 'zstd'
+            return
+            ;;
+    esac
+
+    read -rd '' bytes < <(hexdump -n 3 -e '"%c"' "$1")
+    if [[ $bytes == 'BZh' ]]; then
+        echo 'bzip2'
+        return
+    fi
+
+    # lzma detection sucks and there's really no good way to
+    # do it without reading large portions of the stream. this
+    # check is good enough for GNU tar, apparently, so it's good
+    # enough for me.
+    read -rd '' bytes < <(hexdump -n 3 -e '"%x"' "$1")
+    if [[ $bytes = '5d' ]]; then
+        echo 'lzma'
+        return
+    fi
+
+    # out of ideas, assuming uncompressed
+}
+
 kver_generic() {
     # For unknown architectures, we can try to grep the uncompressed or gzipped
     # image for the boot banner.
@@ -158,7 +217,7 @@ kver_generic() {
     # https://elixir.bootlin.com/linux/v5.7.2/source/init/version.c#L46
     local kver= reader=cat
     
-    [[ $(file -b --mime-type "$1") == 'application/gzip' ]] && reader=zcat
+    [[ $(detect_compression "$1") == 'gzip' ]] && reader=zcat
 
     read _ _ kver _ < <($reader "$1" | grep -m1 -aoE 'Linux version .(\.[-[:alnum:]+]+)+')
 
