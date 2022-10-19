@@ -878,7 +878,7 @@ install_modules() {
     (( ${#zst_comp[*]} )) && zstd -d --rm -q "${zst_comp[@]}"
 
     msg "Generating module dependencies"
-    install -m644 -t "$moduledest" "$_d_kmoduledir"/modules.builtin
+    install -m644 -t "$moduledest" "$_d_kmoduledir"/modules.{builtin,builtin.modinfo,order}
 
     # we install all modules into kernel/, making the .order file incorrect for
     # the module tree. munge it, so that we have an accurate index. This avoids
