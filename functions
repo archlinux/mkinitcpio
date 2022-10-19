@@ -857,7 +857,7 @@ install_modules() {
 
     cp "$@" "$moduledest/kernel"
 
-    if [[ $MODULES_DECOMPRESS == yes ]]; then
+    if [[ "$MODULES_DECOMPRESS" = yes ]]; then
         # unzip modules prior to recompression
         for m in "$@"; do
             case $m in
