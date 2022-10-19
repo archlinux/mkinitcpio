@@ -860,7 +860,7 @@ install_modules() {
     if [[ "$MODULES_DECOMPRESS" = yes ]]; then
         # unzip modules prior to recompression
         for m in "$@"; do
-            case $m in
+            case "$m" in
                 *.xz)
                     xz_comp+=("$moduledest/kernel/${m##*/}")
                     ;;
