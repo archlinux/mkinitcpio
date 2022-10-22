@@ -207,7 +207,7 @@ compute_hookset() {
 }
 
 build_image() {
-    local out=$1 compress=$2 errmsg pipestatus
+    local out=$1 compressout=$1 compress=$2 errmsg pipestatus
 
     case $compress in
         cat)
@@ -228,6 +228,18 @@ build_image() {
             ;;
     esac
 
+    if [[ -f "$out" ]]; then
+        local curr_size space_left_on_device
+
+        curr_size=$(stat --format="%s" $out)
+        space_left_on_device=$(($(stat -f --format="%a*%S" $out)))
+
+        # check if there is enough space on the device to write the image to a tempfile, fallback otherwise
+        if (( $(($curr_size*2)) < $space_left_on_device )); then
+            compressout="$out".tmp
+        fi
+    fi
+
     pushd "$BUILDROOT" >/dev/null
 
     # Reproducibility: set all timestamps to 0
@@ -238,9 +250,13 @@ build_image() {
             sort -z |
             LANG=C bsdtar --uid 0 --gid 0 --null -cnf - -T - |
             LANG=C bsdtar --null -cf - --format=newc @- |
-            $compress "${COMPRESSION_OPTIONS[@]}" > "$out".tmp
-    sync -d "$out".tmp
-    mv -f "$out".tmp "$out"
+            $compress "${COMPRESSION_OPTIONS[@]}" > "$compressout"
+
+    # sync and rename as we wrote to a tempfile
+    if [[ "$compressout" != "$out" ]]; then
+        sync -d "$compressout"
+        mv -f "$compressout" "$out"
+    fi
 
     pipestatus=("${PIPESTATUS[@]}")
     pipeprogs=('find' 'sort' 'bsdtar (step 1)' 'bsdtar (step 2)' "$compress")
