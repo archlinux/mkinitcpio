@@ -238,7 +238,9 @@ build_image() {
             sort -z |
             LANG=C bsdtar --uid 0 --gid 0 --null -cnf - -T - |
             LANG=C bsdtar --null -cf - --format=newc @- |
-            $compress "${COMPRESSION_OPTIONS[@]}" > "$out"
+            $compress "${COMPRESSION_OPTIONS[@]}" > "$out".tmp
+    sync -d "$out".tmp
+    mv -f "$out".tmp "$out"
 
     pipestatus=("${PIPESTATUS[@]}")
     pipeprogs=('find' 'sort' 'bsdtar (step 1)' 'bsdtar (step 2)' "$compress")
