@@ -682,7 +682,7 @@ add_udev_rule() {
         for pair in "${rule[@]}"; do
             IFS=' =' read -r key value <<< "$pair"
             case $key in
-                RUN@({program}|+)|IMPORT{program}|ENV{REMOVE_CMD})
+                RUN{program}|RUN+|IMPORT{program}|ENV{REMOVE_CMD})
                     # strip quotes
                     binary=${value//[\"\']/}
                     # just take the first word as the binary name
