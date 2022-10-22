@@ -231,13 +231,12 @@ build_image() {
     if [[ -f "$out" ]]; then
         local curr_size space_left_on_device
 
-        curr_size=$(stat --format="%s" $out)
-        space_left_on_device=$(($(stat -f --format="%a*%S" $out)))
+        curr_size="$(stat --format="%s" "$out")"
+        space_left_on_device="$(($(stat -f --format="%a*%S" "$out")))"
 
         # check if there is enough space on the device to write the image to a tempfile, fallback otherwise
-        if (( $(($curr_size*2)) < $space_left_on_device )); then
-            compressout="$out".tmp
-        fi
+        # this assumes that the new image is not more than 1¼ times the size of the old one
+        (( $(($curr_size + ($curr_size/4))) < $space_left_on_device )) && compressout="$out".tmp
     fi
 
     pushd "$BUILDROOT" >/dev/null
@@ -251,12 +250,6 @@ build_image() {
             LANG=C bsdtar --uid 0 --gid 0 --null -cnf - -T - |
             LANG=C bsdtar --null -cf - --format=newc @- |
             $compress "${COMPRESSION_OPTIONS[@]}" > "$compressout"
-
-    # sync and rename as we wrote to a tempfile
-    if [[ "$compressout" != "$out" ]]; then
-        sync -d "$compressout"
-        mv -f "$compressout" "$out"
-    fi
 
     pipestatus=("${PIPESTATUS[@]}")
     pipeprogs=('find' 'sort' 'bsdtar (step 1)' 'bsdtar (step 2)' "$compress")
@@ -279,6 +272,12 @@ build_image() {
         return 1
     elif (( _builderrors == 0 )); then
         msg "Image generation successful"
+    fi
+
+    # sync and rename as we only wrote to a tempfile so far to ensure consistency
+    if [[ "$compressout" != "$out" ]]; then
+        sync -d -- "$compressout"
+        mv -f -- "$compressout" "$out"
     fi
 }
 
