@@ -20,8 +20,8 @@ build() {
 
     # mmc
     add_checked_modules '/(drivers/mmc|tifm_)'
-    
-    # spi
+
+    # spi (mmc in spi mode)
     add_checked_modules '/drivers/spi/'
 
     # virtio
