@@ -711,6 +711,8 @@ trap -- ERR
 
 # this is simply a nice-to-have -- it doesn't matter if it fails.
 ldconfig -r "$BUILDROOT" &>/dev/null
+# remove /var/cache/ldconfig/aux-cache for reproducability
+rm -f -- "$BUILDROOT/var/cache/ldconfig/aux-cache"
 
 # Set umask to create initramfs images and EFI images as 600
 umask 077
