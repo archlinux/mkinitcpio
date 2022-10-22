@@ -24,7 +24,7 @@ _optmoduleroot= _optgenimg=
 _optcompress= _opttargetdir=
 _optosrelease=
 _optuefi= _optmicrocode=() _optcmdline= _optsplash= _optkernelimage= _optuefistub=
-_optshowautomods=0 _optsavetree=0 _optshowmods=0
+_optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0
 _optquiet=1 _optcolor=1
 _optskiphooks=() _optaddhooks=() _hooks=()  _optpreset=()
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
@@ -55,6 +55,8 @@ usage: ${0##*/} [options]
    -n, --nocolor                Disable colorized output messages
    -p, --preset <file>          Build specified preset from /etc/mkinitcpio.d
    -P, --allpresets             Process all preset files in /etc/mkinitcpio.d
+   -R, --remove                 Remove specified preset images
+                                This option can only be used with either '-p|--presets' or '-P|--allpresets'
    -r, --moduleroot <dir>       Root directory for modules (default: /)
    -S, --skiphooks <hooks>      Skip specified hooks, comma-separated, during build
    -s, --save                   Save build directory. (default: no)
@@ -376,7 +378,7 @@ build_uefi(){
 
 process_preset() (
     local preset=$1 preset_cli_options=$2 preset_image= preset_options=
-    local -a preset_mkopts preset_cmd
+    local -a preset_mkopts preset_cmd preset_remove_cmd
     if (( MKINITCPIO_PROCESS_PRESET )); then
         error "You appear to be calling a preset from a preset. This is a configuration error."
         cleanup 1
@@ -399,8 +401,13 @@ process_preset() (
 
     ret=0
     for p in "${PRESETS[@]}"; do
-        msg "Building image from preset: $preset: '$p'"
+        if (( _optremove )); then
+             msg "Removing image for preset: $preset: '$p'"
+        else
+             msg "Building image from preset: $preset: '$p'"
+        fi
         preset_cmd=("${preset_mkopts[@]}")
+        preset_remove_cmd=()
 
         preset_kver=${p}_kver
         if [[ ${!preset_kver:-$ALL_kver} ]]; then
@@ -421,11 +428,13 @@ process_preset() (
         preset_efi_image=${p}_efi_image
         if [[ ${!preset_efi_image} ]]; then
             preset_cmd+=(-U "${!preset_efi_image}")
+            preset_remove_cmd+=("${!preset_efi_image}")
         fi
 
         preset_image=${p}_image
         if [[ ${!preset_image} ]]; then
             preset_cmd+=(-g "${!preset_image}")
+            preset_remove_cmd+=("${!preset_image}")
         elif [[ ! ${!preset_efi_image} ]]; then
             warning "No image or efi_image file specified. Skipping image \`%s'" "$p"
             continue
@@ -443,9 +452,25 @@ process_preset() (
             done
         fi
 
-        preset_cmd+=($OPTREST)
-        msg2 "${preset_cmd[*]}"
-        MKINITCPIO_PROCESS_PRESET=1 "$0" "${preset_cmd[@]}"
+        if (( _optremove )); then
+            if (( ${#preset_remove_cmd[*]} )); then
+                # we won't be calling mkinitcpio recursively, so no need to set MKINITCPIO_PROCESS_PRESET
+                for pr in "${preset_remove_cmd[@]}"; do
+                    if [[ ! -f "${pr}" ]]; then
+                        warning "Image not found: \`%s'" "$pr"
+                    elif [[ ! -w "${pr}" ]]; then
+                        error "Image not writable: \`%s'" "$pr"
+                    else
+                        rm -f -- "${pr}"
+                        msg2 "Removed: \`%s'" "$pr"
+                    fi
+                done
+            fi
+        else
+            preset_cmd+=($OPTREST)
+            msg2 "${preset_cmd[*]}"
+            MKINITCPIO_PROCESS_PRESET=1 "$0" "${preset_cmd[@]}"
+        fi
         (( $? )) && ret=1
     done
 
@@ -482,10 +507,10 @@ preload_builtin_modules() {
 trap 'cleanup 130' INT
 trap 'cleanup 143' TERM
 
-_opt_short='A:c:D:g:H:hk:nLMPp:r:S:sd:t:U:Vvz:'
+_opt_short='A:c:D:g:H:hk:nLMPp:Rr:S:sd:t:U:Vvz:'
 _opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
           'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets'
-          'preset:' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:'
+          'preset:' 'remove' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:'
           'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:')
 
 parseopts "$_opt_short" "${_opt_long[@]}" -- "$@" || exit 1
@@ -538,6 +563,9 @@ while :; do
         -p|--preset)
             shift
             _optpreset+=("$1")
+            ;;
+        -R|--remove)
+            _optremove=1
             ;;
         -n|--nocolor)
             _optcolor=0
@@ -625,6 +653,12 @@ OPTREST="$@"
 
 if [[ -t 1 ]] && (( _optcolor )); then
     try_enable_color
+fi
+
+# if we get presets and remove flag, skip to preset processing
+if (( _optremove && ${#_optpreset[*]} )); then
+    map process_preset "${_optpreset[@]}"
+    exit
 fi
 
 if [[ -n $_d_flag_hooks && -n $_d_flag_install ]]; then
