@@ -265,7 +265,7 @@ build_image() {
 }
 
 build_uefi(){
-    local out=$1 initramfs=$2 cmdline=$3 osrelease=$4 splash=$5 kernelimg=$6 uefistub=$7 microcode=(${@:7}) errmsg=
+    local out=$1 initramfs=$2 cmdline=$3 osrelease=$4 splash=$5 kernelimg=$6 uefistub=$7 microcode=(${@:8}) errmsg=
     OBJCOPYARGS=()
 
     msg "Creating UEFI executable: %s" "$out"
@@ -278,7 +278,7 @@ build_uefi(){
                 break
             fi
         done
-    elif [[ ! -f "$uefisub" ]]; then
+    elif [[ ! -f "$uefistub" ]]; then
         error "UEFI stub '%s' not found" "$uefistub"
         return 1
     fi
@@ -560,7 +560,7 @@ while :; do
             ;;
         --uefistub)
             shift
-             _optkernelimage=$1
+             _optuefistub=$1
             ;;
         -M|--automods)
             _optshowautomods=1
