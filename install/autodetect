@@ -31,7 +31,12 @@ build() {
 
     # detect filesystem for root
     if rootfstype=$(findmnt -uno fstype -T '/'); then
-        add_if_avail "$rootfstype"
+        if [[ "${rootfstype}" == "overlay" ]]; then
+            warning "cannot detect type of overlayfs root filesystem"
+            fs_autodetect_failed=1
+        else
+            add_if_avail "$rootfstype"
+        fi
     else
         error "failed to detect root filesystem"
         fs_autodetect_failed=1
