@@ -752,7 +752,7 @@ initialize_buildroot() {
     # creates a temporary directory for the buildroot and initialize it with a
     # basic set of necessary directories and symlinks
 
-    local workdir= kernver=$1 arch=$(uname -m) buildroot
+    local workdir= kernver=$1 arch=$(uname -m) buildroot osreleasefile
 
     if ! workdir=$(mktemp -d --tmpdir mkinitcpio.XXXXXX); then
         error 'Failed to create temporary working directory in %s' "${TMPDIR:-/tmp}"
@@ -793,8 +793,20 @@ initialize_buildroot() {
     ln -s /proc/self/mounts "$buildroot/etc/mtab"
     >"$buildroot/etc/fstab"
 
-    # indicate that this is an initramfs
-    >"$buildroot/etc/initrd-release"
+    # add os-release and initrd-release for systemd
+    if [[ -e /etc/os-release ]]; then
+        if [[ -L /etc/os-release ]]; then
+            osreleasefile="$(realpath -- /etc/os-release)"
+            install -Dm0644 "$osreleasefile" "${buildroot}${osreleasefile}"
+            cp -adT /etc/os-release "${buildroot}/etc/os-release"
+            cp -adT /etc/os-release "${buildroot}/etc/initrd-release"
+        else
+            install -Dm0644 /etc/os-release "${buildroot}/etc/os-release"
+            ln -sT os-release "${buildroot}/etc/initrd-release"
+        fi
+    else
+        >"$buildroot/etc/initrd-release"
+    fi
 
     # add a blank ld.so.conf to keep ldconfig happy
     >"$buildroot/etc/ld.so.conf"
