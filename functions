@@ -574,7 +574,15 @@ add_file() {
     else
         quiet "adding file: %s" "$dest"
     fi
-    command install -Dm$mode "$src" "$BUILDROOT$dest"
+   #check if $src is a symlink
+    if [[ -L $src ]]; then
+        # add the symlink
+        add_file "$(realpath -- "$src")"
+        # create the symlink
+        add_symlink "$src" "$(realpath -- "$src")"
+    else
+       command install -Dm$mode "$src" "$BUILDROOT$dest"
+    fi
 }
 
 add_runscript() {
@@ -634,7 +642,15 @@ add_binary() {
     mode=$(stat -c %a "$binary")
 
     # always add the binary itself
-    add_file "$binary" "$dest" "$mode"
+    # check if binary is a symlink
+    if [[ -L $binary ]]; then
+        # add the binary
+        add_file "$(realpath -- "$binary")"
+        # create the symlink
+        add_symlink "$binary" "$(realpath -- "$binary")"
+    else
+        add_file "$binary" "$dest" "$mode"
+    fi
 
     # negate this so that the RETURN trap is not fired on non-binaries
     ! lddout=$(ldd "$binary" 2>/dev/null) && return 0
