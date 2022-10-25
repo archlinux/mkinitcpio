@@ -18,6 +18,7 @@ build() {
             *application/x-pie-executable*)
                 # Binaries
                 strip --strip-all "$bin"
+                ;;
             *application/x-object*)
                 # Kernel objects
                 strip --strip-debug "$bin"
