@@ -1,5 +1,7 @@
 #!/usr/bin/ash
 
+export PATH='/usr/local/sbin:/usr/local/bin:/usr/bin'
+
 udevd_running=0
 mount_handler=default_mount_handler
 init=/sbin/init

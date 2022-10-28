@@ -827,14 +827,11 @@ initialize_buildroot() {
     fi
 
     # base directory structure
-    install -dm755 "$buildroot"/{new_root,proc,sys,dev,run,tmp,var,etc,usr/{local,lib,bin}}
+    install -dm755 "$buildroot"/{new_root,proc,sys,dev,run,tmp,var,etc,usr/{local{,/bin,/sbin,/lib},lib,bin}}
     ln -s "usr/lib" "$buildroot/lib"
-    ln -s "../lib"  "$buildroot/usr/local/lib"
     ln -s "bin"     "$buildroot/usr/sbin"
     ln -s "usr/bin" "$buildroot/bin"
     ln -s "usr/bin" "$buildroot/sbin"
-    ln -s "../bin"  "$buildroot/usr/local/bin"
-    ln -s "../bin"  "$buildroot/usr/local/sbin"
     ln -s "/run"    "$buildroot/var/run"
 
     case $arch in
