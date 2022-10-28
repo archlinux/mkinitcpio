@@ -5,6 +5,7 @@ build() {
 
     add_fsck() {
         [[ $1 = tmpfs ]] && return
+        [[ $1 = overlay ]] && return
 
         if [[ $1 = ext[234] ]]; then
             add_binary fsck.ext4
