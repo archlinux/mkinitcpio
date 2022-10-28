@@ -147,18 +147,79 @@ kver_x86() {
     printf '%s' "$kver"
 }
 
+detect_compression() {
+    local bytes
+
+    read -rd '' bytes < <(hexdump -n 6 -e '"%c"' "$1")
+    case $bytes in
+        $'\xfd7zXZ')
+            echo 'xz'
+            return
+            ;;
+    esac
+
+    read -rd '' bytes < <(hexdump -n 4 -e '"%c"' "$1")
+    if [[ $bytes = $'\x89LZO' ]]; then
+        echo 'lzop'
+        return
+    fi
+
+    read -rd '' bytes < <(hexdump -n 2 -e '"%x"' "$1")
+    if [[ $bytes = '8b1f' ]]; then
+        echo 'gzip'
+        return
+    fi
+
+    read -rd '' bytes < <(hexdump -n 4 -e '"%x"' "$1")
+    case $bytes in
+        184d2204)
+            error 'Newer lz4 stream format detected! This may not boot!'
+            echo 'lz4'
+            return
+            ;;
+        184c2102)
+            echo 'lz4 -l'
+            return
+            ;;
+        fd2fb528)
+            echo 'zstd'
+            return
+            ;;
+    esac
+
+    read -rd '' bytes < <(hexdump -n 3 -e '"%c"' "$1")
+    if [[ $bytes == 'BZh' ]]; then
+        echo 'bzip2'
+        return
+    fi
+
+    # lzma detection sucks and there's really no good way to
+    # do it without reading large portions of the stream. this
+    # check is good enough for GNU tar, apparently, so it's good
+    # enough for me.
+    read -rd '' bytes < <(hexdump -n 3 -e '"%x"' "$1")
+    if [[ $bytes = '5d' ]]; then
+        echo 'lzma'
+        return
+    fi
+
+    # out of ideas, assuming uncompressed
+}
+
 kver_generic() {
-    # For unknown architectures, we can try to grep the uncompressed
+    # For unknown architectures, we can try to grep the uncompressed or gzipped
     # image for the boot banner.
-    # This should work at least for ARM when run on /boot/Image. On
-    # other architectures it may be worth trying rather than bailing,
-    # and inform the user if none was found.
+    # This should work at least for ARM when run on /boot/Image, or RISC-V on
+    # gzipped /boot/vmlinuz-linuz. On other architectures it may be worth trying
+    # rather than bailing, and inform the user if none was found.
 
     # Loosely grep for `linux_banner`:
     # https://elixir.bootlin.com/linux/v5.7.2/source/init/version.c#L46
-    local kver=
+    local kver= reader=cat
+    
+    [[ $(detect_compression "$1") == 'gzip' ]] && reader=zcat
 
-    read _ _ kver _ < <(grep -m1 -aoE 'Linux version .(\.[-[:alnum:]]+)+' "$1")
+    read _ _ kver _ < <($reader "$1" | grep -m1 -aoE 'Linux version .(\.[-[:alnum:]+]+)+')
 
     printf '%s' "$kver"
 }
@@ -373,6 +434,9 @@ add_firmware() {
             if [[ -f $fwpath/$fw.xz ]]; then
                 add_file "$fwpath/$fw.xz" "$fwpath/$fw.xz" 644 && r=0
                 break
+            elif [[ -f "$fwpath/$fw.zst" ]]; then
+                add_file "$fwpath/$fw.zst" "$fwpath/$fw.zst" 644 && r=0
+                break
             elif [[ -f $fwpath/$fw ]]; then
                 add_file "$fwpath/$fw" "$fwpath/$fw" 644 && r=0
                 break
@@ -571,7 +635,15 @@ add_file() {
     else
         quiet "adding file: %s" "$dest"
     fi
-    command install -Dm$mode "$src" "$BUILDROOT$dest"
+   #check if $src is a symlink
+    if [[ -L $src ]]; then
+        # add the symlink
+        add_file "$(realpath -- "$src")"
+        # create the symlink
+        add_symlink "$src" "$(realpath -- "$src")"
+    else
+       command install -Dm$mode "$src" "$BUILDROOT$dest"
+    fi
 }
 
 add_runscript() {
@@ -631,7 +703,15 @@ add_binary() {
     mode=$(stat -c %a "$binary")
 
     # always add the binary itself
-    add_file "$binary" "$dest" "$mode"
+    # check if binary is a symlink
+    if [[ -L $binary ]]; then
+        # add the binary
+        add_file "$(realpath -- "$binary")"
+        # create the symlink
+        add_symlink "$binary" "$(realpath -- "$binary")"
+    else
+        add_file "$binary" "$dest" "$mode"
+    fi
 
     # negate this so that the RETURN trap is not fired on non-binaries
     ! lddout=$(ldd "$binary" 2>/dev/null) && return 0
@@ -679,7 +759,7 @@ add_udev_rule() {
         for pair in "${rule[@]}"; do
             IFS=' =' read -r key value <<< "$pair"
             case $key in
-                RUN@({program}|+)|IMPORT{program}|ENV{REMOVE_CMD})
+                RUN{program}|RUN+|IMPORT{program}|ENV{REMOVE_CMD})
                     # strip quotes
                     binary=${value//[\"\']/}
                     # just take the first word as the binary name
@@ -733,7 +813,7 @@ initialize_buildroot() {
     # creates a temporary directory for the buildroot and initialize it with a
     # basic set of necessary directories and symlinks
 
-    local workdir= kernver=$1 arch=$(uname -m) buildroot
+    local workdir= kernver=$1 arch=$(uname -m) buildroot osreleasefile
 
     if ! workdir=$(mktemp -d --tmpdir mkinitcpio.XXXXXX); then
         error 'Failed to create temporary working directory in %s' "${TMPDIR:-/tmp}"
@@ -774,8 +854,20 @@ initialize_buildroot() {
     ln -s /proc/self/mounts "$buildroot/etc/mtab"
     >"$buildroot/etc/fstab"
 
-    # indicate that this is an initramfs
-    >"$buildroot/etc/initrd-release"
+    # add os-release and initrd-release for systemd
+    if [[ -e /etc/os-release ]]; then
+        if [[ -L /etc/os-release ]]; then
+            osreleasefile="$(realpath -- /etc/os-release)"
+            install -Dm0644 "$osreleasefile" "${buildroot}${osreleasefile}"
+            cp -adT /etc/os-release "${buildroot}/etc/os-release"
+            cp -adT /etc/os-release "${buildroot}/etc/initrd-release"
+        else
+            install -Dm0644 /etc/os-release "${buildroot}/etc/os-release"
+            ln -sT os-release "${buildroot}/etc/initrd-release"
+        fi
+    else
+        >"$buildroot/etc/initrd-release"
+    fi
 
     # add a blank ld.so.conf to keep ldconfig happy
     >"$buildroot/etc/ld.so.conf"
@@ -875,8 +967,7 @@ install_modules() {
     (( ${#zst_comp[*]} )) && zstd -d --rm -q "${zst_comp[@]}"
 
     msg "Generating module dependencies"
-    install -m644 -t "$moduledest" "$_d_kmoduledir"/modules.builtin
-    install -m644 -t "$moduledest" "$_d_kmoduledir"/modules.order
+    install -m644 -t "$moduledest" "$_d_kmoduledir"/modules.{builtin,builtin.modinfo,order}
     depmod -b "$BUILDROOT" "$KERNELVERSION"
 
     # remove all non-binary module.* files (except devname for on-demand module loading)

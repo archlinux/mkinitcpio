@@ -19,6 +19,10 @@ build() {
                 # Binaries
                 strip --strip-all "$bin"
                 ;;
+            *application/x-object*)
+                # Kernel objects
+                strip --strip-debug "$bin"
+                ;;
         esac
     done
 }

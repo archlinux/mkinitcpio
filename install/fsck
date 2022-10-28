@@ -5,11 +5,15 @@ build() {
 
     add_fsck() {
         [[ $1 = tmpfs ]] && return
+        [[ $1 = overlay ]] && return
 
         if [[ $1 = ext[234] ]]; then
             add_binary fsck.ext4
             add_symlink /usr/bin/fsck.ext2 fsck.ext4
             add_symlink /usr/bin/fsck.ext3 fsck.ext4
+        elif [[ $1 = xfs ]]; then
+            add_binary fsck.xfs
+            add_binary xfs_repair
         else
             add_binary "fsck.$1"
         fi
@@ -23,7 +27,7 @@ build() {
             add_fsck $usrfstype && (( ++added ))
         fi
     else
-        for fsck in /usr/bin/fsck.*; do
+        for fsck in /usr/bin/fsck.* /usr/bin/xfs_repair; do
             [[ -f $fsck ]] || continue
             add_binary "$fsck" && (( ++added ))
         done
