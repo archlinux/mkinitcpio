@@ -84,54 +84,12 @@ detect_filetype() {
             echo
             return
             ;;
-        $'\xfd7zXZ')
-            echo 'xz'
-            return
-            ;;
     esac
 
-    read -rd '' bytes < <(hexdump -n 4 -e '"%c"' "$1")
-    if [[ $bytes = $'\x89LZO' ]]; then
-        echo 'lzop'
-        return
-    fi
+    compression=$(detect_compression "$1")
 
-    read -rd '' bytes < <(hexdump -n 2 -e '"%x"' "$1")
-    if [[ $bytes = '8b1f' ]]; then
-        echo 'gzip'
-        return
-    fi
-
-    read -rd '' bytes < <(hexdump -n 4 -e '"%x"' "$1")
-    case $bytes in
-        184d2204)
-            error 'Newer lz4 stream format detected! This may not boot!'
-            echo 'lz4'
-            return
-            ;;
-        184c2102)
-            echo 'lz4 -l'
-            return
-            ;;
-        fd2fb528)
-            echo 'zstd'
-            return
-            ;;
-    esac
-
-    read -rd '' bytes < <(hexdump -n 3 -e '"%c"' "$1")
-    if [[ $bytes == 'BZh' ]]; then
-        echo 'bzip2'
-        return
-    fi
-
-    # lzma detection sucks and there's really no good way to
-    # do it without reading large portions of the stream. this
-    # check is good enough for GNU tar, apparently, so it's good
-    # enough for me.
-    read -rd '' bytes < <(hexdump -n 3 -e '"%x"' "$1")
-    if [[ $bytes = '5d' ]]; then
-        echo 'lzma'
+    if [[ -n "$compression" ]]; then
+        echo "$compression"
         return
     fi
 
