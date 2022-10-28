@@ -6,9 +6,10 @@ build() {
     add_fsck() {
         case "$1" in
         ext[234])
-            add_binary fsck.ext4
-            add_symlink /usr/bin/fsck.ext2 fsck.ext4
-            add_symlink /usr/bin/fsck.ext3 fsck.ext4
+            add_binary e2fsck
+            add_symlink /usr/bin/fsck.ext2 e2fsck
+            add_symlink /usr/bin/fsck.ext3 e2fsck
+            add_symlink /usr/bin/fsck.ext4 e2fsck
             [[ -e /etc/e2fsck.conf ]] && add_file /etc/e2fsck.conf
             ;;
         xfs)
