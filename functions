@@ -617,7 +617,7 @@ add_file() {
     (( $# )) || return 1
 
     # determine source and destination
-    local src=$1 dest=${2:-$1} mode=
+    local src=$1 dest=${2:-$1} mode= srcrealpath
 
     if [[ ! -f $src ]]; then
         error "file not found: \`%s'" "$src"
@@ -635,12 +635,20 @@ add_file() {
     else
         quiet "adding file: %s" "$dest"
     fi
-   #check if $src is a symlink
-    if [[ -L $src ]]; then
-        # add the symlink
-        add_file "$(realpath -- "$src")"
-        # create the symlink
-        add_symlink "$src" "$(realpath -- "$src")"
+    # check if $src is a symlink
+    if [[ -L "$src" ]]; then
+        # add the file
+        srcrealpath="$(realpath -- "$src")"
+        mode="$(stat -c %a -- "$srcrealpath")"
+        add_file "$srcrealpath" "$srcrealpath" "$mode"
+        [[ -d "${BUILDROOT}${dest%/*}" ]] || install -d -- "${BUILDROOT}${dest%/*}"
+        if [[ "$src" == "$dest" ]]; then
+            # copy the symlink to preserve relativity
+            cp -adT -- "$src" "${BUILDROOT}${src}"
+        else
+            # create the symlink
+            add_symlink "$src" "$dest"
+        fi
     else
        command install -Dm$mode "$src" "$BUILDROOT$dest"
     fi
@@ -702,16 +710,7 @@ add_binary() {
     dest=${2:-$binary}
     mode=$(stat -c %a "$binary")
 
-    # always add the binary itself
-    # check if binary is a symlink
-    if [[ -L $binary ]]; then
-        # add the binary
-        add_file "$(realpath -- "$binary")"
-        # create the symlink
-        add_symlink "$binary" "$(realpath -- "$binary")"
-    else
-        add_file "$binary" "$dest" "$mode"
-    fi
+    add_file "$binary" "$dest" "$mode"
 
     # negate this so that the RETURN trap is not fired on non-binaries
     ! lddout=$(ldd "$binary" 2>/dev/null) && return 0
