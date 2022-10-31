@@ -52,6 +52,7 @@ case $service in
             '(-n --nocolor)'{-n,--nocolor}'[Disable colorized output messages]' \
             '(-P --allpresets)'{-P,--allpresets}'[Process all presets in /etc/mkinitcpio.d]' \
             '(-p --preset)'{-p,--preset}'[Build specified preset from /etc/mkinitcpio.d]:presets:_files -g "*(\:r)" -W /etc/mkinitcpio.d' \
+            '--remove[Remove specified preset images]' \
             '(-r --moduleroot)'{-r,--moduleroot}'[Root directory for modules (default: /)]:directory:_files -/' \
             '(-S --skiphooks)'{-S,--skiphooks}'[Skip specified hooks, comma-separated, during build]:hook(s):_sequence -s , _path_files -W hookdirs' \
             '(-s --save)'{-s,--save}'[Save build directory (default: no)]' \
