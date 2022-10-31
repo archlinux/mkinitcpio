@@ -8,5 +8,5 @@ Target = usr/lib/initcpio/*
 [Action]
 Description = Updating linux initcpios...
 When = PostTransaction
-Exec = /usr/share/libalpm/scripts/mkinitcpio-install
+Exec = /usr/share/libalpm/scripts/mkinitcpio install
 NeedsTargets

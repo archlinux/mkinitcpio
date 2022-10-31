@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+set -e
+
+args=()
+package=0
+
+process_preset() {
+    if [[ -n "$pkgbase" && -e "$preset" ]]; then
+        if ! cmp "$preset" > /dev/null 2>&1 <(sed "s|%PKGBASE%|${pkgbase}|g" /usr/share/mkinitcpio/hook.preset); then
+            if [[ ! -e "$preset.pacsave" ]]; then
+                # save the preset as pacsave
+                mv -- "$preset" "$preset.pacsave" && return 0
+            fi
+        else
+            # remove the preset
+            rm -- "$preset" && return 0
+        fi
+    fi
+}
+
+install_kernel() {
+    preset="/etc/mkinitcpio.d/${1}.preset"
+    if [[ ! -e "$preset" ]]; then
+        if [[ -e "$preset.pacsave" ]]; then
+            # move the pacsave to the template
+            mv -- "${preset}.pacsave" "$preset"
+        else
+            # create the preset from the template
+            sed "s|%PKGBASE%|${1}|g" /usr/share/mkinitcpio/hook.preset \
+                | install -Dm644 /dev/stdin "$preset"
+        fi
+    fi
+
+    # always install the kernel
+    install -Dm644 "$line" "/boot/vmlinuz-${1}"
+
+    # compound args for each kernel
+    args+=(-p "$1")
+}
+
+remove_kernel() {
+    # remove the actual kernel and images for the package being removed
+    kernel="/boot/vmlinuz-${1}"
+    preset="/etc/mkinitcpio.d/${1}.preset"
+    initramfs="/boot/initramfs-${1}.img"
+    fallback_initramfs="/boot/initramfs-${1}-fallback.img"
+    # remove the installed kernel
+    rm -f -- "$kernel"
+
+    process_preset "$1" "$preset"
+
+    # remove images
+    rm -f -- "$initramfs" "$fallback_initramfs"
+}
+
+while read -r line; do
+    if [[ "$line" != */vmlinuz ]]; then
+        # triggers when it's a change to usr/lib/initcpio/*
+        package=1
+        continue
+    fi
+
+    if ! read -r pkgbase > /dev/null 2>&1 < "${line%/vmlinuz}/pkgbase"; then
+        # if the kernel has no pkgbase, we skip it
+        continue
+    fi
+
+    case "$1" in
+        install) install_kernel "$pkgbase";;
+        remove) remove_kernel "$pkgbase";;
+    esac
+done
+
+if (( package )) && compgen -G /etc/mkinitcpio.d/"*.preset" > /dev/null; then
+    case "$1" in
+        install)
+            # change to use all presets
+            args=(-P)
+            ;;
+        remove)
+          shopt -s nullglob
+          for preset in /etc/mkinitcpio.d/*.preset; do
+              pkgbase=${preset##*/}
+              pkgbase=${pkgbase%.preset}
+              process_preset "$pkgbase" "$preset"
+          done
+          shopt -u nullglob
+          ;;
+    esac
+fi
+
+if [[ "$1" == "install" ]] && (( ${#args[@]} )); then
+    mkinitcpio "${args[@]}"
+fi
