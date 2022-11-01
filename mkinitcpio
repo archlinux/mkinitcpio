@@ -290,7 +290,7 @@ build_uefi(){
     msg "Creating UEFI executable: %s" "$out"
 
     if [[ -z "$uefistub" ]]; then
-        for stub in {/usr,}/lib/{systemd/boot/efi,gummiboot}/linux{x64,ia32}.efi.stub; do
+        for stub in {/usr,}/lib/{systemd/boot/efi,gummiboot}/linux{x64,ia32,aa64}.efi.stub; do
             if [[ -f "$stub" ]]; then
                 uefistub="$stub"
                 msg2 "Using UEFI stub: %s" "$uefistub"
