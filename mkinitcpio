@@ -692,6 +692,8 @@ if [[ $KERNELVERSION != 'none' ]]; then
     [[ -d $_d_kmoduledir ]] || die "'$_d_kmoduledir' is not a valid kernel module directory"
 fi
 
+MODULES_DECOMPRESS=${MODULES_DECOMPRESS:-"yes"}
+
 _d_workdir=$(initialize_buildroot "$KERNELVERSION" "$_opttargetdir") || cleanup 1
 BUILDROOT=${_opttargetdir:-$_d_workdir/root}
 

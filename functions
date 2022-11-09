@@ -950,18 +950,21 @@ install_modules() {
     for m in "$@"; do
         install -D -m644 "$m" "$BUILDROOT/$m"
         # unzip modules prior to recompression
-        case $m in
-            *.xz)
-                xz_comp+=("$BUILDROOT/$m")
-                ;;
-            *.gz)
-                gz_comp+=("$BUILDROOT/$m")
-                ;;
-            *.zst)
-                zst_comp+=("$BUILDROOT/$m")
-                ;;
-        esac
+        if [[ "$MODULES_DECOMPRESS" == 'yes' ]]; then
+            case "$m" in
+                *.xz)
+                    xz_comp+=("$BUILDROOT/$m")
+                    ;;
+                *.gz)
+                    gz_comp+=("$BUILDROOT/$m")
+                    ;;
+                *.zst)
+                    zst_comp+=("$BUILDROOT/$m")
+                    ;;
+            esac
+        fi
     done
+
     (( ${#xz_comp[*]} )) && xz -d "${xz_comp[@]}"
     (( ${#gz_comp[*]} )) && gzip -d "${gz_comp[@]}"
     (( ${#zst_comp[*]} )) && zstd -d --rm -q "${zst_comp[@]}"
