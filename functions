@@ -947,19 +947,18 @@ install_modules() {
         return 0
     fi
 
-    cp "$@" "$moduledest/kernel"
-
-    # unzip modules prior to recompression
     for m in "$@"; do
+        install -D -m644 "$m" "$BUILDROOT/$m"
+        # unzip modules prior to recompression
         case $m in
             *.xz)
-                xz_comp+=("$moduledest/kernel/${m##*/}")
+                xz_comp+=("$BUILDROOT/$m")
                 ;;
             *.gz)
-                gz_comp+=("$moduledest/kernel/${m##*/}")
+                gz_comp+=("$BUILDROOT/$m")
                 ;;
             *.zst)
-                zst_comp+=("$moduledest/kernel/${m##*/}")
+                zst_comp+=("$BUILDROOT/$m")
                 ;;
         esac
     done
@@ -969,14 +968,6 @@ install_modules() {
 
     msg "Generating module dependencies"
     install -m644 -t "$moduledest" "$_d_kmoduledir"/modules.{builtin,builtin.modinfo,order}
-
-    # we install all modules into kernel/, making the .order file incorrect for
-    # the module tree. munge it, so that we have an accurate index. This avoids
-    # some rare and subtle issues with module loading choices when an alias
-    # resolves to multiple modules, only one of which can claim a device.
-    awk -F'/' '{ print "kernel/" $NF }' \
-        "$_d_kmoduledir"/modules.order >"$moduledest/modules.order"
-
     depmod -b "$BUILDROOT" "$KERNELVERSION"
 
     # remove all non-binary module.* files (except devname for on-demand module loading)
