@@ -3,7 +3,7 @@
 # lsinitcpio - dump the contents of an initramfs image
 #
 
-shopt -s extglob
+shopt -s extglob globstar
 
 _list='--list'
 _optcolor=1
@@ -128,7 +128,7 @@ analyze_image() {
     # decompress the image since we need to read from it multiple times.
     decomp "$_image" | bsdtar -C "$workdir" -xf - || die 'Failed to decompress image'
 
-    modules=("$workdir/usr/lib/modules"/*/kernel/*.ko*)
+    modules=("$workdir/usr/lib/modules"/*/kernel/**/*.ko*)
     if [[ -f ${modules[0]} ]]; then
         IFS=/ read -r _ _ _ kernver _ <<<"${modules[0]#$workdir/}"
         modules=("${modules[@]##*/}")
