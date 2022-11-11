@@ -848,7 +848,7 @@ initialize_buildroot() {
     [[ $kernver != none ]] && install -dm755 "$buildroot/usr/lib/modules/$kernver/kernel"
 
     # mount tables
-    ln -s /proc/self/mounts "$buildroot/etc/mtab"
+    ln -s ../proc/self/mounts "$buildroot/etc/mtab"
     >"$buildroot/etc/fstab"
 
     # add os-release and initrd-release for systemd
