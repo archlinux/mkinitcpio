@@ -10,7 +10,9 @@ build() {
             add_symlink /usr/bin/fsck.ext2 e2fsck
             add_symlink /usr/bin/fsck.ext3 e2fsck
             add_symlink /usr/bin/fsck.ext4 e2fsck
-            [[ -e /etc/e2fsck.conf ]] && add_file /etc/e2fsck.conf
+            if [[ -e /etc/e2fsck.conf ]]; then
+                add_file /etc/e2fsck.conf
+            fi
             ;;
         xfs)
             add_binary fsck.xfs
