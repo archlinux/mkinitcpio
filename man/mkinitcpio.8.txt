@@ -168,14 +168,16 @@ functions exist to facilitate this.
 
 	Adds a binary to the image. The argument 'binary' need not be an absolute
 	path and, if needed, a lookup will be performed. If the binary is a dynamically
-	linked ELF binary, dependencies will be automatically added. Optionally, a
+	linked ELF binary, dependencies will be automatically added. If it is a
+	symlink, both the symlink and the target binary will be added. Optionally, a
 	destination within the initramfs image as well as a file mode can be specified.
 	By default, the destintation and mode be taken from the source derived from
 	'binary'.
 
 *add_file* 'path' [ 'destination' ] [ 'mode' ]::
 
-	Adds a file and any needed parent directories to the image. Optionally, a
+	Adds a file and any needed parent directories to the image. If it is a
+	symlink, both the symlink and the target file will be added. Optionally, a
 	destination within the initramfs image as well as a file mode can be specified.
 	By default, the destination and mode will be taken from the source and mode of
 	the file specified by the 'path'.
