@@ -18,11 +18,11 @@ ALL_microcode=(/boot/*-ucode.img)
 #default_kver="3.0-ARCH"
 #default_config="/etc/mkinitcpio.conf"
 default_image="/tmp/initramfs-linux.img"
-default_efi_image="/efi/EFI/Linux/arch-linux.efi"
+default_uki="/efi/EFI/Linux/arch-linux.efi"
 default_options=""
 
 #fallback_kver="3.0-ARCH"
 #fallback_config="/etc/mkinitcpio.conf"
 fallback_image="/tmp/initramfs-linux-fallback.img"
-fallback_efi_image="/efi/EFI/Linux/arch-linux-fallback.efi"
+fallback_uki="/efi/EFI/Linux/arch-linux-fallback.efi"
 fallback_options="-S autodetect"

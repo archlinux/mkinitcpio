@@ -67,13 +67,13 @@ Options
 *-n, \--nocolor*::
 	Disable color output.
 
-*-U, \--uefi* 'filename'::
-	Generate a UEFI executable as 'filename'. If a CPIO image is successfully
-	built, it will be used to generate a UEFI executable stub image for UEFI
-	booting. This combines the initramfs, the kernel, any specified microcode
-	and the kernel cmdline into one executable. This is useful for boot chain
-	integrity where the file is signed. Default: no.
-	For a list of relevant options see 'Options for UEFI executable' below.
+*-U, \--uki* 'filename'::
+	Generate a unified kernel image as 'filename'. If a CPIO image is
+	successfully built, it will be used to generate a unified kernel image for
+	UEFI booting. This combines the initramfs, the kernel, any specified
+	microcode and the kernel cmdline into one executable. This is useful for
+	boot chain integrity where the file is signed. Default: no.
+	For a list of relevant options see 'Options for unified kernel image' below.
 
 *-P, \--allpresets*::
 	Process all presets contained in '/etc/mkinitcpio.d'. See the '-p' option for
@@ -117,11 +117,11 @@ Options
 *-z, \--compress* 'compress'::
 	Override the compression method with the 'compress' program.
 
-Options for UEFI executable
+Options for unified kernel image
 ---------------------------
 
 *--cmdline* 'filename'::
-	Use kernel command line with UEFI executable. If none is specified,
+	Use kernel command line with unified kernel image. If none is specified,
 	try one of the files '/etc/kernel/cmdline', '/usr/share/kernel/cmdline'
 	or '/proc/cmdline'.
 
@@ -129,20 +129,20 @@ Options for UEFI executable
 	UEFI executables can show a bitmap file on boot.
 
 *--uefistub* 'filename'::
-	UEFI stub image used for UEFI executable generation.
+	UEFI stub image used for unified kernel image generation.
 	Default: Attempts to look for a systemd-boot or gummiboot
 	stub loader.
 
 *--kernelimage* 'filename'::
-	Include a kernel image for the UEFI executable. Default: one of
+	Include a kernel image for the unified kernel image. Default: one of
 	'/lib/modules/$KERNELVERSION/vmlinuz', '/boot/vmlinuz-$KERNELVERSION', or
 	'/boot/vmlinuz-linux'.
 
 *--microcode* 'filename'::
-	Include microcode into the UEFI executable. Default: no.
+	Include microcode into the unified kernel image. Default: no.
 
 *--osrelease* 'filename'::
-	Include a os-release file for the UEFI executable.
+	Include a os-release file for the unified kernel image.
 	Default: '/etc/os-release' or '/usr/lib/os-release'.
 
 About Presets
@@ -400,11 +400,11 @@ Examples
 	resulting image will be written to /boot/initramfs-linux.img.
 
 *mkinitcpio -U /efi/EFI/Linux/systemd-linux.efi*::
-	Create an initial ramdisk for the kernel along with a UEFI executable.
+	Create an initial ramdisk for the kernel along with a unified kernel image.
 	The resuling executable will be written to /efi/EFI/Linux/systemd-linux.efi.
 
 *mkinitcpio -U /efi/EFI/Linux/systemd-linux.efi --microcode /boot/intel-ucode.img --splash /usr/share/systemd/bootctl/splash-arch.bmp*::
-	Create an initial ramdisk for the kernel and an UEFI executable. This
+	Create an initial ramdisk for the kernel and a unified kernel image. This
 	also includes the Intel CPU microcode and a splash image which will be
 	used during boot.
 

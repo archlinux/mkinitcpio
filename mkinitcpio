@@ -63,12 +63,12 @@ usage: ${0##*/} [options]
    -d, --generatedir <dir>      Write generated image into <dir>
    -t, --builddir <dir>         Use DIR as the temporary build directory
    -D, --hookdir <dir>          Specify where to look for hooks
-   -U, --uefi <path>            Build an UEFI executable
+   -U, --uki <path>             Build a unified kernel image
    -V, --version                Display version information and exit
    -v, --verbose                Verbose output (default: no)
    -z, --compress <program>     Use an alternate compressor on the image
 
-  Options for UEFI executable (-U, --uefi):
+  Options for unified kernel image (-U, --uki):
    --cmdline <path>             Set kernel command line from file
                                 (default: /etc/kernel/cmdline or /proc/cmdline)
    --microcode <path>           Location of microcode
@@ -283,11 +283,11 @@ build_image() {
     fi
 }
 
-build_uefi(){
+build_uki(){
     local out=$1 initramfs=$2 cmdline=$3 osrelease=$4 splash=$5 kernelimg=$6 uefistub=$7 microcode=(${@:8}) errmsg=
     OBJCOPYARGS=()
 
-    msg "Creating UEFI executable: %s" "$out"
+    msg 'Creating unified kernel image: %s' "$out"
 
     if [[ -z "$uefistub" ]]; then
         for stub in {/usr,}/lib/{systemd/boot/efi,gummiboot}/linux{x64,ia32,aa64}.efi.stub; do
@@ -370,9 +370,9 @@ build_uefi(){
 
     status=$?
     if (( $status )) ; then
-        error "UEFI executable generation FAILED"
+        error 'Unified kernel image generation FAILED'
     else
-        msg "UEFI executable generation successful"
+        msg 'Unified kernel image generation successful'
     fi
 }
 
@@ -425,18 +425,23 @@ process_preset() (
             continue
         fi
 
-        preset_efi_image=${p}_efi_image
-        if [[ ${!preset_efi_image} ]]; then
-            preset_cmd+=(-U "${!preset_efi_image}")
-            preset_remove_cmd+=("${!preset_efi_image}")
+        preset_uki="${p}_uki"
+        if [[ ! -v "${p}_uki" && -v "${p}_efi_image" ]]; then
+            preset_uki="${p}_efi_image"
+            warning "Deprecated option '%s' found. Update '%s' to use '%s' instead." "${p}_efi_image" "$preset" "${p}_uki"
+        fi
+
+        if [[ -n "${!preset_uki}" ]]; then
+            preset_cmd+=(-U "${!preset_uki}")
+            preset_remove_cmd+=("${!preset_uki}")
         fi
 
         preset_image=${p}_image
         if [[ ${!preset_image} ]]; then
             preset_cmd+=(-g "${!preset_image}")
             preset_remove_cmd+=("${!preset_image}")
-        elif [[ ! ${!preset_efi_image} ]]; then
-            warning "No image or efi_image file specified. Skipping image \`%s'" "$p"
+        elif [[ -z "${!preset_uki}" ]]; then
+            warning "No image or UKI specified. Skipping image \`%s'" "$p"
             continue
         fi
 
@@ -511,7 +516,7 @@ _opt_short='A:c:D:g:H:hk:nLMPp:Rr:S:sd:t:U:Vvz:'
 _opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
           'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets'
           'preset:' 'remove' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:'
-          'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:')
+          'uki:' 'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:')
 
 parseopts "$_opt_short" "${_opt_long[@]}" -- "$@" || exit 1
 set -- "${OPTRET[@]}"
@@ -570,10 +575,13 @@ while :; do
         -n|--nocolor)
             _optcolor=0
             ;;
-        -U|--uefi)
+        --uefi)
+            warning 'The --uefi option is deprecated. Use --uki instead.'
+            ;&
+        -U|--uki)
             shift
             [[ -d $1 ]] && die "Invalid image path -- must not be a directory"
-            if ! _optuefi=$(readlink -f "$1") || [[ ! -e ${_optuefi%/*} ]]; then
+            if ! _optuki="$(readlink -f "$1")" || [[ ! -e "${_optuki%/*}" ]]; then
                 die "Unable to write to path: \`%s'" "$1"
             fi
             ;;
@@ -667,8 +675,8 @@ if [[ -n $_d_flag_hooks && -n $_d_flag_install ]]; then
 fi
 
 
-# If we specified --uefi but no -g we want to create a temporary initramfs which will be used with the efi executable.
-if [[ $_optuefi && $_optgenimg == "" ]]; then
+# If we specified --uki but no -g we want to create a temporary initramfs which will be used with the efi executable.
+if [[ -n "$_optuki" && -z "$_optgenimg" ]]; then
     tmpfile=$(mktemp -t mkinitcpio.XXXXXX)
     trap "rm $tmpfile" EXIT
     _optgenimg="$tmpfile"
@@ -767,7 +775,7 @@ ldconfig -r "$BUILDROOT" &>/dev/null
 # remove /var/cache/ldconfig/aux-cache for reproducability
 rm -f -- "$BUILDROOT/var/cache/ldconfig/aux-cache"
 
-# Set umask to create initramfs images and EFI images as 600
+# Set umask to create initramfs images and unified kernel images as 600
 umask 077
 
 if [[ $_optgenimg ]]; then
@@ -778,8 +786,8 @@ else
     msg "Dry run complete, use -g IMAGE to generate a real image"
 fi
 
-if [[ $_optuefi && $_optgenimg ]]; then
-    build_uefi "$_optuefi" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" "${_optmicrocode[@]}"
+if [[ -n "$_optuki" && -n "$_optgenimg" ]]; then
+    build_uki "$_optuki" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" "${_optmicrocode[@]}"
 fi
 
 cleanup $(( !!_builderrors ))
