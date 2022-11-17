@@ -42,7 +42,21 @@ build() {
 
     # subshell to avoid namespace pollution
     (
-        shopt -s nullglob
+        shopt -s extglob nullglob
+
+        add_font_file() {
+            local cat file filename fontfile="$1"
+            get_decompressor "$fontfile"
+            add_dir "${of%/*}"
+            "$cat" "$fontfile" > "$BUILDROOT/$of"
+            if [[ "$(head -c 23 "$BUILDROOT/$of" | tr -d '\0')" == '# combine partial fonts' ]]; then
+                while read filename; do
+                    for file in "/usr/share/kbd/consolefonts/partialfonts/$filename"?('.gz'|'.bz2'); do
+                        add_font_file "$file"
+                    done
+                done < <(sed '/^#/d' "$BUILDROOT/$of")
+            fi
+        }
 
         [[ -s /etc/vconsole.conf ]] && . /etc/vconsole.conf
 
@@ -50,11 +64,12 @@ build() {
         [[ $KEYMAP_TOGGLE ]] && add_keymap_file $KEYMAP_TOGGLE.map
 
         if [[ $FONT ]]; then
-            for file in "/usr/share/kbd/consolefonts/$FONT".@(fnt|psf?(u))?(.gz); do
-                get_decompressor "$file"
-                add_dir "${of%/*}"
-                $cat "$file" > "$BUILDROOT/$of"
+            for file in "/usr/share/kbd/consolefonts/$FONT"?('.psfu'|'.psf'|'.cp'|'.fnt')?('.gz'|'.bz2'); do
+                add_font_file "$file"
+                return
             done
+            error "sd-vconsole: requested font not found: '%s'" "$FONT"
+            return 1
         fi
     )
 }
