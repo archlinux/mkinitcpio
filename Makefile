@@ -26,6 +26,8 @@ BASH_SCRIPTS = \
 	mkinitcpio \
 	lsinitcpio
 
+ALL_SCRIPTS=$(shell grep -rIzlE '^#! ?/.+(ba|d|k)?sh' --exclude-dir=".git" ./)
+
 all: doc
 
 MANPAGES = \
@@ -87,6 +89,9 @@ check:
 	@r=0; for t in test/test_*; do $$t || { echo $$t fail; r=1; }; done; exit $$r
 	@r=0; for s in $(BASH_SCRIPTS); do bash -O extglob -n $$s || r=1; done; exit $$r
 
+shellcheck:
+	shellcheck -W 99 --color $(ALL_SCRIPTS)
+
 clean:
 	$(RM) mkinitcpio-$(VERSION).tar.gz.sig mkinitcpio-$(VERSION).tar.gz $(MANPAGES)
 
@@ -107,4 +112,4 @@ upload: mkinitcpio-$(VERSION).tar.gz mkinitcpio-$(VERSION).tar.gz.sig
 version:
 	@echo $(VERSION)
 
-.PHONY: clean dist install tarball version
+.PHONY: clean dist install shellcheck tarball version
