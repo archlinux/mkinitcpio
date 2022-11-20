@@ -1,0 +1,49 @@
+mkinitcptio - Arch Linux initramfs generation tools 
+
+CHANGES WITH v33:
+
+        Announcements:
+    
+        * Development has moved to the Arch Linux GitLab instance. The new
+          URL is https://gitlab.archlinux.org/archlinux/mkinitcpio/mkinitcpio
+    
+        Changes in mkinitcpio:
+        
+        * Introduce DECOMPRESS_MODULES in mkinitcpio.conf. Allows the user to
+          toggle if modules should be recompressed during initramfs creation or
+          not. Defaults to "yes".
+
+        * Support UKI generation on AArch64.
+
+        * Introduce a new --remove switch which allows mkinitcpio to remove all
+          mkinitcpio generated files. Only works together
+          with the -p/-P switches currently.
+
+        * In the initramfs the file /etc/os-release, symlinked to
+          /etc/initrd-release, is now included. systemd enabled initramfs
+          environments might need this file.
+
+        * Supports finding kernel version in gzipped non-x86 kernels.
+
+        * Try to properly resolve symlinks when adding files into the initramfs.
+
+        Changes in hooks:
+
+        * install/fsck now includes the e2fsck binary and symlinks fsck.ext*
+          utilities to this binary.
+
+        * install/fsck will no longer attempt to include nonexistent fsck
+          helpers.
+
+        * install/kms will attempt to include modules that implement the privacy
+          screen feature. Currently the module names are hardcoded.
+
+        Changes in packaging:
+
+        * mkinitcpio-remove and mkinitcpio-install are now unified into a single
+          script installed to 'libalpm/scripts/mkinitcpio'.
+
+        Contributions from: 0x7F, Felix Yan, Hugo Osvaldo Barrera,
+        Morten Linderud, nl6720, rogueai, Simon Brüggen, Tobias Powalowski
+
+        – 2022-11-20
