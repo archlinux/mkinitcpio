@@ -222,7 +222,7 @@ functions exist to facilitate this.
 	autodetect hook is not present in the image, this function is identical to
 	*add_all_modules*.
 
-*add_runscript*::
+*add_runscript* 'scriptname'::
 
 	Adds a runtime hook to the image, which is a busybox ash compatible shell
 	script. The name of the script is guaranteed to match the name of the hook the
