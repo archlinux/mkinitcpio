@@ -688,7 +688,7 @@ add_binary() {
     #   $2: destination on initcpio (optional, defaults to same as source)
 
     local -a sodeps
-    local line= regex= binary= dest= mode= sodep= resolved=
+    local line='' regex='' binary='' dest='' mode='' sodep='' resolved='' shebang='' interpreter=''
 
     if [[ ${1:0:1} != '/' ]]; then
         binary=$(type -P "$1")
@@ -705,8 +705,32 @@ add_binary() {
 
     add_file "$binary" "$dest"
 
-    # negate this so that the RETURN trap is not fired on non-binaries
-    ! lddout=$(ldd "$binary" 2>/dev/null) && return 0
+    # non-binaries
+    if ! lddout="$(ldd "$binary" 2>/dev/null)"; then
+        # detect if the file has a shebang
+        if IFS='' LC_ALL=C read -rn2 -d '' shebang < "$binary" && [[ "$shebang" == '#!' ]]; then
+            read -r shebang < "$binary"
+            interpreter="${shebang##\#\!}"
+            # strip /usr/bin/env and warn if it is missing
+            if [[ "$interpreter" == '/usr/bin/env'* ]]; then
+                [[ -e "${BUILDROOT}/usr/bin/env" ]] || warning "Possibly missing '/usr/bin/env' for binary: %s" "$binary"
+                interpreter="${interpreter##'/usr/bin/env'[[:space:]]}"
+            fi
+            # strip parameters
+            interpreter="${interpreter%%[[:space:]]*}"
+            # lookup the interpreter in PATH on BUILDROOT
+            if [[ "$interpreter" != '/'* ]] && PATH="${BUILDROOT}/usr/local/sbin:${BUILDROOT}/usr/local/bin:${BUILDROOT}/usr/bin" type -P "$interpreter" &>/dev/null; then
+                interpreter="$(PATH="${BUILDROOT}/usr/local/sbin:${BUILDROOT}/usr/local/bin:${BUILDROOT}/usr/bin" type -P "$interpreter")"
+            fi
+
+            # check if the interpreter exists in BUILDROOT
+            if [[ ! -e "${BUILDROOT}/${interpreter}" ]]; then
+                warning "Possibly missing '%s' for binary: %s" "$interpreter" "$binary"
+            fi
+        else
+            return 0
+        fi
+    fi
 
     # resolve sodeps
     regex='^(|.+ )(/.+) \(0x[a-fA-F0-9]+\)'
