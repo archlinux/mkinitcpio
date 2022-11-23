@@ -644,13 +644,8 @@ add_file() {
         mode="$(stat -c %a -- "$srcrealpath")"
         add_file "$srcrealpath" "$srcrealpath" "$mode"
         [[ -d "${BUILDROOT}${dest%/*}" ]] || install -d -- "${BUILDROOT}${dest%/*}"
-        if [[ "$src" == "$dest" ]]; then
-            # copy the symlink to preserve relativity
-            cp -adT -- "$src" "${BUILDROOT}${src}"
-        else
-            # create the symlink
-            add_symlink "$src" "$dest"
-        fi
+        # create the symlink
+        add_symlink "$src" "$dest"
     else
        command install -Dm$mode "$src" "$BUILDROOT$dest"
     fi
