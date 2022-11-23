@@ -589,8 +589,8 @@ add_symlink() {
 
     (( $# == 1 || $# == 2 )) || return 1
 
-    if [[ -z $target ]]; then
-        target=$(readlink -f "$name")
+    if [[ -z "$target" || "$name" == "$target" ]]; then
+        target="$(find "$name" -prune -printf '%l')"
         if [[ -z $target ]]; then
             error 'invalid symlink: %s' "$name"
             return 1
