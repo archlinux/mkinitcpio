@@ -228,6 +228,12 @@ functions exist to facilitate this.
 	script. The name of the script is guaranteed to match the name of the hook the
 	script is called from.
 
+*add_udev_rule* 'rule-file'::
+
+	Adds a udev rule to the image. Dependencies on binaries will be discovered and
+	added. The argument can be a rule file name (discovered from well known udev
+	paths) or an absolute path.
+
 About Runtime Hooks
 -------------------
 Runtime hooks added to the image via the *add_runscript* function from an
