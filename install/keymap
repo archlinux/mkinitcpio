@@ -1,6 +1,9 @@
 #!/bin/bash
 
 build() {
+    # prevent conflicting variables from affecting vconsole.conf values
+    # shellcheck disable=SC2034
+    local KEYMAP KEYMAP_TOGGLE FONT FONT_MAP FONT_UNIMAP
 
     # subshell to avoid namespace pollution
     (

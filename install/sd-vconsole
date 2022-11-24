@@ -34,6 +34,10 @@ add_keymap_file() {
 }
 
 build() {
+    # prevent conflicting variables from affecting vconsole.conf values
+    # shellcheck disable=SC2034
+    local KEYMAP KEYMAP_TOGGLE FONT FONT_MAP FONT_UNIMAP
+
     add_binary /usr/lib/systemd/systemd-vconsole-setup
     add_binary loadkeys
     add_binary setfont
