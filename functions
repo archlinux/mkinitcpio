@@ -645,7 +645,7 @@ add_file() {
         srcrealpath="$(realpath -- "$src")"
         mode="${3:-$(stat -c %a -- "$srcrealpath")}"
         add_file "$srcrealpath" "$srcrealpath" "$mode"
-        [[ -d "${BUILDROOT}${dest%/*}" ]] || install -d -- "${BUILDROOT}${dest%/*}"
+        [[ -d "${BUILDROOT}${dest%/*}" ]] || add_dir "${dest%/*}"
         # create the symlink
         add_symlink "$dest" "$src"
     else
@@ -934,7 +934,7 @@ try_enable_color() {
 }
 
 install_modules() {
-    local m moduledest=$BUILDROOT/lib/modules/$KERNELVERSION
+    local m
     local -a xz_comp gz_comp zst_comp
 
     [[ $KERNELVERSION == none ]] && return 0
@@ -945,7 +945,7 @@ install_modules() {
     fi
 
     for m in "$@"; do
-        install -D -m644 "$m" "$BUILDROOT/$m"
+        add_file "$m" "$m" 644
         # unzip modules prior to recompression
         if [[ "$MODULES_DECOMPRESS" == 'yes' ]]; then
             case "$m" in
@@ -967,11 +967,11 @@ install_modules() {
     (( ${#zst_comp[*]} )) && zstd -d --rm -q "${zst_comp[@]}"
 
     msg "Generating module dependencies"
-    install -m644 -t "$moduledest" "$_d_kmoduledir"/modules.{builtin,builtin.modinfo,order}
+    map add_file "$_d_kmoduledir"/modules.{builtin,builtin.modinfo,order}
     depmod -b "$BUILDROOT" "$KERNELVERSION"
 
     # remove all non-binary module.* files (except devname for on-demand module loading)
-    rm "$moduledest"/modules.!(*.bin|devname|softdep)
+    rm "${BUILDROOT}${_d_kmoduledir}"/modules.!(*.bin|devname|softdep)
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
