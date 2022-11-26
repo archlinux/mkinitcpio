@@ -591,10 +591,12 @@ add_symlink() {
 
     if [[ -z "$target" || "$name" == "$target" ]]; then
         target="$(find "$name" -prune -printf '%l')"
-        if [[ -z $target ]]; then
-            error 'invalid symlink: %s' "$name"
-            return 1
-        fi
+    elif [[ -L "$target" ]]; then
+        target="$(realpath -eq -- "$target")"
+    fi
+    if [[ -z "$target" ]]; then
+        error 'invalid symlink: %s' "$name"
+        return 1
     fi
 
     add_dir "${name%/*}"
@@ -641,11 +643,11 @@ add_file() {
     if [[ -L "$src" ]]; then
         # add the file
         srcrealpath="$(realpath -- "$src")"
-        mode="$(stat -c %a -- "$srcrealpath")"
+        mode="${3:-$(stat -c %a -- "$srcrealpath")}"
         add_file "$srcrealpath" "$srcrealpath" "$mode"
         [[ -d "${BUILDROOT}${dest%/*}" ]] || install -d -- "${BUILDROOT}${dest%/*}"
         # create the symlink
-        add_symlink "$src" "$dest"
+        add_symlink "$dest" "$src"
     else
        command install -Dm$mode "$src" "$BUILDROOT$dest"
     fi
