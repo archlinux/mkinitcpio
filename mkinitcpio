@@ -363,7 +363,7 @@ build_uefi(){
 
     objcopy \
         --add-section .osrel="$osrelease" --change-section-vma .osrel=0x20000 \
-        --add-section .cmdline=<(grep '^[^#]' "$cmdline" | tr -s '\n' ' '; printf '\0') --change-section-vma .cmdline=0x30000 \
+        --add-section .cmdline=<(grep -a '^[^#]' "$cmdline" | tr -s '\n' ' '; printf '\n\0') --change-section-vma .cmdline=0x30000 \
         --add-section .linux="$kernelimg" --change-section-vma .linux=0x2000000 \
         --add-section .initrd=<(cat ${microcode[@]} "$initramfs") --change-section-vma .initrd=0x3000000 \
         ${OBJCOPYARGS[@]} "$uefistub" "$out"
