@@ -585,12 +585,20 @@ add_symlink() {
     #   $1: pathname of symlink on image
     #   $2: absolute path to target of symlink (optional, can be read from $1)
 
-    local name=$1 target=$2
+    local name="$1" target="${2:-$1}" linkobject
 
     (( $# == 1 || $# == 2 )) || return 1
 
-    if [[ -z "$target" || "$name" == "$target" ]]; then
-        target="$(find "$name" -prune -printf '%l')"
+    # find out the link target
+    if [[ "$name" == "$target" ]]; then
+        linkobject="$(find "$target" -prune -printf '%l')"
+        # use relative path if the target is a file in the same directory as the link
+        # anything more would lead to the insanity of parsing each element in its path
+        if [[ "$linkobject" != *'/'* && ! -L "${name%/*}/${linkobject}" ]]; then
+            target="$linkobject"
+        else
+            target="$(realpath -eq -- "$target")"
+        fi
     elif [[ -L "$target" ]]; then
         target="$(realpath -eq -- "$target")"
     fi
