@@ -619,16 +619,10 @@ add_file() {
     (( $# )) || return 1
 
     # determine source and destination
-    local src=$1 dest=${2:-$1} mode= srcrealpath
+    local src="$1" dest="${2:-$1}" mode="$3" srcrealpath
 
     if [[ ! -f $src ]]; then
         error "file not found: \`%s'" "$src"
-        return 1
-    fi
-
-    mode=${3:-$(stat -c %a "$src")}
-    if [[ -z $mode ]]; then
-        error "failed to stat file: \`%s'." "$src"
         return 1
     fi
 
@@ -641,13 +635,17 @@ add_file() {
     if [[ -L "$src" ]]; then
         # add the file
         srcrealpath="$(realpath -- "$src")"
-        mode="${3:-$(stat -c %a -- "$srcrealpath")}"
         add_file "$srcrealpath" "$srcrealpath" "$mode"
         [[ -d "${BUILDROOT}${dest%/*}" ]] || add_dir "${dest%/*}"
         # create the symlink
         add_symlink "$dest" "$src"
     else
-       command install -Dm$mode "$src" "$BUILDROOT$dest"
+        if [[ -z "$mode" ]]; then
+            add_dir "${dest%/*}"
+            command cp --preserve=mode,ownership "$src" "${BUILDROOT}${dest}"
+        else
+            command install -Dm"$mode" "$src" "${BUILDROOT}${dest}"
+        fi
     fi
 }
 
@@ -705,9 +703,8 @@ add_binary() {
     fi
 
     dest=${2:-$binary}
-    mode=$(stat -c %a "$binary")
 
-    add_file "$binary" "$dest" "$mode"
+    add_file "$binary" "$dest"
 
     # negate this so that the RETURN trap is not fired on non-binaries
     ! lddout=$(ldd "$binary" 2>/dev/null) && return 0
@@ -724,7 +721,7 @@ add_binary() {
         fi
 
         if [[ -f $sodep && ! -e $BUILDROOT$sodep ]]; then
-            add_file "$sodep" "$sodep" "$(stat -Lc %a "$sodep")"
+            add_file "$sodep" "$sodep"
         fi
     done <<< "$lddout"
 
