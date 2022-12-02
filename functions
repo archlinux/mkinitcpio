@@ -625,8 +625,6 @@ add_file() {
         error "file not found: \`%s'" "$src"
         return 1
     fi
-    src="$(realpath -s -- "$src")"
-    dest="$(realpath -ms -- "$dest")"
 
     mode=${3:-$(stat -c %a "$src")}
     if [[ -z $mode ]]; then
@@ -705,10 +703,8 @@ add_binary() {
         error "file not found: \`%s'" "$1"
         return 1
     fi
-    binary="$(realpath -s -- "$binary")"
 
     dest=${2:-$binary}
-    dest="$(realpath -ms -- "$dest")"
     mode=$(stat -c %a "$binary")
 
     add_file "$binary" "$dest" "$mode"
