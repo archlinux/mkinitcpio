@@ -14,3 +14,16 @@ check:
         - echo -e "\e[0Ksection_end:`date +%s`:pacman\r\e[0K"
     script:
         - make shellcheck
+
+test:
+    stage: check
+    before_script:
+        - echo -e "\e[0Ksection_start:`date +%s`:pacman[collapsed=true]\r\e[0KInstalling bats"
+        - pacman -Sy --needed --noconfirm archlinux-keyring
+        - pacman --noconfirm -Syu --needed git make bash-bats bash-bats-assert bash-bats-support lzop
+        - echo -e "\e[0Ksection_end:`date +%s`:pacman\r\e[0K"
+    script:
+        - make --silent check BATS_ARGS='-F junit' > bats-report.xml
+    artifacts:
+        reports:
+            junit: bats-report.xml

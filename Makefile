@@ -22,10 +22,6 @@ DIRS = \
 	/usr/share/libalpm/hooks \
 	/usr/share/libalpm/scripts
 
-BASH_SCRIPTS = \
-	mkinitcpio \
-	lsinitcpio
-
 ALL_SCRIPTS=$(shell grep -rIzlE '^#! ?/.+(ba|d|k)?sh' --exclude-dir=".git" ./)
 
 all: doc
@@ -86,8 +82,7 @@ man/%: man/%.txt Makefile
 		-a manmanual="mkinitcpio manual" $<
 
 check:
-	@r=0; for t in test/test_*; do $$t || { echo $$t fail; r=1; }; done; exit $$r
-	@r=0; for s in $(BASH_SCRIPTS); do bash -O extglob -n $$s || r=1; done; exit $$r
+	bats $(BATS_ARGS) test/cases/
 
 shellcheck:
 	shellcheck -W 99 --color $(ALL_SCRIPTS)
@@ -112,4 +107,4 @@ upload: mkinitcpio-$(VERSION).tar.gz mkinitcpio-$(VERSION).tar.gz.sig
 version:
 	@echo $(VERSION)
 
-.PHONY: clean dist install shellcheck tarball version
+.PHONY: check clean dist install shellcheck tarball version
