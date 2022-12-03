@@ -1,5 +1,59 @@
 mkinitcptio - Arch Linux initramfs generation tools 
 
+CHANGES WITH v34:
+
+        Announcement of future breaking changes:
+
+        * Preset variables *_efi_image are deprecated in favor of *_uki and
+          option --uefi is deprecated in favor with --uki. The old variables and
+          options still work, but emit a deprecation warning.
+
+        Changes in mkinitcpio:
+
+        * Preserve relativity of symbolic links that reside in the same
+          directory as their targets.
+
+        * Fix symbolic link creation and create target files with correct
+          permissions.
+
+        * Document add_udev_rule that has been available since v31.
+
+        * Instead of using stat to get the file permissions and install to copy
+          it, use cp unless custom permissions are specified. This improves
+          overall speed of file additions.
+
+        * Existing test suite is migrated to bats (Bash Automated Testing
+          System) and more tests are now available.
+
+        * Ensure /proc/cmdline is read as text and make sure to append a newline
+          and NUL to the .cmdline embedded in unified kernel images. This works
+          around an issue where /proc/cmdline contains garbage.
+
+        * The kernel-install plugin now supports generating unified kernel
+          images.
+
+        * Warn if the interpreter (from the shebang) is missing when adding
+          "binaries" that are actually scripts.
+
+        Changes in hooks:
+
+        * hooks/shutdown once again works when /run/initramfs/ already exists in
+          the initramfs.
+
+        * install/autodetect looks up modules in the target kernel version
+          instead of the currently running one.
+
+        * install/consolefont, install/keymap and install/sd-vconsole now
+          declare vconsole.conf supported variables as local to prevent
+          conflicts with misconstructed hooks may set these variables globally.
+
+        * install/memdisk uses the add_udev_rule function available since v31.
+
+        Contributions from: Adam Maroti, Christian Hesse, Geert Hendrickx,
+        Hector Martin, Morten Linderud, Tcc, Tobias Powalowski, nl6720, rogueai
+
+        – 2022-12-07
+
 CHANGES WITH v33:
 
         Announcements:
