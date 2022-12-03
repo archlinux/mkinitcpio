@@ -1,3 +1,6 @@
+#!/usr/bin/ash
+# SPDX-License-Identifier: GPL-2.0-only
+
 # This file contains common functions used in init and in hooks
 
 # logging targets

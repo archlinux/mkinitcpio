@@ -1,5 +1,6 @@
 /////
 vim:set ts=4 sw=4 syntax=asciidoc noet:
+SPDX-License-Identifier: GPL-2.0-only
 /////
 mkinitcpio.conf(5)
 ==================

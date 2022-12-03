@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
 
 build() {
     find "$BUILDROOT" -type f -perm -u+w -print0 2>/dev/null | while read -d '' bin; do

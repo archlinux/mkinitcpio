@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-only
+
 [Unit]
 Description=Generate shutdown-ramfs
 DefaultDependencies=no

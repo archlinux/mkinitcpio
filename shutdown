@@ -1,4 +1,5 @@
 #!/usr/bin/ash
+# SPDX-License-Identifier: GPL-2.0-only
 
 # teardown a single device by node name
 #   $1: device node name, e.g. md0, dm-2

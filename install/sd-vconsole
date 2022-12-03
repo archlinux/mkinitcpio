@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
 
 get_decompressor() {
     case "$1" in

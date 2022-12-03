@@ -1,3 +1,6 @@
+#!/usr/bin/env bats
+# SPDX-License-Identifier: GPL-2.0-only
+
 shopt -s extglob
 
 load '/usr/lib/bats-assert/load'

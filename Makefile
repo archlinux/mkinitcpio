@@ -1,4 +1,5 @@
 # Makefile for mkinitcpio
+# SPDX-License-Identifier: GPL-2.0-only
 
 VERSION = $(shell if test -f VERSION; then cat VERSION; else git describe | sed 's/-/./g;s/^v//;'; fi)
 

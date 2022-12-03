@@ -1,4 +1,5 @@
 #!/usr/bin/ash
+# SPDX-License-Identifier: GPL-2.0-only
 
 run_latehook() {
     local usr_source mountopts passno realtab=/new_root/etc/fstab

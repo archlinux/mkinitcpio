@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
 
 # Generates a temporary image with the specified compression options
 __gen_test_image() {

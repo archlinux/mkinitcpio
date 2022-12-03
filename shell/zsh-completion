@@ -1,5 +1,7 @@
 #compdef lsinitcpio mkinitcpio
 
+# SPDX-License-Identifier: GPL-2.0-only
+
 _detect_kver() {
     local __ kver_validator='^[[:digit:]]+(\.[[:digit:]]+)+'
     offset=$(hexdump -s 526 -n 2 -e '"%0d"' "$1" 2>/dev/null) || return 1
