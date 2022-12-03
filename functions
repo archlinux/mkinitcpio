@@ -626,11 +626,6 @@ add_file() {
         return 1
     fi
 
-    if [[ -e $BUILDROOT$dest ]]; then
-        quiet "overwriting file: %s" "$dest"
-    else
-        quiet "adding file: %s" "$dest"
-    fi
     # check if $src is a symlink
     if [[ -L "$src" ]]; then
         # add the file
@@ -639,6 +634,11 @@ add_file() {
         # create the symlink
         add_symlink "$dest" "$src"
     else
+        if [[ -e "${BUILDROOT}${dest}" ]]; then
+            quiet 'overwriting file: %s' "$dest"
+        else
+            quiet 'adding file: %s' "$dest"
+        fi
         if [[ -z "$mode" ]]; then
             add_dir "${dest%/*}"
             command cp --preserve=mode,ownership "$src" "${BUILDROOT}${dest}"
