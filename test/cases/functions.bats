@@ -69,3 +69,16 @@ setup() {
     run kver_x86 "$tmp_knl"
     assert_output "6.0.9-arch1-1"
 }
+
+@test "add_binary script" {
+    local tmp_bin BUILDROOT="${BATS_RUN_TMPDIR}/buildroot/" interpreter="/usr/local/${BATS_TEST_NAME}.${RANDOM}" _optquiet=1
+
+    tmp_bin="$(mktemp --tmpdir="$BATS_RUN_TMPDIR" tmp_bin.XXXXXX)"
+    printf '#!%s\n\n:\n' "$interpreter" > "$tmp_bin"
+
+    install -d -- "$BUILDROOT"
+    # initialize_buildroot unconditionally creates a /tmp/mkinitcpio.XXXXXX work directory
+    rmdir -- "$(initialize_buildroot '0' "$BUILDROOT")"
+    run add_binary "$tmp_bin"
+    assert_output "==> WARNING: Possibly missing '${interpreter}' for binary: $tmp_bin"
+}
