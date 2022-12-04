@@ -636,7 +636,6 @@ add_file() {
         # add the file
         srcrealpath="$(realpath -- "$src")"
         add_file "$srcrealpath" "$srcrealpath" "$mode"
-        [[ -d "${BUILDROOT}${dest%/*}" ]] || add_dir "${dest%/*}"
         # create the symlink
         add_symlink "$dest" "$src"
     else
