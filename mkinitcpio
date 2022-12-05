@@ -30,7 +30,7 @@ _optskiphooks=() _optaddhooks=() _hooks=()  _optpreset=()
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
 
 # export a sane PATH
-export PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+export PATH='/usr/local/sbin:/usr/local/bin:/usr/bin'
 
 # Sanitize environment further
 # GREP_OPTIONS="--color=always" will break everything
