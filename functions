@@ -641,7 +641,7 @@ add_file() {
         fi
         if [[ -z "$mode" ]]; then
             add_dir "${dest%/*}"
-            command cp --preserve=mode,ownership "$src" "${BUILDROOT}${dest}"
+            command cp -f --preserve=mode,ownership "$src" "${BUILDROOT}${dest}"
         else
             command install -Dm"$mode" "$src" "${BUILDROOT}${dest}"
         fi
