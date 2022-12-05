@@ -1,11 +1,64 @@
 #!/bin/sh
 
-case $1 in
+COMMAND="${1:?}"
+KERNEL_VERSION="${2:?}"
+ENTRY_DIR_ABS="$3"
+KERNEL_IMAGE="$4"
+
+if [ -n "$KERNEL_INSTALL_GENERATOR" ] && [ "$KERNEL_INSTALL_GENERATOR" != mkinitcpio ]; then
+    exit 0
+fi
+
+MICROCODE=""
+KERNEL_IMAGE_FLAGS=""
+case "$KERNEL_INSTALL_LAYOUT" in
+    uki)
+        IMAGE_PATH="$KERNEL_INSTALL_BOOT_ROOT/EFI/Linux"
+        install -d -- "$IMAGE_PATH" # create /<esp>/EFI/Linux if it not exists yet
+
+        IMAGE_PATH="$IMAGE_PATH/$KERNEL_INSTALL_ENTRY_TOKEN-$KERNEL_VERSION.efi"
+        IMAGE_GENERATION_FLAG="-U"
+
+        # autodetecting microcode images by known location
+        # They're from GRUB_EARLY_INITRD_LINUX_STOCK in https://git.savannah.gnu.org/cgit/grub.git/tree/util/grub-mkconfig.in.
+        for ucode_name in "intel-ucode.img" "amd-ucode.img" "intel-uc.img" "amd-uc.img" "early_ucode.cpio" "microcode.cpio"; do
+            if [ -e "/boot/$ucode_name" ]; then
+                [ "$KERNEL_INSTALL_VERBOSE" -gt 0 ] && echo "Found microcode image /boot/$ucode_name"
+                MICROCODE="--microcode '/boot/$ucode_name'"
+                break
+            elif [ -e "$KERNEL_INSTALL_BOOT_ROOT/$ucode_name" ]; then
+                [ "$KERNEL_INSTALL_VERBOSE" -gt 0 ] && echo "Found microcode image /boot/$ucode_name"
+                MICROCODE="--microcode '$KERNEL_INSTALL_BOOT_ROOT/$ucode_name'"
+                break
+            fi
+        done
+
+        KERNEL_IMAGE_FLAGS="--kernelimage '$KERNEL_IMAGE'"
+        ;;
+    bls)
+        IMAGE_GENERATION_FLAG="-g"
+        IMAGE_PATH="$ENTRY_DIR_ABS/initrd"
+        ;;
+    *)
+        exit 0
+        ;;
+esac
+
+case $COMMAND in
     add)
-        mkinitcpio -k "$2" -g "$3"/initrd
+        [ "$KERNEL_INSTALL_VERBOSE" -gt 0 ] && echo "+ mkinitcpio -k $KERNEL_VERSION $KERNEL_IMAGE_FLAGS $MICROCODE $IMAGE_GENERATION_FLAG $IMAGE_PATH"
+        #shellcheck disable=SC2046
+        mkinitcpio -k "$KERNEL_VERSION" $KERNEL_IMAGE_FLAGS $MICROCODE $IMAGE_GENERATION_FLAG "$IMAGE_PATH"
         ;;
     remove)
-        rm -f -- "$3"/initrd
+        #remove this so that remove is a noop for this install file after 90-uki-copy.install
+        if [ "$KERNEL_INSTALL_LAYOUT" == "uki" ]; then
+            [ "$KERNEL_INSTALL_VERBOSE" -gt 0 ] && echo rm -f -- "$IMAGE_PATH"
+            rm -f -- "$IMAGE_PATH"
+        else
+            printf "For BLS layout only the loader entry is removed during removal.\n"
+            printf "The image files (kernel, initramfs, etc) are left behind on the ESP partition, at: '%s'\n" "$ENTRY_DIR_ABS"
+        fi
         ;;
 esac
 
