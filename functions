@@ -360,7 +360,7 @@ auto_modules() {
 
     mapfile -t mods < <(find /sys/devices -name uevent \
         -exec sort -u {} + | awk -F= '$1 == "MODALIAS" && !_[$0]++')
-    mapfile -t mods < <(modprobe -qaR "${mods[@]#MODALIAS=}")
+    mapfile -t mods < <(modprobe -S "$1" -qaR "${mods[@]#MODALIAS=}")
 
     (( ${#mods[*]} )) && printf "%s\n" "${mods[@]//-/_}"
 }
