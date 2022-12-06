@@ -667,6 +667,9 @@ add_runscript() {
         return
     fi
 
+    if [[ -L "$script" ]]; then
+        script="$(realpath -- "$script")"
+    fi
     add_file "$script" "/hooks/$hookname" 755
 
     mapfile -t funcs < <(funcgrep '^run_[[:alnum:]_]+' "$script")
