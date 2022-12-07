@@ -1,29 +1,46 @@
 stages:
     - check
 
-check:
-    stage: check
+.pacman_install:
     before_script:
         # NOTE: Install latest archlinux-keyring before upgrading system. In the
         # future this should not be needed anymore when we can guarantee a valid
         # keyring for longer:
         # https://gitlab.archlinux.org/archlinux/archlinux-keyring/-/issues/4
-        - echo -e "\e[0Ksection_start:`date +%s`:pacman[collapsed=true]\r\e[0KInstalling ShellCheck"
+        - echo -e "\e[0Ksection_start:`date +%s`:pacman[collapsed=true]\r\e[0KInstalling dependencies"
         - pacman -Sy --needed --noconfirm archlinux-keyring
-        - pacman --noconfirm -Syu --needed git make shellcheck
+        - pacman --noconfirm -Syu --needed bash-bats bash-bats-assert bash-bats-support git jq kcov lzop make shellcheck
         - echo -e "\e[0Ksection_end:`date +%s`:pacman\r\e[0K"
+
+check:
+    stage: check
+    extends: .pacman_install
     script:
         - make shellcheck
 
 test:
     stage: check
-    before_script:
-        - echo -e "\e[0Ksection_start:`date +%s`:pacman[collapsed=true]\r\e[0KInstalling bats"
-        - pacman -Sy --needed --noconfirm archlinux-keyring
-        - pacman --noconfirm -Syu --needed git make bash-bats bash-bats-assert bash-bats-support lzop
-        - echo -e "\e[0Ksection_end:`date +%s`:pacman\r\e[0K"
+    extends: .pacman_install
     script:
         - make --silent check BATS_ARGS='-F junit' > bats-report.xml
     artifacts:
         reports:
             junit: bats-report.xml
+
+coverage:
+    stage: check
+    extends: .pacman_install
+    coverage: '/Percent covered\s+\d+\.\d+/'
+    script:
+        - make coverage 2>/dev/null
+        - jq -r '. |
+            ["Percent covered", .percent_covered],
+            ["Covered lines", .covered_lines],
+            ["Total lines", .total_lines],
+            ["Percent low", .percent_low],
+            ["Percent high", .percent_high] | @tsv' coverage/bats.*/coverage.json
+    artifacts:
+        reports:
+            coverage_report:
+                coverage_format: cobertura
+                path: coverage/bats.*/cobertura.xml

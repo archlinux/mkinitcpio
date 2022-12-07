@@ -84,6 +84,13 @@ man/%: man/%.txt Makefile
 check:
 	bats $(BATS_ARGS) test/cases/
 
+coverage:
+	kcov \
+		--include-path=$(CURDIR) \
+		--exclude-path=$(CURDIR)/test \
+		$(CURDIR)/coverage \
+		bats $(BATS_ARGS) test/cases/
+
 shellcheck:
 	shellcheck -W 99 --color $(ALL_SCRIPTS)
 
@@ -107,4 +114,4 @@ upload: mkinitcpio-$(VERSION).tar.gz mkinitcpio-$(VERSION).tar.gz.sig
 version:
 	@echo $(VERSION)
 
-.PHONY: check clean dist install shellcheck tarball version
+.PHONY: check clean coverage dist install shellcheck tarball version
