@@ -3,11 +3,11 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 _detect_kver() {
-    local __ kver_validator='^[[:digit:]]+(\.[[:digit:]]+)+'
-    offset=$(hexdump -s 526 -n 2 -e '"%0d"' "$1" 2>/dev/null) || return 1
+    local __ kver_validator='^[[:digit:]]+(\.[[:digit:]]+)+' offset
+    offset="$(od -An -j0x20E -dN2 "$1")" || return
     read kver __ < \
         <(dd if="$1" bs=1 count=127 skip=$(( offset + 0x200 )) 2>/dev/null)
-    [[ $kver =~ $kver_validator ]] && printf "$kver"
+    [[ "$kver" =~ $kver_validator ]] && printf "$kver"
 }
 
 _find_kernel_versions() {
