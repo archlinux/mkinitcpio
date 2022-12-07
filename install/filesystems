@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 build() {
+    # fs_autodetect_failed is assigned in the autodetect hook
+    # shellcheck disable=SC2154
     if (( fs_autodetect_failed )); then
         add_all_modules -f 'nls' '/kernel/fs'
     else

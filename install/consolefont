@@ -8,13 +8,14 @@ build() {
 
     # subshell to avoid namespace pollution
     (
+        # shellcheck disable=SC1091
         [[ -s /etc/vconsole.conf ]] && . /etc/vconsole.conf
 
-        if [[ $FONT ]]; then
+        if [[ -n "$FONT" ]]; then
             for file in "/usr/share/kbd/consolefonts/$FONT".@(fnt|psf?(u))?(.gz); do
-                if [[ -e $file ]]; then
-                    [[ $file =~ (\.(fnt|psfu?))(\.gz)?$ ]] && ext=${BASH_REMATCH[2]}
-                    if [[ $file = *.gz ]]; then
+                if [[ -e "$file" ]]; then
+                    [[ "$file" =~ (\.(fnt|psfu?))(\.gz)?$ ]] && ext="${BASH_REMATCH[2]}"
+                    if [[ "$file" == *'.gz' ]]; then
                         gzip -cd "$file" > "$BUILDROOT/consolefont.$ext"
                     else
                         add_file "$file" "/consolefont.$ext"

@@ -55,7 +55,7 @@ build() {
             add_dir "${of%/*}"
             "$cat" "$fontfile" > "$BUILDROOT/$of"
             if [[ "$(head -c 23 "$BUILDROOT/$of" | tr -d '\0')" == '# combine partial fonts' ]]; then
-                while read filename; do
+                while read -r filename; do
                     for file in "/usr/share/kbd/consolefonts/partialfonts/$filename"?('.gz'|'.bz2'); do
                         add_font_file "$file"
                     done
@@ -63,12 +63,13 @@ build() {
             fi
         }
 
+        # shellcheck disable=SC1091
         [[ -s /etc/vconsole.conf ]] && . /etc/vconsole.conf
 
-        [[ $KEYMAP ]] && add_keymap_file $KEYMAP.map
-        [[ $KEYMAP_TOGGLE ]] && add_keymap_file $KEYMAP_TOGGLE.map
+        [[ -n "$KEYMAP" ]] && add_keymap_file "${KEYMAP}.map"
+        [[ -n "$KEYMAP_TOGGLE" ]] && add_keymap_file "${KEYMAP_TOGGLE}.map"
 
-        if [[ $FONT ]]; then
+        if [[ -n "$FONT" ]]; then
             for file in "/usr/share/kbd/consolefonts/$FONT"?('.psfu'|'.psf'|'.cp'|'.fnt')?('.gz'|'.bz2'); do
                 add_font_file "$file"
                 return

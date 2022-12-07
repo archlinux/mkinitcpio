@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 build() {
-    local fsck= added=0
+    local fsck='' added=0
 
     add_fsck() {
         case "$1" in
@@ -29,12 +29,14 @@ build() {
         esac
     }
 
-    if (( ! fs_autodetect_failed )) && [[ $rootfstype$usrfstype ]]; then
-        if [[ $rootfstype ]]; then
-            add_fsck $rootfstype && (( ++added ))
+    # fs_autodetect_failed is assigned in the autodetect hook
+    # shellcheck disable=SC2154
+    if (( ! fs_autodetect_failed )) && [[ -n "${rootfstype}${usrfstype}" ]]; then
+        if [[ -n "$rootfstype" ]]; then
+            add_fsck "$rootfstype" && (( ++added ))
         fi
-        if [[ $usrfstype && $usrfstype != $rootfstype ]]; then
-            add_fsck $usrfstype && (( ++added ))
+        if [[ -n "$usrfstype" && "$usrfstype" != "$rootfstype" ]]; then
+            add_fsck "$usrfstype" && (( ++added ))
         fi
     else
         for fsck in $(compgen -c fsck.); do

@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 build() {
-    local m=
+    local m=''
     local -a md_devs mods
 
-    [[ $KERNELVERSION == none ]] && return 0
+    [[ "$KERNELVERSION" == 'none' ]] && return 0
 
     add_if_avail() {
-        local r= resolved=()
+        local r='' resolved=()
 
         # treat this as an alias, since ext3 might be aliased to ext4. also, as
         # of linux 3.9, we can find any filesystem by the alias "fs-$name"
@@ -31,26 +31,30 @@ build() {
     done
 
     # detect filesystem for root
-    if rootfstype=$(findmnt -uno fstype -T '/'); then
+    if rootfstype="$(findmnt -uno fstype -T '/')"; then
         if [[ "${rootfstype}" == "overlay" ]]; then
             warning "cannot detect type of overlayfs root filesystem"
+            # fs_autodetect_failed is used by other hooks called after this one
+            # shellcheck disable=SC2034
             fs_autodetect_failed=1
         else
             add_if_avail "$rootfstype"
         fi
     else
         error "failed to detect root filesystem"
+        # fs_autodetect_failed is used by other hooks called after this one
+        # shellcheck disable=SC2034
         fs_autodetect_failed=1
     fi
 
     # detect filesystem for separate /usr
-    if usrfstype=$(findmnt -snero fstype -T '/usr'); then
+    if usrfstype="$(findmnt -snero fstype -T '/usr')"; then
         add_if_avail "$usrfstype"
     fi
 
     # scan for md raid devices
-    md_devs=(/sys/class/block/md*/md/level)
-    if [[ -e $md_devs ]]; then
+    mapfile -t md_devs < <(compgen -G '/sys/class/block/md*/md/level')
+    if (( ${#md_devs[@]} )); then
         quiet "found %d mdadm arrays to scan" "${#md_devs[*]}"
         mapfile -t mods < <(awk '{ gsub(/raid[456]/, "raid456"); print; }' "${md_devs[@]}")
         for m in "${mods[@]}"; do

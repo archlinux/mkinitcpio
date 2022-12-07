@@ -8,21 +8,22 @@ build() {
 
     # subshell to avoid namespace pollution
     (
-        l=$LANG
+        l="$LANG"
         unset LANG
 
         for cfg in /etc/{vconsole,locale}.conf; do
-            [[ -s $cfg ]] && . "$cfg"
+            # shellcheck disable=SC1090
+            [[ -s "$cfg" ]] && . "$cfg"
         done
 
-        [[ $LANG ]] && LOCALE=$LANG
-        LANG=$l
+        [[ -n "$LANG" ]] && LOCALE="$LANG"
+        LANG="$l"
 
-        if [[ $LOCALE = *[Uu][Tt][Ff]?(-)8 ]]; then
+        if [[ "$LOCALE" == *[Uu][Tt][Ff]?(-)8 ]]; then
             touch "$BUILDROOT/keymap.utf8"
-            uc=-u
+            uc='-u'
         fi
-        loadkeys -q $uc ${KEYMAP:-us} -b > "$BUILDROOT/keymap.bin"
+        loadkeys -q "$uc" "${KEYMAP:-us}" -b > "$BUILDROOT/keymap.bin"
     ) && add_runscript
 }
 
