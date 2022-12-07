@@ -4,7 +4,7 @@
 run_hook() {
     local disk
 
-    if disk=$(memdiskfind); then
+    if disk="$(memdiskfind)"; then
         # We found a memdisk, set up phram
         modprobe phram phram="memdisk,$disk"
         # Load mtdblock, the memdisk will be /dev/mtdblock0

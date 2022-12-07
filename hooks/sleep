@@ -6,10 +6,10 @@ run_hook() {
         sleeptime=5
     fi
     if [ -n "${sleepdevice}" ]; then
-        poll_device "${sleepdevice}" ${sleeptime}
+        poll_device "${sleepdevice}" "${sleeptime}"
     else
         msg "Sleeping for ${sleeptime} seconds."
-        sleep ${sleeptime}
+        sleep "${sleeptime}"
     fi
 }
 

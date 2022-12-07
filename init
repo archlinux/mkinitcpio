@@ -18,21 +18,30 @@ parse_cmdline </proc/cmdline
 # setup logging as early as possible
 rdlogger_start
 
+# busybox ash supports string replacements
+# shellcheck disable=SC3060
+# assigned by parse_cmdline
+# shellcheck disable=SC2154
 for d in ${disablehooks//,/ }; do
     [ -e "/hooks/$d" ] && chmod 644 "/hooks/$d"
 done
 
+# shellcheck disable=SC1091
 . /config
 
 run_hookfunctions 'run_earlyhook' 'early hook' $EARLYHOOKS
 
 if [ -n "$earlymodules$MODULES" ]; then
+    # busybox ash supports string replacements
+    # shellcheck disable=SC3060
     modprobe -qab ${earlymodules//,/ } $MODULES
 fi
 
 run_hookfunctions 'run_hook' 'hook' $HOOKS
 
 # honor the old behavior of break=y as a synonym for break=premount
+# assigned by parse_cmdline
+# shellcheck disable=SC2154
 if [ "${break}" = "y" ] || [ "${break}" = "premount" ]; then
     echo ":: Pre-mount break requested, type 'exit' to resume operation"
     launch_interactive_shell
@@ -76,6 +85,6 @@ rdlogger_stop
 
 exec env -i \
     "TERM=$TERM" \
-    /usr/bin/switch_root /new_root $init "$@"
+    /usr/bin/switch_root /new_root "$init" "$@"
 
 # vim: set ft=sh ts=4 sw=4 et:

@@ -2,16 +2,18 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 run_hook() {
+    local mode ctrl
+
     if [ -e /keymap.bin ]; then
         msg -n ":: Loading keymap..."
         if [ -f /keymap.utf8 ]; then
-          mode=-u
-          ctrl=G
+            mode='-u'
+            ctrl='G'
         else
-          mode=-a
-          ctrl=@
+            mode='-a'
+            ctrl='@'
         fi
-        kbd_mode $mode -C /dev/console
+        kbd_mode "$mode" -C /dev/console
         printf "\033%%$ctrl" >> /dev/console
         loadkmap < /keymap.bin
         msg "done."

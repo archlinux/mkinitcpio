@@ -4,23 +4,23 @@
 # teardown a single device by node name
 #   $1: device node name, e.g. md0, dm-2
 stop_device() {
-    local devtype= devname=
+    local devtype='' devname=''
 
     # the device must still be active
     [ -e "/sys/class/block/$1" ] || return 1
 
     # this can sometimes fail on stopped md devices, when the
     # sysfs node doesn't go away as quickly as i'd like it to.
-    devtype=$(lsblk -drno TYPE "/dev/$1" 2>/dev/null) || return 1
-    case $devtype in
+    devtype="$(lsblk -drno TYPE "/dev/$1" 2>/dev/null)" || return 1
+    case "$devtype" in
         crypt)
             # dmsetup could be used here, but we don't know that it
             # exists.
-            read devname <"$1/dm/name"
+            read -r devname <"$1/dm/name"
             cryptsetup remove "$devname"
             ;;
         lvm|dm)
-            read devname <"$1/dm/name"
+            read -r devname <"$1/dm/name"
             dmsetup --noudevsync remove "$devname"
             ;;
         raid*)
@@ -28,14 +28,14 @@ stop_device() {
             # clean. unfortunately, there isn't a whole lot we can do
             # if this fails, and the array may need a full rebuild on
             # the next reboot.
-            IFS=: read metadata _ < "/sys/class/block/$1/md/metadata_version"
+            IFS=: read -r metadata _ < "/sys/class/block/$1/md/metadata_version"
             if [ "$metadata" = external ]; then
                 mdadm --wait-clean "/dev/$1"
             fi
             mdadm --stop "/dev/$1"
             ;;
         dmraid)
-            read devname <"$1/dm/name"
+            read -r devname <"$1/dm/name"
             dmraid -an "$devname"
             ;;
         # silently ignore unstacked devices
@@ -45,7 +45,7 @@ stop_device() {
 # recursively disassemble a device chain
 #   $1: device node name, e.g. md0, dm-2
 disassemble() {
-    local holder=
+    local holder=''
 
     for holder in "$1"/holders/*; do
         [ -e "$holder" ] && disassemble "${holder##*/}"
@@ -54,7 +54,7 @@ disassemble() {
 }
 
 copy_binary_from_host() {
-    local bin=$1
+    local bin="$1"
 
     # hardcode a sane PATH
     for p in '/usr/sbin' '/usr/bin' '/sbin' '/bin'; do
@@ -76,7 +76,7 @@ if [ "$1" = kexec ] && ! command -v kexec >/dev/null; then
 fi
 
 # chdir, so that we can avoid a lot of path chopping
-cd /sys/class/block
+cd /sys/class/block || exit
 
 printf '%s\n' "Unmounting all devices."
 
@@ -95,7 +95,7 @@ for part in */holders/*; do
     [ -e "$part" ] && disassemble "${part%%/*}"
 done
 
-case $1 in
+case "$1" in
     poweroff|shutdown|halt)
         "$1" -f
         ;;

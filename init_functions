@@ -10,38 +10,44 @@ _rdlog_cons=$(( 1 << 2 ))
 _rdlog_all=$(( (1 << 3) - 1 ))
 
 msg () {
+    # assigned by parse_cmdline
+    # shellcheck disable=SC2154
     [ "${quiet}" != "y" ] && echo $@
 }
 err () {
-    echo "ERROR: $@"
+    echo "ERROR: $*"
 }
 
 log_kmsg() {
-    local fmt=$1; shift
+    local fmt="$1"; shift
     printf "<31>initramfs: $fmt\n" "$@"
 }
 
 poll_device() {
-    local device=$1 seconds=${2//[!0-9]}
+    # busybox ash supports string replacements
+    # shellcheck disable=SC3060
+    local device="$1" seconds="${2//[!0-9]}"
 
     [ "${seconds:-x}" = x ] && seconds=10
-    deciseconds=$(( seconds * 10 ))
+    deciseconds="$(( seconds * 10 ))"
 
     # tenths of a second
     sleepinterval=1
 
     [ -b "$device" ] && return 0
 
+    # assigned in /init
+    # shellcheck disable=SC2154
     if [ "$udevd_running" -eq 1 ]; then
         msg "Waiting $seconds seconds for device $device ..." >&2
-        while [ ! -b "$device" -a "$deciseconds" -gt 0 ]; do
+        while [ ! -b "$device" ] && [ "$deciseconds" -gt 0 ]; do
             if [ "$sleepinterval" -ge 10 ]; then
                 sleep 1
-                deciseconds=$(( deciseconds - 10 ))
+                deciseconds="$(( deciseconds - 10 ))"
             else
-                sleep .$sleepinterval
-                deciseconds=$(( deciseconds - sleepinterval ))
-                sleepinterval=$(( sleepinterval * 2 ))
+                sleep ".${sleepinterval}"
+                deciseconds="$(( deciseconds - sleepinterval ))"
+                sleepinterval="$(( sleepinterval * 2 ))"
             fi
         done
     fi
@@ -61,15 +67,15 @@ launch_interactive_shell() {
 }
 
 bitfield_has_bit() {
-    [ $(( $1 & $2 )) -eq $2 ]
+    [ "$(( $1 & $2 ))" -eq "$2" ]
 }
 
 major_minor_to_device() {
     local dev
 
-    [ -e "/sys/dev/block/$1:$2" ] || return 1
+    [ -e "/sys/dev/block/${1}:${2}" ] || return 1
 
-    if dev=$(readlink -f "/sys/dev/block/$1:$2" 2>/dev/null); then
+    if dev="$(readlink -f "/sys/dev/block/${1}:${2}" 2>/dev/null)"; then
         echo "/dev/${dev##*/}"
         return 0
     fi
@@ -78,13 +84,14 @@ major_minor_to_device() {
 }
 
 run_hookfunctions() {
-    local hook fn=$1 desc=$2
+    local hook fn="$1" desc="$2"
 
     shift 2
     for hook in "$@"; do
         [ -x "/hooks/$hook" ] || continue
 
         unset "$fn"
+        # shellcheck disable=SC1090
         . "/hooks/$hook"
         type "$fn" >/dev/null || continue
 
@@ -96,19 +103,21 @@ run_hookfunctions() {
 set_log_option() {
     local opt
 
+    # busybox ash supports string replacements
+    # shellcheck disable=SC3060
     for opt in ${1//|/ }; do
-        case $opt in
+        case "$opt" in
             all)
-                rd_logmask=$_rdlog_all
+                rd_logmask="$_rdlog_all"
                 ;;
             kmsg)
-                rd_logmask=$(( rd_logmask | _rdlog_kmsg ))
+                rd_logmask="$(( rd_logmask | _rdlog_kmsg ))"
                 ;;
             file)
-                rd_logmask=$(( rd_logmask | _rdlog_file ))
+                rd_logmask="$(( rd_logmask | _rdlog_file ))"
                 ;;
             console)
-                rd_logmask=$(( rd_logmask | _rdlog_cons ))
+                rd_logmask="$(( rd_logmask | _rdlog_cons ))"
                 ;;
             *)
                 err "unknown rd.log parameter: '$opt'"
@@ -118,9 +127,9 @@ set_log_option() {
 }
 
 startswith() {
-    local word=$1 prefix=$2
+    local word="$1" prefix="$2"
 
-    case $word in
+    case "$word" in
         $prefix*)
             return 0
             ;;
@@ -130,9 +139,9 @@ startswith() {
 }
 
 endswith() {
-    local word=$1 suffix=$2
+    local word="$1" suffix="$2"
 
-    case $word in
+    case "$word" in
         *$suffix)
             return 0
             ;;
@@ -142,20 +151,20 @@ endswith() {
 }
 
 parse_cmdline_item() {
-    local key=$1 value=$2
+    local key="$1" value="$2"
 
-    case $key in
+    case "$key" in
         rw|ro)
-            rwopt=$key
+            rwopt="$key"
             ;;
         fstype)
             # The kernel understands 'rootfstype', but mkinitcpio has (without
             # documentation) supported 'fstype' instead. Ensure we support both
             # for backwards compat, but make fstype legacy.
-            rootfstype=$value
+            rootfstype="$value"
             ;;
         fsck.mode)
-            case $value in
+            case "$value" in
                 force)
                     forcefsck=y
                     ;;
@@ -174,7 +183,7 @@ parse_cmdline_item() {
             if [ -n "$value" ]; then
                 set_log_option "$value"
             else
-                rd_logmask=$(( _rdlog_kmsg | _rdlog_cons ))
+                rd_logmask="$(( _rdlog_kmsg | _rdlog_cons ))"
             fi
             ;;
         [![:alpha:]_]*|[[:alpha:]_]*[![:alnum:]_]*)
@@ -188,18 +197,20 @@ parse_cmdline_item() {
 }
 
 process_cmdline_param() {
-    local item_callback=$1 key=$2 value=$3
+    local item_callback="$1" key="$2" value="$3"
 
     # maybe unquote the value
+    # busybox ash supports string indexing
+    # shellcheck disable=SC3057
     if startswith "$value" "[\"']" && endswith "$value" "${value:0:1}"; then
-        value=${value#?} value=${value%?}
+        value="${value#?}" value="${value%?}"
     fi
 
     "$item_callback" "$key" "$value"
 }
 
 parse_cmdline() {
-    local item_callback=${1:-parse_cmdline_item}
+    local item_callback="${1:-parse_cmdline_item}"
     local cmdline word quoted key value
 
     set -f
@@ -211,20 +222,22 @@ parse_cmdline() {
         if [ -n "$quoted" ]; then
             value="$value $word"
         else
-            case $word in
+            case "$word" in
                 *=*)
-                    key=${word%%=*}
-                    value=${word#*=}
+                    key="${word%%=*}"
+                    value="${word#*=}"
 
                     if startswith "$value" "[\"']"; then
-                        quoted=${value:0:1}
+                        # busybox ash supports string indexing
+                        # shellcheck disable=SC3057
+                        quoted="${value:0:1}"
                     fi
                     ;;
                 '#'*)
                     break
                     ;;
                 *)
-                    key=$word
+                    key="$word"
                     ;;
             esac
         fi
@@ -264,8 +277,10 @@ fsck_device() {
 }
 
 fsck_root() {
+    # assigned by parse_cmdline
+    # shellcheck disable=SC2154
     fsck_device "$root"
-    fsckret=$?
+    fsckret="$?"
 
     if [ -n "$fsckret" ] && [ "$fsckret" -ne 255 ]; then
         # handle error conditions; do nothing on success.
@@ -326,26 +341,28 @@ tag_to_udev_path() {
 }
 
 resolve_device() {
-    local major minor dev tag device=$1
+    local major minor dev tag device="$1"
 
     # attempt to resolve devices immediately. if this fails
     # and udev is running, fall back on lazy resolution using
     # /dev/disk/by-* symlinks. this is flexible enough to support
     # usage of tags without udev and "slow" devices like root on
     # USB, which might not immediately show up.
-    case $device in
+    case "$device" in
         UUID=*|LABEL=*|PARTUUID=*|PARTLABEL=*)
-            dev=$(blkid -lt "$device" -o device)
-            if [ -z "$dev" -a "$udevd_running" -eq 1 ]; then
-                dev=$(tag_to_udev_path "${device%%=*}" "${device#*=}")
+            dev="$(blkid -lt "$device" -o device)"
+            if [ -z "$dev" ] && [ "$udevd_running" -eq 1 ]; then
+                dev="$(tag_to_udev_path "${device%%=*}" "${device#*=}")"
             fi
     esac
 
-    [ -n "$dev" ] && device=$dev
+    [ -n "$dev" ] && device="$dev"
 
-    case $device in
+    case "$device" in
         # path to kernel named block device
         /dev/*)
+            # rootdelay is assigned by parse_cmdline
+            # shellcheck disable=SC2154
             if poll_device "$device" "$rootdelay"; then
                 echo "$device"
                 return 0
@@ -353,17 +370,17 @@ resolve_device() {
             ;;
         # hex encoded major/minor, such as from LILO
         [0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])
-            major=$(( 0x0$device >> 8 ))
-            minor=$(( 0x0$device & 0xff ))
+            major="$(( 0x0$device >> 8 ))"
+            minor="$(( 0x0$device & 0xff ))"
             ;;
         0x[0-9a-fA-F][0-9a-fA-F]*)
-            major=$(( device >> 8 ))
-            minor=$(( device & 0xff ))
+            major="$(( device >> 8 ))"
+            minor="$(( device & 0xff ))"
             ;;
     esac
 
-    if [ -n "$major" -a -n "$minor" ]; then
-        device=$(major_minor_to_device "$major" "$minor" || echo '/dev/root')
+    if [ -n "$major" ] && [ -n "$minor" ]; then
+        device="$(major_minor_to_device "$major" "$minor" || echo '/dev/root')"
 
         if [ ! -b "$device" ]; then
             msg "Creating device node with major $major and minor $minor." >&2
@@ -378,7 +395,7 @@ resolve_device() {
 
 default_mount_handler() {
     msg ":: mounting '$root' on real root"
-    if ! mount ${rootfstype:+-t $rootfstype} -o ${rwopt:-ro}${rootflags:+,$rootflags} "$root" "$1"; then
+    if ! mount -t "${rootfstype:-auto}" -o "${rwopt:-ro}${rootflags:+,$rootflags}" "$root" "$1"; then
         echo "You are now being dropped into an emergency shell."
         launch_interactive_shell
         msg "Trying to continue (this will most likely fail) ..."
@@ -388,7 +405,7 @@ default_mount_handler() {
 rdlogger_start() {
     # rd.debug implies rd.log=console if rd.log(=.*)? isn't present
     if [ "$rd_logmask" -eq 0 ] && [ -n "$rd_debug" ]; then
-        rd_logmask=$_rdlog_cons
+        rd_logmask="$_rdlog_cons"
     fi
 
     [ "$rd_logmask" -gt 0 ] || return
@@ -396,7 +413,7 @@ rdlogger_start() {
     mkfifo /run/initramfs/rdlogger.pipe
 
     rdlogger </run/initramfs/rdlogger.pipe >/dev/console 2>&1 &
-    printf %s $! >/run/initramfs/rdlogger.pid
+    printf %s "$!" >/run/initramfs/rdlogger.pid
 
     exec >/run/initramfs/rdlogger.pipe 2>&1
     [ -n "$rd_debug" ] && set -x
@@ -418,12 +435,12 @@ rdlogger_stop() {
     exec 0<>/dev/console 1<>/dev/console 2<>/dev/console
 
     # wait up to 1 second for a graceful shutdown
-    until [ ! -e /run/initramfs/rdlogger.pipe ] || [ $i -eq 10 ]; do
+    until [ ! -e /run/initramfs/rdlogger.pipe ] || [ "$i" -eq 10 ]; do
         sleep 0.1
-        i=$(( i + 1 ))
+        i="$(( i + 1 ))"
     done
 
-    if [ $i -eq 10 ]; then
+    if [ "$i" -eq 10 ]; then
         # racy! the logger might still go away on its own
         read -r pid </run/initramfs/rdlogger.pid 2>/dev/null
         if [ -n "$pid" ]; then
