@@ -738,9 +738,8 @@ add_binary() {
             if [[ ! -e "${BUILDROOT}/${interpreter}" ]]; then
                 warning "Possibly missing '%s' for binary: %s" "$interpreter" "$binary"
             fi
-        else
-            return 0
         fi
+        return 0
     fi
 
     # resolve sodeps
