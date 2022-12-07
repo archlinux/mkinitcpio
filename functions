@@ -724,7 +724,7 @@ add_binary() {
             interpreter="${shebang##\#\!}"
             # strip /usr/bin/env and warn if it is missing
             if [[ "$interpreter" == '/usr/bin/env'* ]]; then
-                [[ -e "${BUILDROOT}/usr/bin/env" ]] || warning "Possibly missing '/usr/bin/env' for binary: %s" "$binary"
+                [[ -e "${BUILDROOT}/usr/bin/env" ]] || warning "Possibly missing '/usr/bin/env' for script: %s" "$binary"
                 interpreter="${interpreter##'/usr/bin/env'[[:space:]]}"
             fi
             # strip parameters
@@ -736,7 +736,7 @@ add_binary() {
 
             # check if the interpreter exists in BUILDROOT
             if [[ ! -e "${BUILDROOT}/${interpreter}" ]]; then
-                warning "Possibly missing '%s' for binary: %s" "$interpreter" "$binary"
+                warning "Possibly missing '%s' for script: %s" "$interpreter" "$binary"
             fi
         fi
         return 0

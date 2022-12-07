@@ -80,5 +80,5 @@ setup() {
     # initialize_buildroot unconditionally creates a /tmp/mkinitcpio.XXXXXX work directory
     rmdir -- "$(initialize_buildroot 'none' "$BUILDROOT")"
     run add_binary "$tmp_bin"
-    assert_output "==> WARNING: Possibly missing '${interpreter}' for binary: $tmp_bin"
+    assert_output "==> WARNING: Possibly missing '${interpreter}' for script: $tmp_bin"
 }
