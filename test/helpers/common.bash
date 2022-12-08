@@ -30,3 +30,10 @@ __gen_test_kernel() {
     echo "$kernel_ver" >> "$tmp_knl"
     echo "$tmp_knl"
 }
+
+__check_binary(){
+    local binary="$1"
+    if ! command -v "${binary}" &>/dev/null; then
+        skip "${binary} not installed"
+    fi
+}

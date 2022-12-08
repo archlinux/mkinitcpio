@@ -48,6 +48,7 @@ setup() {
 }
 
 @test "detect_compression lzop" {
+    __check_binary "lzop"
     local tmp_img="$(__gen_test_image 'lzop')"
     run detect_compression "$tmp_img"
     assert_output "lzop"
