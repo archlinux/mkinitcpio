@@ -23,7 +23,7 @@ DIRS = \
 	/usr/share/libalpm/hooks \
 	/usr/share/libalpm/scripts
 
-ALL_SCRIPTS=$(shell grep -rIzlE '^#! ?/.+(ba|d|k)?sh' --exclude-dir=".git" ./)
+ALL_SCRIPTS=$(shell grep -rIlE '^#! */.+[ /](bash|ash|sh|bats)' --exclude-dir=".git" ./)
 
 all: doc
 
