@@ -1,39 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-2.0-only
 
-get_decompressor() {
-    case "$1" in
-        *.gz)
-            cat=zcat
-            of=${1%.gz}
-            ;;
-        *.bz2)
-            cat=bzcat
-            of=${1%.bz2}
-            ;;
-        *)
-            cat=cat
-            of=$1
-            ;;
-    esac
-}
-
-add_keymap_file() {
-    local cat cmd rest f of
-
-    while read f; do
-        get_decompressor "$f"
-        while read -r cmd rest; do
-            if [[ $cmd == include ]]; then
-                eval set $rest
-                add_keymap_file "$1"
-            fi
-        done < <($cat "$f")
-        add_dir "${of%/*}"
-        $cat "$f" > "$BUILDROOT/$of"
-    done < <(find /usr/share/kbd/keymaps/ -type f -regex ".*/$1\(\.inc\)?\(\.gz\|\.bz2\)?")
-}
-
 build() {
     # prevent conflicting variables from affecting vconsole.conf values
     # shellcheck disable=SC2034
@@ -48,6 +15,39 @@ build() {
     # subshell to avoid namespace pollution
     (
         shopt -s extglob nullglob
+
+        get_decompressor() {
+            case "$1" in
+                *.gz)
+                    cat='zcat'
+                    of="${1%.gz}"
+                    ;;
+                *.bz2)
+                    cat='bzcat'
+                    of="${1%.bz2}"
+                    ;;
+                *)
+                    cat='cat'
+                    of="$1"
+                    ;;
+            esac
+        }
+
+        add_keymap_file() {
+            local cat cmd rest f of
+
+            while read -r f; do
+                get_decompressor "$f"
+                while read -r cmd rest; do
+                    if [[ "$cmd" == 'include' ]]; then
+                        eval set "$rest"
+                        add_keymap_file "$1"
+                    fi
+                done < <("$cat" "$f")
+                add_dir "${of%/*}"
+                "$cat" "$f" > "$BUILDROOT/$of"
+            done < <(find /usr/share/kbd/keymaps/ -type f -regex ".*/$1\(\.inc\)?\(\.gz\|\.bz2\)?")
+        }
 
         add_font_file() {
             local cat file filename fontfile="$1"
