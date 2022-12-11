@@ -723,21 +723,20 @@ add_binary() {
         # detect if the file has a shebang
         if IFS='' LC_ALL=C read -rn2 -d '' shebang < "$binary" && [[ "$shebang" == '#!' ]]; then
             read -r shebang < "$binary"
-            interpreter="${shebang##\#\!}"
+            interpreter="${shebang##\#\!*([[:space:]])}"
             # strip /usr/bin/env and warn if it is missing
             if [[ "$interpreter" == '/usr/bin/env'* ]]; then
                 [[ -e "${BUILDROOT}/usr/bin/env" ]] || warning "Possibly missing '/usr/bin/env' for script: %s" "$binary"
-                interpreter="${interpreter##'/usr/bin/env'[[:space:]]}"
+                interpreter="${interpreter##'/usr/bin/env'+([[:space:]])}"
             fi
             # strip parameters
             interpreter="${interpreter%%[[:space:]]*}"
-            # lookup the interpreter in PATH on BUILDROOT
-            if [[ "$interpreter" != '/'* ]] && PATH="${BUILDROOT}/usr/local/sbin:${BUILDROOT}/usr/local/bin:${BUILDROOT}/usr/bin" type -P "$interpreter" &>/dev/null; then
-                interpreter="$(PATH="${BUILDROOT}/usr/local/sbin:${BUILDROOT}/usr/local/bin:${BUILDROOT}/usr/bin" type -P "$interpreter")"
-            fi
-
             # check if the interpreter exists in BUILDROOT
-            if [[ ! -e "${BUILDROOT}/${interpreter}" ]]; then
+            if [[ "$interpreter" != '/'* ]] && PATH="${BUILDROOT}/usr/local/sbin:${BUILDROOT}/usr/local/bin:${BUILDROOT}/usr/bin" type -P "$interpreter" &>/dev/null; then
+                :
+            elif [[ -e "${BUILDROOT}/${interpreter}" ]]; then
+                :
+            else
                 warning "Possibly missing '%s' for script: %s" "$interpreter" "$binary"
             fi
         fi
