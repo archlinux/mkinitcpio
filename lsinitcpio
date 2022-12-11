@@ -78,9 +78,11 @@ size_to_human() {
 detect_filetype() {
     local bytes
 
-    read -rd '' bytes < <(hexdump -n 6 -e '"%c"' "$1")
+    read -rd '' -n 6 bytes < "$1"
+    printf -v bytes '%02x' "'${bytes:0:1}" "'${bytes:1:1}" "'${bytes:2:1}" \
+                           "'${bytes:3:1}" "'${bytes:4:1}" "'${bytes:5:1}"
     case $bytes in
-        '070701')
+        '303730373031')
             # no compression
             echo
             return

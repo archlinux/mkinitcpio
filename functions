@@ -135,15 +135,16 @@ parseopts() {
 }
 
 kver_x86() {
+    local kver
+    local -i offset
     # scrape the version out of the kernel image. locate the offset
     # to the version string by reading 2 bytes out of image at at
     # address 0x20E. this leads us to a string of, at most, 128 bytes.
     # read the first word from this string as the kernel version.
-    local kver offset=$(hexdump -s 526 -n 2 -e '"%0d"' "$1")
-    [[ $offset = +([0-9]) ]] || return 1
+    offset="$(od -An -j0x20E -dN2 "$1")" || return
 
     read kver _ < \
-        <(dd if="$1" bs=1 count=127 skip=$(( offset + 0x200 )) 2>/dev/null)
+        <(dd if="$1" bs=1 count=127 skip=$((offset + 0x200)) 2>/dev/null)
 
     printf '%s' "$kver"
 }
@@ -151,44 +152,44 @@ kver_x86() {
 detect_compression() {
     local bytes
 
-    read -rd '' bytes < <(hexdump -n 6 -e '"%c"' "$1")
+    bytes="$(od -An -t x1 -N6 "$1" | tr -dc '[:alnum:]')"
     case $bytes in
-        $'\xfd7zXZ')
+        'fd377a585a00')
             echo 'xz'
             return
             ;;
     esac
 
-    read -rd '' bytes < <(hexdump -n 4 -e '"%c"' "$1")
-    if [[ $bytes = $'\x89LZO' ]]; then
+   bytes="$(od -An -t x1 -N4 "$1" | tr -dc '[:alnum:]')"
+    if [[ $bytes == '894c5a4f' ]]; then
         echo 'lzop'
         return
     fi
 
-    read -rd '' bytes < <(hexdump -n 2 -e '"%x"' "$1")
-    if [[ $bytes = '8b1f' ]]; then
+   bytes="$(od -An -t x2 -N2 "$1" | tr -dc '[:alnum:]')"
+    if [[ $bytes == '8b1f' ]]; then
         echo 'gzip'
         return
     fi
 
-    read -rd '' bytes < <(hexdump -n 4 -e '"%x"' "$1")
+    bytes="$(od -An -t x4 -N4 "$1" | tr -dc '[:alnum:]')"
     case $bytes in
-        184d2204)
+        '184d2204')
             error 'Newer lz4 stream format detected! This may not boot!'
             echo 'lz4'
             return
             ;;
-        184c2102)
+        '184c2102')
             echo 'lz4 -l'
             return
             ;;
-        fd2fb528)
+        'fd2fb528')
             echo 'zstd'
             return
             ;;
     esac
 
-    read -rd '' bytes < <(hexdump -n 3 -e '"%c"' "$1")
+    bytes="$(od -An -c -N3 "$1" | tr -dc '[:alnum:]')"
     if [[ $bytes == 'BZh' ]]; then
         echo 'bzip2'
         return
@@ -198,8 +199,8 @@ detect_compression() {
     # do it without reading large portions of the stream. this
     # check is good enough for GNU tar, apparently, so it's good
     # enough for me.
-    read -rd '' bytes < <(hexdump -n 3 -e '"%x"' "$1")
-    if [[ $bytes = '5d' ]]; then
+    bytes="$(od -An -t x1 -N3 "$1" | tr -dc '[:alnum:]')"
+    if [[ $bytes == '5d0000' ]]; then
         echo 'lzma'
         return
     fi

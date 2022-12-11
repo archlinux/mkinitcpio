@@ -4,6 +4,7 @@
 shopt -s extglob
 
 load '/usr/lib/bats-assert/load'
+load '/usr/lib/bats-support/load'
 load "../helpers/common"
 
 setup() {
