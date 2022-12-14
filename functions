@@ -638,23 +638,28 @@ add_file() {
 
     # check if $src is a symlink
     if [[ -L "$src" ]]; then
-        # add the file
         srcrealpath="$(realpath -- "$src")"
-        add_file "$srcrealpath" "$srcrealpath" "$mode"
-        # create the symlink
-        add_symlink "$dest" "$src"
+        if [[ "$srcrealpath" != "$dest" ]]; then
+            # add the target file
+            add_file "$srcrealpath" "$srcrealpath" "$mode"
+            # create the symlink
+            add_symlink "$dest" "$src"
+            return
+        fi
+    fi
+
+    # unlike install, cp does not create directories leading to the destination
+    [[ -z "$mode" ]] && add_dir "${dest%/*}"
+
+    if [[ -e "${BUILDROOT}${dest}" ]]; then
+        quiet 'overwriting file: %s' "$dest"
     else
-        if [[ -e "${BUILDROOT}${dest}" ]]; then
-            quiet 'overwriting file: %s' "$dest"
-        else
-            quiet 'adding file: %s' "$dest"
-        fi
-        if [[ -z "$mode" ]]; then
-            add_dir "${dest%/*}"
-            command cp --remove-destination --preserve=mode,ownership "$src" "${BUILDROOT}${dest}"
-        else
-            command install -Dm"$mode" "$src" "${BUILDROOT}${dest}"
-        fi
+        quiet 'adding file: %s' "$dest"
+    fi
+    if [[ -z "$mode" ]]; then
+        command cp --remove-destination --preserve=mode,ownership "$src" "${BUILDROOT}${dest}"
+    else
+        command install -Dm"$mode" "$src" "${BUILDROOT}${dest}"
     fi
 }
 
