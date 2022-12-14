@@ -286,6 +286,7 @@ build_image() {
 
 build_uki(){
     local out=$1 initramfs=$2 cmdline=$3 osrelease=$4 splash=$5 kernelimg=$6 uefistub=$7 microcode=(${@:8}) errmsg=
+    local -i offset=0
     OBJCOPYARGS=()
 
     msg 'Creating unified kernel image: %s' "$out"
@@ -304,19 +305,23 @@ build_uki(){
         return 1
     fi
 
-    if [[ -z "$kernelimg" ]]; then
-        for img in "/lib/modules/$KERNELVERSION/vmlinuz" "/boot/vmlinuz-$KERNELVERSION" "/boot/vmlinuz-linux"; do
-            if [[ -f "$img" ]]; then
-                kernelimg="$img"
-                msg2 "Using kernel image: %s" "$kernelimg"
-                break
-            fi
-        done
+    offset="$(objdump -h "${uefistub}" | awk 'NF==7 {size=strtonum("0x"$3); offset=strtonum("0x"$4)} END {print size + offset}')"
+
+    if [[ -z "$osrelease" ]]; then
+        if [[ -f "/etc/os-release" ]]; then
+            osrelease="/etc/os-release"
+        elif [[ -f "/usr/lib/os-release" ]]; then
+            osrelease="/usr/lib/os-release"
+        fi
+        msg2 "Using os-release file: %s" "$osrelease"
     fi
-    if [[ ! -f "$kernelimg" ]]; then
-        error "Kernel image '%s' not found" "$kernelimage"
+    if [[ ! -f "$osrelease" ]]; then
+        error "os-release file '%s' not found" "$osrelease"
         return 1
     fi
+
+    OBJCOPYARGS+=(--add-section ".osrel=${osrelease}" --change-section-vma ".osrel=$(printf 0x%x $offset)")
+    offset="$((offset + $(stat -Lc%s "$osrelease")))"
 
     if [[ -z "$cmdline" ]]; then
         if [[ -f "/etc/kernel/cmdline" ]]; then
@@ -335,39 +340,54 @@ build_uki(){
         return 1
     fi
 
-    if [[ -z "$osrelease" ]]; then
-        if [[ -f "/etc/os-release" ]]; then
-            osrelease="/etc/os-release"
-        elif [[ -f "/usr/lib/os-release" ]]; then
-            osrelease="/usr/lib/os-release"
-        fi
-        msg2 "Using os-release file: %s" "$osrelease"
+    cmdline_tmp="$(mktemp -t mkinitcpio.XXXXXX)"
+    trap 'rm -- "$cmdline_tmp"' EXIT
+
+    printf "%s\n\0" "$(grep -a '^[^#]' "$cmdline" | tr -s '\n' ' ')" > "$cmdline_tmp"
+
+    OBJCOPYARGS+=(--add-section ".cmdline=${cmdline_tmp}" --change-section-vma .cmdline="$(printf 0x%x $offset)")
+    offset="$((offset + $(stat -Lc%s "$cmdline_tmp")))"
+
+    if [[ -n "$splash" ]]; then
+        OBJCOPYARGS+=(--add-section ".splash=$splash" --change-section-vma ".splash=$(printf 0x%x $offset)")
+        offset="$((offset + $(stat -Lc%s "$splash")))"
+        msg2 "Using splash image: %s" "$splash"
     fi
-    if [[ ! -f "$osrelease" ]]; then
-        error "os-release file '%s' not found" "$osrelease"
+
+    if [[ -z "$kernelimg" ]]; then
+        for img in "/lib/modules/$KERNELVERSION/vmlinuz" "/boot/vmlinuz-$KERNELVERSION" "/boot/vmlinuz-linux"; do
+            if [[ -f "$img" ]]; then
+                kernelimg="$img"
+                msg2 'Using kernel image: %s' "$kernelimg"
+                break
+            fi
+        done
+    fi
+    if [[ ! -f "$kernelimg" ]]; then
+        error "Kernel image '%s' not found" "$kernelimg"
         return 1
     fi
+
+    OBJCOPYARGS+=(--add-section ".linux=$kernelimg" --change-section-vma ".linux=$(printf 0x%x $offset)")
+    offset="$((offset + $(stat -Lc%s "$kernelimg")))"
 
     if [[ -z "$initramfs" ]]; then
         error "Initramfs '%s' not found" "$initramfs"
         return 1
     fi
 
-    if [[ -n "$splash" ]]; then
-        OBJCOPYARGS+=(--add-section .splash="$splash" --change-section-vma .splash=0x40000)
-        msg2 "Using splash image: %s" "$splash"
-    fi
-
     for image in "${microcode[@]}"; do
         msg2 "Using microcode image: %s" "$image"
     done
 
-    objcopy \
-        --add-section .osrel="$osrelease" --change-section-vma .osrel=0x20000 \
-        --add-section .cmdline=<(grep -a '^[^#]' "$cmdline" | tr -s '\n' ' '; printf '\n\0') --change-section-vma .cmdline=0x30000 \
-        --add-section .linux="$kernelimg" --change-section-vma .linux=0x2000000 \
-        --add-section .initrd=<(cat ${microcode[@]} "$initramfs") --change-section-vma .initrd=0x3000000 \
-        ${OBJCOPYARGS[@]} "$uefistub" "$out"
+    initramfs_tmp="$(mktemp -t mkinitcpio.XXXXXX)"
+    trap 'rm -- "$initramfs_tmp"' EXIT
+
+    cat -- "${microcode[@]}" "$initramfs" > "$initramfs_tmp"
+
+    OBJCOPYARGS+=(--add-section ".initrd=${initramfs_tmp}" --change-section-vma ".initrd=$(printf 0x%x $offset)")
+
+    objcopy "${OBJCOPYARGS[@]}" "$uefistub" "$out"
 
     status=$?
     if (( $status )) ; then
