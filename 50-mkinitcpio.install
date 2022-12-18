@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-2.0-only
 
 COMMAND="${1:?}"
@@ -6,12 +6,12 @@ KERNEL_VERSION="${2:?}"
 ENTRY_DIR_ABS="$3"
 KERNEL_IMAGE="$4"
 
-if [ -n "$KERNEL_INSTALL_GENERATOR" ] && [ "$KERNEL_INSTALL_GENERATOR" != mkinitcpio ]; then
+if [[ -n "$KERNEL_INSTALL_GENERATOR" && "$KERNEL_INSTALL_GENERATOR" != mkinitcpio ]]; then
     exit 0
 fi
 
-MICROCODE=""
-KERNEL_IMAGE_FLAGS=""
+MICROCODE=()
+KERNEL_IMAGE_FLAGS=()
 case "$KERNEL_INSTALL_LAYOUT" in
     uki)
         IMAGE_PATH="$KERNEL_INSTALL_BOOT_ROOT/EFI/Linux"
@@ -23,18 +23,16 @@ case "$KERNEL_INSTALL_LAYOUT" in
         # autodetecting microcode images by known location
         # They're from GRUB_EARLY_INITRD_LINUX_STOCK in https://git.savannah.gnu.org/cgit/grub.git/tree/util/grub-mkconfig.in.
         for ucode_name in "intel-ucode.img" "amd-ucode.img" "intel-uc.img" "amd-uc.img" "early_ucode.cpio" "microcode.cpio"; do
-            if [ -e "/boot/$ucode_name" ]; then
-                [ "$KERNEL_INSTALL_VERBOSE" -gt 0 ] && echo "Found microcode image /boot/$ucode_name"
-                MICROCODE="--microcode '/boot/$ucode_name'"
-                break
-            elif [ -e "$KERNEL_INSTALL_BOOT_ROOT/$ucode_name" ]; then
-                [ "$KERNEL_INSTALL_VERBOSE" -gt 0 ] && echo "Found microcode image /boot/$ucode_name"
-                MICROCODE="--microcode '$KERNEL_INSTALL_BOOT_ROOT/$ucode_name'"
-                break
+            if [[ -e "/boot/$ucode_name" ]]; then
+                (( KERNEL_INSTALL_VERBOSE )) && echo "Found microcode image /boot/$ucode_name"
+                MICROCODE+=(--microcode "/boot/$ucode_name")
+            elif [[ -e "$KERNEL_INSTALL_BOOT_ROOT/$ucode_name" ]]; then
+                (( KERNEL_INSTALL_VERBOSE )) && echo "Found microcode image /boot/$ucode_name"
+                MICROCODE+=(--microcode "$KERNEL_INSTALL_BOOT_ROOT/$ucode_name")
             fi
         done
 
-        KERNEL_IMAGE_FLAGS="--kernelimage '$KERNEL_IMAGE'"
+        KERNEL_IMAGE_FLAGS=(--kernelimage "$KERNEL_IMAGE")
         ;;
     bls)
         IMAGE_GENERATION_FLAG="-g"
@@ -47,14 +45,14 @@ esac
 
 case $COMMAND in
     add)
-        [ "$KERNEL_INSTALL_VERBOSE" -gt 0 ] && echo "+ mkinitcpio -k $KERNEL_VERSION $KERNEL_IMAGE_FLAGS $MICROCODE $IMAGE_GENERATION_FLAG $IMAGE_PATH"
+        (( KERNEL_INSTALL_VERBOSE )) && echo "+ mkinitcpio -k '$KERNEL_VERSION'" "${KERNEL_IMAGE_FLAGS[@]}" "${MICROCODE[@]}" "$IMAGE_GENERATION_FLAG '$IMAGE_PATH'"
         #shellcheck disable=SC2046
-        mkinitcpio -k "$KERNEL_VERSION" $KERNEL_IMAGE_FLAGS $MICROCODE $IMAGE_GENERATION_FLAG "$IMAGE_PATH"
+        mkinitcpio -k "$KERNEL_VERSION" "${KERNEL_IMAGE_FLAGS[@]}" "${MICROCODE[@]}" "$IMAGE_GENERATION_FLAG" "$IMAGE_PATH"
         ;;
     remove)
         #remove this so that remove is a noop for this install file after 90-uki-copy.install
-        if [ "$KERNEL_INSTALL_LAYOUT" == "uki" ]; then
-            [ "$KERNEL_INSTALL_VERBOSE" -gt 0 ] && echo rm -f -- "$IMAGE_PATH"
+        if [[ "$KERNEL_INSTALL_LAYOUT" == "uki" ]]; then
+            (( KERNEL_INSTALL_VERBOSE )) && echo rm -f -- "$IMAGE_PATH"
             rm -f -- "$IMAGE_PATH"
         else
             printf "For BLS layout only the loader entry is removed during removal.\n"
