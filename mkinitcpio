@@ -479,11 +479,11 @@ process_preset() (
             mapfile -d ' ' -O "${#preset_cmd[@]}" -t preset_cmd <<< "${!preset_options}"
         fi
 
-        preset_microcode=${p}_microcode[@]
-        if [[ ${!preset_microcode:-$ALL_microcode} ]]; then
-            for mc in "${!preset_microcode:-${ALL_microcode[@]}}"; do
-                preset_cmd+=(--microcode "$mc")
-            done
+        declare -n preset_microcode="${p}_microcode"
+        if [[ -n "${preset_microcode[*]}" || -n "${ALL_microcode[*]}" ]]; then
+            mapfile -d '' -O "${#preset_cmd[@]}" -t preset_cmd  < <(
+                printf -- '--microcode\0%s\0' "${preset_microcode[@]:-${ALL_microcode[@]}}"
+            )
         fi
 
         if (( _optremove )); then
