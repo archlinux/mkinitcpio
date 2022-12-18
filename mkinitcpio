@@ -221,7 +221,7 @@ build_image() {
             msg "Creating %s-compressed initcpio image: %s" "$compress" "$out"
             ;;&
         xz)
-            COMPRESSION_OPTIONS=('--check=crc32' "${COMPRESSION_OPTIONS[@]}")
+            COMPRESSION_OPTIONS=('-T0' '--check=crc32' "${COMPRESSION_OPTIONS[@]}")
             ;;
         lz4)
             COMPRESSION_OPTIONS=('-l' "${COMPRESSION_OPTIONS[@]}")
