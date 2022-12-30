@@ -210,7 +210,69 @@ detect_compression() {
         return
     fi
 
+    read -rd '' bytes < <(hexdump -s "$((0x04))" -n 4 -v -e '"%c"' "$1")
+    if [[ "$bytes" == 'zimg' ]]; then
+        echo 'zimg'
+        return
+    fi
+
     # out of ideas, assuming uncompressed
+}
+
+kver_zimage() {
+    # Generic EFI zboot added since kernel 6.1
+    # https://elixir.bootlin.com/linux/v6.1/source/drivers/firmware/efi/libstub/Makefile.zboot
+    # https://elixir.bootlin.com/linux/v6.1/source/drivers/firmware/efi/libstub/zboot-header.S
+
+    local kver='' reader start size comp_type
+
+    # Reading 4 bytes from address 0x08 is the starting offset of compressed data
+    start="$(hexdump -s $((0x08)) -n 4 -e '"%d"' "$1")"
+
+    # Reading 4 bytes from address 0x0c is the size of compressed data,
+    # but it needs to be corrected according to the compressed type.
+    size="$(hexdump -s $((0x0c)) -n 4 -e '"%d"' "$1")"
+
+    # Read 36 bytes (before 0x3c) from address 0x18,
+    # which is a nul-terminated string representing the compressed type.
+    read -rd '' comp_type < <(hexdump -s "$((0x18))" -n 36 -v -e '"%c"' "$1")
+
+    [[ "$start" =~ ^[0-9]+$ ]] || return 1
+    [[ "$size" =~ ^[0-9]+$ ]] || return 1
+
+    case "$comp_type" in
+        'gzip')
+            reader='zcat'
+            ;;
+        'lz4')
+            reader='lz4cat'
+            size="$(( $size+4 ))"
+            ;;
+        'lzma')
+            reader='xzcat'
+            size="$(( $size+4 ))"
+            ;;
+        'lzo')
+            reader="lzop -d"
+            size="$(( $size+4 ))"
+            ;;
+        'xzkern')
+            reader='xzcat'
+            size="$(( $size+4 ))"
+            ;;
+        'zstd22')
+            reader='zstdcat'
+            size="$(( $size+4 ))"
+            ;;
+        *)
+            reader="$comp_type"
+            size="$(( $size+4 ))"
+            ;;
+    esac
+
+    read _ _ kver _ < <(dd if="$1" bs=1 count="$size" skip="$start" 2>/dev/null | $reader - | grep -m1 -aoE  'Linux version .(\.[-[:alnum:]+]+)+')
+
+    printf '%s' "$kver"
 }
 
 kver_generic() {
@@ -223,8 +285,16 @@ kver_generic() {
     # Loosely grep for `linux_banner`:
     # https://elixir.bootlin.com/linux/v5.7.2/source/init/version.c#L46
     local kver='' reader='cat'
-
+    
     [[ "$(detect_compression "$1")" == 'gzip' ]] && reader='zcat'
+
+    if [[ "$comp_type" == 'zimg' ]]; then
+        # Generic EFI zboot image
+        kver_zimage "$1"
+        return 0
+    elif [[ "$comp_type" == 'gzip' ]]; then
+        reader=zcat
+    fi
 
     read -r _ _ kver _ < <($reader "$1" | grep -m1 -aoE 'Linux version .(\.[-[:alnum:]+]+)+')
 
