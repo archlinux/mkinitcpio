@@ -76,12 +76,66 @@ setup() {
     assert_output "zstd"
 }
 
+@test "detect_compression zimg" {
+    local tmp_img="$(__gen_test_image 'zimg')"
+    run detect_compression "$tmp_img"
+    assert_output "zimg"
+}
+
 @test "kver_x86" {
     local kernel_ver tmp_knl
     kernel_ver="6.0.9-arch1-1 #1 SMP PREEMPT_DYNAMIC Wed, 16 Nov 2022 17:01:17 +0000 x86_64 GNU/Linux"
     tmp_knl=$(__gen_test_kernel "$kernel_ver")
     run kver_x86 "$tmp_knl"
     assert_output "6.0.9-arch1-1"
+}
+
+@test "kver_zimage gzip" {
+    local kernel_ver tmp_knl
+    kernel_ver="Linux version 6.1.0-rc5-5 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"
+    local tmp_img="$(__gen_test_zboot_kernel "$kernel_ver" 'gzip')"
+    run kver_zimage "$tmp_img"
+    assert_output "6.1.0-rc5-5"
+}
+
+@test "kver_zimage lz4" {
+    local kernel_ver tmp_knl
+    kernel_ver="Linux version 6.1.0-rc5-5 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"
+    local tmp_img="$(__gen_test_zboot_kernel "$kernel_ver" 'lz4')"
+    run kver_zimage "$tmp_img"
+    assert_output "6.1.0-rc5-5"
+}
+
+@test "kver_zimage lzma" {
+    local kernel_ver tmp_knl
+    kernel_ver="Linux version 6.1.0-rc5-5 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"
+    local tmp_img="$(__gen_test_zboot_kernel "$kernel_ver" 'lzma')"
+    run kver_zimage "$tmp_img"
+    assert_output "6.1.0-rc5-5"
+}
+
+@test "kver_zimage lzo" {
+    local kernel_ver tmp_knl
+    kernel_ver="Linux version 6.1.0-rc5-5 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"
+    local tmp_img="$(__gen_test_zboot_kernel "$kernel_ver" 'lzo')"
+    run kver_zimage "$tmp_img"
+    assert_output "6.1.0-rc5-5"
+}
+
+@test "kver_zimage xz" {
+    local kernel_ver tmp_knl
+    kernel_ver="Linux version 6.1.0-rc5-5 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"
+    local tmp_img="$(__gen_test_zboot_kernel "$kernel_ver" 'xzkern')"
+    run kver_zimage "$tmp_img"
+    assert_output "6.1.0-rc5-5"
+}
+
+@test "kver_zimage zstd" {
+    local kernel_ver tmp_knl
+    kernel_ver="Linux version 6.1.0-arch1-2 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"
+    local tmp_img="$(__gen_test_zboot_kernel "$kernel_ver" 'zstd22')"
+    run kver_zimage "$tmp_img"
+    assert_output "6.1.0-arch1-2"
 }
 
 @test "add_binary script" {
