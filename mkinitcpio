@@ -94,7 +94,7 @@ cleanup() {
         # when _optpreset is set, we're in the main loop, not a worker process
         if (( _optsavetree )) && [[ -z ${_optpreset[*]} ]]; then
             printf '%s\n' "${!_autodetect_cache[@]}" > "$_d_workdir/autodetect_modules"
-            msg "build directory saved in %s" "$_d_workdir"
+            msg "build directory saved in '%s'" "$_d_workdir"
         else
             rm -rf "$_d_workdir"
         fi
@@ -117,17 +117,17 @@ resolve_kernver() {
     fi
 
     if [[ ! -e $kernel ]]; then
-        error "specified kernel image does not exist: \`%s'" "$kernel"
+        error "specified kernel image does not exist: '%s'" "$kernel"
         return 1
     fi
 
     kver "$kernel" && return
 
-    error "invalid kernel specified: \`%s'" "$1"
+    error "invalid kernel specified: '%s'" "$1"
 
     arch=$(uname -m)
     if [[ $arch != @(i?86|x86_64) ]]; then
-        error "kernel version extraction from image not supported for \`%s' architecture" "$arch"
+        error "kernel version extraction from image not supported for '%s' architecture" "$arch"
         error "there's a chance the generic version extractor may work with a valid uncompressed kernel image"
     fi
 
@@ -194,7 +194,7 @@ hook_list() {
     if (( ${#depr[*]} )); then
         echo
         for p in "${!depr[@]}"; do
-            printf $'%s This hook is deprecated in favor of \'%s\'\n' \
+            printf $'\'%s\' This hook is deprecated in favor of \'%s\'\n' \
                 "${ss_ordinals[p]}" "${depr[p]}"
         done
     fi
@@ -214,11 +214,11 @@ build_image() {
 
     case $compress in
         cat)
-            msg "Creating uncompressed initcpio image: %s" "$out"
+            msg "Creating uncompressed initcpio image: '%s'" "$out"
             unset COMPRESSION_OPTIONS
             ;;
         *)
-            msg "Creating %s-compressed initcpio image: %s" "$compress" "$out"
+            msg "Creating %s-compressed initcpio image: '%s'" "$compress" "$out"
             ;;&
         xz)
             COMPRESSION_OPTIONS=('-T0' '--check=crc32' "${COMPRESSION_OPTIONS[@]}")
@@ -271,7 +271,7 @@ build_image() {
     fi
 
     if [[ $errmsg ]]; then
-        error "Image generation FAILED: %s" "$errmsg"
+        error "Image generation FAILED: '%s'" "$errmsg"
         return 1
     elif (( _builderrors == 0 )); then
         msg "Image generation successful"
@@ -289,13 +289,13 @@ build_uki(){
     local -i offset=0
     OBJCOPYARGS=()
 
-    msg 'Creating unified kernel image: %s' "$out"
+    msg "Creating unified kernel image: '%s'" "$out"
 
     if [[ -z "$uefistub" ]]; then
         for stub in {/usr,}/lib/{systemd/boot/efi,gummiboot}/linux{x64,ia32,aa64}.efi.stub; do
             if [[ -f "$stub" ]]; then
                 uefistub="$stub"
-                msg2 "Using UEFI stub: %s" "$uefistub"
+                msg2 "Using UEFI stub: '%s'" "$uefistub"
                 break
             fi
         done
@@ -313,7 +313,7 @@ build_uki(){
         elif [[ -f "/usr/lib/os-release" ]]; then
             osrelease="/usr/lib/os-release"
         fi
-        msg2 "Using os-release file: %s" "$osrelease"
+        msg2 "Using os-release file: '%s'" "$osrelease"
     fi
     if [[ ! -f "$osrelease" ]]; then
         error "os-release file '%s' not found" "$osrelease"
@@ -333,7 +333,7 @@ build_uki(){
             cmdline="/proc/cmdline"
             warning "Reusing current kernel cmdline from $cmdline"
         fi
-        msg2 "Using cmdline file: %s" "$cmdline"
+        msg2 "Using cmdline file: '%s'" "$cmdline"
     fi
     if [[ ! -f "$cmdline" ]]; then
         error "Kernel cmdline file '%s' not found" "$cmdline"
@@ -351,14 +351,14 @@ build_uki(){
     if [[ -n "$splash" ]]; then
         OBJCOPYARGS+=(--add-section ".splash=$splash" --change-section-vma ".splash=$(printf 0x%x $offset)")
         offset="$((offset + $(stat -Lc%s "$splash")))"
-        msg2 "Using splash image: %s" "$splash"
+        msg2 "Using splash image: '%s'" "$splash"
     fi
 
     if [[ -z "$kernelimg" ]]; then
         for img in "/lib/modules/$KERNELVERSION/vmlinuz" "/boot/vmlinuz-$KERNELVERSION" "/boot/vmlinuz-linux"; do
             if [[ -f "$img" ]]; then
                 kernelimg="$img"
-                msg2 'Using kernel image: %s' "$kernelimg"
+                msg2 "Using kernel image: '%s'" "$kernelimg"
                 break
             fi
         done
@@ -377,7 +377,7 @@ build_uki(){
     fi
 
     for image in "${microcode[@]}"; do
-        msg2 "Using microcode image: %s" "$image"
+        msg2 "Using microcode image: '%s'" "$image"
     done
 
     initramfs_tmp="$(mktemp -t mkinitcpio.XXXXXX)"
@@ -410,9 +410,9 @@ process_preset() (
         printf -v preset '%s/%s.preset' "$_d_presets" "$preset"
     fi
 
-    . "$preset" || die "Failed to load preset: \`%s'" "$preset"
+    . "$preset" || die "Failed to load preset: '%s'" "$preset"
 
-    (( ! ${#PRESETS[@]} )) && warning "Preset file \`%s' is empty or does not contain any presets." "$preset"
+    (( ! ${#PRESETS[@]} )) && warning "Preset file '%s' is empty or does not contain any presets." "$preset"
 
     # Use -m and -v options specified earlier
     (( _optquiet )) || preset_mkopts+=(-v)
@@ -434,7 +434,7 @@ process_preset() (
         if [[ ${!preset_kver:-$ALL_kver} ]]; then
             preset_cmd+=(-k "${!preset_kver:-$ALL_kver}")
         else
-            warning "No kernel version specified. Skipping image \`%s'" "$p"
+            warning "No kernel version specified. Skipping image '%s'" "$p"
             continue
         fi
 
@@ -442,7 +442,7 @@ process_preset() (
         if [[ ${!preset_config:-$ALL_config} ]]; then
             preset_cmd+=(-c "${!preset_config:-$ALL_config}")
         else
-            warning "No configuration file specified. Skipping image \`%s'" "$p"
+            warning "No configuration file specified. Skipping image '%s'" "$p"
             continue
         fi
 
@@ -462,7 +462,7 @@ process_preset() (
             preset_cmd+=(-g "${!preset_image}")
             preset_remove_cmd+=("${!preset_image}")
         elif [[ -z "${!preset_uki}" ]]; then
-            warning "No image or UKI specified. Skipping image \`%s'" "$p"
+            warning "No image or UKI specified. Skipping image '%s'" "$p"
             continue
         fi
 
@@ -483,12 +483,13 @@ process_preset() (
                 # we won't be calling mkinitcpio recursively, so no need to set MKINITCPIO_PROCESS_PRESET
                 for pr in "${preset_remove_cmd[@]}"; do
                     if [[ ! -f "${pr}" ]]; then
-                        warning "Image not found: \`%s'" "$pr"
+                        warning "Image not found: '%s'" "$pr"
                     elif [[ ! -w "${pr}" ]]; then
-                        error "Image not writable: \`%s'" "$pr"
+                        error "Image not writable: '%s'" "$pr"
                     else
                         rm -f -- "${pr}"
-                        msg2 "Removed: \`%s'" "$pr"
+                        msg2 "Removed: '%s'" "$pr"
+                        warning "Image not found: '%s'" "$pr"
                     fi
                 done
             fi
@@ -575,7 +576,7 @@ while :; do
             shift
             [[ -d $1 ]] && die "Invalid image path -- must not be a directory"
             if ! _optgenimg=$(readlink -f "$1") || [[ ! -e ${_optgenimg%/*} ]]; then
-                die "Unable to write to path: \`%s'" "$1"
+                die "Unable to write to path: '%s'" "$1"
             fi
             ;;
         -h|--help)
@@ -603,7 +604,7 @@ while :; do
             shift
             [[ -d $1 ]] && die "Invalid image path -- must not be a directory"
             if ! _optuki="$(readlink -f "$1")" || [[ ! -e "${_optuki%/*}" ]]; then
-                die "Unable to write to path: \`%s'" "$1"
+                die "Unable to write to path: '%s'" "$1"
             fi
             ;;
         -v|--verbose)
@@ -726,7 +727,7 @@ MODULES_DECOMPRESS=${MODULES_DECOMPRESS:-"yes"}
 _d_workdir=$(initialize_buildroot "$KERNELVERSION" "$_opttargetdir") || cleanup 1
 BUILDROOT=${_opttargetdir:-$_d_workdir/root}
 
-. "$_f_config" || die "Failed to read configuration \`%s'" "$_f_config"
+. "$_f_config" || die "Failed to read configuration '%s'" "$_f_config"
 
 arrayize_config
 
@@ -751,20 +752,20 @@ if [[ $_optgenimg ]]; then
     # then check the directory
     if [[ ( -e $_optgenimg && ! -w $_optgenimg ) ||
             ( ! -d ${_optgenimg%/*} || ! -w ${_optgenimg%/*} ) ]]; then
-        die 'Unable to write to %s' "$_optgenimg"
+        die "Unable to write to '%s'" "$_optgenimg"
     fi
 
     _optcompress=${_optcompress:-${COMPRESSION:-zstd}}
     if ! type -P "$_optcompress" >/dev/null; then
-        warning "Unable to locate compression method: %s" "$_optcompress"
+        warning "Unable to locate compression method: '%s'" "$_optcompress"
         _optcompress=cat
     fi
 
-    msg "Starting build: %s" "$KERNELVERSION"
+    msg "Starting build: '%s'" "$KERNELVERSION"
 elif [[ $_opttargetdir ]]; then
-    msg "Starting build: %s" "$KERNELVERSION"
+    msg "Starting build: '%s'" "$KERNELVERSION"
 else
-    msg "Starting dry run: %s" "$KERNELVERSION"
+    msg "Starting dry run: '%s'" "$KERNELVERSION"
 fi
 
 # set functrace and trap to catch errors in add_* functions

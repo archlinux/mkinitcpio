@@ -503,13 +503,13 @@ add_module() {
 
     if (( !found )); then
         (( ign_errors || _addedmodules["$target"] )) && return 0
-        error "module not found: \`%s'" "$target"
+        error "module not found: '%s'" "$target"
         return 1
     fi
 
     if (( ${#firmware[*]} )); then
         add_firmware "${firmware[@]}" ||
-            warning 'Possibly missing firmware for module: %s' "$target"
+            warning "Possibly missing firmware for module: '%s'" "$target"
     fi
 
     # handle module quirks
@@ -605,7 +605,7 @@ add_symlink() {
         target="$(realpath -eq -- "$target")"
     fi
     if [[ -z "$target" ]]; then
-        error 'invalid symlink: %s' "$name"
+        error "invalid symlink: '%s'" "$name"
         return 1
     fi
 
@@ -632,7 +632,7 @@ add_file() {
     local src="$1" dest="${2:-$1}" mode="$3" srcrealpath
 
     if [[ ! -f $src ]]; then
-        error "file not found: \`%s'" "$src"
+        error "file not found: '%s'" "$src"
         return 1
     fi
 
@@ -670,7 +670,7 @@ add_runscript() {
     local funcs fn script hookname=${BASH_SOURCE[1]##*/}
 
     if ! script=$(PATH=$_d_hooks type -P "$hookname"); then
-        error "runtime script for \`%s' not found" "$hookname"
+        error "runtime script for '%s' not found" "$hookname"
         return
     fi
 
@@ -715,7 +715,7 @@ add_binary() {
     fi
 
     if [[ ! -f $binary ]]; then
-        error "file not found: \`%s'" "$1"
+        error "file not found: '%s'" "$1"
         return 1
     fi
 
@@ -754,7 +754,7 @@ add_binary() {
         if [[ $line =~ $regex ]]; then
             sodep=${BASH_REMATCH[2]}
         elif [[ $line = *'not found' ]]; then
-            error "binary dependency \`%s' not found for \`%s'" "${line%% *}" "$1"
+            error "binary dependency '%s' not found for '%s'" "${line%% *}" "$1"
             (( ++_builderrors ))
             continue
         fi
