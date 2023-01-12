@@ -46,8 +46,8 @@ remove_kernel() {
     preset="/etc/mkinitcpio.d/${1}.preset"
     initramfs="/boot/initramfs-${1}.img"
     fallback_initramfs="/boot/initramfs-${1}-fallback.img"
-    uki="/efi/EFI/archlinux-${1}.efi"
-    fallback_uki="/efi/EFI/Linux/archlinux-${1}-fallback.efi"
+    uki="/efi/EFI/arch-${1}.efi"
+    fallback_uki="/efi/EFI/Linux/arch-${1}-fallback.efi"
     # remove the installed kernel
     rm -f -- "$kernel"
 
