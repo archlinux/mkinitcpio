@@ -98,11 +98,11 @@ detect_filetype() {
 
     # still nothing? hrmm, maybe the user goofed and it's a kernel
     if kver "$1" >/dev/null; then
-        die '%s is a kernel image, not an initramfs image!' "$1"
+        die "'%s' is a kernel image, not an initramfs image!" "$1"
     fi
 
     # out of ideas, we're done here.
-    die 'Unexpected file type. Are you sure %s is an initramfs?' "$1"
+    die "Unexpected file type. Are you sure '%s' is an initramfs?" "$1"
 }
 
 analyze_image() {
@@ -256,7 +256,7 @@ if [[ -t 1 ]] && (( _optcolor )); then
 fi
 
 [[ $_image ]] || die "No image specified (use -h for help)"
-[[ -f $_image ]] || die "No such file: %s" "$_image"
+[[ -f $_image ]] || die "No such file: '%s'" "$_image"
 
 case $(( _optanalyze + _optlistcontents + _optshowconfig )) in
     0)

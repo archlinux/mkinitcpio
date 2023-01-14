@@ -23,7 +23,7 @@ build() {
                     exit 0
                 fi
             done
-            error "consolefont: requested font not found: \`%s'" "$FONT"
+            error "consolefont: requested font not found: '%s'" "$FONT"
             exit 1
         else
             warning "consolefont: no font found in configuration"
