@@ -289,6 +289,9 @@ build_uki(){
     local -i offset=0
     OBJCOPYARGS=()
 
+    # reproducibility, preserve dates of used files
+    OBJCOPYARG+=(-p)
+
     msg "Creating unified kernel image: '%s'" "$out"
 
     if [[ -z "$uefistub" ]]; then
