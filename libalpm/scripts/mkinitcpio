@@ -46,13 +46,15 @@ remove_kernel() {
     preset="/etc/mkinitcpio.d/${1}.preset"
     initramfs="/boot/initramfs-${1}.img"
     fallback_initramfs="/boot/initramfs-${1}-fallback.img"
+    uki="/efi/EFI/arch-${1}.efi"
+    fallback_uki="/efi/EFI/Linux/arch-${1}-fallback.efi"
     # remove the installed kernel
     rm -f -- "$kernel"
 
     process_preset "$1" "$preset"
 
     # remove images
-    rm -f -- "$initramfs" "$fallback_initramfs"
+    rm -f -- "$initramfs" "$fallback_initramfs" "$uki" "$fallback_uki"
 }
 
 while read -r line; do
