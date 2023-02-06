@@ -67,7 +67,7 @@ usage: ${0##*/} [options]
    -U, --uki <path>             Build a unified kernel image
    -V, --version                Display version information and exit
    -v, --verbose                Verbose output (default: no)
-   -z, --compress <program>     Use an alternate compressor on the image
+   -z, --compress <program>     Use an alternate compressor on the image (cat, xz, lz4, zstd)
 
   Options for unified kernel image (-U, --uki):
    --cmdline <path>             Set kernel command line from file

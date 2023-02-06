@@ -119,7 +119,7 @@ Options
 	Override the compression method with the 'compress' program.
 
 Options for unified kernel image
----------------------------
+--------------------------------
 
 *--cmdline* 'filename'::
 	Use kernel command line with unified kernel image. If none is specified,
@@ -151,8 +151,53 @@ About Presets
 A preset is a pre-defined definition on how to create an initial ramdisk.
 Instead of specifying the configuration file and which output file, every time
 you generate a new initial ramdisk, you define a preset and use the -p switch
-to generate an initial ramdisk according to your preset. Presets are located in
-/etc/mkinitcpio.d
+to generate an initial ramdisk according to your preset.
+
+Typically, presets are files located in '/etc/mkinitcpio.d/' with the extension
+'.preset', e.g. '/etc/mkinitcpio.d/linux.preset' for the *linux* preset.
+It is possible to use files in other locations, too.  Then the path to this
+file needs to be specified.
+
+Presets files are shell scripts that get sourced by mkinitcpio and the following
+variables will influence its behavior.
+
+Note, that mkinitcpio calls itself for each preset and passes the options
+defined in the preset file file via command line arguments. Those are mentioned
+in the description of the options below, so refer to the manual of the command
+line arguments for more information about a particular option.
+
+*PRESETS*::
+
+	An array of preset names defined in this file. These names will be
+	used as prefix to other options to provide preset-specific options.
+	For example, if a
+	'PRESET=("custom")' is given, then the image is specified via
+	'custom_image="/boot/custom.img"'.
+
+*<preset>_kver* (defaults to value of *ALL_kver* -- one of the two is *required*)::
+
+	Specify the Kernel version (via *-k* in mkinitcpio).
+
+*<preset>_config* (defaults to value of *ALL_config* -- one of the two is *required*)::
+
+	Path to the configuration file (passed via *-c* to mkinitcpio).
+
+*<preset>_uki* (one of *<preset>_uki* and *<preset>_image* is *required*)::
+
+	Output file path for a unified kernel image (passed via *-U* to mkinitcpio).
+
+*<preset>_image* (one of *<preset>_uki* and *<preset>_image* is *required*)::
+
+	Output file path for the generated image (passed via *-g* to mkinitcpio).
+
+*<preset>_options*::
+
+	Further command line arguments to pass to mkinitcpio as a simple string.
+	They will get appended at the end of the call to mkinitcpio (after all the
+	options mentioned above), so this can be used to overwrite options (for
+	example pass a *-S* 'hook' here to skip a hook).
+
+
 
 About Install Hooks
 -------------------
