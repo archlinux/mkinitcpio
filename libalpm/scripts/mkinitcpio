@@ -83,6 +83,9 @@ remove_kernel() {
         [[ -s "$preset" ]] && . "$preset"
         read_preset "$pkgbase"
 
+        # access all the files to trigger any potential automounts
+        stat -- /boot/ /efi/ "${filelist[@]}" &>/dev/null || :
+
         # remove the actual kernel and images for the package being removed
         rm -f -- "${filelist[@]}"
     ) || return
