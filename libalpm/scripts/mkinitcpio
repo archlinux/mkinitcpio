@@ -22,37 +22,48 @@ process_preset() {
 
 read_preset() {
     local pkgbase="$1" p preset_image preset_uki preset_kver
+    local unsorted_filelist=() unsorted_kernellist=()
 
     if [[ -v PRESETS ]]; then
         for p in "${PRESETS[@]}"; do
             declare -n preset_image="${p}_image" preset_uki="${p}_uki" preset_kver="${p}_kver"
 
             if [[ -v preset_image ]]; then
-                filelist+=("${preset_image}")
+                unsorted_filelist+=("${preset_image}")
             elif [[ -v ALL_image ]]; then
-                filelist+=("${ALL_image}")
+                unsorted_filelist+=("${ALL_image}")
             fi
             if [[ -v preset_uki ]]; then
-                filelist+=("${preset_uki}")
+                unsorted_filelist+=("${preset_uki}")
             elif [[ -v ALL_uki ]]; then
-                filelist+=("${ALL_uki}")
+                unsorted_filelist+=("${ALL_uki}")
             fi
             if [[ -v preset_kver ]]; then
-                filelist+=("${preset_kver}")
-                kernellist+=("${preset_kver}")
+                unsorted_filelist+=("${preset_kver}")
+                unsorted_kernellist+=("${preset_kver}")
             elif [[ -v ALL_kver ]]; then
-                filelist+=("${ALL_kver}")
-                kernellist+=("${ALL_kver}")
+                unsorted_filelist+=("${ALL_kver}")
+                unsorted_kernellist+=("${ALL_kver}")
             fi
         done
     else
-        filelist+=("/boot/vmlinuz-${pkgbase}"
+        unsorted_filelist+=("/boot/vmlinuz-${pkgbase}"
                   "/boot/initramfs-${pkgbase}.img"
                   "/boot/initramfs-${pkgbase}-fallback.img"
                   "/efi/EFI/arch-${pkgbase}.efi"
                   "/efi/EFI/Linux/arch-${pkgbase}-fallback.efi")
-        kernellist+=("/boot/vmlinuz-${pkgbase}")
+        unsorted_kernellist+=("/boot/vmlinuz-${pkgbase}")
     fi
+
+    # Deduplicate file lists
+    filelist=()
+    while IFS='' read -r -d '' arrayelement; do
+        filelist+=("$arrayelement")
+    done < <(printf '%s\0' "${unsorted_filelist[@]}" | sort -uz)
+    kernellist=()
+    while IFS='' read -r -d '' arrayelement; do
+        kernellist+=("$arrayelement")
+    done < <(printf '%s\0' "${unsorted_kernellist[@]}" | sort -uz)
 }
 
 install_kernel() {
