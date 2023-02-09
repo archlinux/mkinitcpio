@@ -26,6 +26,10 @@ build() {
                     cat='bzcat'
                     of="${1%.bz2}"
                     ;;
+                *.zst)
+                    cat='zstdcat'
+                    of="${1%.zst}"
+                    ;;
                 *)
                     cat='cat'
                     of="$1"
@@ -46,7 +50,7 @@ build() {
                 done < <("$cat" "$f")
                 add_dir "${of%/*}"
                 "$cat" "$f" > "$BUILDROOT/$of"
-            done < <(find /usr/share/kbd/keymaps/ -type f -regex ".*/$1\(\.inc\)?\(\.gz\|\.bz2\)?")
+            done < <(find /usr/share/kbd/keymaps/ -type f -regex ".*/$1\(\.inc\)?\(\.gz\|\.bz2|\.zst\)?")
         }
 
         add_font_file() {
@@ -56,7 +60,7 @@ build() {
             "$cat" "$fontfile" > "$BUILDROOT/$of"
             if [[ "$(head -c 23 "$BUILDROOT/$of" | tr -d '\0')" == '# combine partial fonts' ]]; then
                 while read -r filename; do
-                    for file in "/usr/share/kbd/consolefonts/partialfonts/$filename"?('.gz'|'.bz2'); do
+                    for file in "/usr/share/kbd/consolefonts/partialfonts/$filename"?('.gz'|'.bz2'|'.zst'); do
                         add_font_file "$file"
                     done
                 done < <(sed '/^#/d' "$BUILDROOT/$of")
@@ -70,7 +74,7 @@ build() {
         [[ -n "$KEYMAP_TOGGLE" ]] && add_keymap_file "${KEYMAP_TOGGLE}.map"
 
         if [[ -n "$FONT" ]]; then
-            for file in "/usr/share/kbd/consolefonts/$FONT"?('.psfu'|'.psf'|'.cp'|'.fnt')?('.gz'|'.bz2'); do
+            for file in "/usr/share/kbd/consolefonts/$FONT"?('.psfu'|'.psf'|'.cp'|'.fnt')?('.gz'|'.bz2'|'.zst'); do
                 add_font_file "$file"
                 return
             done
