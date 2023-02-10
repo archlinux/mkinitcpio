@@ -476,7 +476,9 @@ process_preset() (
 
         preset_options="${p}_options"
         if [[ -n "${!preset_options}" ]]; then
-            mapfile -d ' ' -O "${#preset_cmd[@]}" -t preset_cmd <<< "${!preset_options}"
+            mapfile -d ' ' -O "${#preset_cmd[@]}" -t preset_cmd < <(
+                printf '%s' "${!preset_options}"
+            )
         fi
 
         declare -n preset_microcode="${p}_microcode"
