@@ -1,5 +1,71 @@
 mkinitcptio - Arch Linux initramfs generation tools 
 
+CHANGES WITH v35:
+
+        New Features:
+
+        * mkinitcpio now has support for post-generation hooks. These can be
+          used to act on generated initramfs images such as Secure Boot signing.
+          The feature is documented in the mkinitcpio(8) man page.
+
+        Changes in mkinitcpio:
+
+        * Improved code quality of scripts with shellcheck.
+
+        * Replaced hexdump usage with od.
+
+        * The makefile was taught `coverage` which generates a coverage report of
+          mkinitcpio.
+
+        * Several improvements on the symlink handling of mkinitcpio.
+
+        * add_binary was taught to check for script interpreters and warns about
+          missing interpreters.
+
+        * UKIs are now generated with dynamically allocated section sizes instead
+          of the previous hard coded values.
+
+        * xz compression is now always executed in "multithreaded mode" through
+          the -T0 switch after the xz utilitiy's recent improvements in reproducibility.
+
+        * Several fixups to improve consistency for msg/error/warning messages.
+
+        * Preset scripts are now documented in the mkinitcpio(8) man page.
+
+        * mkinitcpio will now attempt to more thoroughly clean up its temporary files upon
+          exit.
+
+        * Modules included in the initramfs now retain their permissions instead of being
+          hard coded to 644.
+
+        * The kernel-install script will now utilize the staging area as expected by
+          systemd.
+
+        * The init script now passes file system labels, file system UUIDs, partition
+          labels and partition UUIDs directly to the mount and fsck commands instead of
+          resolving them.
+
+        Changes in hooks:
+
+        * install/sd-vconsole is now executed inside a subshell to avoid
+          affecting the global scope.
+
+        * install/sd-vconsole and install/consolefont now look for zstd compressed fonts.
+
+        Changes in packaging:
+
+        * The installed preset now includes commented-out suggestions for UKI and
+          default_options.
+
+        * libalpm/scripts/mkinitcpio will now also delete UKIs when
+          uninstalling a kernel.
+
+        Contributions from: Adam Maroti, cedric cvl, ff0x, Florian Eitel,
+        Josephine Pfeiffer, Markus Weippert, Michael Kopp, Morten Linderud,
+        nl6720, rogueai, Sebastian Wiesner, Tobias Powalowski, Yishen Miao
+
+        – 2023-03-18
+
 CHANGES WITH v34:
 
         Announcement of future breaking changes:
