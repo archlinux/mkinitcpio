@@ -128,3 +128,15 @@ setup() {
     [[ -e "${BUILDROOT}/${dir}/testdir1/testsubdir1/3.test3" ]] || return
     [[ ! -e "${BUILDROOT}/${dir}/testdir1/testsubdir1/4.notest4" ]] || return
 }
+
+@test "find_module_from_symbol" {
+    local KERNELVERSION
+    KERNELVERSION="$(uname -r)"
+
+    if [[ ! -d "/lib/modules/${KERNELVERSION}/" ]]; then
+        skip "No kernel modules available"
+    fi
+
+    run find_module_from_symbol "drm_privacy_screen_register" "=drivers/platform"
+    assert_output --partial "thinkpad_acpi"
+}

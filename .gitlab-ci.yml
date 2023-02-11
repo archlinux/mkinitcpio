@@ -28,6 +28,8 @@ test:
     artifacts:
         reports:
             junit: bats-report.xml
+    tags:
+        - vm
 
 coverage:
     stage: check

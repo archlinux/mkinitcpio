@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-2.0-only
 
+shopt -s extglob
+
 parseopts() {
     local opt='' optarg='' i='' shortopts="$1"
     local -a longopts=() unused_argv=()
@@ -1043,6 +1045,51 @@ install_modules() {
 
     # remove all non-binary module.* files (except devname for on-demand module loading)
     rm "${BUILDROOT}${_d_kmoduledir}"/modules.!(*.bin|devname|softdep)
+}
+
+find_module_from_symbol() {
+    # Find a module based off on the symbol
+    #   $1: symbol to find
+    #   $2: the directory to look at
+    #
+    # The directory can either be a:
+    #   absolute directory with a leading /
+    #   A subdirectory with a = prefix, like =drivers/hid
+
+    local moduledir symbols="$1" directories=("${@:2}")
+    for dir in "${directories[@]}"; do
+        case "${dir::1}" in
+            = )
+                moduledir="/lib/modules/$KERNELVERSION/kernel/${dir:1}"
+                ;;
+            /*)
+                moduledir="$dir"
+                ;;
+        esac
+
+
+        decomp_to_stdout() {
+            case "$1" in
+                *.xz) xz -d "$1" -c ;;
+                *.gz) gzip -d "$1" -c ;;
+                *.zst) zstd -q -d "$1" -c ;;
+            esac
+        }
+
+        while read -r -d '' mod; do
+            if decomp_to_stdout "$mod" | grep -Eq "^($symbols)" &> /dev/null; then
+                mod=${mod##*/}
+                mod="${mod%.ko*}"
+                printf '%s\n' "${mod//-/_}"
+            fi
+        done < <(find "$moduledir" -name '*.ko*' -print0 2>/dev/null)
+    done
+}
+
+add_module_from_symbol() {
+    local mods
+    mapfile -t mods < <(find_module_from_symbol "$@")
+    map add_module "${mods[@]}"
 }
 
 # vim: set ft=sh ts=4 sw=4 et:

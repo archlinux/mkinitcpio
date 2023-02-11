@@ -266,6 +266,12 @@ functions exist to facilitate this.
     and added. The argument can be a rule file name (discovered from well known
     udev paths) or an absolute path.
 
+*add_module_from_symbol* _symbol_ _paths..._::
+
+    Adds a udev rule to the image. Dependencies on binaries will be discovered
+    and added. The argument can be a rule file name (discovered from well known
+    udev paths) or an absolute path.
+
 == About runtime hooks
 
 Runtime hooks added to the image via the *add_runscript* function from an
