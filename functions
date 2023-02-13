@@ -567,13 +567,17 @@ add_full_dir() {
 
         for f in "$1"/*; do
             if [[ -L "$f" ]]; then
-                if [[ "$f" == "$filter" ]]; then
+                # Explicit glob matching
+                # shellcheck disable=SC2053
+                if [[ "$f" == $filter ]]; then
                     add_symlink "${f#"${strip_prefix}"}" "$(readlink "$f")"
                 fi
             elif [[ -d "$f" ]]; then
                 add_full_dir "$f" "$filter" "$strip_prefix"
             elif [[ -f "$f" ]]; then
-                if [[ "$f" == "$filter" ]]; then
+                # Explicit glob matching
+                # shellcheck disable=SC2053
+                if [[ "$f" == $filter ]]; then
                     add_file "$f" "${f#"${strip_prefix}"}"
                 fi
             fi
