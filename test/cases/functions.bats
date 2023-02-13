@@ -76,7 +76,7 @@ setup() {
 }
 
 @test "add_binary script" {
-    local tmp_bin BUILDROOT="${BATS_RUN_TMPDIR}/buildroot/" interpreter="/usr/local/${BATS_TEST_NAME}.${RANDOM}" _optquiet=1
+    local tmp_bin BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}/" interpreter="/usr/local/${BATS_TEST_NAME}.${RANDOM}" _optquiet=1
 
     tmp_bin="$(mktemp --tmpdir="$BATS_RUN_TMPDIR" tmp_bin.XXXXXX)"
     printf '#!%s\n\n:\n' "$interpreter" > "$tmp_bin"
@@ -86,4 +86,36 @@ setup() {
     rmdir -- "$(initialize_buildroot 'none' "$BUILDROOT")"
     run add_binary "$tmp_bin"
     assert_output "==> WARNING: Possibly missing '${interpreter}' for script: $tmp_bin"
+}
+
+@test "add_full_dir" {
+    local i dir BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}/" _optquiet=1
+    dir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+
+    install -d -- "$BUILDROOT" "${dir}/testdir1/testsubdir1" \
+        "${dir}/testdir2/testsubdir1" "${dir}/testdir2/testsubdir2"
+    printf 'test\n' > "${dir}/testdir1/1"
+    printf 'test\n' > "${dir}/testdir1/testsubdir1/2"
+    printf 'test\n' > "${dir}/testdir2/testsubdir2/3"
+    ln -s -- 3 "${dir}/testdir2/testsubdir2/4"
+
+    run add_full_dir "$dir"
+    LC_ALL=C diff -r "${dir}/" "${BUILDROOT}/${dir}/"
+}
+
+@test "add_full_dir glob" {
+    local i dir BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}/" _optquiet=1
+    dir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+
+    install -d -- "$BUILDROOT" "${dir}/testdir1/testsubdir1"
+    printf 'test\n' > "${dir}/testdir1/1.notest1"
+    printf 'test\n' > "${dir}/testdir1/2.test2"
+    printf 'test\n' > "${dir}/testdir1/testsubdir1/3.test3"
+    ln -s -- 3.test3 "${dir}/testdir1/testsubdir1/4.notest4"
+
+    run add_full_dir "$dir" '*.test*'
+    [[ ! -e "${BUILDROOT}/${dir}/testdir1/1.notest1" ]] || return
+    [[ -e "${BUILDROOT}/${dir}/testdir1/2.test2" ]] || return
+    [[ -e "${BUILDROOT}/${dir}/testdir1/testsubdir1/3.test3" ]] || return
+    [[ ! -e "${BUILDROOT}/${dir}/testdir1/testsubdir1/4.notest4" ]] || return
 }
