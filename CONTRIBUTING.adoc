@@ -1,67 +1,80 @@
-Care and feeding of your initramfs generator
---------------------------------------------
+:toc: preamble
+:sectnums:
+
+= Care and feeding of your initramfs generator
 
 This guide attempts to outline the style used in the mkinitcpio codebase.
 
+== Bash v. POSIX
 
-Bash v. POSIX
--------------
 Never use POSIX syntax if Bash offers a construct of its own, even if the
 two are effectively identical. This means always using double braces over
-the inferior '[' and 'test'.
+the inferior `[` and `test`.
 
 
-Variable usage and naming conventions
-------------------------------------
+== Variable usage and naming conventions
+
 There are three classifications of variables in mkinitcpio.
 
-1) local variables: all lower case, and scoped within functions. Use
-freely, as they're well contained. Unless you're introducing a new
+=== Local variables
+
+All lower case, and scoped within functions. Use
+freely, as they are well contained. Unless you are introducing a new
 option, this is what you want to use.
 
-  local foo=$1
+[source,bash]
+----
+local foo=$1
+----
 
-2) global variables: these are known to mkinitcpio internally, but are
-global in scope. They carry runtime configuration and data collected during the
-image generation process. These are always lower case, but carry a leading
-underscore to denote that they're global. It's helpful to prefix these
-variables instead with a '_f_' or '_d_' if they refer to a file or directory,
-respectively.
+=== Global variables
 
-  _optcolor=1
-  _d_hookdir=/etc/foo.d
-  _f_config=/etc/foo.conf
+These are known to mkinitcpio internally, but are global in scope. They carry
+runtime configuration and data collected during the image generation process.
+These are always lower case, but carry a leading underscore to denote that
+they are global. It is helpful to prefix these variables instead with a `_f_` or
+`_d_` if they refer to a file or directory, respectively.
 
-3) "API" variables: also global in scope, but exist "outside" of
-mkinitcpio -- either drawn in from the configuration file, or "exported"
-to the install hooks. These are always all upper case. When introducing
-new variables, extreme care must be taken to pick names that will not
-conflict with the environment inherited by mkinitcpio.
+[source,bash]
+----
+_optcolor=1
+_d_hookdir=/etc/foo.d
+_f_config=/etc/foo.conf
+----
 
-Function naming
----------------
+=== "API" variables
+
+Also global in scope, but exist "outside" of mkinitcpio - either drawn in from
+the configuration file, or "exported" to the install hooks. These are always all
+upper case. When introducing new variables, extreme care must be taken to pick
+names that will not conflict with the environment inherited by mkinitcpio.
+
+== Function naming
+
 Use all lower case with underscores where appropriate, for easy readability.
 Adhere to POSIX variable naming requirements for the contents of the name,
 that is: only alphanumerics, underscores, and the identifier must not start
 with a number.
 
 
-Quoting
--------
+== Quoting
+
 Overquoting is preferred to underquoting, but freely avoid quoting in the
 cases when expansion is guaranteed not to happen, such as in single argument
 test expressions or the subject of a case statement.
 
 
-Functions and block statements
-------------------------------
+== Functions and block statements
+
 Always use "top-right, "lower left" for blocks of code and functions.
 
-  do_glob() {
-    local g fn=$1; shift
+[source,bash]
+----
+do_glob() {
+  local g fn=$1; shift
 
-    for g in "$@"; do
-      "$fn" "$g"
-    done
-  }
-
+  for g in "$@"; do
+    "$fn" "$g"
+  done
+}
+----
