@@ -76,7 +76,7 @@ install: all
 	install -m755 libalpm/scripts/mkinitcpio $(DESTDIR)/usr/share/libalpm/scripts/mkinitcpio
 
 doc: $(MANPAGES)
-man/%: man/%.txt Makefile
+man/%: man/%.adoc Makefile
 	a2x -d manpage \
 		-f manpage \
 		-a manversion="mkinitcpio $(VERSION)" \
