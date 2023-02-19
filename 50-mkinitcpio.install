@@ -14,10 +14,11 @@ MICROCODE=()
 KERNEL_IMAGE_FLAGS=()
 case "$KERNEL_INSTALL_LAYOUT" in
     uki)
-        IMAGE_PATH="$KERNEL_INSTALL_BOOT_ROOT/EFI/Linux"
-        install -d -- "$IMAGE_PATH" # create /<esp>/EFI/Linux if it not exists yet
+        # TODO: remove once https://github.com/systemd/systemd/pull/26119 is merged 
+        # and a systemd version including it is packaged
+        install -d -- "$KERNEL_INSTALL_BOOT_ROOT"/EFI/Linux
 
-        IMAGE_PATH="$IMAGE_PATH/$KERNEL_INSTALL_ENTRY_TOKEN-$KERNEL_VERSION.efi"
+        IMAGE_PATH="$KERNEL_INSTALL_STAGING_AREA/uki.efi"
         IMAGE_GENERATION_FLAG="-U"
 
         # autodetecting microcode images by known location
@@ -46,7 +47,6 @@ esac
 case $COMMAND in
     add)
         (( KERNEL_INSTALL_VERBOSE )) && echo "+ mkinitcpio -k '$KERNEL_VERSION'" "${KERNEL_IMAGE_FLAGS[@]}" "${MICROCODE[@]}" "$IMAGE_GENERATION_FLAG '$IMAGE_PATH'"
-        #shellcheck disable=SC2046
         mkinitcpio -k "$KERNEL_VERSION" "${KERNEL_IMAGE_FLAGS[@]}" "${MICROCODE[@]}" "$IMAGE_GENERATION_FLAG" "$IMAGE_PATH"
         ;;
     remove)
