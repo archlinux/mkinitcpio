@@ -4,7 +4,7 @@
 build() {
     # prevent conflicting variables from affecting vconsole.conf values
     # shellcheck disable=SC2034
-    local KEYMAP KEYMAP_TOGGLE FONT FONT_MAP FONT_UNIMAP
+    local KEYMAP KEYMAP_TOGGLE FONT FONT_MAP FONT_UNIMAP XKB_LAYOUT XKB_MODEL XKB_VARIANT XKB_OPTIONS
 
     # subshell to avoid namespace pollution
     (
