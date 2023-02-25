@@ -27,7 +27,7 @@ _optosrelease=''
 _optuefi='' _optmicrocode=() _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
 _optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0
 _optquiet=1 _optcolor=1
-_optskiphooks=() _optaddhooks=() _hooks=()  _optpreset=()
+_optskiphooks=() _optaddhooks=() _hooks=()  _optpreset=() _tmpfiles=()
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
 
 # export a sane PATH
@@ -87,16 +87,21 @@ mkinitcpio "$version"
 EOF
 }
 
+# The function is called from the EXIT trap
+# shellcheck disable=SC2317
 cleanup() {
     local err="${1:-$?}"
 
+    if (( ${#_tmpfiles[@]} )); then
+        rm -f -- "${_tmpfiles[@]}"
+    fi
     if [[ -n "$_d_workdir" ]]; then
         # when _optpreset is set, we're in the main loop, not a worker process
         if (( _optsavetree )) && [[ -z ${_optpreset[*]} ]]; then
             printf '%s\n' "${!_autodetect_cache[@]}" > "$_d_workdir/autodetect_modules"
             msg "build directory saved in '%s'" "$_d_workdir"
         else
-            rm -rf "$_d_workdir"
+            rm -rf -- "$_d_workdir"
         fi
     fi
 
@@ -346,7 +351,7 @@ build_uki() {
     fi
 
     cmdline_tmp="$(mktemp -t mkinitcpio.XXXXXX)"
-    trap 'rm -- "$cmdline_tmp"' EXIT
+    _tmpfiles+=("$cmdline_tmp")
 
     printf "%s\n\0" "$(grep -a '^[^#]' "$cmdline" | tr -s '\n' ' ')" > "$cmdline_tmp"
 
@@ -386,7 +391,7 @@ build_uki() {
     done
 
     initramfs_tmp="$(mktemp -t mkinitcpio.XXXXXX)"
-    trap 'rm -- "$initramfs_tmp"' EXIT
+    _tmpfiles+=("$initramfs_tmp")
 
     cat -- "${microcode[@]}" "$initramfs" > "$initramfs_tmp"
 
@@ -409,7 +414,7 @@ process_preset() (
     local -a preset_mkopts preset_cmd preset_remove_cmd
     if (( MKINITCPIO_PROCESS_PRESET )); then
         error "You appear to be calling a preset from a preset. This is a configuration error."
-        cleanup 1
+        exit 1
     fi
 
     # allow path to preset file, else resolve it in $_d_presets
@@ -543,8 +548,7 @@ preload_builtin_modules() {
 # shellcheck source=functions
 . "$_f_functions"
 
-trap 'cleanup 130' INT
-trap 'cleanup 143' TERM
+trap 'cleanup' EXIT
 
 _opt_short='A:c:D:g:H:hk:nLMPp:Rr:S:sd:t:U:Vvz:'
 _opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
@@ -593,11 +597,11 @@ while :; do
             ;;
         -h|--help)
             usage
-            cleanup 0
+            exit 0
             ;;
         -V|--version)
             version
-            cleanup 0
+            exit 0
             ;;
         -p|--preset)
             shift
@@ -712,7 +716,7 @@ fi
 # If we specified --uki but no -g we want to create a temporary initramfs which will be used with the efi executable.
 if [[ -n "$_optuki" && -z "$_optgenimg" ]]; then
     tmpfile="$(mktemp -t mkinitcpio.XXXXXX)"
-    trap 'rm $tmpfile' EXIT
+    _tmpfiles+=("$tmpfile")
     _optgenimg="$tmpfile"
 fi
 
@@ -729,14 +733,14 @@ if (( ${#_optpreset[*]} )); then
 fi
 
 if [[ "$KERNELVERSION" != 'none' ]]; then
-    KERNELVERSION="$(resolve_kernver "$KERNELVERSION")" || cleanup 1
+    KERNELVERSION="$(resolve_kernver "$KERNELVERSION")" || exit 1
     _d_kmoduledir="$_optmoduleroot/lib/modules/$KERNELVERSION"
     [[ -d "$_d_kmoduledir" ]] || die "'$_d_kmoduledir' is not a valid kernel module directory"
 fi
 
 MODULES_DECOMPRESS="${MODULES_DECOMPRESS:-"yes"}"
 
-_d_workdir="$(initialize_buildroot "$KERNELVERSION" "$_opttargetdir")" || cleanup 1
+_d_workdir="$(initialize_buildroot "$KERNELVERSION" "$_opttargetdir")" || exit 1
 BUILDROOT="${_opttargetdir:-$_d_workdir/root}"
 
 # shellcheck source=mkinitcpio.conf
@@ -758,7 +762,7 @@ if (( _optshowautomods )); then
     PATH="$_d_install" . 'autodetect'
     build
     printf '%s\n' "${!_autodetect_cache[@]}" | sort
-    cleanup 0
+    exit 0
 fi
 
 if [[ -n "$_optgenimg" ]]; then
@@ -826,6 +830,6 @@ if [[ -n "$_optuki" && -n "$_optgenimg" ]]; then
     build_uki "$_optuki" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" "${_optmicrocode[@]}"
 fi
 
-cleanup $(( !!_builderrors ))
+exit $(( !!_builderrors ))
 
 # vim: set ft=sh ts=4 sw=4 et:
