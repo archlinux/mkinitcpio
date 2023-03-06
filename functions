@@ -1004,7 +1004,7 @@ install_modules() {
     fi
 
     for m in "$@"; do
-        add_file "$m" "$m" 644
+        add_file "$m"
         # unzip modules prior to recompression
         if [[ "$MODULES_DECOMPRESS" == 'yes' ]]; then
             case "$m" in
