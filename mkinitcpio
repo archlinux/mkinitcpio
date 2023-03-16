@@ -20,6 +20,7 @@ _d_flag_hooks=
 _d_flag_install=
 _d_flag_post=
 _d_firmware=({/usr,}/lib/firmware/updates {/usr,}/lib/firmware)
+_d_fwpath=() # the actual firmware lookup path, a subset of _d_firmware listed above
 _d_presets=mkinitcpio.d
 
 # options and runtime data
@@ -206,6 +207,17 @@ hook_list() {
                 "${ss_ordinals[p]}" "${depr[p]}"
         done
     fi
+}
+
+compute_d_fwpath() {
+    local fw_dir
+    for fw_dir in "${_d_firmware[@]}"; do
+        fw_dir="$(realpath -- "$fw_dir")"
+        if [[ -d "$fw_dir" ]]; then
+            # only add if not already in array
+            ! in_array "$fw_dir" "${_d_fwpath[@]}" && _d_fwpath+=("$fw_dir")
+        fi
+    done
 }
 
 compute_hookset() {
@@ -958,6 +970,8 @@ fi
 . "$_f_config" || die "Failed to read configuration '%s'" "$_f_config"
 
 arrayize_config
+
+compute_d_fwpath
 
 # after returning, hooks are populated into the array '_hooks'
 # HOOKS should not be referenced from here on

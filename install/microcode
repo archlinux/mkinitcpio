@@ -50,9 +50,9 @@ build() {
     if (( mkinitcpio_autodetect )); then
         vendor="$(get_host_vendor)"
         ucode_file="$(get_host_ucode "$vendor")"
-        # _d_firmware is assigned in mkinitcpio
+        # _d_fwpath is assigned in mkinitcpio
         # shellcheck disable=SC2154
-        for fwpath in "${_d_firmware[@]}"; do
+        for fwpath in "${_d_fwpath[@]}"; do
             if [[ -f "${fwpath}/${ucode_file}" ]]; then
                 if ! [[ -d "${ucode_dest}" ]]; then
                     install -dm755 "${ucode_dest}"
@@ -66,9 +66,9 @@ build() {
 
     for vendor in "${vendors[@]}"; do
         # find the uncompiled update files and compile them
-        # _d_firmware is assigned in mkinitcpio
+        # _d_fwpath is assigned in mkinitcpio
         # shellcheck disable=SC2154
-        for fwpath in "${_d_firmware[@]}"; do
+        for fwpath in "${_d_fwpath[@]}"; do
             if [[ -e "${ucode_dest}/${ucode_bin[$vendor]}" ]]; then
                 break
             fi
