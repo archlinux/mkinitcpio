@@ -551,21 +551,11 @@ preload_builtin_modules() {
 
 run_post_hooks() {
     local args=("$@")
-    local hook status pkgbase kerneldst
+    local hook status
     local -i count=0
     local -a paths seen
 
     IFS=: read -ra paths <<<"$_d_post"
-
-    if [[ -n "$KERNELIMAGE" ]]; then
-        if [[ "${KERNELIMAGE:0:6}" == '/boot/' ]]; then
-            kerneldst="$KERNELIMAGE"
-        elif read -r pkgbase &> /dev/null < "${KERNELIMAGE%/*}/pkgbase"; then
-            kerneldst="/boot/vmlinuz-$pkgbase"
-        else
-            kerneldst="/boot/vmlinuz-$KERNELVERSION"
-        fi
-    fi
 
     for path in "${paths[@]}"; do
         for hook in "$path"/*; do
@@ -579,7 +569,7 @@ run_post_hooks() {
             (( count++ )) || msg 'Running post hooks'
             msg2 'Running post hook: [%s]' "${hook##*/}"
 
-            KERNELVERSION="$KERNELVERSION" KERNELDESTINATION="$kerneldst" command "$hook" "$KERNELIMAGE" "${args[@]}"
+            KERNELVERSION="$KERNELVERSION" KERNELDESTINATION="$KERNELDESTINATION" command "$hook" "$KERNELIMAGE" "${args[@]}"
             status="$?"
 
             if (( status )); then
@@ -782,7 +772,7 @@ if (( ${#_optpreset[*]} )); then
     exit
 fi
 
-KERNELIMAGE=''
+KERNELIMAGE='' KERNELDESTINATION=''
 if [[ "$KERNELVERSION" != 'none' ]]; then
     # if the "version" is given as a file name, use it without modification,
     # if doesn't exist, resolve_kernver will fail anyway
@@ -796,9 +786,14 @@ if [[ "$KERNELVERSION" != 'none' ]]; then
 
     if [[ -z "$KERNELIMAGE" ]]; then
         # search well-known locations for the kernel image
-        for img in "$_d_kmoduledir/vmlinuz" "/lib/modules/$KERNELVERSION/vmlinuz" "/boot/vmlinuz-$KERNELVERSION"; do
+        for img in "$_d_kmoduledir/vmlinuz" "/lib/modules/$KERNELVERSION/vmlinuz"; do
             if [[ -f "$img" ]]; then
                 KERNELIMAGE="$img"
+                if read -r pkgbase &> /dev/null < "${img%/*}/pkgbase"; then
+                    KERNELDESTINATION="/boot/vmlinuz-$pkgbase"
+                else
+                    KERNELDESTINATION="/boot/vmlinuz-$KERNELVERSION"
+                fi
                 quiet "located kernel image: '%s'" "$KERNELIMAGE"
                 break
             fi
@@ -816,7 +811,9 @@ if [[ "$KERNELVERSION" != 'none' ]]; then
         done
     fi
 
-    if [[ ! -f "$KERNELIMAGE" ]]; then
+    if [[ -f "$KERNELIMAGE" ]]; then
+        [[ -z "$KERNELDESTINATION" ]] && KERNELDESTINATION="$KERNELIMAGE"
+    else
         # this is not fatal, initramfs will still be generated but post
         # hooks will not know what kernel image is used
         warning 'Could not find kernel image for version %s' "$KERNELVERSION"
