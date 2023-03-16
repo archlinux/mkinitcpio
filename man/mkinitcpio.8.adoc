@@ -318,8 +318,22 @@ About Post Hooks
 ----------------
 Post hooks are executables or scripts that get executed after the image has been
 successfully generated and can be used for further processing (i.e. signing).
-They receive the image as the first argument and optionally the unified kernel
-image as a second.
+They receive the kernel as the first argument, the image as second and optionally
+the unified kernel image as a third.
+
+Note that the first argument will be empty when the mkinitcpio has been invoked with
+'-k none' or '-k version' and the kernel image cannot be found on the filesystem.
+
+The following enviroment variables are passed:
+
+*KERNELVERSION*::
+	Contains the full version of the kernel the image has been built from.
+
+*KERNELDESTINATION*::
+	The default location where the kernel should be located for booting. This usually
+	is the same as the first argument but might differ if mkinitcpio hasn't been
+	invoked with '-k /boot/*'. If no kernel image has been found this variable will
+	be empty as well.
 
 Early Init Environment
 ----------------------

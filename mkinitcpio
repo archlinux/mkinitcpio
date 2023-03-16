@@ -367,7 +367,9 @@ build_uki() {
     fi
 
     if [[ -z "$kernelimg" ]]; then
-        for img in "/lib/modules/$KERNELVERSION/vmlinuz" "/boot/vmlinuz-$KERNELVERSION" "/boot/vmlinuz-linux"; do
+        # FIXME: fallback to /boot/vmlinuz-linux can probably be removed as
+        #   $KERNELIMAGE should point to an image with the correct version
+        for img in "$KERNELIMAGE" "/boot/vmlinuz-linux"; do
             if [[ -f "$img" ]]; then
                 kernelimg="$img"
                 msg2 "Using kernel image: '%s'" "$kernelimg"
@@ -549,11 +551,21 @@ preload_builtin_modules() {
 
 run_post_hooks() {
     local args=("$@")
-    local hook status
+    local hook status pkgbase kerneldst
     local -i count=0
     local -a paths seen
 
     IFS=: read -ra paths <<<"$_d_post"
+
+    if [[ -n "$KERNELIMAGE" ]]; then
+        if [[ "${KERNELIMAGE:0:6}" == '/boot/' ]]; then
+            kerneldst="$KERNELIMAGE"
+        elif read -r pkgbase &> /dev/null < "${KERNELIMAGE%/*}/pkgbase"; then
+            kerneldst="/boot/vmlinuz-$pkgbase"
+        else
+            kerneldst="/boot/vmlinuz-$KERNELVERSION"
+        fi
+    fi
 
     for path in "${paths[@]}"; do
         for hook in "$path"/*; do
@@ -567,7 +579,7 @@ run_post_hooks() {
             (( count++ )) || msg 'Running post hooks'
             msg2 'Running post hook: [%s]' "${hook##*/}"
 
-            KERNELVERSION="$KERNELVERSION" "$hook" "${args[@]}"
+            KERNELVERSION="$KERNELVERSION" KERNELDESTINATION="$kerneldst" command "$hook" "$KERNELIMAGE" "${args[@]}"
             status="$?"
 
             if (( status )); then
@@ -770,10 +782,45 @@ if (( ${#_optpreset[*]} )); then
     exit
 fi
 
+KERNELIMAGE=''
 if [[ "$KERNELVERSION" != 'none' ]]; then
+    # if the "version" is given as a file name, use it without modification,
+    # if doesn't exist, resolve_kernver will fail anyway
+    if [[ "${KERNELVERSION:0:1}" == '/' ]]; then
+        KERNELIMAGE="$KERNELVERSION"
+    fi
+
     KERNELVERSION="$(resolve_kernver "$KERNELVERSION")" || exit 1
     _d_kmoduledir="$_optmoduleroot/lib/modules/$KERNELVERSION"
     [[ -d "$_d_kmoduledir" ]] || die "'$_d_kmoduledir' is not a valid kernel module directory"
+
+    if [[ -z "$KERNELIMAGE" ]]; then
+        # search well-known locations for the kernel image
+        for img in "$_d_kmoduledir/vmlinuz" "/lib/modules/$KERNELVERSION/vmlinuz" "/boot/vmlinuz-$KERNELVERSION"; do
+            if [[ -f "$img" ]]; then
+                KERNELIMAGE="$img"
+                quiet "located kernel image: '%s'" "$KERNELIMAGE"
+                break
+            fi
+        done
+    fi
+
+    if [[ -z "$KERNELIMAGE" ]]; then
+        # check version of all kernels in /boot
+        for img in /boot/vmlinuz-*; do
+            if [[ "$(kver "$img")" == "$KERNELVERSION" ]]; then
+                KERNELIMAGE="$img"
+                quiet "located kernel image: '%s'" "$KERNELIMAGE"
+                break
+            fi
+        done
+    fi
+
+    if [[ ! -f "$KERNELIMAGE" ]]; then
+        # this is not fatal, initramfs will still be generated but post
+        # hooks will not know what kernel image is used
+        warning 'Could not find kernel image for version %s' "$KERNELVERSION"
+    fi
 fi
 
 MODULES_DECOMPRESS="${MODULES_DECOMPRESS:-"yes"}"
