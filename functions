@@ -447,21 +447,17 @@ add_firmware() {
     # add a firmware file to the image.
     #   $1: firmware path fragment
 
-    local fw fwpath r=1
+    local fw fwpath fwfile r=1
 
     for fw; do
         # _d_firmware is assigned in mkinitcpio
         # shellcheck disable=SC2154
         for fwpath in "${_d_firmware[@]}"; do
-            if [[ -f $fwpath/$fw.xz ]]; then
-                add_file "$fwpath/$fw.xz" "$fwpath/$fw.xz" 644 && r=0
-                break
-            elif [[ -f "$fwpath/$fw.zst" ]]; then
-                add_file "$fwpath/$fw.zst" "$fwpath/$fw.zst" 644 && r=0
-                break
-            elif [[ -f $fwpath/$fw ]]; then
-                add_file "$fwpath/$fw" "$fwpath/$fw" 644 && r=0
-                break
+            if ! compgen -G "${BUILDROOT}${fwpath}/${fw}"?(.*) &>/dev/null; then
+                if fwfile="$(compgen -G "${fwpath}/${fw}"?(.*))"; then
+                    add_file "$fwfile" && r=0
+                    break
+                fi
             fi
         done
     done
