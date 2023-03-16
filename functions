@@ -647,8 +647,6 @@ add_file() {
     #   $2: destination on initcpio (optional, defaults to same as source)
     #   $3: mode
 
-    (( $# )) || return 1
-
     # determine source and destination
     local src="$1" dest="${2:-$1}" mode="$3" srcrealpath
 
@@ -735,14 +733,9 @@ add_binary() {
         binary="$1"
     fi
 
-    if [[ ! -f "$binary" ]]; then
-        error "file not found: '%s'" "$1"
-        return 1
-    fi
-
     dest="${2:-$binary}"
 
-    add_file "$binary" "$dest"
+    add_file "$binary" "$dest" || return 1
 
     # non-binaries
     if ! lddout="$(ldd "$binary" 2>/dev/null)"; then
