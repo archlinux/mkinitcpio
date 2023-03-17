@@ -260,9 +260,21 @@ parse_cmdline() {
 }
 
 fsck_device() {
+    local device
     [ -x /sbin/fsck ] || return 255
 
-    if [ ! -b "$1" ]; then
+    # If the device is specified via a tag supported by util-linux fsck, resolve
+    # it to the block device to verify it exists, but still pass the unmodified
+    # tag to fsck.
+    case "$1" in
+        'UUID='* | 'LABEL='* | 'PARTUUID='* | 'PARTLABEL='*)
+            device="$(resolve_device "$1")"
+            ;;
+        *)
+            device="$1"
+            ;;
+    esac
+    if [ ! -b "$device" ]; then
         err "device '$1' not found. Skipping fsck."
         return 255
     fi
