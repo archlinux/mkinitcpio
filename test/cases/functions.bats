@@ -12,57 +12,66 @@ setup() {
 }
 
 @test "detect_compression bzip2" {
-    local tmp_img="$(__gen_test_image 'bzip2')"
+    local tmp_img
+    tmp_img="$(__gen_test_image 'bzip2')"
     run detect_compression "$tmp_img"
     assert_output "bzip2"
 }
 
 @test "detect_compression cat" {
-    local tmp_img="$(__gen_test_image 'cat')"
+    local tmp_img
+    tmp_img="$(__gen_test_image 'cat')"
     run detect_compression "$tmp_img"
     assert_output ""
 }
 
 @test "detect_compression gzip" {
-    local tmp_img="$(__gen_test_image 'gzip')"
+    local tmp_img
+    tmp_img="$(__gen_test_image 'gzip')"
     run detect_compression "$tmp_img"
     assert_output "gzip"
 }
 
 @test "detect_compression lz4" {
-    local tmp_img="$(__gen_test_image 'lz4')"
+    local tmp_img
+    tmp_img="$(__gen_test_image 'lz4')"
     run detect_compression "$tmp_img"
     assert_output --partial "==> ERROR: Newer lz4 stream format detected! This may not boot!"
     assert_output --partial "lz4"
 }
 
 @test "detect_compression lz4 (legacy)" {
-    local tmp_img="$(__gen_test_image 'lz4' '-l')"
+    local tmp_img
+    tmp_img="$(__gen_test_image 'lz4' '-l')"
     run detect_compression "$tmp_img"
     assert_output "lz4 -l"
 }
 
 @test "detect_compression lzma" {
-    local tmp_img="$(__gen_test_image 'lzma')"
+    local tmp_img
+    tmp_img="$(__gen_test_image 'lzma')"
     run detect_compression "$tmp_img"
     assert_output "lzma"
 }
 
 @test "detect_compression lzop" {
+    local tmp_img
     __check_binary "lzop"
-    local tmp_img="$(__gen_test_image 'lzop')"
+    tmp_img="$(__gen_test_image 'lzop')"
     run detect_compression "$tmp_img"
     assert_output "lzop"
 }
 
 @test "detect_compression xz" {
-    local tmp_img="$(__gen_test_image 'xz' '--check=crc32')"
+    local tmp_img
+    tmp_img="$(__gen_test_image 'xz' '--check=crc32')"
     run detect_compression "$tmp_img"
     assert_output "xz"
 }
 
 @test "detect_compression zstd" {
-    local tmp_img="$(__gen_test_image 'zstd' '-T0')"
+    local tmp_img
+    tmp_img="$(__gen_test_image 'zstd' '-T0')"
     run detect_compression "$tmp_img"
     assert_output "zstd"
 }

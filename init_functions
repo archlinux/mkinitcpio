@@ -12,7 +12,7 @@ _rdlog_all=$(( (1 << 3) - 1 ))
 msg () {
     # assigned by parse_cmdline
     # shellcheck disable=SC2154
-    [ "${quiet}" != "y" ] && echo $@
+    [ "${quiet}" != "y" ] && echo "$@"
 }
 err () {
     echo "ERROR: $*"
@@ -20,6 +20,7 @@ err () {
 
 log_kmsg() {
     local fmt="$1"; shift
+    # shellcheck disable=SC2059
     printf "<31>initramfs: $fmt\n" "$@"
 }
 
@@ -55,6 +56,7 @@ poll_device() {
     [ -b "$device" ]
 }
 
+# shellcheck disable=SC2120
 launch_interactive_shell() {
     export PS1='[rootfs \W]\$ '
 
@@ -215,6 +217,7 @@ parse_cmdline() {
 
     set -f
     read -r cmdline
+    # shellcheck disable=SC2086
     set -- $cmdline
     set +f
 
@@ -306,6 +309,7 @@ fsck_root() {
                 "*  reboot automatically.                    *" \
                 "*                                           *" \
                 "*********************************************"
+            # shellcheck disable=SC2119
             launch_interactive_shell
             echo ":: Automatic reboot in progress"
             sleep 2
@@ -353,7 +357,7 @@ tag_to_udev_path() {
 }
 
 resolve_device() {
-    local major minor dev tag device="$1"
+    local major minor dev device="$1"
 
     # attempt to resolve devices immediately. if this fails
     # and udev is running, fall back on lazy resolution using
@@ -409,6 +413,7 @@ default_mount_handler() {
     msg ":: mounting '$root' on real root"
     if ! mount -t "${rootfstype:-auto}" -o "${rwopt:-ro}${rootflags:+,$rootflags}" "$root" "$1"; then
         echo "You are now being dropped into an emergency shell."
+        # shellcheck disable=SC2119
         launch_interactive_shell
         msg "Trying to continue (this will most likely fail) ..."
     fi

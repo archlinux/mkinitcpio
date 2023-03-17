@@ -414,7 +414,7 @@ build_uki() {
 # The function is invoked via `map process_preset`
 # shellcheck disable=SC2317
 process_preset() (
-    local preset="$1" preset_cli_options="$2" preset_image='' preset_options=''
+    local preset="$1" preset_image='' preset_options=''
     local -a preset_mkopts preset_cmd preset_remove_cmd
     if (( MKINITCPIO_PROCESS_PRESET )); then
         error "You appear to be calling a preset from a preset. This is a configuration error."
@@ -517,6 +517,7 @@ process_preset() (
             msg2 "${preset_cmd[*]}"
             MKINITCPIO_PROCESS_PRESET=1 "$0" "${preset_cmd[@]}"
         fi
+        # shellcheck disable=SC2181
         (( $? )) && ret=1
     done
 
@@ -825,7 +826,7 @@ MODULES_DECOMPRESS="${MODULES_DECOMPRESS:-"yes"}"
 _d_workdir="$(initialize_buildroot "$KERNELVERSION" "$_opttargetdir")" || exit 1
 BUILDROOT="${_opttargetdir:-$_d_workdir/root}"
 
-# shellcheck source=mkinitcpio.conf
+# shellcheck disable=SC1091 source=mkinitcpio.conf
 . "$_f_config" || die "Failed to read configuration '%s'" "$_f_config"
 
 arrayize_config

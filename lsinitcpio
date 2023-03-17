@@ -153,7 +153,7 @@ analyze_image() {
 
     read -r version < "$workdir/VERSION"
 
-    # shellcheck disable=SC1090
+    # shellcheck disable=SC1090,SC1091
     . "$workdir/config"
 
     explicitmod=("${MODULES[@]}")
@@ -193,6 +193,7 @@ analyze_image() {
         printf '\n'
     fi
 
+    # shellcheck disable=SC2128
     if [[ -n "$HOOKS" ]]; then
         msg 'Hook run order:'
         printf '  %s\n' "$HOOKS"

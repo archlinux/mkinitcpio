@@ -29,14 +29,18 @@ done
 # shellcheck disable=SC1091
 . /config
 
+# We rely on word splitting
+# shellcheck disable=SC2086
 run_hookfunctions 'run_earlyhook' 'early hook' $EARLYHOOKS
 
 if [ -n "$earlymodules$MODULES" ]; then
     # busybox ash supports string replacements
-    # shellcheck disable=SC3060
+    # shellcheck disable=SC3060,SC2086
     modprobe -qab ${earlymodules//,/ } $MODULES
 fi
 
+# We rely on word splitting
+# shellcheck disable=SC2086
 run_hookfunctions 'run_hook' 'hook' $HOOKS
 
 # honor the old behavior of break=y as a synonym for break=premount
@@ -62,7 +66,12 @@ fsck_root
 # Mount root at /new_root
 "$mount_handler" /new_root
 
+# We rely on word splitting
+# shellcheck disable=SC2086
 run_hookfunctions 'run_latehook' 'late hook' $LATEHOOKS
+
+# We rely on word splitting
+# shellcheck disable=SC2086
 run_hookfunctions 'run_cleanuphook' 'cleanup hook' $CLEANUPHOOKS
 
 if [ "$(stat -c %D /)" = "$(stat -c %D /new_root)" ]; then

@@ -12,9 +12,9 @@ setup() {
 }
 
 __assert() {
-    local expect_fail= key= expected_value= actual_value
+    local expect_fail key expected_value actual_value
 
-    if [ "$1" = '--expect-fail' ]; then
+    if [[ "$1" == '--expect-fail' ]]; then
         expect_fail=y
         shift
     fi
@@ -22,15 +22,16 @@ __assert() {
     key=$1 expected_value=$2
     eval actual_value=\$"$1"
 
+    # shellcheck disable=SC2254
     case $actual_value in
     $expected_value)
-        if [ -n "$expect_fail" ]; then
+        if [[ -n "$expect_fail" ]]; then
             echo "EXPECTED FAIL: $key: expected='$expected_value', got='$actual_value'"
             return 1
         fi
         ;;
     *)
-        if [ -z "$expect_fail" ]; then
+        if [[ -z "$expect_fail" ]]; then
             echo "FAIL: $key: expected='$expected_value', got='$actual_value'"
             return 1
         fi
@@ -41,7 +42,7 @@ __assert() {
 }
 
 __test_parse() {
-    local flag= cmdline= expect_fail= expect_parse_fail=
+    local flag cmdline expect_fail expect_parse_fail
 
     for flag; do
         case $flag in
@@ -50,6 +51,7 @@ __test_parse() {
             shift
             ;;
         --expect-parse-fail)
+            # shellcheck disable=SC2034
             expect_parse_fail=y
             shift
             ;;
@@ -61,16 +63,17 @@ __test_parse() {
 
     cmdline=$1
     shift
-    [ -n "$V" ] && echo "testing cmdline: $cmdline"
+    [[ -n "$V" ]] && echo "testing cmdline: $cmdline"
 
     echo "$cmdline" | {
         parse_cmdline
 
         result=0
-        while [ "$#" -gt 0 ]; do
+        while (( $# )); do
             key=$1 expected_value=$2
             shift 2
-
+            # Quoting expect_fail ruins the test, unsure why
+            # shellcheck disable=SC2248
             __assert $expect_fail "$key" "$expected_value" || result=$e_assertion_failure
         done
 
@@ -81,11 +84,18 @@ __test_parse() {
 
 @test "parse_cmdline" {
 
+    # Legacy stuff, idk man
+
+    # shellcheck disable=SC2034
     failed=0
+    # shellcheck disable=SC2034
     tests=0
 
+    # shellcheck disable=SC2034
     e_ok=0
+    # shellcheck disable=SC2034
     e_parser_failure=2
+    # shellcheck disable=SC2034
     e_assertion_failure=130
 
     # bare words

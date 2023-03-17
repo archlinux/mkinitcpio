@@ -8,6 +8,7 @@ load '/usr/lib/bats-support/load'
 load "../helpers/common"
 
 setup() {
+    # shellcheck disable=SC1091
     source ./shell/zsh-completion || true
 }
 

@@ -291,6 +291,7 @@ die() {
 map() {
     local r=0
     for _ in "${@:2}"; do
+        # shellcheck disable=SC1105,SC2210,SC2035
         "$1" "$_" || (( $# > 255 ? r=1 : ++r ))
     done
     return "$r"
@@ -453,6 +454,7 @@ add_firmware() {
         # _d_firmware is assigned in mkinitcpio
         # shellcheck disable=SC2154
         for fwpath in "${_d_firmware[@]}"; do
+            # shellcheck disable=SC2153
             if ! compgen -G "${BUILDROOT}${fwpath}/${fw}"?(.*) &>/dev/null; then
                 if fwfile="$(compgen -G "${fwpath}/${fw}"?(.*))"; then
                     add_file "$fwfile" && r=0
@@ -800,6 +802,8 @@ add_udev_rule() {
 
     while IFS=, read -ra rule; do
         # skip empty lines, comments
+        # rule is an array, but we are only checking if it's an empty string
+        # shellcheck disable=SC2128
         [[ -z "$rule" || "$rule" == @(+([[:space:]])|#*) ]] && continue
 
         for pair in "${rule[@]}"; do
@@ -923,6 +927,7 @@ initialize_buildroot() {
 
 run_build_hook() {
     local hook="$1" script='' resolved=''
+    # shellcheck disable=SC2034
     local MODULES=() BINARIES=() FILES=() SCRIPT=''
 
     # find script in install dirs

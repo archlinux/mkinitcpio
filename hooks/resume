@@ -27,7 +27,9 @@ run_hook () {
             # standard hibernation
             if resumedev="$(resolve_device "$resume" "$rootdelay")"; then
                 if [ -e /sys/power/resume ]; then
-                    printf "%d:%d" $(stat -Lc "0x%t 0x%T" "$resumedev") >/sys/power/resume
+                    # shellcheck disable=SC3001
+                    read -r major minor < <(stat -Lc '0x%t 0x%T' "$resumedev")
+                    printf '%d:%d' "$major" "$minor" >/sys/power/resume
                     return 0
                 else
                     err "resume: no hibernation support found"

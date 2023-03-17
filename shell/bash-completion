@@ -4,9 +4,9 @@
 _detect_kver() {
     local kver_validator='^[[:digit:]]+(\.[[:digit:]]+)+' offset
     offset="$(od -An -j0x20E -dN2 "$1")" || return
-    read kver _ < \
+    read -r kver _ < \
         <(dd if="$1" bs=1 count=127 skip=$(( offset + 0x200 )) 2>/dev/null)
-    [[ "$kver" =~ $kver_validator ]] && printf "$kver"
+    [[ "$kver" =~ $kver_validator ]] && printf '%s' "$kver"
 }
 
 _lsinitcpio() {
@@ -18,7 +18,7 @@ _lsinitcpio() {
 
     case $cur in
         -*)
-            COMPREPLY=($(compgen -W "${opts[*]}" -- "$cur")) ;;
+            mapfile -t COMPREPLY< <(compgen -W "${opts[*]}" -- "$cur") ;;
         *)
             _filedir ;;
     esac
@@ -26,7 +26,7 @@ _lsinitcpio() {
 
 _find_kernel_versions() {
     local -a matches
-    local dir f kver
+    local f kver
 
     for f in /boot/*; do
         # only match regular files which pass validation
@@ -35,7 +35,7 @@ _find_kernel_versions() {
         fi
     done
 
-    COMPREPLY=($(compgen -W "${matches[*]}" -- $cur))
+    mapfile -t COMPREPLY < <(compgen -W "${matches[*]}" -- "$cur")
 }
 
 _files_from_dirs() {
@@ -56,7 +56,7 @@ _files_from_dirs() {
 }
 
 _mkinitcpio() {
-    local action cur prev opts
+    local cur prev opts
     opts=(-A --addhooks -c --config -D --hookdir -d --generatedir -g --generate -H --hookhelp -h --help -k --kernel
           -L --listhooks -M --automods -n --nocolor -P --allpresets -p --preset -R --remove -r --moduleroot
           -S --skiphooks -s --save -t --builddir -V --version -v --verbose -z --compress
@@ -72,11 +72,11 @@ _mkinitcpio() {
         -k|--kernel)
             _find_kernel_versions ;;
         -p|--preset)
-            COMPREPLY=($(compgen -W "$(_files_from_dirs -s .preset /etc/mkinitcpio.d)" -- "$cur")) ;;
+            mapfile -t COMPREPLY < <(compgen -W "$(_files_from_dirs -s .preset /etc/mkinitcpio.d)" -- "$cur") ;;
         -[AHS]|--add|--hookhelp|--skiphooks)
-            COMPREPLY=($(compgen -W "$(_files_from_dirs {/usr,}/lib/initcpio/install)" -- "$cur")) ;;
+            mapfile -t COMPREPLY < <(compgen -W "$(_files_from_dirs {/usr,}/lib/initcpio/install)" -- "$cur") ;;
         *)
-            COMPREPLY=($(compgen -W "${opts[*]}" -- "$cur")) ;;
+            mapfile -t COMPREPLY < <(compgen -W "${opts[*]}" -- "$cur") ;;
     esac
 }
 
