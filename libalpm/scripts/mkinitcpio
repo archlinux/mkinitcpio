@@ -50,7 +50,7 @@ read_preset() {
         unsorted_filelist+=("/boot/vmlinuz-${pkgbase}"
                   "/boot/initramfs-${pkgbase}.img"
                   "/boot/initramfs-${pkgbase}-fallback.img"
-                  "/efi/EFI/arch-${pkgbase}.efi"
+                  "/efi/EFI/Linux/arch-${pkgbase}.efi"
                   "/efi/EFI/Linux/arch-${pkgbase}-fallback.efi")
         unsorted_kernellist+=("/boot/vmlinuz-${pkgbase}")
     fi

@@ -314,6 +314,27 @@ run in reverse.
 	from a run_earlyhook function should be shut down here in preparation for
 	switching to the real root.
 
+About Post Hooks
+----------------
+Post hooks are executables or scripts that get executed after the image has been
+successfully generated and can be used for further processing (i.e. signing).
+They receive the kernel as the first argument, the image as second and optionally
+the unified kernel image as a third.
+
+Note that the first argument will be empty when the mkinitcpio has been invoked with
+'-k none' or '-k version' and the kernel image cannot be found on the filesystem.
+
+The following enviroment variables are passed:
+
+*KERNELVERSION*::
+	Contains the full version of the kernel the image has been built from.
+
+*KERNELDESTINATION*::
+	The default location where the kernel should be located for booting. This usually
+	is the same as the first argument but might differ if mkinitcpio hasn't been
+	invoked with '-k /boot/*'. If no kernel image has been found this variable will
+	be empty as well.
+
 Early Init Environment
 ----------------------
 mkinitcpio gives special treatment to certain environment variables passed on
@@ -431,6 +452,10 @@ Files
 '/etc/initcpio/hooks'::
 '/usr/lib/initcpio/hooks'::
 	Search path for early userspace runtime hooks.
+
+'/etc/initcpio/post'::
+'/usr/lib/initcpio/post'::
+	Search path for post generation hooks.
 
 Examples
 --------

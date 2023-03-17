@@ -15,8 +15,10 @@ _f_functions=functions
 _f_config=mkinitcpio.conf
 _d_hooks="$PWD/hooks:/usr/lib/initcpio/hooks:/lib/initcpio/hooks"
 _d_install="$PWD/install:/usr/lib/initcpio/install:/lib/initcpio/install"
+_d_post="$PWD/post:/usr/lib/initcpio/post:/lib/initcpio/post"
 _d_flag_hooks=
 _d_flag_install=
+_d_flag_post=
 _d_firmware=({/usr,}/lib/firmware/updates {/usr,}/lib/firmware)
 _d_presets=mkinitcpio.d
 
@@ -24,10 +26,10 @@ _d_presets=mkinitcpio.d
 _optmoduleroot='' _optgenimg=''
 _optcompress='' _opttargetdir=''
 _optosrelease=''
-_optuefi='' _optmicrocode=() _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
+_optuki='' _optmicrocode=() _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
 _optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0
 _optquiet=1 _optcolor=1
-_optskiphooks=() _optaddhooks=() _hooks=()  _optpreset=() _tmpfiles=()
+_optskiphooks=() _optaddhooks=() _hooks=()  _optpreset=() _tmpfiles=() _generated=()
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
 
 # export a sane PATH
@@ -365,7 +367,9 @@ build_uki() {
     fi
 
     if [[ -z "$kernelimg" ]]; then
-        for img in "/lib/modules/$KERNELVERSION/vmlinuz" "/boot/vmlinuz-$KERNELVERSION" "/boot/vmlinuz-linux"; do
+        # FIXME: fallback to /boot/vmlinuz-linux can probably be removed as
+        #   $KERNELIMAGE should point to an image with the correct version
+        for img in "$KERNELIMAGE" "/boot/vmlinuz-linux"; do
             if [[ -f "$img" ]]; then
                 kernelimg="$img"
                 msg2 "Using kernel image: '%s'" "$kernelimg"
@@ -545,6 +549,40 @@ preload_builtin_modules() {
     fi
 }
 
+run_post_hooks() {
+    local args=("$@")
+    local hook status
+    local -i count=0
+    local -a paths seen
+
+    IFS=: read -ra paths <<<"$_d_post"
+
+    for path in "${paths[@]}"; do
+        for hook in "$path"/*; do
+            if [[ ! -e "$hook" ]] || in_array "${hook##*/}" "${seen[@]}"; then
+                continue
+            fi
+            seen+=("${hook##*/}")
+
+            [[ -x "$hook" ]] || continue
+
+            (( count++ )) || msg 'Running post hooks'
+            msg2 'Running post hook: [%s]' "${hook##*/}"
+
+            KERNELVERSION="$KERNELVERSION" KERNELDESTINATION="$KERNELDESTINATION" command "$hook" "$KERNELIMAGE" "${args[@]}"
+            status="$?"
+
+            if (( status )); then
+                error "'%s' failed with exit code %d" "$hook" "$status"
+                return 1
+            fi
+        done
+    done
+
+    (( count )) && msg 'Post processing done'
+    return 0
+}
+
 # shellcheck source=functions
 . "$_f_functions"
 
@@ -686,6 +724,7 @@ while :; do
             shift
             _d_flag_hooks+="$1/hooks:"
             _d_flag_install+="$1/install:"
+            _d_flag_post+="$1/post:"
             ;;
         --)
             shift
@@ -707,9 +746,10 @@ if (( _optremove && ${#_optpreset[*]} )); then
     exit
 fi
 
-if [[ -n "$_d_flag_hooks" && -n "$_d_flag_install" ]]; then
+if [[ -n "$_d_flag_hooks" && -n "$_d_flag_install" && -n "$_d_flag_post" ]]; then
     _d_hooks="${_d_flag_hooks%:}"
     _d_install="${_d_flag_install%:}"
+    _d_post="${_d_flag_post%:}"
 fi
 
 
@@ -732,10 +772,52 @@ if (( ${#_optpreset[*]} )); then
     exit
 fi
 
+KERNELIMAGE='' KERNELDESTINATION=''
 if [[ "$KERNELVERSION" != 'none' ]]; then
+    # if the "version" is given as a file name, use it without modification,
+    # if doesn't exist, resolve_kernver will fail anyway
+    if [[ "${KERNELVERSION:0:1}" == '/' ]]; then
+        KERNELIMAGE="$KERNELVERSION"
+    fi
+
     KERNELVERSION="$(resolve_kernver "$KERNELVERSION")" || exit 1
     _d_kmoduledir="$_optmoduleroot/lib/modules/$KERNELVERSION"
     [[ -d "$_d_kmoduledir" ]] || die "'$_d_kmoduledir' is not a valid kernel module directory"
+
+    if [[ -z "$KERNELIMAGE" ]]; then
+        # search well-known locations for the kernel image
+        for img in "$_d_kmoduledir/vmlinuz" "/lib/modules/$KERNELVERSION/vmlinuz"; do
+            if [[ -f "$img" ]]; then
+                KERNELIMAGE="$img"
+                if read -r pkgbase &> /dev/null < "${img%/*}/pkgbase"; then
+                    KERNELDESTINATION="/boot/vmlinuz-$pkgbase"
+                else
+                    KERNELDESTINATION="/boot/vmlinuz-$KERNELVERSION"
+                fi
+                quiet "located kernel image: '%s'" "$KERNELIMAGE"
+                break
+            fi
+        done
+    fi
+
+    if [[ -z "$KERNELIMAGE" ]]; then
+        # check version of all kernels in /boot
+        for img in /boot/vmlinuz-*; do
+            if [[ "$(kver "$img")" == "$KERNELVERSION" ]]; then
+                KERNELIMAGE="$img"
+                quiet "located kernel image: '%s'" "$KERNELIMAGE"
+                break
+            fi
+        done
+    fi
+
+    if [[ -f "$KERNELIMAGE" ]]; then
+        [[ -z "$KERNELDESTINATION" ]] && KERNELDESTINATION="$KERNELIMAGE"
+    else
+        # this is not fatal, initramfs will still be generated but post
+        # hooks will not know what kernel image is used
+        warning 'Could not find kernel image for version %s' "$KERNELVERSION"
+    fi
 fi
 
 MODULES_DECOMPRESS="${MODULES_DECOMPRESS:-"yes"}"
@@ -820,6 +902,7 @@ umask 077
 
 if [[ -n "$_optgenimg" ]]; then
     build_image "$_optgenimg" "$_optcompress" || exit 1
+    _generated+=("$_optgenimg")
 elif [[ -n "$_opttargetdir" ]]; then
     msg "Build complete."
 else
@@ -827,7 +910,12 @@ else
 fi
 
 if [[ -n "$_optuki" && -n "$_optgenimg" ]]; then
-    build_uki "$_optuki" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" "${_optmicrocode[@]}"
+    build_uki "$_optuki" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" "${_optmicrocode[@]}" &&
+        (( ${#_generated[*]} )) && _generated+=("$_optuki")
+fi
+
+if (( ${#_generated[*]} )); then
+    run_post_hooks "${_generated[@]}" || (( ++_builderrors ))
 fi
 
 exit $(( !!_builderrors ))
