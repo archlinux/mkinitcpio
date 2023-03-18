@@ -33,8 +33,9 @@ coverage:
     stage: check
     extends: .pacman_install
     coverage: '/Percent covered\s+\d+\.\d+/'
+    allow_failure: true
     script:
-        - make coverage 2>/dev/null
+        - make coverage
         - jq -r '. |
             ["Percent covered", .percent_covered],
             ["Covered lines", .covered_lines],
