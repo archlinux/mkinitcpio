@@ -1,5 +1,17 @@
 mkinitcptio - Arch Linux initramfs generation tools 
 
+CHANGES WITH v35.1:
+
+        Bugfix release:
+
+        * mkinitcpio failed to setup the required files in /dev/fd to support process
+          substitution. This resulted in hooks/resume failing to work after a shellcheck
+          fix up.
+
+        Contributions from: Morten Linderud
+
+        – 2023-03-19
+
 CHANGES WITH v35:
 
         New Features:
