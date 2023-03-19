@@ -520,6 +520,15 @@ mount_setup() {
     if [ -e /sys/firmware/efi ]; then
         mount -t efivarfs efivarfs /sys/firmware/efi/efivars -o nosuid,nodev,noexec
     fi
+
+    # Setup /dev symlinks
+    if [ -e /proc/kcore ]; then
+        ln -sfT /proc/kcore /dev/core
+    fi
+    ln -sfT /proc/self/fd /dev/fd
+    ln -sfT /proc/self/fd/0 /dev/stdin
+    ln -sfT /proc/self/fd/1 /dev/stdout
+    ln -sfT /proc/self/fd/2 /dev/stderr
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
