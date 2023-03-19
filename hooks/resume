@@ -1,24 +1,24 @@
 #!/usr/bin/ash
 # SPDX-License-Identifier: GPL-2.0-only
 
-run_hook () {
+run_hook() {
     local resumedev
 
     # assigned by parse_cmdline
     # shellcheck disable=SC2154
     case "$resume" in
         '')
-            err "resume: no device specified for hibernation"
-            return 1;
+            err 'resume: no device specified for hibernation'
+            return 1
             ;;
-        swap:*|file:*)
+        'swap:'* | 'file:'*)
             # tux-on-ice syntax: swap:/dev/sda2 or file:/dev/sda2:0xdeadbeef
-            if [ -d /sys/power/tuxonice  ]; then
+            if [ -d /sys/power/tuxonice ]; then
                 echo "$resume" >/sys/power/tuxonice/resume
                 echo >/sys/power/tuxonice/do_resume
                 return 0
             else
-                err "resume: tux-on-ice syntax detected, but no support found"
+                err 'resume: tux-on-ice syntax detected, but no support found'
                 return 1
             fi
             ;;
@@ -32,7 +32,7 @@ run_hook () {
                     printf '%d:%d' "$major" "$minor" >/sys/power/resume
                     return 0
                 else
-                    err "resume: no hibernation support found"
+                    err 'resume: no hibernation support found'
                     return 1
                 fi
             fi

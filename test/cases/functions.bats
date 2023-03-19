@@ -88,7 +88,7 @@ setup() {
     local tmp_bin BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}/" interpreter="/usr/local/${BATS_TEST_NAME}.${RANDOM}" _optquiet=1
 
     tmp_bin="$(mktemp --tmpdir="$BATS_RUN_TMPDIR" tmp_bin.XXXXXX)"
-    printf '#!%s\n\n:\n' "$interpreter" > "$tmp_bin"
+    printf '#!%s\n\n:\n' "$interpreter" >"$tmp_bin"
 
     install -d -- "$BUILDROOT"
     # initialize_buildroot unconditionally creates a /tmp/mkinitcpio.XXXXXX work directory
@@ -103,9 +103,9 @@ setup() {
 
     install -d -- "$BUILDROOT" "${dir}/testdir1/testsubdir1" \
         "${dir}/testdir2/testsubdir1" "${dir}/testdir2/testsubdir2"
-    printf 'test\n' > "${dir}/testdir1/1"
-    printf 'test\n' > "${dir}/testdir1/testsubdir1/2"
-    printf 'test\n' > "${dir}/testdir2/testsubdir2/3"
+    printf 'test\n' >"${dir}/testdir1/1"
+    printf 'test\n' >"${dir}/testdir1/testsubdir1/2"
+    printf 'test\n' >"${dir}/testdir2/testsubdir2/3"
     ln -s -- 3 "${dir}/testdir2/testsubdir2/4"
 
     run add_full_dir "$dir"
@@ -117,9 +117,9 @@ setup() {
     dir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
 
     install -d -- "$BUILDROOT" "${dir}/testdir1/testsubdir1"
-    printf 'test\n' > "${dir}/testdir1/1.notest1"
-    printf 'test\n' > "${dir}/testdir1/2.test2"
-    printf 'test\n' > "${dir}/testdir1/testsubdir1/3.test3"
+    printf 'test\n' >"${dir}/testdir1/1.notest1"
+    printf 'test\n' >"${dir}/testdir1/2.test2"
+    printf 'test\n' >"${dir}/testdir1/testsubdir1/3.test3"
     ln -s -- 3.test3 "${dir}/testdir1/testsubdir1/4.notest4"
 
     run add_full_dir "$dir" '*.test*'

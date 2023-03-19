@@ -8,7 +8,7 @@ build() {
 
     # pata, sata, scsi, nvme
     for filter in 'scsi/.*ata' '/(block|scsi|fusion|nvme)/' 'ata/[ps]ata_' \
-            'ata/(ahci|pdc_adma|ata_piix|ata_generic)'; do
+        'ata/(ahci|pdc_adma|ata_piix|ata_generic)'; do
         add_checked_modules "$filter"
     done
 
@@ -31,7 +31,7 @@ build() {
     # nvdimm
     add_checked_modules '/drivers/nvdimm/'
 
-	# Intel Volume Management Device
+    # Intel Volume Management Device
     add_checked_modules 'vmd'
 }
 

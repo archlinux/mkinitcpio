@@ -30,15 +30,18 @@ parseopts() {
                     return 1
                 else
                     return 0
-                fi ;;
+                fi
+                ;;
             0)
                 # fail, no match found
-                return 255 ;;
+                return 255
+                ;;
             *)
                 # fail, ambiguous match
                 printf "%s: option '%s' is ambiguous; possibilities:%s\n" "${0##*/}" \
                     "--$1" "$(printf " '%s'" "${longmatch[@]%:}")"
-                return 254 ;;
+                return 254
+                ;;
         esac
     }
 
@@ -80,8 +83,8 @@ parseopts() {
                     fi
                 done
                 ;;
-            --?*=*|--?*) # long option
-                IFS='=' read -r opt optarg <<< "${1#--}"
+            --?*=* | --?*) # long option
+                IFS='=' read -r opt optarg <<<"${1#--}"
                 longoptmatch "$opt"
                 case $? in
                     0)
@@ -99,7 +102,7 @@ parseopts() {
                             OPTRET+=("--$opt" "$optarg")
                         # --longopt optarg
                         elif [[ -n "$2" ]]; then
-                            OPTRET+=("--$opt" "$2" )
+                            OPTRET+=("--$opt" "$2")
                             shift
                         else
                             printf "%s: option '--%s' requires an argument\n" "${0##*/}" "$opt"
@@ -160,13 +163,13 @@ detect_compression() {
             ;;
     esac
 
-   bytes="$(od -An -t x1 -N4 "$1" | tr -dc '[:alnum:]')"
+    bytes="$(od -An -t x1 -N4 "$1" | tr -dc '[:alnum:]')"
     if [[ "$bytes" == '894c5a4f' ]]; then
         echo 'lzop'
         return
     fi
 
-   bytes="$(od -An -t x2 -N2 "$1" | tr -dc '[:alnum:]')"
+    bytes="$(od -An -t x2 -N2 "$1" | tr -dc '[:alnum:]')"
     if [[ "$bytes" == '8b1f' ]]; then
         echo 'gzip'
         return
@@ -218,7 +221,7 @@ kver_generic() {
     # Loosely grep for `linux_banner`:
     # https://elixir.bootlin.com/linux/v5.7.2/source/init/version.c#L46
     local kver='' reader='cat'
-    
+
     [[ "$(detect_compression "$1")" == 'gzip' ]] && reader='zcat'
 
     read -r _ _ kver _ < <($reader "$1" | grep -m1 -aoE 'Linux version .(\.[-[:alnum:]+]+)+')
@@ -299,11 +302,11 @@ map() {
 
 arrayize_config() {
     set -f
-    [[ ${MODULES@a} != *a* ]] && IFS=' ' read -r -a MODULES <<< "$MODULES"
-    [[ ${BINARIES@a} != *a* ]] && IFS=' ' read -r -a BINARIES <<< "$BINARIES"
-    [[ ${FILES@a} != *a* ]] && IFS=' ' read -r -a FILES <<< "$FILES"
-    [[ ${HOOKS@a} != *a* ]] && IFS=' ' read -r -a HOOKS <<< "$HOOKS"
-    [[ ${COMPRESSION_OPTIONS@a} != *a* ]] && IFS=' ' read -r -a COMPRESSION_OPTIONS <<< "$COMPRESSION_OPTIONS"
+    [[ ${MODULES@a} != *a* ]] && IFS=' ' read -r -a MODULES <<<"$MODULES"
+    [[ ${BINARIES@a} != *a* ]] && IFS=' ' read -r -a BINARIES <<<"$BINARIES"
+    [[ ${FILES@a} != *a* ]] && IFS=' ' read -r -a FILES <<<"$FILES"
+    [[ ${HOOKS@a} != *a* ]] && IFS=' ' read -r -a HOOKS <<<"$HOOKS"
+    [[ ${COMPRESSION_OPTIONS@a} != *a* ]] && IFS=' ' read -r -a COMPRESSION_OPTIONS <<<"$COMPRESSION_OPTIONS"
     set +f
 }
 
@@ -509,7 +512,7 @@ add_module() {
                 fi
                 ;;
             depends)
-                IFS=',' read -r -a deps <<< "$value"
+                IFS=',' read -r -a deps <<<"$value"
                 map add_module "${deps[@]}"
                 ;;
             firmware)
@@ -748,8 +751,8 @@ add_binary() {
     # non-binaries
     if ! lddout="$(ldd "$binary" 2>/dev/null)"; then
         # detect if the file has a shebang
-        if IFS='' LC_ALL=C read -rn2 -d '' shebang < "$binary" && [[ "$shebang" == '#!' ]]; then
-            read -r shebang < "$binary"
+        if IFS='' LC_ALL=C read -rn2 -d '' shebang <"$binary" && [[ "$shebang" == '#!' ]]; then
+            read -r shebang <"$binary"
             interpreter="${shebang##\#\!*([[:space:]])}"
             # strip /usr/bin/env and warn if it is missing
             if [[ "$interpreter" == '/usr/bin/env'* ]]; then
@@ -784,7 +787,7 @@ add_binary() {
         if [[ -f "$sodep" && ! -e "${BUILDROOT}${sodep}" ]]; then
             add_file "$sodep" "$sodep"
         fi
-    done <<< "$lddout"
+    done <<<"$lddout"
 
     return 0
 }
@@ -813,9 +816,9 @@ add_udev_rule() {
         [[ -z "$rule" || "$rule" == @(+([[:space:]])|#*) ]] && continue
 
         for pair in "${rule[@]}"; do
-            IFS=' =' read -r key value <<< "$pair"
+            IFS=' =' read -r key value <<<"$pair"
             case "$key" in
-                'RUN{program}'|'RUN+'|'IMPORT{program}'|'ENV{REMOVE_CMD}')
+                'RUN{program}' | 'RUN+' | 'IMPORT{program}' | 'ENV{REMOVE_CMD}')
                     # strip quotes
                     binary="${value//[\"\']/}"
                     # just take the first word as the binary name
@@ -838,7 +841,7 @@ parse_config() {
     map add_binary "${BINARIES[@]}"
     map add_file "${FILES[@]}"
 
-    tee "$BUILDROOT/buildconfig" < "$1" | {
+    tee "$BUILDROOT/buildconfig" <"$1" | {
         # When MODULES is not an array (but instead implicitly converted at
         # startup), sourcing the config causes the string value of MODULES
         # to be assigned as MODULES[0]. Avoid this by explicitly unsetting

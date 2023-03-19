@@ -24,18 +24,18 @@ __assert() {
 
     # shellcheck disable=SC2254
     case $actual_value in
-    $expected_value)
-        if [[ -n "$expect_fail" ]]; then
-            echo "EXPECTED FAIL: $key: expected='$expected_value', got='$actual_value'"
-            return 1
-        fi
-        ;;
-    *)
-        if [[ -z "$expect_fail" ]]; then
-            echo "FAIL: $key: expected='$expected_value', got='$actual_value'"
-            return 1
-        fi
-        ;;
+        $expected_value)
+            if [[ -n "$expect_fail" ]]; then
+                echo "EXPECTED FAIL: $key: expected='$expected_value', got='$actual_value'"
+                return 1
+            fi
+            ;;
+        *)
+            if [[ -z "$expect_fail" ]]; then
+                echo "FAIL: $key: expected='$expected_value', got='$actual_value'"
+                return 1
+            fi
+            ;;
     esac
 
     return 0
@@ -46,18 +46,18 @@ __test_parse() {
 
     for flag; do
         case $flag in
-        --expect-fail)
-            expect_fail='--expect-fail'
-            shift
-            ;;
-        --expect-parse-fail)
-            # shellcheck disable=SC2034
-            expect_parse_fail=y
-            shift
-            ;;
-        *)
-            break
-            ;;
+            --expect-fail)
+                expect_fail='--expect-fail'
+                shift
+                ;;
+            --expect-parse-fail)
+                # shellcheck disable=SC2034
+                expect_parse_fail=y
+                shift
+                ;;
+            *)
+                break
+                ;;
         esac
     done
 

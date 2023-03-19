@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 build() {
-  add_full_dir /etc/modprobe.d '*.conf'
-  add_full_dir /usr/lib/modprobe.d '*.conf'
+    add_full_dir /etc/modprobe.d '*.conf'
+    add_full_dir /usr/lib/modprobe.d '*.conf'
 }
 
 help() {
-  cat <<HELPEOF
+    cat <<HELPEOF
 This hook installs modprobe configuration files from /etc/modprobe.d and
 /usr/lib/modprobe.d.
 HELPEOF

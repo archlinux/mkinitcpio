@@ -19,7 +19,7 @@ stop_device() {
             read -r devname <"$1/dm/name"
             cryptsetup remove "$devname"
             ;;
-        lvm|dm)
+        lvm | dm)
             read -r devname <"$1/dm/name"
             dmsetup --noudevsync remove "$devname"
             ;;
@@ -28,7 +28,7 @@ stop_device() {
             # clean. unfortunately, there isn't a whole lot we can do
             # if this fails, and the array may need a full rebuild on
             # the next reboot.
-            IFS=: read -r metadata _ < "/sys/class/block/$1/md/metadata_version"
+            IFS=: read -r metadata _ <"/sys/class/block/$1/md/metadata_version"
             if [ "$metadata" = external ]; then
                 mdadm --wait-clean "/dev/$1"
             fi
@@ -96,7 +96,7 @@ for part in */holders/*; do
 done
 
 case "$1" in
-    poweroff|shutdown|halt)
+    poweroff | shutdown | halt)
         "$1" -f
         ;;
     *)

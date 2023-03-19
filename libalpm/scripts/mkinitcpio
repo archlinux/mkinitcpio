@@ -8,7 +8,7 @@ package=0
 
 process_preset() {
     if [[ -n "$pkgbase" && -e "$preset" ]]; then
-        if ! cmp "$preset" > /dev/null 2>&1 <(sed "s|%PKGBASE%|${pkgbase}|g" /usr/share/mkinitcpio/hook.preset); then
+        if ! cmp "$preset" <(sed "s|%PKGBASE%|${pkgbase}|g" /usr/share/mkinitcpio/hook.preset) &>/dev/null; then
             if [[ ! -e "$preset.pacsave" ]]; then
                 # save the preset as pacsave
                 mv -- "$preset" "$preset.pacsave" && return 0
@@ -48,10 +48,10 @@ read_preset() {
         done
     else
         unsorted_filelist+=("/boot/vmlinuz-${pkgbase}"
-                  "/boot/initramfs-${pkgbase}.img"
-                  "/boot/initramfs-${pkgbase}-fallback.img"
-                  "/efi/EFI/Linux/arch-${pkgbase}.efi"
-                  "/efi/EFI/Linux/arch-${pkgbase}-fallback.efi")
+            "/boot/initramfs-${pkgbase}.img"
+            "/boot/initramfs-${pkgbase}-fallback.img"
+            "/efi/EFI/Linux/arch-${pkgbase}.efi"
+            "/efi/EFI/Linux/arch-${pkgbase}-fallback.efi")
         unsorted_kernellist+=("/boot/vmlinuz-${pkgbase}")
     fi
 
@@ -125,14 +125,14 @@ while read -r line; do
         continue
     fi
 
-    if ! read -r pkgbase > /dev/null 2>&1 < "${line%/vmlinuz}/pkgbase"; then
+    if ! read -r pkgbase &>/dev/null <"${line%/vmlinuz}/pkgbase"; then
         # if the kernel has no pkgbase, we skip it
         continue
     fi
 
     case "$1" in
-        install) install_kernel "$pkgbase";;
-        remove) remove_kernel "$pkgbase";;
+        install) install_kernel "$pkgbase" ;;
+        remove) remove_kernel "$pkgbase" ;;
     esac
 done
 
@@ -143,14 +143,14 @@ if (( package )) && compgen -G /etc/mkinitcpio.d/"*.preset" > /dev/null; then
             args=(-P)
             ;;
         remove)
-          shopt -s nullglob
-          for preset in /etc/mkinitcpio.d/*.preset; do
-              pkgbase=${preset##*/}
-              pkgbase=${pkgbase%.preset}
-              process_preset "$pkgbase" "$preset"
-          done
-          shopt -u nullglob
-          ;;
+            shopt -s nullglob
+            for preset in /etc/mkinitcpio.d/*.preset; do
+                pkgbase=${preset##*/}
+                pkgbase=${pkgbase%.preset}
+                process_preset "$pkgbase" "$preset"
+            done
+            shopt -u nullglob
+            ;;
     esac
 fi
 

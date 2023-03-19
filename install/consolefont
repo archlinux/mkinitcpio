@@ -16,7 +16,7 @@ build() {
                 if [[ -e "$file" ]]; then
                     [[ "$file" =~ (\.(fnt|psfu?))(\.gz|\.zst)?$ ]] && ext="${BASH_REMATCH[2]}"
                     if [[ "$file" == *'.gz' ]]; then
-                        gzip -cd "$file" > "$BUILDROOT/consolefont.$ext"
+                        gzip -cd "$file" >"$BUILDROOT/consolefont.$ext"
                     elif [[ "$file" == *'.zst' ]]; then
                         zstd -qd "$file" -o "$BUILDROOT/consolefont.$ext"
                     else
@@ -28,7 +28,7 @@ build() {
             error "consolefont: requested font not found: '%s'" "$FONT"
             exit 1
         else
-            warning "consolefont: no font found in configuration"
+            warning 'consolefont: no font found in configuration'
             exit 1
         fi
     ) && add_runscript

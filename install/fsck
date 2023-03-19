@@ -6,26 +6,26 @@ build() {
 
     add_fsck() {
         case "$1" in
-        ext[234])
-            add_binary e2fsck
-            add_symlink /usr/bin/fsck.ext2 e2fsck
-            add_symlink /usr/bin/fsck.ext3 e2fsck
-            add_symlink /usr/bin/fsck.ext4 e2fsck
-            if [[ -e /etc/e2fsck.conf ]]; then
-                add_file /etc/e2fsck.conf
-            fi
-            ;;
-        xfs)
-            add_binary fsck.xfs
-            add_binary xfs_repair
-            ;;
-        *)
-            if compgen -c "fsck.$1" &> /dev/null; then
-                add_binary "fsck.$1"
-            else
-                return 1
-            fi
-            ;;
+            ext[234])
+                add_binary e2fsck
+                add_symlink /usr/bin/fsck.ext2 e2fsck
+                add_symlink /usr/bin/fsck.ext3 e2fsck
+                add_symlink /usr/bin/fsck.ext4 e2fsck
+                if [[ -e /etc/e2fsck.conf ]]; then
+                    add_file /etc/e2fsck.conf
+                fi
+                ;;
+            xfs)
+                add_binary fsck.xfs
+                add_binary xfs_repair
+                ;;
+            *)
+                if compgen -c "fsck.$1" &>/dev/null; then
+                    add_binary "fsck.$1"
+                else
+                    return 1
+                fi
+                ;;
         esac
     }
 

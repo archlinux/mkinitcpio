@@ -29,7 +29,7 @@ _optosrelease=''
 _optuki='' _optmicrocode=() _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
 _optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0
 _optquiet=1 _optcolor=1
-_optskiphooks=() _optaddhooks=() _hooks=()  _optpreset=() _tmpfiles=() _generated=()
+_optskiphooks=() _optaddhooks=() _hooks=() _optpreset=() _tmpfiles=() _generated=()
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
 
 # export a sane PATH
@@ -100,7 +100,7 @@ cleanup() {
     if [[ -n "$_d_workdir" ]]; then
         # when _optpreset is set, we're in the main loop, not a worker process
         if (( _optsavetree )) && [[ -z ${_optpreset[*]} ]]; then
-            printf '%s\n' "${!_autodetect_cache[@]}" > "$_d_workdir/autodetect_modules"
+            printf '%s\n' "${!_autodetect_cache[@]}" >"$_d_workdir/autodetect_modules"
             msg "build directory saved in '%s'" "$_d_workdir"
         else
             rm -rf -- "$_d_workdir"
@@ -257,11 +257,11 @@ build_image() {
     find . -mindepth 1 -execdir touch -hcd "@0" "{}" +
 
     # If this pipeline changes, |pipeprogs| below needs to be updated as well.
-    find . -mindepth 1 -printf '%P\0' |
-            sort -z |
-            LANG=C bsdtar --uid 0 --gid 0 --null -cnf - -T - |
-            LANG=C bsdtar --null -cf - --format=newc @- |
-            $compress "${COMPRESSION_OPTIONS[@]}" > "$compressout"
+    find . -mindepth 1 -printf '%P\0' \
+        | sort -z \
+        | LANG=C bsdtar --uid 0 --gid 0 --null -cnf - -T - \
+        | LANG=C bsdtar --null -cf - --format=newc @- \
+        | $compress "${COMPRESSION_OPTIONS[@]}" >"$compressout"
 
     pipestatus=("${PIPESTATUS[@]}")
     pipeprogs=('find' 'sort' 'bsdtar (step 1)' 'bsdtar (step 2)' "$compress")
@@ -355,7 +355,7 @@ build_uki() {
     cmdline_tmp="$(mktemp -t mkinitcpio.XXXXXX)"
     _tmpfiles+=("$cmdline_tmp")
 
-    printf "%s\n\0" "$(grep -a '^[^#]' "$cmdline" | tr -s '\n' ' ')" > "$cmdline_tmp"
+    printf "%s\n\0" "$(grep -a '^[^#]' "$cmdline" | tr -s '\n' ' ')" >"$cmdline_tmp"
 
     OBJCOPYARGS+=(--add-section ".cmdline=${cmdline_tmp}" --change-section-vma .cmdline="$(printf 0x%x "$offset")")
     offset="$((offset + $(stat -Lc%s "$cmdline_tmp")))"
@@ -397,7 +397,7 @@ build_uki() {
     initramfs_tmp="$(mktemp -t mkinitcpio.XXXXXX)"
     _tmpfiles+=("$initramfs_tmp")
 
-    cat -- "${microcode[@]}" "$initramfs" > "$initramfs_tmp"
+    cat -- "${microcode[@]}" "$initramfs" >"$initramfs_tmp"
 
     OBJCOPYARGS+=(--add-section ".initrd=${initramfs_tmp}" --change-section-vma ".initrd=$(printf 0x%x "$offset")")
 
@@ -440,9 +440,9 @@ process_preset() (
     ret=0
     for p in "${PRESETS[@]}"; do
         if (( _optremove )); then
-             msg "Removing image for preset: $preset: '$p'"
+            msg "Removing image for preset: $preset: '$p'"
         else
-             msg "Building image from preset: $preset: '$p'"
+            msg "Building image from preset: $preset: '$p'"
         fi
         preset_cmd=("${preset_mkopts[@]}")
         preset_remove_cmd=()
@@ -492,7 +492,7 @@ process_preset() (
 
         declare -n preset_microcode="${p}_microcode"
         if [[ -n "${preset_microcode[*]}" || -n "${ALL_microcode[*]}" ]]; then
-            mapfile -d '' -O "${#preset_cmd[@]}" -t preset_cmd  < <(
+            mapfile -d '' -O "${#preset_cmd[@]}" -t preset_cmd < <(
                 printf -- '--microcode\0%s\0' "${preset_microcode[@]:-${ALL_microcode[@]}}"
             )
         fi
@@ -591,9 +591,9 @@ trap 'cleanup' EXIT
 
 _opt_short='A:c:D:g:H:hk:nLMPp:Rr:S:sd:t:U:Vvz:'
 _opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
-          'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets'
-          'preset:' 'remove' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:'
-          'uki:' 'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:')
+           'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets'
+           'preset:' 'remove' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:'
+           'uki:' 'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:')
 
 parseopts "$_opt_short" "${_opt_long[@]}" -- "$@" || exit 1
 set -- "${OPTRET[@]}"
@@ -602,13 +602,13 @@ unset _opt_short _opt_long OPTRET
 while :; do
     case "$1" in
         # --add remains for backwards compat
-        -A|--add|--addhooks)
+        -A | --add | --addhooks)
             shift
-            IFS=, read -r -a add <<< "$1"
+            IFS=, read -r -a add <<<"$1"
             _optaddhooks+=("${add[@]}")
             unset add
             ;;
-        -c|--config)
+        -c | --config)
             shift
             _f_config="$1"
             ;;
@@ -616,67 +616,67 @@ while :; do
             shift
             _optcmdline="$1"
             ;;
-        -k|--kernel)
+        -k | --kernel)
             shift
             KERNELVERSION="$1"
             ;;
-        -s|--save)
+        -s | --save)
             _optsavetree=1
             ;;
-        -d|--generatedir)
+        -d | --generatedir)
             shift
             _opttargetdir="$1"
             ;;
-        -g|--generate)
+        -g | --generate)
             shift
             [[ -d "$1" ]] && die 'Invalid image path -- must not be a directory'
             if ! _optgenimg="$(readlink -f "$1")" || [[ ! -e "${_optgenimg%/*}" ]]; then
                 die "Unable to write to path: '%s'" "$1"
             fi
             ;;
-        -h|--help)
+        -h | --help)
             usage
             exit 0
             ;;
-        -V|--version)
+        -V | --version)
             version
             exit 0
             ;;
-        -p|--preset)
+        -p | --preset)
             shift
             _optpreset+=("$1")
             ;;
-        -R|--remove)
+        -R | --remove)
             _optremove=1
             ;;
-        -n|--nocolor)
+        -n | --nocolor)
             _optcolor=0
             ;;
         --uefi)
             warning 'The --uefi option is deprecated. Use --uki instead.'
             ;&
-        -U|--uki)
+        -U | --uki)
             shift
             [[ -d "$1" ]] && die "Invalid image path -- must not be a directory"
             if ! _optuki="$(readlink -f "$1")" || [[ ! -e "${_optuki%/*}" ]]; then
                 die "Unable to write to path: '%s'" "$1"
             fi
             ;;
-        -v|--verbose)
+        -v | --verbose)
             _optquiet=0
             ;;
-        -S|--skiphooks)
+        -S | --skiphooks)
             shift
-            IFS=, read -r -a skip <<< "$1"
+            IFS=, read -r -a skip <<<"$1"
             _optskiphooks+=("${skip[@]}")
             unset skip
             ;;
-        -H|--hookhelp)
+        -H | --hookhelp)
             shift
             hook_help "$1"
             exit
             ;;
-        -L|--listhooks)
+        -L | --listhooks)
             hook_list
             exit 0
             ;;
@@ -687,20 +687,20 @@ while :; do
             ;;
         --kernelimage)
             shift
-             _optkernelimage="$1"
+            _optkernelimage="$1"
             ;;
         --uefistub)
             shift
-             _optuefistub="$1"
+            _optuefistub="$1"
             ;;
-        -M|--automods)
+        -M | --automods)
             _optshowautomods=1
             ;;
         --microcode)
             shift
             _optmicrocode+=("$1")
             ;;
-        -P|--allpresets)
+        -P | --allpresets)
             _optpreset=("$_d_presets"/*.preset)
             [[ -e "${_optpreset[0]}" ]] || die 'No presets found in %s' "$_d_presets"
             ;;
@@ -709,19 +709,19 @@ while :; do
             [[ ! -f "$1" ]] && die 'Invalid file -- must be a file'
             _optosrelease="$1"
             ;;
-        -t|--builddir)
+        -t | --builddir)
             shift
             export TMPDIR="$1"
             ;;
-        -z|--compress)
+        -z | --compress)
             shift
             _optcompress="$1"
             ;;
-        -r|--moduleroot)
+        -r | --moduleroot)
             shift
             _optmoduleroot="$1"
             ;;
-        -D|--hookdir)
+        -D | --hookdir)
             shift
             _d_flag_hooks+="$1/hooks:"
             _d_flag_install+="$1/install:"
@@ -752,7 +752,6 @@ if [[ -n "$_d_flag_hooks" && -n "$_d_flag_install" && -n "$_d_flag_post" ]]; the
     _d_install="${_d_flag_install%:}"
     _d_post="${_d_flag_post%:}"
 fi
-
 
 # If we specified --uki but no -g we want to create a temporary initramfs which will be used with the efi executable.
 if [[ -n "$_optuki" && -z "$_optgenimg" ]]; then
@@ -790,7 +789,7 @@ if [[ "$KERNELVERSION" != 'none' ]]; then
         for img in "$_d_kmoduledir/vmlinuz" "/lib/modules/$KERNELVERSION/vmlinuz"; do
             if [[ -f "$img" ]]; then
                 KERNELIMAGE="$img"
-                if read -r pkgbase &> /dev/null < "${img%/*}/pkgbase"; then
+                if read -r pkgbase &>/dev/null <"${img%/*}/pkgbase"; then
                     KERNELDESTINATION="/boot/vmlinuz-$pkgbase"
                 else
                     KERNELDESTINATION="/boot/vmlinuz-$KERNELVERSION"
@@ -911,8 +910,8 @@ else
 fi
 
 if [[ -n "$_optuki" && -n "$_optgenimg" ]]; then
-    build_uki "$_optuki" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" "${_optmicrocode[@]}" &&
-        (( ${#_generated[*]} )) && _generated+=("$_optuki")
+    build_uki "$_optuki" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" "${_optmicrocode[@]}" \
+        && (( ${#_generated[*]} )) && _generated+=("$_optuki")
 fi
 
 if (( ${#_generated[*]} )); then

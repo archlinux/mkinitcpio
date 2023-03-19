@@ -4,17 +4,17 @@
 # This file contains common functions used in init and in hooks
 
 # logging targets
-_rdlog_file=$(( 1 << 0 ))
-_rdlog_kmsg=$(( 1 << 1 ))
-_rdlog_cons=$(( 1 << 2 ))
-_rdlog_all=$(( (1 << 3) - 1 ))
+_rdlog_file="$(( 1 << 0 ))"
+_rdlog_kmsg="$(( 1 << 1 ))"
+_rdlog_cons="$(( 1 << 2 ))"
+_rdlog_all="$(( (1 << 3) - 1 ))"
 
-msg () {
+msg() {
     # assigned by parse_cmdline
     # shellcheck disable=SC2154
     [ "${quiet}" != "y" ] && echo "$@"
 }
-err () {
+err() {
     echo "ERROR: $*"
 }
 
@@ -27,7 +27,7 @@ log_kmsg() {
 poll_device() {
     # busybox ash supports string replacements
     # shellcheck disable=SC3060
-    local device="$1" seconds="${2//[!0-9]}"
+    local device="$1" seconds="${2//[!0-9]/}"
 
     [ "${seconds:-x}" = x ] && seconds=10
     deciseconds="$(( seconds * 10 ))"
@@ -156,7 +156,7 @@ parse_cmdline_item() {
     local key="$1" value="$2"
 
     case "$key" in
-        rw|ro)
+        rw | ro)
             rwopt="$key"
             ;;
         fstype)
@@ -188,7 +188,7 @@ parse_cmdline_item() {
                 rd_logmask="$(( _rdlog_kmsg | _rdlog_cons ))"
             fi
             ;;
-        [![:alpha:]_]*|[[:alpha:]_]*[![:alnum:]_]*)
+        [![:alpha:]_]* | [[:alpha:]_]*[![:alnum:]_]*)
             # invalid shell variable, ignore it
             ;;
         *)
@@ -365,11 +365,12 @@ resolve_device() {
     # usage of tags without udev and "slow" devices like root on
     # USB, which might not immediately show up.
     case "$device" in
-        UUID=*|LABEL=*|PARTUUID=*|PARTLABEL=*)
+        'UUID='* | 'LABEL='* | 'PARTUUID='* | 'PARTLABEL='*)
             dev="$(blkid -lt "$device" -o device)"
             if [ -z "$dev" ] && [ "$udevd_running" -eq 1 ]; then
                 dev="$(tag_to_udev_path "${device%%=*}" "${device#*=}")"
             fi
+            ;;
     esac
 
     [ -n "$dev" ] && device="$dev"
@@ -385,7 +386,7 @@ resolve_device() {
             fi
             ;;
         # hex encoded major/minor, such as from LILO
-        [0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]|[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])
+        [0-9a-fA-F][0-9a-fA-F][0-9a-fA-F] | [0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])
             major="$(( 0x0$device >> 8 ))"
             minor="$(( 0x0$device & 0xff ))"
             ;;

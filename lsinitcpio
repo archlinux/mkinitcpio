@@ -17,7 +17,7 @@ declare -A bsdcpio_options=(
 )
 
 usage() {
-    cat<<USAGE
+    cat <<USAGE
 lsinitcpio %VERSION%
 usage: ${0##*/} [action] [options] <initramfs>
 
@@ -37,7 +37,7 @@ USAGE
 }
 
 version() {
-    cat<<EOF
+    cat <<EOF
 lsinitcpio %VERSION%
 EOF
 }
@@ -79,7 +79,7 @@ size_to_human() {
 detect_filetype() {
     local bytes
 
-    read -rd '' -n 6 bytes < "$1"
+    read -rd '' -n 6 bytes <"$1"
     printf -v bytes '%02x' "'${bytes:0:1}" "'${bytes:1:1}" "'${bytes:2:1}" \
                            "'${bytes:3:1}" "'${bytes:4:1}" "'${bytes:5:1}"
     case $bytes in
@@ -151,7 +151,7 @@ analyze_image() {
 
     mapfile -t binaries < <(find "$workdir/usr/bin" -type f -printf %f\\n)
 
-    read -r version < "$workdir/VERSION"
+    read -r version <"$workdir/VERSION"
 
     # shellcheck disable=SC1090,SC1091
     . "$workdir/config"
@@ -222,30 +222,30 @@ unset _opt_short _opt_long OPTRET
 
 while :; do
     case $1 in
-        -a|--analyze)
+        -a | --analyze)
             _optanalyze=1
             ;;
-        -c|--config)
+        -c | --config)
             _optshowconfig=1
             ;;
-        -h|--help)
+        -h | --help)
             usage
             exit 0
             ;;
-        -l|--list)
+        -l | --list)
             _optlistcontents=1
             ;;
-        -n|--nocolor)
+        -n | --nocolor)
             _optcolor=0
             ;;
-        -V|--version)
+        -V | --version)
             version
             exit 0
             ;;
-        -v|--verbose)
+        -v | --verbose)
             bsdcpio_options['verbose']='--verbose'
             ;;
-        -x|--extract)
+        -x | --extract)
             unset 'bsdcpio_options[list]'
             ;;
         --)
@@ -268,9 +268,11 @@ fi
 case $(( _optanalyze + _optlistcontents + _optshowconfig )) in
     0)
         # default action when none specified
-        _optlistcontents=1 ;;
+        _optlistcontents=1
+        ;;
     [!1])
-        die "Only one action may be specified at a time" ;;
+        die "Only one action may be specified at a time"
+        ;;
 esac
 
 # read compression type

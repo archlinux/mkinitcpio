@@ -14,7 +14,7 @@ MICROCODE=()
 KERNEL_IMAGE_FLAGS=()
 case "$KERNEL_INSTALL_LAYOUT" in
     uki)
-        # TODO: remove once https://github.com/systemd/systemd/pull/26119 is merged 
+        # TODO: remove once https://github.com/systemd/systemd/pull/26119 is merged
         # and a systemd version including it is packaged
         install -d -- "$KERNEL_INSTALL_BOOT_ROOT"/EFI/Linux
 

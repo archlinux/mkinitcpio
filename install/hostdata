@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 build() {
-  add_file /etc/machine-id
-  add_file /etc/hostname
+    add_file /etc/machine-id
+    add_file /etc/hostname
 }
 
 help() {
-  cat <<HELPEOF
+    cat <<HELPEOF
 This hook installs host-specific configuration files into the initramfs.
 HELPEOF
 }

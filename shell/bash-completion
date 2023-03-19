@@ -17,10 +17,8 @@ _lsinitcpio() {
     _get_comp_words_by_ref cur
 
     case $cur in
-        -*)
-            mapfile -t COMPREPLY< <(compgen -W "${opts[*]}" -- "$cur") ;;
-        *)
-            _filedir ;;
+        -*) mapfile -t COMPREPLY < <(compgen -W "${opts[*]}" -- "$cur") ;;
+        *) _filedir ;;
     esac
 }
 
@@ -65,18 +63,24 @@ _mkinitcpio() {
     _get_comp_words_by_ref cur prev
 
     case $prev in
-        -[cgU]|--cmdline|--config|--generate|--kernelimage|--microcode|--osrelease|--splash|--uki|--uefistub)
-            _filedir ;;
-        -D|--hookdir|-d|--generatedir|-r|--moduleroot|-t|--builddir)
-            _filedir -d ;;
-        -k|--kernel)
-            _find_kernel_versions ;;
-        -p|--preset)
-            mapfile -t COMPREPLY < <(compgen -W "$(_files_from_dirs -s .preset /etc/mkinitcpio.d)" -- "$cur") ;;
-        -[AHS]|--add|--hookhelp|--skiphooks)
-            mapfile -t COMPREPLY < <(compgen -W "$(_files_from_dirs {/usr,}/lib/initcpio/install)" -- "$cur") ;;
+        -[cgU] | --cmdline | --config | --generate | --kernelimage | --microcode | --osrelease | --splash | --uki | --uefistub)
+            _filedir
+            ;;
+        -D | --hookdir | -d | --generatedir | -r | --moduleroot | -t | --builddir)
+            _filedir -d
+            ;;
+        -k | --kernel)
+            _find_kernel_versions
+            ;;
+        -p | --preset)
+            mapfile -t COMPREPLY < <(compgen -W "$(_files_from_dirs -s .preset /etc/mkinitcpio.d)" -- "$cur")
+            ;;
+        -[AHS] | --add | --hookhelp | --skiphooks)
+            mapfile -t COMPREPLY < <(compgen -W "$(_files_from_dirs {/usr,}/lib/initcpio/install)" -- "$cur")
+            ;;
         *)
-            mapfile -t COMPREPLY < <(compgen -W "${opts[*]}" -- "$cur") ;;
+            mapfile -t COMPREPLY < <(compgen -W "${opts[*]}" -- "$cur")
+            ;;
     esac
 }
 

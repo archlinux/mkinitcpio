@@ -5,7 +5,7 @@ run_hook() {
     local mode ctrl
 
     if [ -e /keymap.bin ]; then
-        msg -n ":: Loading keymap..."
+        msg -n ':: Loading keymap...'
         if [ -f /keymap.utf8 ]; then
             mode='-u'
             ctrl='G'
@@ -14,9 +14,9 @@ run_hook() {
             ctrl='@'
         fi
         kbd_mode "$mode" -C /dev/console
-        printf "\033%%$ctrl" >> /dev/console
-        loadkmap < /keymap.bin
-        msg "done."
+        printf "\033%%$ctrl" >>/dev/console
+        loadkmap </keymap.bin
+        msg 'done.'
     fi
 }
 
