@@ -1,8 +1,26 @@
-The corresponding files are licensed under the GNU General Public License, version 2
-as per the included LICENSE file.
-    Copyright (C) 2006-2021, Thomas Bächler <thomas@archlinux.org>
-                             Aaron Griffin <aaronmgriffin@gmail.com>
-                             Tobias Powalowski <tpowa@archlinux.org>
-                             Dave Reisner <dreisner@archlinux.org>
-                             Giancarlo Razzolini <grazzolini@archlinux.org>
+:toc: preamble
+:sectnums:
 
+= README
+
+mkinitcpio is a modular initramfs image creation utility. 🐏
+
+== Contributing
+
+mkinitcpio development happens on the Arch Linux GitLab instance: https://gitlab.archlinux.org/archlinux/mkinitcpio/mkinitcpio. All issues and merge request should be submitted there.
+
+Development discussion can be held in the link:ircs://irc.libera.chat/archlinux-projects[#archlinux-projects] IRC channel on https://libera.chat/[Libera Chat] and the https://lists.archlinux.org/mailman3/lists/arch-projects.lists.archlinux.org/[arch-projects mailing list].
+
+Before contributing, make yourself familiar with the https://terms.archlinux.org/docs/code-of-conduct/[Arch Linux code of conduct] and xref:CONTRIBUTING.adoc[mkinitcpio coding style].
+
+== User documentation
+
+Primary usage documention is available in the xref:man/mkinitcpio.8.adoc[mkinitcpio(8)], xref:man/lsinitcpio.1.adoc[lsinitcpio(1)] and xref:man/mkinitcpio.conf.5.adoc[mkinitcpio.conf(5)] man pages.
+
+A comprehensible user guide is available in the https://wiki.archlinux.org/title/mkinitcpio[mkinitcpio article on ArchWiki].
+
+== License
+
+This project is licensed under the terms of the *GPL-2.0-only*. See `link:LICENSE[]`.
+
+Copyright 🄯 mkinitcpio contributors. See the `link:AUTHORS[]` file or `+git log+` for the full list of authors.
