@@ -11,7 +11,6 @@ Never use POSIX syntax if Bash offers a construct of its own, even if the
 two are effectively identical. This means always using double braces over
 the inferior `[` and `test`.
 
-
 == Variable usage and naming conventions
 
 There are three classifications of variables in mkinitcpio.
@@ -24,7 +23,7 @@ option, this is what you want to use.
 
 [source,bash]
 ----
-local foo=$1
+local foo="$1"
 ----
 
 === Global variables
@@ -37,9 +36,9 @@ they are global. It is helpful to prefix these variables instead with a `_f_` or
 
 [source,bash]
 ----
-_optcolor=1
-_d_hookdir=/etc/foo.d
-_f_config=/etc/foo.conf
+define -i _optcolor=1
+_d_hookdir='/etc/foo.d'
+_f_config='/etc/foo.conf'
 ----
 
 === "API" variables
@@ -56,25 +55,49 @@ Adhere to POSIX variable naming requirements for the contents of the name,
 that is: only alphanumerics, underscores, and the identifier must not start
 with a number.
 
-
 == Quoting
 
-Overquoting is preferred to underquoting, but freely avoid quoting in the
-cases when expansion is guaranteed not to happen, such as in single argument
-test expressions or the subject of a case statement.
+Overquoting is preferred to underquoting. Prefer single quotes to double quotes
+if possible. Remember to quote, quote and quote some more.
 
+When quoting variables, use brace expansion if the variable is part of a larger
+string.
+
+[source,bash]
+----
+a='/test'
+b="/some/path${a}"
+c="$b"
+----
 
 == Functions and block statements
 
-Always use "top-right, "lower left" for blocks of code and functions.
+Always use "top-right, lower left" for blocks of code and functions.
 
 [source,bash]
 ----
 do_glob() {
-  local g fn=$1; shift
+    local g fn="$1"; shift
 
-  for g in "$@"; do
-    "$fn" "$g"
-  done
+    for g in "$@"; do
+        "$fn" "$g"
+    done
 }
 ----
+
+== Bash Automated Testing System
+
+mkinitcpio uses bats (Bash Automated Testing System). The tests are found in
+the `link:test[]` directory.
+
+Each newly added function should also have an accompanying test.
+
+== ShellCheck
+
+All shell scripts must be validated with ShellCheck. Use `make shellcheck` and
+ensure it successfully passes.
+
+== EditorConfig
+
+A `link:.editorconfig[]` file is provided to ensure consistency
+(indenting, newlines, trailing whitespace) between text editors.
