@@ -1,71 +1,72 @@
-/////
+////
 vim:set ts=4 sw=4 syntax=asciidoc noet:
 SPDX-License-Identifier: GPL-2.0-only
-/////
-lsinitcpio(1)
-=============
+////
+:doctype: manpage
 
-Name
-----
+= lsinitcpio(1)
+
+
+== Name
+
 lsinitcpio - Examine an initramfs
 
-Synopsis
---------
-'lsinitcpio' [action] [options] 'image'
+== Synopsis
 
-Description
------------
-Examines the contents of an initcpio image. Without any options, 'lsinitcpio'
+_lsinitcpio_ [action] [options] _image_
+
+== Description
+
+Examines the contents of an initcpio image. Without any options, _lsinitcpio_
 simply lists the contents of an image.
 
-Actions
--------
-*-a, \--analyze*::
-	Analyze the contents of the specified image and print output in human
-	readable form.
+== Actions
 
-*-c, \--config*::
-	Show the configuration file the given image was built with.
+*-a*, *--analyze*::
+    Analyze the contents of the specified image and print output in human
+    readable form.
 
-*-l, \--list*::
-	List the contents of the archive. This is the default action. Pass the *-v*
-	flag for more detailed results.
+*-c*, *--config*::
+    Show the configuration file the given image was built with.
 
-*-x, \--extract*::
-	Extract the given image to the current working directory.
+*-l*, *--list*::
+    List the contents of the archive. This is the default action. Pass the *-v*
+    flag for more detailed results.
 
-Options
--------
+*-x*, *--extract*::
+    Extract the given image to the current working directory.
 
-*-h, \--help*::
-	Output a short overview of available command-line switches.
+== Options
 
-*-n, \--nocolor*::
-	Disable color output.
+*-h*, *--help*::
+    Output a short overview of available command-line switches.
 
-*-V, \--version*::
-	Display version information.
+*-n*, *--nocolor*::
+    Disable color output.
 
-*-v, \--verbose*::
-	Be more verbose. In particular, show long style output when listing
-	the contents of an image, and show files as they are extracted when
-	the *-x* option is given.
+*-V*, *--version*::
+    Display version information.
 
-Bugs
-----
+*-v*, *--verbose*::
+    Be more verbose. In particular, show long style output when listing
+    the contents of an image, and show files as they are extracted when
+    the *-x* option is given.
+
+== Bugs
+
 Upon writing this man page, there were no noticeable bugs present. Please visit
-<https://gitlab.archlinux.org/archlinux/mkinitcpio/mkinitcpio/-/issues> for an
+https://gitlab.archlinux.org/archlinux/mkinitcpio/mkinitcpio/-/issues for an
 up to date list.
 
-See Also
---------
+== See also
+
 *mkinitcpio*(8)
 
-Authors
--------
-mkinitcpio is maintained by the Arch Linux community. Refer to the 'AUTHORS'
+== Authors
+
+mkinitcpio is maintained by the Arch Linux community. Refer to the _AUTHORS_
 file for a full list of contributors.
 
-Copyright
----------
+== Copyright
+
 Copyright 🄯 mkinitcpio contributors. GPL-2.0-only.

@@ -1,90 +1,85 @@
-/////
+////
 vim:set ts=4 sw=4 syntax=asciidoc noet:
 SPDX-License-Identifier: GPL-2.0-only
-/////
-mkinitcpio.conf(5)
-==================
+////
+:doctype: manpage
 
-Name
-----
+= mkinitcpio.conf(5)
+
+== Name
+
 mkinitcpio.conf - mkinitcpio configuration file
 
-Synopsis
---------
-/etc/mkinitcpio.conf
+== Synopsis
 
-Description
------------
-mkinitcpio will attempt to read from a config file each time it is invoked,
-`/etc/mkinitcpio.conf' by default. This file defines several variables which
-describe the contents of the image to be generated.
+_/etc/mkinitcpio.conf_
 
-Variables
----------
+== Description
+
+mkinitcpio will attempt to read from a configuration file each time it is
+invoked, _/etc/mkinitcpio.conf_ by default. This file defines several variables
+which describe the contents of the image to be generated.
+
+== Variables
+
 *MODULES*::
-
-	Defines an array of additional modules which should be added to the image.
-	Dependencies (including other modules and necessary firmware), will also be
-	added to the image. At runtime, the modules in this array which were
-	successfully added to the image will be explicitly loaded.
+    Defines an array of additional modules which should be added to the image.
+    Dependencies (including other modules and necessary firmware), will also be
+    added to the image. At runtime, the modules in this array which were
+    successfully added to the image will be explicitly loaded.
 
 *FILES*::
-
-	Defines an array of additional files which should be added to the image.
-	Files are added as is, and parent directories will be added if needed. Files
-	specified in this variable will override previously added files of the same
-	path.
+    Defines an array of additional files which should be added to the image.
+    Files are added as is, and parent directories will be added if needed. Files
+    specified in this variable will override previously added files of the same
+    path.
 
 *BINARIES*::
-
-	Defines an array of additional binaries which should be added to the
-	image. These are assumed to be dynamic ELF binaries, and necessary shared
-	library dependencies will automatically be added. However, it is not
-	considered an error to specify a non-ELF binary in this variable. Parent
-	directories will be added if needed. Files specified in this variable will
-	override previously added files of the same path.
+    Defines an array of additional binaries which should be added to the
+    image. These are assumed to be dynamic ELF binaries, and necessary shared
+    library dependencies will automatically be added. However, it is not
+    considered an error to specify a non-ELF binary in this variable. Parent
+    directories will be added if needed. Files specified in this variable will
+    override previously added files of the same path.
 
 *HOOKS*::
-
-	Defines an array of hooks which will be run during the build process.
-	Order is important, as it defines the order in which hooks will be run
-	during bootup. Use mkinitcpio's '-L' flag to list all available hooks,
-	and the '-H' flag to display the help text for a specific hook.
+    Defines an array of hooks which will be run during the build process.
+    Order is important, as it defines the order in which hooks will be run
+    during bootup. Use mkinitcpio's *-L* flag to list all available hooks,
+    and the *-H* flag to display the help text for a specific hook.
 
 *COMPRESSION*::
-
-	Defines a program to filter the generated image through. The kernel
-	understands the compression formats yielded by the *zstd*, *gzip*, *bzip2*,
-	*lz4*, *lzop*, *lzma*, and *xz* compressors. If unspecified, this setting
-	defaults to *zstd* compression. In order to create an uncompressed image,
-	define this variable as *cat*.
-+
-It's not hard to realize that a filter such as a *tac* or *rev* will cause
-*mkinitcpio* to report success but generate a useless image. Similarly, using a
-compression program not listed above may generate an equally useless image,
-despite being "valid".
+    Defines a program to filter the generated image through. The kernel
+    understands the compression formats yielded by the *zstd*(1), *gzip*(1),
+    *bzip2*(1), *lz4*(1), *lzop*(1), *lzma*(1), and *xz*(1) compressors. If
+    unspecified, this setting defaults to _zstd_ compression. In order to create
+    an uncompressed image, define this variable as _cat_.
+     +
+    It is not hard to realize that a filter such as a _tac_ or _rev_ will cause
+    *mkinitcpio* to report success but generate a useless image. Similarly,
+    using a compression program not listed above may generate an equally useless
+    image, despite being "valid".
 
 *COMPRESSION_OPTIONS*::
-
-	Defines an array of additional options to be passed to the compression
-	program. This option is generally not used. It can be potentially dangerous
-	and may cause invalid images to be generated without any sign of an error.
+    Defines an array of additional options to be passed to the compression
+    program. This option is generally not used. It can be potentially dangerous
+    and may cause invalid images to be generated without any sign of an error.
 
 *MODULES_DECOMPRESS*::
+    Switch (_yes_/_no_) to decide wether kernel modules should be compressed or
+    uncompressed during initramfs creation. Enabled by default for faster bootup
+    and smaller initramfs size. Disable it to reduce RAM usage in early
+    userspace.
 
-	Switch (yes/no) to decide wether kernel modules should be compressed or
-	uncompressed during initramfs creation. Enabled by default for faster bootup
-	and smaller initramfs size. Disable it to reduce RAM usage in early userspace.
+== See also
 
-See Also
---------
 *mkinitcpio*(8)
 
-Authors
--------
-mkinitcpio is maintained by the Arch Linux community. Refer to the 'AUTHORS'
+== Authors
+
+mkinitcpio is maintained by the Arch Linux community. Refer to the _AUTHORS_
 file for a full list of contributors.
 
-Copyright
----------
+== Copyright
+
 Copyright 🄯 mkinitcpio contributors. GPL-2.0-only.
