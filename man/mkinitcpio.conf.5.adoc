@@ -82,8 +82,9 @@ See Also
 
 Authors
 -------
-mkinitcpio is created and maintained by the Arch Linux Developer community.
+mkinitcpio is maintained by the Arch Linux community. Refer to the 'AUTHORS'
+file for a full list of contributors.
 
 Copyright
 ---------
-Copyright (c) Arch Linux 2006-2023
+Copyright 🄯 mkinitcpio contributors. GPL-2.0-only.

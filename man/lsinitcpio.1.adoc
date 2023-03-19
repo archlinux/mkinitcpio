@@ -53,8 +53,9 @@ Options
 
 Bugs
 ----
-Upon writing this manpage, there were no noticeable bugs present. Please visit
-<http://bugs.archlinux.org/> for an up to date list.
+Upon writing this man page, there were no noticeable bugs present. Please visit
+<https://gitlab.archlinux.org/archlinux/mkinitcpio/mkinitcpio/-/issues> for an
+up to date list.
 
 See Also
 --------
@@ -62,8 +63,9 @@ See Also
 
 Authors
 -------
-lsinitcpio was created by Dave Reisner <dreisner@archlinux.org>
+mkinitcpio is maintained by the Arch Linux community. Refer to the 'AUTHORS'
+file for a full list of contributors.
 
 Copyright
 ---------
-Copyright (c) Arch Linux 2011-2021
+Copyright 🄯 mkinitcpio contributors. GPL-2.0-only.
