@@ -47,6 +47,8 @@ run_hookfunctions 'run_hook' 'hook' $HOOKS
 # assigned by parse_cmdline
 # shellcheck disable=SC2154
 if [ "${break}" = "y" ] || [ "${break}" = "premount" ]; then
+    # shellcheck disable=SC2086
+    run_hookfunctions 'run_emergencyhook' 'emergency hook' $EMERGENCYHOOKS
     echo ":: Pre-mount break requested, type 'exit' to resume operation"
     launch_interactive_shell
 fi
@@ -78,6 +80,8 @@ if [ "$(stat -c %D /)" = "$(stat -c %D /new_root)" ]; then
     # Nothing got mounted on /new_root. This is the end, we don't know what to do anymore
     # We fall back into a shell, but the shell has now PID 1
     # This way, manual recovery is still possible.
+    # shellcheck disable=SC2086
+    run_hookfunctions 'run_emergencyhook' 'emergency hook' $EMERGENCYHOOKS
     err "Failed to mount the real root device."
     echo "Bailing out, you are on your own. Good luck."
     echo
@@ -85,6 +89,8 @@ if [ "$(stat -c %D /)" = "$(stat -c %D /new_root)" ]; then
 elif [ ! -x "/new_root${init}" ]; then
     # Successfully mounted /new_root, but ${init} is missing
     # The same logic as above applies
+    # shellcheck disable=SC2086
+    run_hookfunctions 'run_emergencyhook' 'emergency hook' $EMERGENCYHOOKS
     err "Root device mounted successfully, but ${init} does not exist."
     echo "Bailing out, you are on your own. Good luck."
     echo
@@ -92,6 +98,8 @@ elif [ ! -x "/new_root${init}" ]; then
 fi
 
 if [ "${break}" = "postmount" ]; then
+    # shellcheck disable=SC2086
+    run_hookfunctions 'run_emergencyhook' 'emergency hook' $EMERGENCYHOOKS
     echo ":: Post-mount break requested, type 'exit' to resume operation"
     launch_interactive_shell
 fi
