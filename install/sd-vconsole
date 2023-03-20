@@ -73,6 +73,30 @@ build() {
         [[ -n "$KEYMAP" ]] && add_keymap_file "${KEYMAP}.map"
         [[ -n "$KEYMAP_TOGGLE" ]] && add_keymap_file "${KEYMAP_TOGGLE}.map"
 
+        if [[ -n "$FONT_MAP" ]]; then
+            FONT_MAP="${FONT_MAP%.trans}"
+            if [[ -f "/usr/share/kbd/consoletrans/$FONT_MAP" ]]; then
+                add_file "/usr/share/kbd/consoletrans/$FONT_MAP"
+            elif [[ -f "/usr/share/kbd/consoletrans/$FONT_MAP.trans" ]]; then
+                add_file "/usr/share/kbd/consoletrans/$FONT_MAP.trans"
+            elif [[ -f "/usr/share/kbd/consoletrans/${FONT_MAP}_to_uni.trans" ]]; then
+                add_file "/usr/share/kbd/consoletrans/${FONT_MAP}_to_uni.trans"
+            else
+                error "sd-vconsole: requested font map not found: '%s'" "$FONT_MAP"
+                return 1
+            fi
+        fi
+
+        if [[ -n "$FONT_UNIMAP" ]]; then
+            FONT_UNIMAP="${FONT_UNIMAP%.uni}"
+            if [[ -f "/usr/share/kbd/unimaps/$FONT_UNIMAP.uni" ]]; then
+                add_file "/usr/share/kbd/unimaps/$FONT_UNIMAP.uni"
+            else
+                error "sd-vconsole: requested font unimap not found: '%s'" "$FONT_UNIMAP"
+                return 1
+            fi
+        fi
+
         if [[ -n "$FONT" ]]; then
             for file in "/usr/share/kbd/consolefonts/$FONT"?('.psfu'|'.psf'|'.cp'|'.fnt')?('.gz'|'.bz2'|'.zst'); do
                 add_font_file "$file"
