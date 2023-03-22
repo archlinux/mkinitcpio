@@ -448,16 +448,19 @@ add_firmware() {
     # add a firmware file to the image.
     #   $1: firmware path fragment
 
-    local fw fwpath fwfile r=1
+    local fw fwpath
+    local -a fwfile
+    local -i r=1
 
     for fw; do
         # _d_firmware is assigned in mkinitcpio
         # shellcheck disable=SC2154
         for fwpath in "${_d_firmware[@]}"; do
             # shellcheck disable=SC2153
-            if ! compgen -G "${BUILDROOT}${fwpath}/${fw}"?(.*) &>/dev/null; then
-                if fwfile="$(compgen -G "${fwpath}/${fw}"?(.*))"; then
-                    add_file "$fwfile" && r=0
+            if ! compgen -G "${BUILDROOT}${fwpath}/${fw}?(.*)" &>/dev/null; then
+                # modinfo has firmware entries with globs, read entries into an array
+                if read -r fwfile < <(compgen -G "${fwpath}/${fw}?(.*)"); then
+                    map add_file "${fwfile[@]}" && r=0
                     break
                 fi
             fi
