@@ -463,6 +463,9 @@ add_firmware() {
                     map add_file "${fwfile[@]}" && r=0
                     break
                 fi
+            else
+                r=0
+                break
             fi
         done
     done
