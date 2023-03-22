@@ -8,6 +8,7 @@ build() {
 
     # subshell to avoid namespace pollution
     (
+        loadkeys_opts=('-q')
         l="$LANG"
         unset LANG
 
@@ -21,9 +22,9 @@ build() {
 
         if [[ "$LOCALE" == *[Uu][Tt][Ff]?(-)8 ]]; then
             touch "$BUILDROOT/keymap.utf8"
-            uc='-u'
+            loadkeys_opts+=('-u')
         fi
-        loadkeys -q "$uc" "${KEYMAP:-us}" -b > "$BUILDROOT/keymap.bin"
+        loadkeys "${loadkeys_opts[@]}" "${KEYMAP:-us}" -b > "$BUILDROOT/keymap.bin"
     ) && add_runscript
 }
 
