@@ -318,6 +318,7 @@ build_uki() {
     fi
 
     offset="$(objdump -h "${uefistub}" | awk 'NF==7 {size=strtonum("0x"$3); offset=strtonum("0x"$4)} END {print size + offset}')"
+    offset="$(((offset & ~0xff) + 0x100))"
 
     if [[ -z "$osrelease" ]]; then
         if [[ -f "/etc/os-release" ]]; then
@@ -334,6 +335,7 @@ build_uki() {
 
     OBJCOPYARGS+=(--add-section ".osrel=${osrelease}" --change-section-vma ".osrel=$(printf 0x%x "$offset")")
     offset="$((offset + $(stat -Lc%s "$osrelease")))"
+    offset="$(((offset & ~0xff) + 0x100))"
 
     if [[ -z "$cmdline" ]]; then
         if [[ -f "/etc/kernel/cmdline" ]]; then
@@ -359,10 +361,12 @@ build_uki() {
 
     OBJCOPYARGS+=(--add-section ".cmdline=${cmdline_tmp}" --change-section-vma .cmdline="$(printf 0x%x "$offset")")
     offset="$((offset + $(stat -Lc%s "$cmdline_tmp")))"
+    offset="$(((offset & ~0xff) + 0x100))"
 
     if [[ -n "$splash" ]]; then
         OBJCOPYARGS+=(--add-section ".splash=${splash}" --change-section-vma ".splash=$(printf 0x%x "$offset")")
         offset="$((offset + $(stat -Lc%s "$splash")))"
+        offset="$(((offset & ~0xff) + 0x100))"
         msg2 "Using splash image: '%s'" "$splash"
     fi
 
@@ -384,6 +388,7 @@ build_uki() {
 
     OBJCOPYARGS+=(--add-section ".linux=${kernelimg}" --change-section-vma ".linux=$(printf 0x%x "$offset")")
     offset="$((offset + $(stat -Lc%s "$kernelimg")))"
+    offset="$(((offset & ~0xff) + 0x100))"
 
     if [[ -z "$initramfs" ]]; then
         error "Initramfs '%s' not found" "$initramfs"
