@@ -1,4 +1,24 @@
-mkinitcptio - Arch Linux initramfs generation tools 
+mkinitcpio - Arch Linux initramfs generation tools
+
+CHANGES WITH v35.2:
+
+        Bugfix release:
+
+        * install/sd-vconsole: include font map and font unimap files in the
+          initramfs.
+
+        * Fix support for adding firmware files that a kernel module specifies
+          using glob syntax.
+
+        * Do not show a misleading "Possibly missing firmware for module"
+          warning when a firmware file was already added once.
+
+        * install/keymap: make sure keymap file adding works on non-UTF-8
+          locales.
+
+        Contributions from: Balló György, nl6720
+
+        – 2023-03-24
 
 CHANGES WITH v35.1:
 
