@@ -363,6 +363,7 @@ list_hookpoints() {
     in_array run_hook "${funcs[@]}" && msg2 "pre-mount hook"
     in_array run_latehook "${funcs[@]}" && msg2 "post-mount hook"
     in_array run_cleanuphook "${funcs[@]}" && msg2 "cleanup hook"
+    in_array run_emergencyhook "${funcs[@]}" && msg2 "emergency hook"
 }
 
 modprobe() {
@@ -726,6 +727,9 @@ add_runscript() {
             run_cleanuphook)
                 _runhooks['cleanup']="$hookname ${_runhooks['cleanup']}"
                 ;;
+            run_emergencyhook)
+                _runhooks['emergency']="$hookname ${_runhooks['emergency']}"
+                ;;
         esac
     done
 }
@@ -865,7 +869,8 @@ parse_config() {
             'EARLYHOOKS' "${_runhooks['early']# }" \
             'HOOKS' "${_runhooks['hooks']# }" \
             'LATEHOOKS' "${_runhooks['late']# }" \
-            'CLEANUPHOOKS' "${_runhooks['cleanup']% }"
+            'CLEANUPHOOKS' "${_runhooks['cleanup']% }" \
+            'EMERGENCYHOOKS' "${_runhooks['emergency']% }"
     } >"$BUILDROOT/config"
 }
 

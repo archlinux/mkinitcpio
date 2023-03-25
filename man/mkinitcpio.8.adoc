@@ -314,6 +314,12 @@ run in reverse.
 	from a run_earlyhook function should be shut down here in preparation for
 	switching to the real root.
 
+*run_emergencyhook*::
+
+	Functions of this name are run before the emergency shell launched in case of
+	boot failure. For example this allows boot splash screens to terminate their
+	process, so users will notice the failure.
+
 About Post Hooks
 ----------------
 Post hooks are executables or scripts that get executed after the image has been

@@ -211,6 +211,12 @@ analyze_image() {
         printf '  %s\n' "$CLEANUPHOOKS"
         printf '\n'
     fi
+
+    if [[ -n "$EMERGENCYHOOKS" ]]; then
+        msg 'Emergency hook run order:'
+        printf '  %s\n' "$EMERGENCYHOOKS"
+        printf '\n'
+    fi
 }
 
 _opt_short='achlnVvx'

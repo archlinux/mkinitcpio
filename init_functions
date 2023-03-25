@@ -300,6 +300,8 @@ fsck_root() {
     if [ -n "$fsckret" ] && [ "$fsckret" -ne 255 ]; then
         # handle error conditions; do nothing on success.
         if bitfield_has_bit "$fsckret" 4; then
+            # shellcheck disable=SC2086
+            run_hookfunctions 'run_emergencyhook' 'emergency hook' $EMERGENCYHOOKS
             err "Bailing out. Run 'fsck $root' manually"
             printf '%s\n' \
                 "********** FILESYSTEM CHECK FAILED **********" \
@@ -315,6 +317,8 @@ fsck_root() {
             sleep 2
             reboot -f
         elif bitfield_has_bit "$fsckret" 2; then
+            # shellcheck disable=SC2086
+            run_hookfunctions 'run_emergencyhook' 'emergency hook' $EMERGENCYHOOKS
             printf '%s\n' \
                 "************** REBOOT REQUIRED **************" \
                 "*                                           *" \
@@ -413,6 +417,9 @@ resolve_device() {
 default_mount_handler() {
     msg ":: mounting '$root' on real root"
     if ! mount -t "${rootfstype:-auto}" -o "${rwopt:-ro}${rootflags:+,$rootflags}" "$root" "$1"; then
+        # shellcheck disable=SC2086
+        run_hookfunctions 'run_emergencyhook' 'emergency hook' $EMERGENCYHOOKS
+        err "Failed to mount '$root' on real root"
         echo "You are now being dropped into an emergency shell."
         # shellcheck disable=SC2119
         launch_interactive_shell
