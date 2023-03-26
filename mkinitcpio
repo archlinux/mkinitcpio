@@ -295,8 +295,7 @@ build_image() {
 
 build_uki() {
     local out="$1" initramfs="$2" cmdline="$3" osrelease="$4" splash="$5" kernelimg="$6" uefistub="$7" microcode=("${@:8}") errmsg=''
-    local -i offset=0
-    local -i align=0x200
+    local -i offset=0 align=0 mask=0
     OBJCOPYARGS=()
 
     # reproducibility, preserve dates of used files
@@ -318,8 +317,11 @@ build_uki() {
         return 1
     fi
 
+    align=$(objdump -p "${uefistub}" | awk '/SectionAlignment/ {print strtonum("0x"$2)}')
+    mask=$((-align))
+
     offset="$(objdump -h "${uefistub}" | awk 'NF==7 {size=strtonum("0x"$3); offset=strtonum("0x"$4)} END {print size + offset}')"
-    offset="$(((offset & ~0xff) + align))"
+    offset="$(((offset & mask) + align))"
 
     if [[ -z "$osrelease" ]]; then
         if [[ -f "/etc/os-release" ]]; then
@@ -336,7 +338,7 @@ build_uki() {
 
     OBJCOPYARGS+=(--add-section ".osrel=${osrelease}" --change-section-vma ".osrel=$(printf 0x%x "$offset")")
     offset="$((offset + $(stat -Lc%s "$osrelease")))"
-    offset="$(((offset & ~0xff) + align))"
+    offset="$(((offset & mask) + align))"
 
     if [[ -z "$cmdline" ]]; then
         if [[ -f "/etc/kernel/cmdline" ]]; then
@@ -362,12 +364,12 @@ build_uki() {
 
     OBJCOPYARGS+=(--add-section ".cmdline=${cmdline_tmp}" --change-section-vma .cmdline="$(printf 0x%x "$offset")")
     offset="$((offset + $(stat -Lc%s "$cmdline_tmp")))"
-    offset="$(((offset & ~0xff) + align))"
+    offset="$(((offset & mask) + align))"
 
     if [[ -n "$splash" ]]; then
         OBJCOPYARGS+=(--add-section ".splash=${splash}" --change-section-vma ".splash=$(printf 0x%x "$offset")")
         offset="$((offset + $(stat -Lc%s "$splash")))"
-        offset="$(((offset & ~0xff) + align))"
+        offset="$(((offset & mask) + align))"
         msg2 "Using splash image: '%s'" "$splash"
     fi
 
@@ -389,7 +391,7 @@ build_uki() {
 
     OBJCOPYARGS+=(--add-section ".linux=${kernelimg}" --change-section-vma ".linux=$(printf 0x%x "$offset")")
     offset="$((offset + $(stat -Lc%s "$kernelimg")))"
-    offset="$(((offset & ~0xff) + align))"
+    offset="$(((offset & mask) + align))"
 
     if [[ -z "$initramfs" ]]; then
         error "Initramfs '%s' not found" "$initramfs"
