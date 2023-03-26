@@ -53,15 +53,15 @@ if [ "${break}" = "y" ] || [ "${break}" = "premount" ]; then
     launch_interactive_shell
 fi
 
-# If the tag is supported by util-linux mount, pass it as is.
-# Otherwise, use the resolved device path.
-case "$root" in
-    'UUID='* | 'LABEL='* | 'PARTUUID='* | 'PARTLABEL='*) : ;;
-    *)
-        rootdev="$(resolve_device "$root")" && root="$rootdev"
-        unset rootdev
-        ;;
-esac
+if rootdev="$(resolve_device "$root")"; then
+    # If the tag is supported by util-linux mount, pass it as is.
+    # Otherwise, use the resolved device path.
+    case "$root" in
+        'UUID='* | 'LABEL='* | 'PARTUUID='* | 'PARTLABEL='*) : ;;
+        *) root="$rootdev" ;;
+    esac
+fi
+unset rootdev
 
 fsck_root
 

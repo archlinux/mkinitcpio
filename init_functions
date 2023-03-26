@@ -266,21 +266,18 @@ fsck_device() {
     local device
     [ -x /sbin/fsck ] || return 255
 
-    # If the device is specified via a tag supported by util-linux fsck, resolve
-    # it to the block device to verify it exists, but still pass the unmodified
-    # tag to fsck.
-    case "$1" in
-        'UUID='* | 'LABEL='* | 'PARTUUID='* | 'PARTLABEL='*)
-            device="$(resolve_device "$1")"
-            ;;
-        *)
-            device="$1"
-            ;;
-    esac
+    device="$(resolve_device "$1")"
     if [ ! -b "$device" ]; then
         err "device '$1' not found. Skipping fsck."
         return 255
     fi
+
+    # If the device is specified via a tag supported by util-linux fsck,
+    # pass the unmodified tag to fsck.
+    case "$1" in
+        'UUID='* | 'LABEL='* | 'PARTUUID='* | 'PARTLABEL='*) device="$1" ;;
+        *) : ;;
+    esac
 
     if [ -n "$fastboot" ]; then
         msg ":: skipping fsck on '$1'"
@@ -288,7 +285,7 @@ fsck_device() {
     fi
 
     msg ":: performing fsck on '$1'"
-    fsck -Ta -C"$FSCK_FD" "$1" -- ${forcefsck+-f}
+    fsck -Ta -C"$FSCK_FD" "$device" -- ${forcefsck+-f}
 }
 
 fsck_root() {
