@@ -317,8 +317,8 @@ build_uki() {
         return 1
     fi
 
-    align=$(objdump -p "${uefistub}" | awk '/SectionAlignment/ {print strtonum("0x"$2)}')
-    mask=$((-align))
+    align="$(objdump -p "${uefistub}" | awk '/SectionAlignment/ {print strtonum("0x"$2)}')"
+    mask="$((-align))"
 
     offset="$(objdump -h "${uefistub}" | awk 'NF==7 {size=strtonum("0x"$3); offset=strtonum("0x"$4)} END {print size + offset}')"
     offset="$(((offset & mask) + align))"
