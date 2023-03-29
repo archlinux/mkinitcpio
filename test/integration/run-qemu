@@ -1,0 +1,16 @@
+#!/usr/bin/bash
+
+KVERSION=${KVERSION-$(uname -r)}
+VMLINUZ="/lib/modules/${KVERSION}/vmlinuz"
+
+if ! [[ -f "$VMLINUZ" ]]; then
+    VMLINUZ="/boot/vmlinuz"
+fi
+
+exec /usr/bin/qemu-system-x86_64 \
+    -enable-kvm -cpu host \
+    -chardev stdio,id=char0,signal=off -serial chardev:char0 \
+    -M q35 -smp 2 -m 512 -nodefaults -vga none -display none -no-reboot -device virtio-rng-pci \
+    "${ARGS[@]}" \
+    -kernel "$VMLINUZ" \
+    "$@"

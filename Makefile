@@ -103,6 +103,10 @@ endif
 check:
 	LC_ALL=C.UTF-8 bats --jobs $(JOBS) $(BATS_ARGS) test/cases/
 
+
+integration:
+	bats -r $(BATS_ARGS) test/integration/
+
 coverage:
 	kcov \
 		--include-path=$(CURDIR) \
