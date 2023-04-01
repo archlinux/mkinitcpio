@@ -25,8 +25,9 @@ parseopts() {
         case "${#longmatch[*]}" in
             1)
                 # success, override with opt and return arg req (0 == none, 1 == required)
-                opt="${longmatch%:}"
+                opt="${longmatch%%:*}"
                 if [[ "${longmatch[*]}" == *: ]]; then
+                    NARGS="${longmatch/$opt/}"
                     return 1
                 else
                     return 0
@@ -65,21 +66,24 @@ parseopts() {
                     OPTRET+=("-$opt")
                     # option requires optarg
                     if [[ "$shortopts" == *"${opt}:"* ]]; then
-                        # if we're not at the end of the option chunk, the rest is the optarg
-                        if (( i < ${#1} - 1 )); then
-                            OPTRET+=("${1:i+1}")
-                            break
-                        # if we're at the end, grab the the next positional, if it exists
-                        elif (( i == ${#1} - 1 )) && [[ -n "$2" ]]; then
-                            OPTRET+=("$2")
-                            shift
-                            break
-                        # parse failure
-                        else
-                            printf "%s: option '%s' requires an argument\n" "${0##*/}" "-$opt"
-                            OPTRET=(--)
-                            return 1
-                        fi
+                        l="${shortopts//*${opt}}"
+
+                        # This loop counts the number of suffix ":" signs at the end of the option.
+                        # this is the number of arguments we are expecting
+                        for (( ii = 0; ii < ${#l}; ii++ )); do
+                            n="${l:$ii:1}"
+                            [[ "$n" != ":" ]] && break
+                            if [[ -n "$2" ]]; then
+                                OPTRET+=("$2")
+                                shift
+                            # parse failure
+                            else
+                                printf "%s: option '%s' requires an argument\n" "${0##*/}" "-$opt"
+                                OPTRET=(--)
+                                return 1
+                            fi
+                        done
+                        break
                     fi
                 done
                 ;;
@@ -97,18 +101,24 @@ parseopts() {
                         fi
                         ;;
                     1)
-                        # --longopt=optarg
-                        if [[ -n "$optarg" ]]; then
-                            OPTRET+=("--$opt" "$optarg")
-                        # --longopt optarg
-                        elif [[ -n "$2" ]]; then
-                            OPTRET+=("--$opt" "$2")
-                            shift
-                        else
-                            printf "%s: option '--%s' requires an argument\n" "${0##*/}" "$opt"
-                            OPTRET=(--)
-                            return 1
-                        fi
+                        OPTRET+=("--$opt")
+                        mapfile -d ' ' -t optarg <<< "$optarg"
+                        for (( ii = 0; ii < ${#NARGS}; ii++ )); do
+                            # --longopt=optarg
+                            # or --longopt="optarg more"
+                            if [[ -n "${optarg[*]}" ]] && (( ${#optarg[@]} == ${#NARGS} )); then
+                                OPTRET+=("${optarg[@]}")
+                                break 1
+                            # --longopt optarg
+                            elif [[ -n "$2" ]]; then
+                                OPTRET+=("$2")
+                                shift
+                            else
+                                printf "%s: option '--%s' requires an argument\n" "${0##*/}" "$opt"
+                                OPTRET=(--)
+                                return 1
+                            fi
+                        done
                         ;;
                     254)
                         # ambiguous option -- error was reported for us by longoptmatch()
