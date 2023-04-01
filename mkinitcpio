@@ -70,6 +70,7 @@ usage: ${0##*/} [options]
    -V, --version                Display version information and exit
    -v, --verbose                Verbose output (default: no)
    -z, --compress <program>     Use an alternate compressor on the image (cat, xz, lz4, zstd)
+   -i, --include <src> <dest>   Include files into the initramfs filesystem
 
   Options for unified kernel image (-U, --uki):
    --cmdline <path>             Set kernel command line from file
@@ -589,9 +590,9 @@ run_post_hooks() {
 
 trap 'cleanup' EXIT
 
-_opt_short='A:c:D:g:H:hk:nLMPp:Rr:S:sd:t:U:Vvz:'
+_opt_short='A:c:D:g:H:hk:nLMPp:Rr:S:sd:t:U:Vvz:i::'
 _opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
-           'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets'
+           'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets' 'include::'
            'preset:' 'remove' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:'
            'uki:' 'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:')
 
@@ -712,6 +713,11 @@ while :; do
         -t | --builddir)
             shift
             export TMPDIR="$1"
+            ;;
+        -i | --include)
+            include_src+=("$2")
+            include_target+=("$3")
+            shift 2
             ;;
         -z | --compress)
             shift
@@ -896,6 +902,17 @@ trap -- ERR
 ldconfig -r "$BUILDROOT" &>/dev/null
 # remove /var/cache/ldconfig/aux-cache for reproducability
 rm -f -- "$BUILDROOT/var/cache/ldconfig/aux-cache"
+
+for ((i = 0; i < ${#include_src[@]}; i++)); do
+    msg "Adding files to the filesystem..."
+    src="${include_src[$i]}"
+    dest="${include_target[$i]}"
+    if [[ -f "$f" ]]; then
+        add_file "$src" "$dest"
+    elif [[ -d "$f" ]]; then
+        add_full_dir "$src" "" "$src"
+    fi
+done
 
 # Set umask to create initramfs images and unified kernel images as 600
 umask 077
