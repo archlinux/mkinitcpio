@@ -294,10 +294,28 @@ build_image() {
     fi
 }
 
+increase_uki_offset() {
+    local step="$1"
+    OBJCOPYOFFSET="$((((OBJCOPYOFFSET + step - 1) & -OBJCOPYALIGN) + OBJCOPYALIGN))"
+}
+
+add_uki_section() {
+    local secname="$1" filename="${2:-/dev/stdin}"
+    if ! [[ -f "$filename" ]]; then
+        local tmpfile
+        tmpfile="$(mktemp -t 'mkinitcpio.XXXXXX')"
+        _tmpfiles+=("$tmpfile")
+        cat -- "$filename" > "$tmpfile"
+        filename="$tmpfile"
+    fi
+    OBJCOPYARGS+=(--add-section "$secname=$filename" --change-section-vma "$secname=$(printf 0x%x "$OBJCOPYOFFSET")")
+    increase_uki_offset "$(stat -Lc%s "$filename")"
+}
+
 build_uki() {
     local out="$1" initramfs="$2" cmdline="$3" osrelease="$4" splash="$5" kernelimg="$6" uefistub="$7" microcode=("${@:8}") errmsg=''
-    local -i offset=0 align=0 mask=0
     OBJCOPYARGS=()
+    declare -i OBJCOPYOFFSET=0 OBJCOPYALIGN=0
 
     # reproducibility, preserve dates of used files
     OBJCOPYARGS+=(-p)
@@ -318,11 +336,12 @@ build_uki() {
         return 1
     fi
 
-    align="$(objdump -p "${uefistub}" | awk '/SectionAlignment/ {print strtonum("0x"$2)}')"
-    mask="$((-align))"
-
-    offset="$(objdump -h "${uefistub}" | awk 'NF==7 {size=strtonum("0x"$3); offset=strtonum("0x"$4)} END {print size + offset}')"
-    offset="$(((offset & mask) + align))"
+    OBJCOPYOFFSET="$(LC_ALL=C objdump -h "${uefistub}" \
+        | awk 'NF==7 {size=strtonum("0x"$3); offset=strtonum("0x"$4)} END {print size + offset}')"
+    OBJCOPYALIGN="$(LC_ALL=C objdump -p "${uefistub}" \
+        | awk '/SectionAlignment/ {print strtonum("0x"$2)}')"
+    # fix alignment
+    increase_uki_offset 0
 
     if [[ -z "$osrelease" ]]; then
         if [[ -f "/etc/os-release" ]]; then
@@ -337,9 +356,7 @@ build_uki() {
         return 1
     fi
 
-    OBJCOPYARGS+=(--add-section ".osrel=${osrelease}" --change-section-vma ".osrel=$(printf 0x%x "$offset")")
-    offset="$((offset + $(stat -Lc%s "$osrelease")))"
-    offset="$(((offset & mask) + align))"
+    add_uki_section '.osrel' "$osrelease"
 
     if [[ -z "$cmdline" ]]; then
         if [[ -f "/etc/kernel/cmdline" ]]; then
@@ -358,19 +375,10 @@ build_uki() {
         return 1
     fi
 
-    cmdline_tmp="$(mktemp -t mkinitcpio.XXXXXX)"
-    _tmpfiles+=("$cmdline_tmp")
-
-    printf "%s\n\0" "$(grep -a '^[^#]' "$cmdline" | tr -s '\n' ' ')" >"$cmdline_tmp"
-
-    OBJCOPYARGS+=(--add-section ".cmdline=${cmdline_tmp}" --change-section-vma .cmdline="$(printf 0x%x "$offset")")
-    offset="$((offset + $(stat -Lc%s "$cmdline_tmp")))"
-    offset="$(((offset & mask) + align))"
+    add_uki_section '.cmdline' <(printf '%s\n\0' "$(grep -a '^[^#]' "$cmdline" | tr -s '\n' ' ')")
 
     if [[ -n "$splash" ]]; then
-        OBJCOPYARGS+=(--add-section ".splash=${splash}" --change-section-vma ".splash=$(printf 0x%x "$offset")")
-        offset="$((offset + $(stat -Lc%s "$splash")))"
-        offset="$(((offset & mask) + align))"
+        add_uki_section '.splash' "$splash"
         msg2 "Using splash image: '%s'" "$splash"
     fi
 
@@ -390,9 +398,7 @@ build_uki() {
         return 1
     fi
 
-    OBJCOPYARGS+=(--add-section ".linux=${kernelimg}" --change-section-vma ".linux=$(printf 0x%x "$offset")")
-    offset="$((offset + $(stat -Lc%s "$kernelimg")))"
-    offset="$(((offset & mask) + align))"
+    add_uki_section '.linux' "$kernelimg"
 
     if [[ -z "$initramfs" ]]; then
         error "Initramfs '%s' not found" "$initramfs"
@@ -403,12 +409,7 @@ build_uki() {
         msg2 "Using microcode image: '%s'" "$image"
     done
 
-    initramfs_tmp="$(mktemp -t mkinitcpio.XXXXXX)"
-    _tmpfiles+=("$initramfs_tmp")
-
-    cat -- "${microcode[@]}" "$initramfs" >"$initramfs_tmp"
-
-    OBJCOPYARGS+=(--add-section ".initrd=${initramfs_tmp}" --change-section-vma ".initrd=$(printf 0x%x "$offset")")
+    add_uki_section '.initrd' <(cat -- "${microcode[@]}" "$initramfs")
 
     objcopy "${OBJCOPYARGS[@]}" "$uefistub" "$out"
 
