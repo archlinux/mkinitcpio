@@ -357,6 +357,7 @@ build_uki() {
     fi
 
     add_uki_section '.osrel' "$osrelease"
+    add_uki_section '.uname' <(printf %s "$KERNELVERSION")
 
     if [[ -z "$cmdline" ]]; then
         if [[ -f "/etc/kernel/cmdline" ]]; then
