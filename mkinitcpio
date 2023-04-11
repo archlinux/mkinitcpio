@@ -356,7 +356,14 @@ build_uki() {
         return 1
     fi
 
-    add_uki_section '.osrel' "$osrelease"
+    add_uki_section '.osrel' <(
+        if [[ -n "$MKINITCPIO_PROCESS_PRESET" ]] && ! grep -q '^IMAGE_\(ID\|VERSION\)=' "$osrelease"; then
+            echo "IMAGE_ID=${MKINITCPIO_PROCESS_PRESET}"
+            echo "IMAGE_VERSION=${MKINITCPIO_PROCESS_PRESET%-default}"
+        fi
+        grep -q '^VERSION_ID=' "$osrelease" || echo "VERSION_ID=$KERNELVERSION"
+        cat "$osrelease"
+    )
     add_uki_section '.uname' <(printf %s "$KERNELVERSION")
 
     if [[ -z "$cmdline" ]]; then
@@ -427,7 +434,7 @@ build_uki() {
 process_preset() (
     local preset="$1" preset_image='' preset_options=''
     local -a preset_mkopts preset_cmd preset_remove_cmd
-    if (( MKINITCPIO_PROCESS_PRESET )); then
+    if [[ -n "$MKINITCPIO_PROCESS_PRESET" ]]; then
         error "You appear to be calling a preset from a preset. This is a configuration error."
         exit 1
     fi
@@ -510,7 +517,6 @@ process_preset() (
 
         if (( _optremove )); then
             if (( ${#preset_remove_cmd[*]} )); then
-                # we won't be calling mkinitcpio recursively, so no need to set MKINITCPIO_PROCESS_PRESET
                 for pr in "${preset_remove_cmd[@]}"; do
                     if [[ ! -f "${pr}" ]]; then
                         warning "Image not found: '%s'" "$pr"
@@ -524,9 +530,11 @@ process_preset() (
                 done
             fi
         else
+            local preset_name="${preset##*/}"; preset_name="${preset_name%.preset}-$p"
             preset_cmd+=("${OPTREST[@]}")
             msg2 "${preset_cmd[*]}"
-            MKINITCPIO_PROCESS_PRESET=1 "$0" "${preset_cmd[@]}"
+            # we won't be calling mkinitcpio recursively, so no need to set MKINITCPIO_PROCESS_PRESET
+            MKINITCPIO_PROCESS_PRESET="$preset_name" "$0" "${preset_cmd[@]}"
         fi
         # shellcheck disable=SC2181
         (( $? )) && ret=1
