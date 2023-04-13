@@ -299,7 +299,7 @@ build_uki() {
     OBJCOPYARGS=()
 
     # reproducibility, preserve dates of used files
-    OBJCOPYARG+=(-p)
+    OBJCOPYARGS+=(-p)
 
     msg "Creating unified kernel image: '%s'" "$out"
 
