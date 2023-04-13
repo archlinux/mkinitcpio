@@ -49,3 +49,5 @@ coverage:
             coverage_report:
                 coverage_format: cobertura
                 path: coverage/bats.*/cobertura.xml
+    tags:
+        - vm
