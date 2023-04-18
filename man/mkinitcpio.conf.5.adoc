@@ -66,7 +66,7 @@ which describe the contents of the image to be generated.
     and may cause invalid images to be generated without any sign of an error.
 
 *MODULES_DECOMPRESS*::
-    Switch (_yes_/_no_) to decide wether kernel modules should be compressed or
+    Switch (_yes_/_no_) to decide whether kernel modules should be compressed or
     uncompressed during initramfs creation. Enabled by default for faster bootup
     and smaller initramfs size. Disable it to reduce RAM usage in early
     userspace.
