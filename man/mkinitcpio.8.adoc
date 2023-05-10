@@ -34,6 +34,7 @@ other features.
 
 *-c*, *--config* _config_::
     Use _config_ file to generate the ramdisk. Default: _/etc/mkinitcpio.conf_.
+    If specified, drop-in files in _/etc/mkinitcpio.conf.d/_ will be ignored.
 
 *-d*, *--generatedir* _directory_::
     Set _directory_ as the location where the initramfs is built. This might be
@@ -424,6 +425,8 @@ More information can be found at https://reproducible-builds.org.
 
 _/etc/mkinitcpio.conf_::
     Default configuration file for mkinitcpio.
+_/etc/mkinitcpio.conf.d_::
+	Directory containing drop-in configuration files.
 
 _/etc/mkinitcpio.d_::
     Directory containing mkinitcpio presets.

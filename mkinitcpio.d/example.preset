@@ -7,7 +7,7 @@ PRESETS=('default' 'fallback')
 # The kver can be specified as an explicit kernel version or
 # as the path to an kernel image.
 ALL_kver='/boot/vmlinuz-linux'
-ALL_config='/etc/mkinitcpio.conf'
+#ALL_config='/etc/mkinitcpio.conf'
 ALL_microcode=(/boot/*-ucode.img)
 
 # presetname_kver    - the kernel version (omit if ALL_kver should be used)

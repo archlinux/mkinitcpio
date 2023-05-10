@@ -13,6 +13,7 @@ shopt -s extglob
 # needed files/directories
 _f_functions=functions
 _f_config=mkinitcpio.conf
+_d_config=mkinitcpio.conf.d
 _d_hooks="$PWD/hooks:/usr/lib/initcpio/hooks:/lib/initcpio/hooks"
 _d_install="$PWD/install:/usr/lib/initcpio/install:/lib/initcpio/install"
 _d_post="$PWD/post:/usr/lib/initcpio/post:/lib/initcpio/post"
@@ -28,7 +29,7 @@ _optcompress='' _opttargetdir=''
 _optosrelease=''
 _optuki='' _optmicrocode=() _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
 _optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0
-_optquiet=1 _optcolor=1
+_optquiet=1 _optcolor=1 _optconfd=1
 _optskiphooks=() _optaddhooks=() _hooks=() _optpreset=() _tmpfiles=() _generated=()
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
 
@@ -466,9 +467,9 @@ process_preset() (
         preset_config="${p}_config"
         if [[ -n "${!preset_config:-$ALL_config}" ]]; then
             preset_cmd+=(-c "${!preset_config:-$ALL_config}")
+            msg "Using configuration file: '%s'" "${!preset_config:-$ALL_config}"
         else
-            warning "No configuration file specified. Skipping image '%s'" "$p"
-            continue
+            msg "Using default configuration file: '%s'" "$_f_config"
         fi
 
         preset_uki="${p}_uki"
@@ -619,6 +620,7 @@ while :; do
         -c | --config)
             shift
             _f_config="$1"
+            _optconfd=0
             ;;
         --cmdline)
             shift
@@ -832,6 +834,23 @@ MODULES_DECOMPRESS="${MODULES_DECOMPRESS:-"yes"}"
 
 _d_workdir="$(initialize_buildroot "$KERNELVERSION" "$_opttargetdir")" || exit 1
 BUILDROOT="${_opttargetdir:-$_d_workdir/root}"
+
+# Source additional configuration files, if no configuration file has been defined either with "-c" or via preset file
+if [[ -d "$_d_config" ]] && (( _optconfd )); then
+    mapfile -d '' conf_files < <(find "$_d_config" -maxdepth 1 -type f -name '*.conf' -print0 | sed -z 's/.*\///' | sort -zVu)
+    if (( ${#conf_files[@]} )); then
+        tmpfile="$(mktemp -t mkinitcpio.XXXXXX)"
+        _tmpfiles+=("$tmpfile")
+        cat -- "$_f_config" > "$tmpfile" || die "Failed to read configuration '%s'" "$_f_config"
+        for conf in "${conf_files[@]}"; do
+            if [[ -r "$_d_config/$conf" ]]; then
+                cat -- "$_d_config/$conf" >> "$tmpfile"
+                msg "Using drop-in configuration file: '%s'" "$conf"
+            fi
+        done
+        _f_config="$tmpfile"
+    fi
+fi
 
 # shellcheck disable=SC1091 source=mkinitcpio.conf
 . "$_f_config" || die "Failed to read configuration '%s'" "$_f_config"

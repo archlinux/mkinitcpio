@@ -8,6 +8,7 @@ DIRS = \
 	/usr/share/bash-completion/completions \
 	/usr/share/zsh/site-functions \
 	/etc/mkinitcpio.d \
+	/etc/mkinitcpio.conf.d \
 	/etc/initcpio/hooks \
 	/etc/initcpio/install \
 	/etc/initcpio/post \
@@ -43,6 +44,7 @@ install: all
 	    -e 's|\(^_d_install\)=.*|\1=/etc/initcpio/install:/usr/lib/initcpio/install|' \
 	    -e 's|\(^_d_post\)=.*|\1=/etc/initcpio/post:/usr/lib/initcpio/post|' \
 	    -e 's|\(^_d_presets\)=.*|\1=/etc/mkinitcpio.d|' \
+	    -e 's|\(^_d_config\)=.*|\1=/etc/mkinitcpio.conf.d|' \
 	    -e 's|%VERSION%|$(VERSION)|g' \
 	    < mkinitcpio > $(DESTDIR)/usr/bin/mkinitcpio
 
