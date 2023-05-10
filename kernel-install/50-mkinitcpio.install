@@ -3,62 +3,50 @@
 
 COMMAND="${1:?}"
 KERNEL_VERSION="${2:?}"
-ENTRY_DIR_ABS="$3"
 KERNEL_IMAGE="$4"
 
-if [[ -n "$KERNEL_INSTALL_INITRD_GENERATOR" && "$KERNEL_INSTALL_INITRD_GENERATOR" != mkinitcpio ]]; then
+if [[ "${KERNEL_INSTALL_INITRD_GENERATOR:-mkinitcpio}" != 'mkinitcpio' ]]; then
     exit 0
 fi
 
-MICROCODE=()
-KERNEL_IMAGE_FLAGS=()
-case "$KERNEL_INSTALL_LAYOUT" in
-    uki)
-        # TODO: remove once https://github.com/systemd/systemd/pull/26119 is merged
-        # and a systemd version including it is packaged
-        install -d -- "$KERNEL_INSTALL_BOOT_ROOT"/EFI/Linux
+if [[ "$COMMAND" == "add" ]]; then
 
-        IMAGE_PATH="$KERNEL_INSTALL_STAGING_AREA/uki.efi"
-        IMAGE_GENERATION_FLAG="-U"
+    GENERATED_CMD=(mkinitcpio -k "$KERNEL_VERSION")
+    BLS_ARGS=(-g "$KERNEL_INSTALL_STAGING_AREA/initrd")
 
-        # autodetecting microcode images by known location
-        # They're from GRUB_EARLY_INITRD_LINUX_STOCK in https://git.savannah.gnu.org/cgit/grub.git/tree/util/grub-mkconfig.in.
-        for ucode_name in "intel-ucode.img" "amd-ucode.img" "intel-uc.img" "amd-uc.img" "early_ucode.cpio" "microcode.cpio"; do
-            if [[ -e "/boot/$ucode_name" ]]; then
-                (( KERNEL_INSTALL_VERBOSE )) && echo "Found microcode image /boot/$ucode_name"
-                MICROCODE+=(--microcode "/boot/$ucode_name")
-            elif [[ -e "$KERNEL_INSTALL_BOOT_ROOT/$ucode_name" ]]; then
-                (( KERNEL_INSTALL_VERBOSE )) && echo "Found microcode image /boot/$ucode_name"
-                MICROCODE+=(--microcode "$KERNEL_INSTALL_BOOT_ROOT/$ucode_name")
+    case "$KERNEL_INSTALL_LAYOUT" in
+        uki)
+            #TODO change default to ukify once they have a suitable install script
+            if [[ "${KERNEL_INSTALL_UKI_GENERATOR:-mkinitcpio}" != 'mkinitcpio' ]]; then
+                GENERATED_CMD+=("${BLS_ARGS[@]}")
+            else
+                GENERATED_CMD+=(--kernelimage "$KERNEL_IMAGE")
+
+                # autodetecting microcode images by known location
+                # They're from GRUB_EARLY_INITRD_LINUX_STOCK in https://git.savannah.gnu.org/cgit/grub.git/tree/util/grub-mkconfig.in.
+                ucode_names=("intel-ucode.img" "amd-ucode.img" "intel-uc.img" "amd-uc.img" "early_ucode.cpio" "microcode.cpio")
+                for ucode_name in "${ucode_names[@]}"; do
+                    for dir in "$KERNEL_INSTALL_BOOT_ROOT" "/boot"; do
+                        if [[ -f "${dir}/${ucode_name}" ]]; then
+                            (( KERNEL_INSTALL_VERBOSE )) && echo "Found microcode image $ucode_name"
+                            GENERATED_CMD+=(--microcode "${dir}/$ucode_name")
+                        fi
+                    done
+                done
+
+                GENERATED_CMD+=(-U "$KERNEL_INSTALL_STAGING_AREA/uki.efi" )
             fi
-        done
+            ;;
+        bls)
+            GENERATED_CMD+=("${BLS_ARGS[@]}")
+            ;;
+        *)
+            exit 0
+            ;;
+    esac
 
-        KERNEL_IMAGE_FLAGS=(--kernelimage "$KERNEL_IMAGE")
-        ;;
-    bls)
-        IMAGE_GENERATION_FLAG="-g"
-        IMAGE_PATH="$ENTRY_DIR_ABS/initrd"
-        ;;
-    *)
-        exit 0
-        ;;
-esac
-
-case $COMMAND in
-    add)
-        (( KERNEL_INSTALL_VERBOSE )) && echo "+ mkinitcpio -k '$KERNEL_VERSION'" "${KERNEL_IMAGE_FLAGS[@]}" "${MICROCODE[@]}" "$IMAGE_GENERATION_FLAG '$IMAGE_PATH'"
-        mkinitcpio -k "$KERNEL_VERSION" "${KERNEL_IMAGE_FLAGS[@]}" "${MICROCODE[@]}" "$IMAGE_GENERATION_FLAG" "$IMAGE_PATH"
-        ;;
-    remove)
-        #remove this so that remove is a noop for this install file after 90-uki-copy.install
-        if [[ "$KERNEL_INSTALL_LAYOUT" == "uki" ]]; then
-            (( KERNEL_INSTALL_VERBOSE )) && echo rm -f -- "$IMAGE_PATH"
-            rm -f -- "$IMAGE_PATH"
-        else
-            printf "For BLS layout only the loader entry is removed during removal.\n"
-            printf "The image files (kernel, initramfs, etc) are left behind on the ESP partition, at: '%s'\n" "$ENTRY_DIR_ABS"
-        fi
-        ;;
-esac
+   (( KERNEL_INSTALL_VERBOSE )) && printf "+ %s\n" "${GENERATED_CMD[*]}"
+   "${GENERATED_CMD[@]}"
+fi
 
 # vim: set ft=sh ts=4 sw=4 et:
