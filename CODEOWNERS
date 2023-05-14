@@ -1,2 +1,5 @@
 [kernel-install]
 kernel-install/ @clavelc @lobachevsky
+
+[test suite]
+test/ @rogueai
