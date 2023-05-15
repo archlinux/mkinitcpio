@@ -357,12 +357,10 @@ build_uki() {
     fi
 
     add_uki_section '.osrel' <(
-        if [[ -n "$MKINITCPIO_PROCESS_PRESET" ]] && ! grep -q '^IMAGE_\(ID\|VERSION\)=' "$osrelease"; then
-            echo "IMAGE_ID=${MKINITCPIO_PROCESS_PRESET}"
-            echo "IMAGE_VERSION=${MKINITCPIO_PROCESS_PRESET%-default}"
-        fi
-        grep -q '^VERSION_ID=' "$osrelease" || echo "VERSION_ID=$KERNELVERSION"
-        cat "$osrelease"
+        suffix="${MKINITCPIO_PROCESS_PRESET##*-}"
+        [[ "$suffix" == 'default' ]] && suffix=""
+        printf 'VERSION_ID=%s%s\n' "$KERNELVERSION" "${suffix:+"~$suffix"}"
+        grep -v '^VERSION_ID=' "$osrelease"
     )
     add_uki_section '.uname' <(printf %s "$KERNELVERSION")
 
