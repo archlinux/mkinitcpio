@@ -9,44 +9,45 @@ if [[ "${KERNEL_INSTALL_INITRD_GENERATOR:-mkinitcpio}" != 'mkinitcpio' ]]; then
     exit 0
 fi
 
-if [[ "$COMMAND" == "add" ]]; then
-
-    GENERATED_CMD=(mkinitcpio -k "$KERNEL_VERSION")
-    BLS_ARGS=(-g "$KERNEL_INSTALL_STAGING_AREA/initrd")
-
-    case "$KERNEL_INSTALL_LAYOUT" in
-        uki)
-            #TODO change default to ukify once they have a suitable install script
-            if [[ "${KERNEL_INSTALL_UKI_GENERATOR:-mkinitcpio}" != 'mkinitcpio' ]]; then
-                GENERATED_CMD+=("${BLS_ARGS[@]}")
-            else
-                GENERATED_CMD+=(--kernelimage "$KERNEL_IMAGE")
-
-                # autodetecting microcode images by known location
-                # They're from GRUB_EARLY_INITRD_LINUX_STOCK in https://git.savannah.gnu.org/cgit/grub.git/tree/util/grub-mkconfig.in.
-                ucode_names=("intel-ucode.img" "amd-ucode.img" "intel-uc.img" "amd-uc.img" "early_ucode.cpio" "microcode.cpio")
-                for ucode_name in "${ucode_names[@]}"; do
-                    for dir in "$KERNEL_INSTALL_BOOT_ROOT" "/boot"; do
-                        if [[ -f "${dir}/${ucode_name}" ]]; then
-                            (( KERNEL_INSTALL_VERBOSE )) && echo "Found microcode image $ucode_name"
-                            GENERATED_CMD+=(--microcode "${dir}/$ucode_name")
-                        fi
-                    done
-                done
-
-                GENERATED_CMD+=(-U "$KERNEL_INSTALL_STAGING_AREA/uki.efi" )
-            fi
-            ;;
-        bls)
-            GENERATED_CMD+=("${BLS_ARGS[@]}")
-            ;;
-        *)
-            exit 0
-            ;;
-    esac
-
-   (( KERNEL_INSTALL_VERBOSE )) && printf "+ %s\n" "${GENERATED_CMD[*]}"
-   "${GENERATED_CMD[@]}"
+if [[ "$COMMAND" != "add" ]]; then
+    exit 0
 fi
+
+GENERATED_CMD=(mkinitcpio -k "$KERNEL_VERSION")
+BLS_ARGS=(-g "$KERNEL_INSTALL_STAGING_AREA/initrd")
+
+case "$KERNEL_INSTALL_LAYOUT" in
+    uki)
+        #TODO change default to ukify once they have a suitable install script
+        if [[ "${KERNEL_INSTALL_UKI_GENERATOR:-mkinitcpio}" != 'mkinitcpio' ]]; then
+            GENERATED_CMD+=("${BLS_ARGS[@]}")
+        else
+            GENERATED_CMD+=(--kernelimage "$KERNEL_IMAGE")
+
+            # autodetecting microcode images by known location
+            # They're from GRUB_EARLY_INITRD_LINUX_STOCK in https://git.savannah.gnu.org/cgit/grub.git/tree/util/grub-mkconfig.in.
+            ucode_names=("intel-ucode.img" "amd-ucode.img" "intel-uc.img" "amd-uc.img" "early_ucode.cpio" "microcode.cpio")
+            for ucode_name in "${ucode_names[@]}"; do
+                for dir in "$KERNEL_INSTALL_BOOT_ROOT" "/boot"; do
+                    if [[ -f "${dir}/${ucode_name}" ]]; then
+                        (( KERNEL_INSTALL_VERBOSE )) && echo "Found microcode image $ucode_name"
+                        GENERATED_CMD+=(--microcode "${dir}/$ucode_name")
+                    fi
+                done
+            done
+
+            GENERATED_CMD+=(-U "$KERNEL_INSTALL_STAGING_AREA/uki.efi" )
+        fi
+        ;;
+    bls)
+        GENERATED_CMD+=("${BLS_ARGS[@]}")
+        ;;
+    *)
+        exit 0
+        ;;
+esac
+
+(( KERNEL_INSTALL_VERBOSE )) && printf "+ %s\n" "${GENERATED_CMD[*]}"
+"${GENERATED_CMD[@]}"
 
 # vim: set ft=sh ts=4 sw=4 et:
