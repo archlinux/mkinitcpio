@@ -5,24 +5,20 @@ COMMAND="${1:?}"
 KERNEL_VERSION="${2:?}"
 KERNEL_IMAGE="$4"
 
-if [[ "${KERNEL_INSTALL_INITRD_GENERATOR:-mkinitcpio}" != 'mkinitcpio' ]]; then
-    exit 0
-fi
+[[ "${KERNEL_INSTALL_INITRD_GENERATOR:-mkinitcpio}" == 'mkinitcpio' ]] || exit 0
 
-if [[ "$COMMAND" != "add" ]]; then
-    exit 0
-fi
+[[ "$COMMAND" == "add" ]] || exit 0
 
-GENERATED_CMD=(mkinitcpio -k "$KERNEL_VERSION")
+GENERATOR_CMD=(mkinitcpio -k "$KERNEL_VERSION")
 BLS_ARGS=(-g "$KERNEL_INSTALL_STAGING_AREA/initrd")
 
 case "$KERNEL_INSTALL_LAYOUT" in
     uki)
         #TODO change default to ukify once they have a suitable install script
         if [[ "${KERNEL_INSTALL_UKI_GENERATOR:-mkinitcpio}" != 'mkinitcpio' ]]; then
-            GENERATED_CMD+=("${BLS_ARGS[@]}")
+            GENERATOR_CMD+=("${BLS_ARGS[@]}")
         else
-            GENERATED_CMD+=(--kernelimage "$KERNEL_IMAGE")
+            GENERATOR_CMD+=(--kernelimage "$KERNEL_IMAGE")
 
             # autodetecting microcode images by known location
             # They're from GRUB_EARLY_INITRD_LINUX_STOCK in https://git.savannah.gnu.org/cgit/grub.git/tree/util/grub-mkconfig.in.
@@ -30,24 +26,24 @@ case "$KERNEL_INSTALL_LAYOUT" in
             for ucode_name in "${ucode_names[@]}"; do
                 for dir in "$KERNEL_INSTALL_BOOT_ROOT" "/boot"; do
                     if [[ -f "${dir}/${ucode_name}" ]]; then
-                        (( KERNEL_INSTALL_VERBOSE )) && echo "Found microcode image $ucode_name"
-                        GENERATED_CMD+=(--microcode "${dir}/$ucode_name")
+                        (( KERNEL_INSTALL_VERBOSE )) && printf "Found microcode image $ucode_name\n"
+                        GENERATOR_CMD+=(--microcode "${dir}/$ucode_name")
                     fi
                 done
             done
 
-            GENERATED_CMD+=(-U "$KERNEL_INSTALL_STAGING_AREA/uki.efi" )
+            GENERATOR_CMD+=(-U "$KERNEL_INSTALL_STAGING_AREA/uki.efi" )
         fi
         ;;
     bls)
-        GENERATED_CMD+=("${BLS_ARGS[@]}")
+        GENERATOR_CMD+=("${BLS_ARGS[@]}")
         ;;
     *)
         exit 0
         ;;
 esac
 
-(( KERNEL_INSTALL_VERBOSE )) && printf "+ %s\n" "${GENERATED_CMD[*]}"
-"${GENERATED_CMD[@]}"
+(( KERNEL_INSTALL_VERBOSE )) && printf "+ %s\n" "${GENERATOR_CMD[*]}"
+"${GENERATOR_CMD[@]}"
 
 # vim: set ft=sh ts=4 sw=4 et:
