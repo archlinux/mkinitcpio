@@ -297,7 +297,7 @@ build_image() {
 # do not invoke directly, this is called by uki_init and uki_add_section
 _uki_increase_offset() {
     local step="$1"
-    _uki_offset="$((((_uki_offset + step - 1) & -_uki_alignment) + _uki_alignment))"
+    _uki_offset+="$(((step + _uki_alignment - 1) / _uki_alignment * _uki_alignment))"
 }
 
 uki_init() {
@@ -310,13 +310,10 @@ uki_init() {
     # reproducibility, preserve dates of used files
     _uki_objcopy_args+=(-p)
 
-    _uki_offset="$(LC_ALL=C objdump -h "${uefistub}" \
-        | awk 'NF==7 {size=strtonum("0x"$3); offset=strtonum("0x"$4)} END {print size + offset}')"
     _uki_alignment="$(LC_ALL=C objdump -p "${uefistub}" \
         | awk '/SectionAlignment/ {print strtonum("0x"$2)}')"
-
-    # fix alignment, increasing by zero will just round up to the next section start
-    _uki_increase_offset 0
+    _uki_increase_offset "$(LC_ALL=C objdump -h "${uefistub}" \
+        | awk 'NF==7 {size=strtonum("0x"$3); offset=strtonum("0x"$4)} END {print size + offset}')"
 }
 
 uki_add_section() {
