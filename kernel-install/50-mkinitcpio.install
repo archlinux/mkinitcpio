@@ -3,6 +3,8 @@
 
 COMMAND="${1:?}"
 KERNEL_VERSION="${2:?}"
+# shellcheck disable=SC2034
+ENTRY_DIR_ABS="$3"
 KERNEL_IMAGE="$4"
 
 [[ "${KERNEL_INSTALL_INITRD_GENERATOR:-mkinitcpio}" == 'mkinitcpio' ]] || exit 0
@@ -26,7 +28,7 @@ case "$KERNEL_INSTALL_LAYOUT" in
             for ucode_name in "${ucode_names[@]}"; do
                 for dir in "$KERNEL_INSTALL_BOOT_ROOT" "/boot"; do
                     if [[ -f "${dir}/${ucode_name}" ]]; then
-                        (( KERNEL_INSTALL_VERBOSE )) && printf "Found microcode image $ucode_name\n"
+                        (( KERNEL_INSTALL_VERBOSE )) && printf "+ Found microcode image %s\n" "$ucode_name"
                         GENERATOR_CMD+=(--microcode "${dir}/$ucode_name")
                     fi
                 done
