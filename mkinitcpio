@@ -294,13 +294,48 @@ build_image() {
     fi
 }
 
-build_uki() {
-    local out="$1" initramfs="$2" cmdline="$3" osrelease="$4" splash="$5" kernelimg="$6" uefistub="$7" microcode=("${@:8}") errmsg=''
-    local -i offset=0 align=0 mask=0
-    OBJCOPYARGS=()
+# do not invoke directly, this is called by uki_init and uki_add_section
+_uki_increase_offset() {
+    local step="$1"
+    _uki_offset+="$(((step + _uki_alignment - 1) / _uki_alignment * _uki_alignment))"
+}
+
+uki_init() {
+    local uefistub="$1"
+
+    # global variables shared between uki functions
+    declare -gi _uki_offset=0 _uki_alignment=0
+    declare -ga _uki_objcopy_args=("$uefistub")
 
     # reproducibility, preserve dates of used files
-    OBJCOPYARGS+=(-p)
+    _uki_objcopy_args+=(-p)
+
+    _uki_alignment="$(LC_ALL=C objdump -p "${uefistub}" \
+        | awk '/SectionAlignment/ {print strtonum("0x"$2)}')"
+    _uki_increase_offset "$(LC_ALL=C objdump -h "${uefistub}" \
+        | awk 'NF==7 {size=strtonum("0x"$3); offset=strtonum("0x"$4)} END {print size + offset}')"
+}
+
+uki_add_section() {
+    local secname="$1" filename="${2:-/dev/stdin}"
+    if [[ ! -f "$filename" ]]; then
+        local tmpfile
+        tmpfile="$(mktemp -t 'mkinitcpio.XXXXXX')"
+        _tmpfiles+=("$tmpfile")
+        cat -- "$filename" > "$tmpfile"
+        filename="$tmpfile"
+    fi
+    _uki_objcopy_args+=(--add-section "$secname=$filename" --change-section-vma "$secname=$(printf 0x%x "$_uki_offset")")
+    _uki_increase_offset "$(stat -Lc%s "$filename")"
+}
+
+uki_assemble() {
+    local out="$1"
+    objcopy "${_uki_objcopy_args[@]}" "$out"
+}
+
+build_uki() {
+    local out="$1" initramfs="$2" cmdline="$3" osrelease="$4" splash="$5" kernelimg="$6" uefistub="$7" microcode=("${@:8}") errmsg=''
 
     msg "Creating unified kernel image: '%s'" "$out"
 
@@ -318,11 +353,7 @@ build_uki() {
         return 1
     fi
 
-    align="$(objdump -p "${uefistub}" | awk '/SectionAlignment/ {print strtonum("0x"$2)}')"
-    mask="$((-align))"
-
-    offset="$(objdump -h "${uefistub}" | awk 'NF==7 {size=strtonum("0x"$3); offset=strtonum("0x"$4)} END {print size + offset}')"
-    offset="$(((offset & mask) + align))"
+    uki_init "$uefistub"
 
     if [[ -z "$osrelease" ]]; then
         if [[ -f "/etc/os-release" ]]; then
@@ -337,9 +368,13 @@ build_uki() {
         return 1
     fi
 
-    OBJCOPYARGS+=(--add-section ".osrel=${osrelease}" --change-section-vma ".osrel=$(printf 0x%x "$offset")")
-    offset="$((offset + $(stat -Lc%s "$osrelease")))"
-    offset="$(((offset & mask) + align))"
+    uki_add_section '.osrel' <(
+        suffix="${MKINITCPIO_PROCESS_PRESET##*-}"
+        [[ "$suffix" == 'default' ]] && suffix=""
+        printf 'VERSION_ID=%s%s\n' "$KERNELVERSION" "${suffix:+"~$suffix"}"
+        grep -v '^VERSION_ID=' "$osrelease"
+    )
+    uki_add_section '.uname' <(printf %s "$KERNELVERSION")
 
     if [[ -z "$cmdline" ]]; then
         if [[ -f "/etc/kernel/cmdline" ]]; then
@@ -358,19 +393,10 @@ build_uki() {
         return 1
     fi
 
-    cmdline_tmp="$(mktemp -t mkinitcpio.XXXXXX)"
-    _tmpfiles+=("$cmdline_tmp")
-
-    printf "%s\n\0" "$(grep -a '^[^#]' "$cmdline" | tr -s '\n' ' ')" >"$cmdline_tmp"
-
-    OBJCOPYARGS+=(--add-section ".cmdline=${cmdline_tmp}" --change-section-vma .cmdline="$(printf 0x%x "$offset")")
-    offset="$((offset + $(stat -Lc%s "$cmdline_tmp")))"
-    offset="$(((offset & mask) + align))"
+    uki_add_section '.cmdline' <(printf '%s\n\0' "$(grep -a '^[^#]' "$cmdline" | tr -s '\n' ' ')")
 
     if [[ -n "$splash" ]]; then
-        OBJCOPYARGS+=(--add-section ".splash=${splash}" --change-section-vma ".splash=$(printf 0x%x "$offset")")
-        offset="$((offset + $(stat -Lc%s "$splash")))"
-        offset="$(((offset & mask) + align))"
+        uki_add_section '.splash' "$splash"
         msg2 "Using splash image: '%s'" "$splash"
     fi
 
@@ -390,9 +416,7 @@ build_uki() {
         return 1
     fi
 
-    OBJCOPYARGS+=(--add-section ".linux=${kernelimg}" --change-section-vma ".linux=$(printf 0x%x "$offset")")
-    offset="$((offset + $(stat -Lc%s "$kernelimg")))"
-    offset="$(((offset & mask) + align))"
+    uki_add_section '.linux' "$kernelimg"
 
     if [[ -z "$initramfs" ]]; then
         error "Initramfs '%s' not found" "$initramfs"
@@ -403,14 +427,9 @@ build_uki() {
         msg2 "Using microcode image: '%s'" "$image"
     done
 
-    initramfs_tmp="$(mktemp -t mkinitcpio.XXXXXX)"
-    _tmpfiles+=("$initramfs_tmp")
+    uki_add_section '.initrd' <(cat -- "${microcode[@]}" "$initramfs")
 
-    cat -- "${microcode[@]}" "$initramfs" >"$initramfs_tmp"
-
-    OBJCOPYARGS+=(--add-section ".initrd=${initramfs_tmp}" --change-section-vma ".initrd=$(printf 0x%x "$offset")")
-
-    objcopy "${OBJCOPYARGS[@]}" "$uefistub" "$out"
+    uki_assemble "$out"
 
     status="$?"
     if (( status )) ; then
@@ -425,7 +444,7 @@ build_uki() {
 process_preset() (
     local preset="$1" preset_image='' preset_options=''
     local -a preset_mkopts preset_cmd preset_remove_cmd
-    if (( MKINITCPIO_PROCESS_PRESET )); then
+    if [[ -n "$MKINITCPIO_PROCESS_PRESET" ]]; then
         error "You appear to be calling a preset from a preset. This is a configuration error."
         exit 1
     fi
@@ -508,7 +527,6 @@ process_preset() (
 
         if (( _optremove )); then
             if (( ${#preset_remove_cmd[*]} )); then
-                # we won't be calling mkinitcpio recursively, so no need to set MKINITCPIO_PROCESS_PRESET
                 for pr in "${preset_remove_cmd[@]}"; do
                     if [[ ! -f "${pr}" ]]; then
                         warning "Image not found: '%s'" "$pr"
@@ -522,9 +540,11 @@ process_preset() (
                 done
             fi
         else
+            local preset_name="${preset##*/}"; preset_name="${preset_name%.preset}-$p"
             preset_cmd+=("${OPTREST[@]}")
             msg2 "${preset_cmd[*]}"
-            MKINITCPIO_PROCESS_PRESET=1 "$0" "${preset_cmd[@]}"
+            # we won't be calling mkinitcpio recursively, so no need to set MKINITCPIO_PROCESS_PRESET
+            MKINITCPIO_PROCESS_PRESET="$preset_name" "$0" "${preset_cmd[@]}"
         fi
         # shellcheck disable=SC2181
         (( $? )) && ret=1
