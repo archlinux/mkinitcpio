@@ -376,24 +376,36 @@ build_uki() {
     )
     uki_add_section '.uname' <(printf %s "$KERNELVERSION")
 
-    if [[ -z "$cmdline" ]]; then
-        if [[ -f "/etc/kernel/cmdline" ]]; then
-            cmdline="/etc/kernel/cmdline"
-        elif [[ -f "/usr/lib/kernel/cmdline" ]]; then
-            cmdline="/usr/lib/kernel/cmdline"
+    local cmdline_files=()
+    if [[ -n "$cmdline" ]]; then
+        if [[ -f "$cmdline" ]]; then
+            cmdline_files+=("$cmdline")
         else
-            warning "Note: /etc/kernel/cmdline does not exist and --cmdline is unset!"
-            cmdline="/proc/cmdline"
-            warning "Reusing current kernel cmdline from $cmdline"
+            error "Kernel cmdline file '%s' not found" "$cmdline"
+            return 1
         fi
-        msg2 "Using cmdline file: '%s'" "$cmdline"
-    fi
-    if [[ ! -f "$cmdline" ]]; then
-        error "Kernel cmdline file '%s' not found" "$cmdline"
-        return 1
     fi
 
-    uki_add_section '.cmdline' <(printf '%s\n\0' "$(grep -a '^[^#]' "$cmdline" | tr -s '\n' ' ')")
+    if [[ -z "$cmdline" ]]; then
+        if [[ -f "/etc/kernel/cmdline" ]]; then
+            cmdline_files+=("/etc/kernel/cmdline")
+        elif [[ -f "/usr/lib/kernel/cmdline" ]]; then
+            cmdline_files+=("/usr/lib/kernel/cmdline")
+        fi
+        if [[ -d '/etc/cmdline.d' ]]; then
+            mapfile -d '' -O "${#cmdline_files[@]}" cmdline_files < <(find "/etc/cmdline.d" -type f -name '*.conf' -print0 | sort -zVu)
+        fi
+    fi
+
+    if (( ! ${#cmdline_files[@]} )); then
+        warning "Note: no cmdline files where found and --cmdline is not set!"
+        cmdline_files=("/proc/cmdline")
+        warning "Reusing current kernel cmdline from ${cmdline_files[*]}"
+    else
+        msg2 "Using cmdline file: '%s'" "${cmdline_files[@]}"
+    fi
+
+    uki_add_section '.cmdline' <(printf '%s\n\0' "$(grep -ha -- '^[^#]' "${cmdline_files[@]}" | tr -s '\n' ' ')")
 
     if [[ -n "$splash" ]]; then
         uki_add_section '.splash' "$splash"
