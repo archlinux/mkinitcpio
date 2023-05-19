@@ -511,14 +511,16 @@ process_preset() (
             continue
         fi
 
-        preset_options="${p}_options"
-        if [[ -n "${!preset_options}" ]]; then
+        local -n preset_options="${p}_options"
+        if [[ "${preset_options@a}" == *a* ]]; then
+            preset_cmd+=("${preset_options[@]}")
+        elif [[ -n "$preset_options" ]]; then
             mapfile -d ' ' -O "${#preset_cmd[@]}" -t preset_cmd < <(
-                printf '%s' "${!preset_options}"
+                printf '%s' "$preset_options"
             )
         fi
 
-        declare -n preset_microcode="${p}_microcode"
+        local -n preset_microcode="${p}_microcode"
         if [[ -n "${preset_microcode[*]}" || -n "${ALL_microcode[*]}" ]]; then
             mapfile -d '' -O "${#preset_cmd[@]}" -t preset_cmd < <(
                 printf -- '--microcode\0%s\0' "${preset_microcode[@]:-${ALL_microcode[@]}}"
