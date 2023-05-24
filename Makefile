@@ -35,7 +35,7 @@ MANPAGES = \
 	man/mkinitcpio.conf.5 \
 	man/lsinitcpio.1
 
-install: all
+prepare:
 	install -dm755 $(addprefix $(DESTDIR),$(DIRS))
 
 	sed -e 's|\(^_f_config\)=.*|\1=/etc/mkinitcpio.conf|' \
@@ -52,6 +52,7 @@ install: all
 	    -e 's|%VERSION%|$(VERSION)|g' \
 	    < lsinitcpio > $(DESTDIR)/usr/bin/lsinitcpio
 
+install-generator: all prepare
 	chmod 755 $(DESTDIR)/usr/bin/lsinitcpio $(DESTDIR)/usr/bin/mkinitcpio
 
 	install -m644 mkinitcpio.conf $(DESTDIR)/etc/mkinitcpio.conf
@@ -76,9 +77,12 @@ install: all
 	ln -s mkinitcpio $(DESTDIR)/usr/share/bash-completion/completions/lsinitcpio
 	install -m644 shell/zsh-completion $(DESTDIR)/usr/share/zsh/site-functions/_mkinitcpio
 
+install-hooks: prepare
 	install -m644 libalpm/hooks/90-mkinitcpio-install.hook $(DESTDIR)/usr/share/libalpm/hooks/90-mkinitcpio-install.hook
 	install -m644 libalpm/hooks/60-mkinitcpio-remove.hook $(DESTDIR)/usr/share/libalpm/hooks/60-mkinitcpio-remove.hook
 	install -m755 libalpm/scripts/mkinitcpio $(DESTDIR)/usr/share/libalpm/scripts/mkinitcpio
+
+install: install-generator install-hooks
 
 doc: $(MANPAGES)
 man/%: man/%.adoc Makefile
@@ -120,4 +124,4 @@ upload: mkinitcpio-$(VERSION).tar.gz mkinitcpio-$(VERSION).tar.gz.sig
 version:
 	@echo $(VERSION)
 
-.PHONY: check clean coverage dist install shellcheck tarball version
+.PHONY: check clean coverage dist install install-generator install-hooks shellcheck tarball version prepare
