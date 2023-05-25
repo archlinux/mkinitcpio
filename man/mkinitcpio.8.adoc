@@ -189,7 +189,7 @@ line arguments for more information about a particular option.
     Output file path for the generated image (passed via *-g* to mkinitcpio).
 
 *<preset>_options*::
-    Further command line arguments to pass to mkinitcpio as a simple string.
+    Further command line arguments to pass to mkinitcpio as a string or array.
     They will get appended at the end of the call to mkinitcpio (after all the
     options mentioned above), so this can be used to overwrite options (for
     example pass a *-S* _hook_ here to skip a hook).
