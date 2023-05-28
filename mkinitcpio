@@ -7,7 +7,6 @@
 declare -r version=%VERSION%
 
 shopt -s extglob
-
 ### globals within mkinitcpio, but not intended to be used by hooks
 
 # needed files/directories
@@ -28,7 +27,7 @@ _optmoduleroot='' _optgenimg=''
 _optcompress='' _opttargetdir=''
 _optosrelease=''
 _optuki='' _optmicrocode=() _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
-_optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0
+_optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0 _optnocmdline=0
 _optquiet=1 _optcolor=1 _optconfd=1
 _optskiphooks=() _optaddhooks=() _hooks=() _optpreset=() _tmpfiles=() _generated=()
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
@@ -386,26 +385,30 @@ build_uki() {
         fi
     fi
 
-    if [[ -z "$cmdline" ]]; then
-        if [[ -f "/etc/kernel/cmdline" ]]; then
-            cmdline_files+=("/etc/kernel/cmdline")
-        elif [[ -f "/usr/lib/kernel/cmdline" ]]; then
-            cmdline_files+=("/usr/lib/kernel/cmdline")
+    if (( ! _optnocmdline )); then
+        if [[ -z "$cmdline" ]]; then
+            if [[ -f "/etc/kernel/cmdline" ]]; then
+                cmdline_files+=("/etc/kernel/cmdline")
+            elif [[ -f "/usr/lib/kernel/cmdline" ]]; then
+                cmdline_files+=("/usr/lib/kernel/cmdline")
+            fi
+            if [[ -d '/etc/cmdline.d' ]]; then
+                mapfile -d '' -O "${#cmdline_files[@]}" cmdline_files < <(find "/etc/cmdline.d" -type f -name '*.conf' -print0 | sort -zVu)
+            fi
         fi
-        if [[ -d '/etc/cmdline.d' ]]; then
-            mapfile -d '' -O "${#cmdline_files[@]}" cmdline_files < <(find "/etc/cmdline.d" -type f -name '*.conf' -print0 | sort -zVu)
-        fi
-    fi
 
-    if (( ! ${#cmdline_files[@]} )); then
-        warning "Note: no cmdline files where found and --cmdline is not set!"
-        cmdline_files=("/proc/cmdline")
-        warning "Reusing current kernel cmdline from ${cmdline_files[*]}"
+        if (( ! ${#cmdline_files[@]} )); then
+            warning "Note: no cmdline files where found and --cmdline is not set!"
+            cmdline_files=("/proc/cmdline")
+            warning "Reusing current kernel cmdline from ${cmdline_files[*]}"
+        else
+            msg2 "Using cmdline file: '%s'" "${cmdline_files[@]}"
+        fi
+
+        uki_add_section '.cmdline' <(printf '%s\n\0' "$(grep -ha -- '^[^#]' "${cmdline_files[@]}" | tr -s '\n' ' ')")
     else
-        msg2 "Using cmdline file: '%s'" "${cmdline_files[@]}"
+        quiet 'Kernel cmdline will not be embeded.'
     fi
-
-    uki_add_section '.cmdline' <(printf '%s\n\0' "$(grep -ha -- '^[^#]' "${cmdline_files[@]}" | tr -s '\n' ' ')")
 
     if [[ -n "$splash" ]]; then
         uki_add_section '.splash' "$splash"
@@ -636,7 +639,7 @@ _opt_short='A:c:D:g:H:hk:nLMPp:Rr:S:sd:t:U:Vvz:'
 _opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
            'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets'
            'preset:' 'remove' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:'
-           'uki:' 'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:')
+           'uki:' 'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:' 'no-cmdline')
 
 parseopts "$_opt_short" "${_opt_long[@]}" -- "$@" || exit 1
 set -- "${OPTRET[@]}"
@@ -659,6 +662,9 @@ while :; do
         --cmdline)
             shift
             _optcmdline="$1"
+            ;;
+        --no-cmdline)
+            _optnocmdline=1
             ;;
         -k | --kernel)
             shift

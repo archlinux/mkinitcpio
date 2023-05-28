@@ -129,6 +129,12 @@ other features.
     try one of the files _/etc/kernel/cmdline_, _/usr/share/kernel/cmdline_
     or _/proc/cmdline_.
 
+*--no-cmdline*::
+    Omit embedding a kernel command line string in the unified kernel image.
+    Kernel command line options will need to be passed via the kernel command
+    line.
+    Overrides the *--cmdline* option.
+
 *--splash* _filename_::
     UEFI executables can show a bitmap file on boot.
 
