@@ -1,5 +1,54 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v36:
+
+        New Features:
+
+        * Kernel command line options can now be read from the drop-in directory
+          /etc/cmdline.d/.
+
+        * mkinitcpio can now be configured from the drop-in directory
+          /etc/mkinitcpio.conf.d/.
+
+        * Hooks can now use a find_module_from_symbol function to include modules
+          based on symbol lookups. This is useful to include all modules that
+          provide a given function, instead of including all of them.
+
+        * The --no-cmdline option omits embedding the kernel command line files,
+          allowing to pass kernel command line options directly through the boot
+          entry. This is practical if you need to retain the ability to edit
+          these options, or overrride them during boot.
+
+        Changes in mkinitcpio:
+
+        * preset_options can now be a bash array.
+
+        * Created UKIs now contain a .uname section in the binary.
+
+        * The VERSION_ID in a UKI osrel section is now suffixed with the
+          mkinitcpio preset name (except for "default"). This makes it easier
+          to distinguish images generated for different kernels.
+
+        Changes in hooks:
+
+        * A regression was fixed where the busybox init hook did not wait for
+          devices to come online before resolving them.
+
+        * run_emergencyhook is a new function that allows running functions
+          before the emergency shell is launched.
+
+        Changes in packaging:
+
+        * Split out make install into two new targets.
+          install-generator installs the generated scripts from make prepare
+          along with kernel-install hooks.  install-hooks installs the alpm
+          hooks. install by defaults now runs both of these targets.
+
+        Contributions from: Adam Maroti, Balló György, cvlc12, Joel McBride,
+        Markus Weippert, Morten Linderud, nl6720, Yishen Miao
+
+        – 2023-05-26
+
 CHANGES WITH v35.2:
 
         Bugfix release:
