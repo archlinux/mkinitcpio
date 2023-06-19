@@ -22,16 +22,9 @@ case "$KERNEL_INSTALL_LAYOUT" in
         else
             GENERATOR_CMD+=(--kernelimage "$KERNEL_IMAGE")
 
-            # autodetecting microcode images by known location
-            # They're from GRUB_EARLY_INITRD_LINUX_STOCK in https://git.savannah.gnu.org/cgit/grub.git/tree/util/grub-mkconfig.in.
-            ucode_names=("intel-ucode.img" "amd-ucode.img" "intel-uc.img" "amd-uc.img" "early_ucode.cpio" "microcode.cpio")
-            for ucode_name in "${ucode_names[@]}"; do
-                for dir in "$KERNEL_INSTALL_BOOT_ROOT" "/boot"; do
-                    if [[ -f "${dir}/${ucode_name}" ]]; then
-                        (( KERNEL_INSTALL_VERBOSE )) && printf "+ Found microcode image %s\n" "$ucode_name"
-                        GENERATOR_CMD+=(--microcode "${dir}/$ucode_name")
-                    fi
-                done
+            # Add microcode if found in staging area
+            for microcode in "${KERNEL_INSTALL_STAGING_AREA}"/microcode*; do
+                [[ -f "$microcode" ]] && GENERATOR_CMD+=(--microcode "$microcode")
             done
 
             GENERATOR_CMD+=(-U "$KERNEL_INSTALL_STAGING_AREA/uki.efi" )

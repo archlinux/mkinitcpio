@@ -1,0 +1,26 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-only
+
+COMMAND="${1:?}"
+# shellcheck disable=SC2034
+KERNEL_VERSION="${2:?}"
+# shellcheck disable=SC2034
+ENTRY_DIR_ABS="$3"
+# shellcheck disable=SC2034
+KERNEL_IMAGE="$4"
+
+set -e
+
+[[ "$COMMAND" = "add" ]] || exit 0
+
+for dir in "${KERNEL_INSTALL_BOOT_ROOT}" "/boot"; do
+    for microcode in "intel-ucode.img" "amd-ucode.img" "intel-uc.img" "amd-uc.img" "early_ucode.cpio" "microcode.cpio"; do
+        if [[ -f "${dir}/${microcode}" ]]; then
+            install -m 0644 "${dir}/${microcode}" "${KERNEL_INSTALL_STAGING_AREA}/microcode-${microcode}" || {
+                echo "Error: could not copy '$microcode' to the staging area." >&2
+                exit 1
+            }
+            (( KERNEL_INSTALL_VERBOSE )) && printf "+ Found microcode image %s\n" "$microcode"
+        fi
+    done
+done
