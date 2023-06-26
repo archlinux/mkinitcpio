@@ -877,7 +877,7 @@ BUILDROOT="${_opttargetdir:-$_d_workdir/root}"
 
 # Source additional configuration files, if no configuration file has been defined either with "-c" or via preset file
 if [[ -d "$_d_config" ]] && (( _optconfd )); then
-    mapfile -d '' conf_files < <(find "$_d_config" -maxdepth 1 -type f -name '*.conf' -print0 | sed -z 's/.*\///' | sort -zVu)
+    mapfile -d '' conf_files < <(find "$_d_config" -maxdepth 1 -xtype f -name '*.conf' -print0 | sed -z 's/.*\///' | sort -zVu)
     if (( ${#conf_files[@]} )); then
         tmpfile="$(mktemp -t mkinitcpio.XXXXXX)"
         _tmpfiles+=("$tmpfile")
