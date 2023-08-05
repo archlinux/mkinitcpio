@@ -272,11 +272,11 @@ functions exist to facilitate this.
     and added. The argument can be a rule file name (discovered from well known
     udev paths) or an absolute path.
 
-*add_module_from_symbol* _symbol_ _paths..._::
-
-    Adds a udev rule to the image. Dependencies on binaries will be discovered
-    and added. The argument can be a rule file name (discovered from well known
-    udev paths) or an absolute path.
+*add_module_from_symbol* [ *-c* ] _symbol_ _paths..._::
+    Adds modules from the _paths_ directories containing the _symbol_ to the
+    image.
+    Uses *add_module* by default, but by specifying the *-c* flag,
+    *add_checked_modules* will be used instead.
 
 == About runtime hooks
 
