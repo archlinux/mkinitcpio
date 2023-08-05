@@ -24,7 +24,9 @@ build() {
             touch "$BUILDROOT/keymap.utf8"
             loadkeys_opts+=('-u')
         fi
-        loadkeys "${loadkeys_opts[@]}" "${KEYMAP:-us}" -b >"$BUILDROOT/keymap.bin"
+        if [[ "$KEYMAP" != 'kernel' ]]; then
+            loadkeys "${loadkeys_opts[@]}" "${KEYMAP:-us}" -b >"$BUILDROOT/keymap.bin"
+        fi
     ) && add_runscript
 }
 
