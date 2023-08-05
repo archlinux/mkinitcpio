@@ -6,7 +6,7 @@ build() {
     map add_checked_modules '/drivers/char/agp/' '/drivers/gpu/drm/'
 
     # modules that implement the privacy screen interface
-    add_module_from_symbol 'drm_privacy_screen_register' '=drivers/platform'
+    add_module_from_symbol -c 'drm_privacy_screen_register' '=drivers/platform'
 }
 
 help() {
