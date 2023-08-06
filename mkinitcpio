@@ -393,7 +393,7 @@ build_uki() {
                 cmdline_files+=("/usr/lib/kernel/cmdline")
             fi
             if [[ -d '/etc/cmdline.d' ]]; then
-                mapfile -d '' -O "${#cmdline_files[@]}" cmdline_files < <(find "/etc/cmdline.d" -type f -name '*.conf' -print0 | sort -zVu)
+                mapfile -d '' -O "${#cmdline_files[@]}" cmdline_files < <(find "/etc/cmdline.d" -xtype f -name '*.conf' -print0 | sort -zVu)
             fi
         fi
 
@@ -877,7 +877,7 @@ BUILDROOT="${_opttargetdir:-$_d_workdir/root}"
 
 # Source additional configuration files, if no configuration file has been defined either with "-c" or via preset file
 if [[ -d "$_d_config" ]] && (( _optconfd )); then
-    mapfile -d '' conf_files < <(find "$_d_config" -maxdepth 1 -type f -name '*.conf' -print0 | sed -z 's/.*\///' | sort -zVu)
+    mapfile -d '' conf_files < <(find "$_d_config" -maxdepth 1 -xtype f -name '*.conf' -print0 | sed -z 's/.*\///' | sort -zVu)
     if (( ${#conf_files[@]} )); then
         tmpfile="$(mktemp -t mkinitcpio.XXXXXX)"
         _tmpfiles+=("$tmpfile")
