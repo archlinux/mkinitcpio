@@ -1095,8 +1095,9 @@ add_module_from_symbol() {
         shift
     fi
     mapfile -t mods < <(find_module_from_symbol "$@")
+    (( ${#mods[@]} )) || return 1
     if (( use_add_checked_modules )); then
-        map add_checked_modules "${mods[@]}"
+        map add_checked_modules "${mods[@]}" || :
     else
         map add_module "${mods[@]}"
     fi
