@@ -4,10 +4,16 @@
 run_hook() {
     if [ -e /consolefont.psfu ]; then
         msg -n ":: Loading console font..."
+        # Supported in ash
+        # shellcheck disable=SC3036
+        echo -en "a\010 \010"
         setfont -C /dev/console /consolefont.psfu
         msg "done."
     elif [ -e /consolefont.psf ]; then
         msg -n ":: Loading console font..."
+        # Supported in ash
+        # shellcheck disable=SC3036
+        echo -en "a\010 \010"
         setfont -C /dev/console /consolefont.psf
         msg "done."
     else
