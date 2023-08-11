@@ -70,7 +70,7 @@ build() {
         # shellcheck disable=SC1091
         [[ -s /etc/vconsole.conf ]] && . /etc/vconsole.conf
 
-        [[ "$KEYMAP" != 'kernel' ]] && add_keymap_file "${KEYMAP:-us}.map"
+        [[ "$KEYMAP" != '@kernel' ]] && add_keymap_file "${KEYMAP:-us}.map"
         [[ -n "$KEYMAP_TOGGLE" ]] && add_keymap_file "${KEYMAP_TOGGLE}.map"
 
         if [[ -n "$FONT_MAP" ]]; then
