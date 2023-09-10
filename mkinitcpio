@@ -334,18 +334,48 @@ uki_assemble() {
 }
 
 build_uki() {
-    local out="$1" initramfs="$2" cmdline="$3" osrelease="$4" splash="$5" kernelimg="$6" uefistub="$7" microcode=("${@:8}") errmsg=''
+    local out="$1" initramfs="$2" cmdline="$3" osrelease="$4" splash="$5" kernelimg="$6" uefistub="$7" microcode=("${@:8}") errmsg='' stub cpuarch uefiarch
 
     msg "Creating unified kernel image: '%s'" "$out"
 
     if [[ -z "$uefistub" ]]; then
-        for stub in {/usr,}/lib/{systemd/boot/efi,gummiboot}/linux{x64,ia32,aa64}.efi.stub; do
+        cpuarch="$(uname -m)"
+        case "$cpuarch" in
+            x86_64)
+                uefiarch='x64'
+                # Detect 64-bit x86_64 systems with 32-bit IA32 UEFI
+                if [[ -e /sys/firmware/efi/fw_platform_size ]]; then
+                    if (( $(< /sys/firmware/efi/fw_platform_size) == 32 )); then
+                        uefiarch='ia32'
+                    fi
+                else
+                    warning 'Cannot determine UEFI bitness. Assuming x64 UEFI.'
+                fi
+                ;;
+            i386|i686)
+                uefiarch='ia32'
+                ;;
+            aarch64*|arm64|armv8*)
+                uefiarch='aa64'
+                ;;
+            arm*)
+                uefiarch='arm'
+                ;;
+            *)
+                uefiarch="$cpuarch"
+                ;;
+        esac
+        for stub in /usr/lib/{systemd/boot/efi,gummiboot}/"linux${uefiarch}.efi.stub"; do
             if [[ -f "$stub" ]]; then
                 uefistub="$stub"
                 msg2 "Using UEFI stub: '%s'" "$uefistub"
                 break
             fi
         done
+        if [[ -z "$uefistub" ]]; then
+            error "UEFI stub for architecture '%s' not found" "$uefiarch"
+            return 1
+        fi
     fi
     if [[ ! -f "$uefistub" ]]; then
         error "UEFI stub '%s' not found" "$uefistub"
