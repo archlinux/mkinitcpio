@@ -407,7 +407,7 @@ build_uki() {
 
         uki_add_section '.cmdline' <(printf '%s\n\0' "$(grep -ha -- '^[^#]' "${cmdline_files[@]}" | tr -s '\n' ' ')")
     else
-        quiet 'Kernel cmdline will not be embeded.'
+        quiet 'Kernel cmdline will not be embedded.'
     fi
 
     if [[ -n "$splash" ]]; then
@@ -961,7 +961,7 @@ trap -- ERR
 
 # this is simply a nice-to-have -- it doesn't matter if it fails.
 ldconfig -r "$BUILDROOT" &>/dev/null
-# remove /var/cache/ldconfig/aux-cache for reproducability
+# remove /var/cache/ldconfig/aux-cache for reproducibility
 rm -f -- "$BUILDROOT/var/cache/ldconfig/aux-cache"
 
 # Set umask to create initramfs images and unified kernel images as 600
