@@ -6,6 +6,8 @@ build() {
     # shellcheck disable=SC2034
     local KEYMAP KEYMAP_TOGGLE FONT FONT_MAP FONT_UNIMAP XKBLAYOUT XKBMODEL XKBVARIANT XKBOPTIONS
 
+    add_binary setfont
+
     # subshell to avoid namespace pollution
     (
         # shellcheck disable=SC1091
