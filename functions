@@ -745,7 +745,10 @@ add_binary() {
     local line='' regex='' binary='' dest='' mode='' sodep='' resolved='' shebang='' interpreter=''
 
     if [[ "${1:0:1}" != '/' ]]; then
-        binary="$(type -P "$1")"
+        if ! binary="$(type -P "$1")"; then
+            error "binary not found: '%s'" "$1"
+            return 1
+        fi
     else
         binary="$1"
     fi
