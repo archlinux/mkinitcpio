@@ -5,7 +5,7 @@ build() {
 
     add_module 'dm-crypt'
     add_module 'dm-integrity'
-    if [[ $CRYPTO_MODULES ]]; then
+    if [[ -n "$CRYPTO_MODULES" ]]; then
         for mod in $CRYPTO_MODULES; do
             add_module "$mod"
         done
@@ -38,7 +38,7 @@ build() {
     add_binary '/usr/lib/ossl-modules/legacy.so'
 
     # add libraries dlopen()ed by systemd-cryptsetup
-    for FILE in $(find /usr/lib/ -maxdepth 1 -name "libfido2.so*"); do
+    find /usr/lib/ -maxdepth 1 -name "libfido2.so*" | while read -r -d '' FILE; do
         if [[ -L "${FILE}" ]]; then
             add_symlink "${FILE}"
         else
