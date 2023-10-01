@@ -1,8 +1,6 @@
 #!/bin/bash
 
 build() {
-    local rules tool
-
     map add_binary \
         '/usr/lib/systemd/systemd-udevd' \
         '/usr/bin/udevadm' \

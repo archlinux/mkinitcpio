@@ -5,7 +5,7 @@ add_systemd_unit() {
     # and other unit files will be discovered and added.
     #   $1: path to rules file (or name of rules file)
 
-    local unit= rule= entry= key= value= binary= dep=
+    local unit key dep
 
     unit=$(PATH=/usr/lib/systemd/system:/lib/systemd/system type -P "$1")
     if [[ -z $unit ]]; then
@@ -37,7 +37,7 @@ add_systemd_unit() {
     done <"$unit"
 
     # preserve reverse soft dependency
-    for dep in {/usr,}/lib/systemd/system/*.wants/${unit##*/}; do
+    for dep in {/usr,}/lib/systemd/system/*.wants/"${unit##*/}"; do
         if [[ -L $dep ]]; then
             add_symlink "$dep"
         fi
@@ -46,13 +46,13 @@ add_systemd_unit() {
     # add hard dependencies
     if [[ -d $unit.requires ]]; then
         for dep in "$unit".requires/*; do
-            add_systemd_unit ${dep##*/}
+            add_systemd_unit "${dep##*/}"
         done
     fi
 }
 
 add_systemd_drop_in() {
-    local unit=$1 dropin_name=$2
+    local unit=$1
 
     mkdir -p "$BUILDROOT/etc/systemd/system/$unit.d"
     cat >"$BUILDROOT/etc/systemd/system/$unit.d/$2.conf"
@@ -123,7 +123,7 @@ build() {
 
     # add libraries dlopen()ed by tpm2-util
     for LIB in tss2-{esys,rc,mu,tcti-'*'}; do
-        for FILE in $(find /usr/lib/ -maxdepth 1 -name "lib${LIB}.so*"); do
+        find /usr/lib/ -maxdepth 1 -name "lib${LIB}.so*" | while read -r -d '' FILE; do
             if [[ -L "${FILE}" ]]; then
                 add_symlink "${FILE}"
             else
@@ -146,9 +146,11 @@ build() {
 
     add_dir "/etc/modules-load.d"
     (
+      # FIXME: this should be a function in mkinitcpio
+      # shellcheck disable=SC1091,SC2154 source=mkinitcpio.conf
       . "$_f_config"
       set -f
-      printf '%s\n' ${MODULES[@]} >"$BUILDROOT/etc/modules-load.d/MODULES.conf"
+      printf '%s\n' "${MODULES[@]}" >"$BUILDROOT/etc/modules-load.d/MODULES.conf"
     )
 }
 

@@ -3,11 +3,15 @@
 run_earlyhook() {
     kmod static-nodes --format=tmpfiles --output=/run/tmpfiles.d/kmod.conf
     systemd-tmpfiles --prefix=/dev --create --boot
+    # assigned by parse_cmdline
+    # shellcheck disable=SC2154
     if [ "${quiet}" = "y" ]; then
         /usr/lib/systemd/systemd-udevd --daemon --resolve-names=never >/dev/null 2>&1
     else
         /usr/lib/systemd/systemd-udevd --daemon --resolve-names=never
     fi
+    # used externally by poll_device()
+    # shellcheck disable=SC2034
     udevd_running=1
 }
 
