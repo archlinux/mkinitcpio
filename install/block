@@ -25,6 +25,9 @@ build() {
     # spi (mmc in spi mode)
     add_checked_modules '/drivers/spi/'
 
+    # pci controller
+    add_checked_modules '/drivers/pci/controller/'
+
     # virtio
     add_checked_modules 'virtio'
 
