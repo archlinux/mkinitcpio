@@ -31,8 +31,8 @@ build() {
     # nvdimm
     add_checked_modules '/drivers/nvdimm/'
 
-    # Intel Volume Management Device
-    add_checked_modules 'vmd'
+    # pci controller
+    add_checked_modules '/drivers/pci/controller/'
 }
 
 help() {
