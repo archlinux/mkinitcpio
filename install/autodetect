@@ -4,6 +4,7 @@
 build() {
     local m=''
     local -a md_devs mods
+    local -i attempts_left
 
     [[ "$KERNELVERSION" == 'none' ]] && return 0
 
@@ -12,7 +13,25 @@ build() {
 
         local mods=() uevents
 
-        uevents="$(find /sys/devices -name uevent -exec sort -u {} +)" || return 1
+        # Look for uevents
+        for (( attempts_left=2; attempts_left; --attempts_left )); do
+            if uevents="$(find /sys/devices -name uevent -exec sort -u {} +)"; then
+                break
+            fi
+            if (( attempts_left > 1 )); then
+                # Sleep and try again to avoid a race condition with udev
+                # NOTE: This is a best-effort workaround for what is assumed to be
+                # a bug in `udevadm settle` where the command exits while the
+                # devices have not yet settled. See
+                # https://gitlab.archlinux.org/archlinux/mkinitcpio/mkinitcpio/-/issues/177
+                # and https://bugs.archlinux.org/task/77789 for details.
+                warning 'An error was encountered during device lookup. Retrying.'
+                sleep 1
+            else
+                error 'An error was encountered during device lookup.'
+                return 1
+            fi
+        done
         mapfile -t mods < <(sed -n 's/\(DRIVER\|MODALIAS\)=\(.\+\)/\2/p' <<<"$uevents")
         mapfile -t mods < <(modprobe -S "$KERNELVERSION" -qaR "${mods[@]}" | sort -u)
 
