@@ -10,10 +10,10 @@ build() {
     auto_modules() {
         # Perform auto detection of modules via sysfs.
 
-        local mods=()
+        local mods=() uevents
 
-        mapfile -t mods < <(find /sys/devices -name uevent \
-            -exec sort -u {} + | sed -n 's/\(DRIVER\|MODALIAS\)=\(.\+\)/\2/p')
+        uevents="$(find /sys/devices -name uevent -exec sort -u {} +)" || return 1
+        mapfile -t mods < <(sed -n 's/\(DRIVER\|MODALIAS\)=\(.\+\)/\2/p' <<<"$uevents")
         mapfile -t mods < <(modprobe -S "$KERNELVERSION" -qaR "${mods[@]}" | sort -u)
 
         (( ${#mods[*]} )) && printf "%s\n" "${mods[@]//-/_}"
@@ -38,6 +38,11 @@ build() {
     fi
 
     mapfile -t mods < <(auto_modules)
+    if (( ! ${#mods[@]} )); then
+        error 'Cannot acquire used modules. Unable to use autodetection.'
+        return 1
+    fi
+
     for m in "${mods[@]}"; do
         _autodetect_cache["$m"]=1
     done
