@@ -7,6 +7,18 @@ build() {
 
     [[ "$KERNELVERSION" == 'none' ]] && return 0
 
+    auto_modules() {
+        # Perform auto detection of modules via sysfs.
+
+        local mods=()
+
+        mapfile -t mods < <(find /sys/devices -name uevent \
+            -exec sort -u {} + | awk -F= '$1 == "MODALIAS" && !_[$0]++')
+        mapfile -t mods < <(modprobe -S "$KERNELVERSION" -qaR "${mods[@]#MODALIAS=}")
+
+        (( ${#mods[*]} )) && printf "%s\n" "${mods[@]//-/_}"
+    }
+
     add_if_avail() {
         local r='' resolved=()
 
@@ -25,7 +37,7 @@ build() {
         return 1
     fi
 
-    mapfile -t mods < <(auto_modules "$KERNELVERSION")
+    mapfile -t mods < <(auto_modules)
     for m in "${mods[@]}"; do
         _autodetect_cache["$m"]=1
     done
