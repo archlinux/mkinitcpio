@@ -14,7 +14,7 @@ build() {
 
         mapfile -t mods < <(find /sys/devices -name uevent \
             -exec sort -u {} + | sed -n 's/MODALIAS=\(.*\)/\1/p')
-        mapfile -t mods < <(modprobe -S "$KERNELVERSION" -qaR "${mods[@]}")
+        mapfile -t mods < <(modprobe -S "$KERNELVERSION" -qaR "${mods[@]}" | sort -u)
 
         (( ${#mods[*]} )) && printf "%s\n" "${mods[@]//-/_}"
     }
