@@ -2,15 +2,10 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 build() {
-    local filter
-
     map add_module ahci? sd_mod? usb_storage? uas? mmc_block? nvme? virtio_scsi? virtio_blk?
 
     # pata, sata, scsi, nvme
-    for filter in 'scsi/.*ata' '/(block|scsi|fusion|nvme)/' 'ata/[ps]ata_' \
-        'ata/(ahci|pdc_adma|ata_piix|ata_generic)'; do
-        add_checked_modules "$filter"
-    done
+    add_checked_modules '/(block|ata|scsi|fusion|nvme)/'
 
     # usb
     add_checked_modules -f '(_cs|sl811_hcd|isp116x_hcd)' '/usb/host'
