@@ -1089,21 +1089,20 @@ find_module_from_symbol() {
     done
 }
 
-add_module_from_symbol() {
-    local mods
-    local -i use_add_checked_modules=0
+add_all_modules_from_symbol() {
+    local -a mods
 
-    if [[ "$1" == '-c' ]]; then
-        use_add_checked_modules=1
-        shift
-    fi
     mapfile -t mods < <(find_module_from_symbol "$@")
     (( ${#mods[@]} )) || return 1
-    if (( use_add_checked_modules )); then
-        map add_checked_modules "${mods[@]}" || :
-    else
-        map add_module "${mods[@]}"
-    fi
+    map add_module "${mods[@]}"
+}
+
+add_checked_modules_from_symbol() {
+    local -a mods
+
+    mapfile -t mods < <(find_module_from_symbol "$@")
+    (( ${#mods[*]} )) || return 1
+    map add_checked_modules "${mods[@]}" || :
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
