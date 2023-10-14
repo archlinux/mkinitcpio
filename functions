@@ -1100,9 +1100,16 @@ add_all_modules_from_symbol() {
 add_checked_modules_from_symbol() {
     local -a mods
 
-    mapfile -t mods < <(find_module_from_symbol "$@")
+    # _autodetect_cache is declared in mkinitcpio and assigned in install/autodetect
+    # shellcheck disable=SC2154
+    if (( ${#_autodetect_cache[*]} )); then
+        mapfile -t mods < <(find_module_from_symbol "$@" | grep -xFf <(printf '%s\n' "${!_autodetect_cache[@]}"))
+    else
+        mapfile -t mods < <(find_module_from_symbol "$@")
+    fi
+
     (( ${#mods[*]} )) || return 1
-    map add_checked_modules "${mods[@]}" || :
+    map add_module "${mods[@]}"
 }
 
 # vim: set ft=sh ts=4 sw=4 et:
