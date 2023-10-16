@@ -13,7 +13,7 @@ build() {
         local mods=()
 
         mapfile -t mods < <(find /sys/devices -name uevent \
-            -exec sort -u {} + | sed -n 's/\(DRIVER\|MODALIAS\)=\(.*\)/\2/p')
+            -exec sort -u {} + | sed -n 's/\(DRIVER\|MODALIAS\)=\(.\+\)/\2/p')
         mapfile -t mods < <(modprobe -S "$KERNELVERSION" -qaR "${mods[@]}" | sort -u)
 
         (( ${#mods[*]} )) && printf "%s\n" "${mods[@]//-/_}"
