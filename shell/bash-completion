@@ -1,12 +1,169 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-2.0-only
 
+_detect_compression() {
+    local bytes
+
+    bytes="$(od -An -t x1 -N6 "$1" | tr -dc '[:alnum:]')"
+    case "$bytes" in
+        'fd377a585a00')
+            echo 'xz'
+            return
+            ;;
+    esac
+
+    bytes="$(od -An -t x1 -N4 "$1" | tr -dc '[:alnum:]')"
+    if [[ "$bytes" == '894c5a4f' ]]; then
+        echo 'lzop'
+        return
+    fi
+
+    bytes="$(od -An -t x2 -N2 "$1" | tr -dc '[:alnum:]')"
+    if [[ "$bytes" == '8b1f' ]]; then
+        echo 'gzip'
+        return
+    fi
+
+    bytes="$(od -An -t x4 -N4 "$1" | tr -dc '[:alnum:]')"
+    case "$bytes" in
+        '184d2204')
+            error 'Newer lz4 stream format detected! This may not boot!'
+            echo 'lz4'
+            return
+            ;;
+        '184c2102')
+            echo 'lz4 -l'
+            return
+            ;;
+        'fd2fb528')
+            echo 'zstd'
+            return
+            ;;
+    esac
+
+    bytes="$(od -An -c -N3 "$1" | tr -dc '[:alnum:]')"
+    if [[ "$bytes" == 'BZh' ]]; then
+        echo 'bzip2'
+        return
+    fi
+
+    # lzma detection sucks and there's really no good way to
+    # do it without reading large portions of the stream. this
+    # check is good enough for GNU tar, apparently, so it's good
+    # enough for me.
+    bytes="$(od -An -t x1 -N3 "$1" | tr -dc '[:alnum:]')"
+    if [[ "$bytes" == '5d0000' ]]; then
+        echo 'lzma'
+        return
+    fi
+
+    read -rd '' bytes < <(od -An -j0x04 -t c -N4 "$1" | tr -dc '[:alnum:]')
+    if [[ "$bytes" == 'zimg' ]]; then
+        echo 'zimg'
+        return
+    fi
+
+    # out of ideas, assuming uncompressed
+}
+
+_kver_zimage() {
+    # Generic EFI zboot added since kernel 6.1
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/Makefile.zboot?h=v6.1
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/zboot-header.S?h=v6.1
+
+    local kver='' reader start size comp_type
+
+    # Reading 4 bytes from address 0x08 is the starting offset of compressed data
+    start="$(od -An -j0x08 -t u4 -N4 "$1" | tr -dc '[:alnum:]')"
+
+    # Reading 4 bytes from address 0x0c is the size of compressed data,
+    # but it needs to be corrected according to the compressed type.
+    size="$(od -An -j0x0c -t u4 -N4 "$1" | tr -dc '[:alnum:]')"
+
+    # Read 36 bytes (before 0x3c) from address 0x18,
+    # which is a nul-terminated string representing the compressed type.
+    read -rd '' comp_type < <(od -An -j0x18 -t a -N32 "$1" | sed 's/ nul//g' | tr -dc '[:alnum:]')
+
+    [[ "$start" =~ ^[0-9]+$ ]] || return 1
+    [[ "$size" =~ ^[0-9]+$ ]] || return 1
+
+    case "$comp_type" in
+        'gzip')
+            reader='zcat'
+            ;;
+        'lz4')
+            reader='lz4cat'
+            size="$((size + 4))"
+            ;;
+        'lzma')
+            reader='xzcat'
+            size="$((size + 4))"
+            ;;
+        'lzo')
+            reader="lzop -d"
+            size="$((size + 4))"
+            ;;
+        'xzkern')
+            reader='xzcat'
+            size="$((size + 4))"
+            ;;
+        'zstd22')
+            reader='zstdcat'
+            size="$((size + 4))"
+            ;;
+        *)
+            reader="$comp_type"
+            size="$((size + 4))"
+            ;;
+    esac
+
+    read -r _ _ kver _ < <(dd if="$1" bs=1 count="$size" skip="$start" 2>/dev/null | $reader - | grep -m1 -aoE  'Linux version .(\.[-[:alnum:]+]+)+')
+
+    printf '%s' "$kver"
+}
+
+_detect_generic_kver() {
+    # For unknown architectures, we can try to grep the uncompressed or gzipped
+    # image for the boot banner.
+    # This should work at least for ARM when run on /boot/Image, or RISC-V on
+    # gzipped /boot/vmlinuz-linuz. On other architectures it may be worth trying
+    # rather than bailing, and inform the user if none was found.
+
+    # Loosely grep for `linux_banner`:
+    # https://elixir.bootlin.com/linux/v5.7.2/source/init/version.c#L46
+    local kver='' reader='cat'
+    local comp_type=''
+
+    comp_type="$(_detect_compression "$1")"
+
+    if [[ "$comp_type" == 'zimg' ]]; then
+        # Generic EFI zboot image
+        _kver_zimage "$1"
+        return 0
+    elif [[ "$comp_type" == 'gzip' ]]; then
+        reader='zcat'
+    fi
+
+    [[ "$(_detect_compression "$1")" == 'gzip' ]] && reader='zcat'
+
+    read -r _ _ kver _ < <($reader "$1" | grep -m1 -aoE 'Linux version .(\.[-[:alnum:]+]+)+')
+
+    printf '%s' "$kver"
+}
+
 _detect_kver() {
     local kver_validator='^[[:digit:]]+(\.[[:digit:]]+)+' offset
-    offset="$(od -An -j0x20E -dN2 "$1")" || return
-    read -r kver _ < \
-        <(dd if="$1" bs=1 count=127 skip=$(( offset + 0x200 )) 2>/dev/null)
-    [[ "$kver" =~ $kver_validator ]] && printf '%s' "$kver"
+    local arch
+
+    arch="$(uname -m)"
+    if [[ $arch == @(i?86|x86_64) ]]; then
+        offset="$(od -An -j0x20E -dN2 "$1")" || return
+        read -r kver _ < \
+            <(dd if="$1" bs=1 count=127 skip=$(( offset + 0x200 )) 2>/dev/null)
+        [[ "$kver" =~ $kver_validator ]] && printf '%s' "$kver"
+    else
+        _detect_generic_kver "$1"
+    fi
 }
 
 _lsinitcpio() {
