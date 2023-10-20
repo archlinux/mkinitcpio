@@ -6,6 +6,7 @@ build() {
     # shellcheck disable=SC2034
     local KEYMAP KEYMAP_TOGGLE FONT FONT_MAP FONT_UNIMAP XKBLAYOUT XKBMODEL XKBVARIANT XKBOPTIONS
 
+    add_systemd_unit systemd-vconsole-setup.service
     add_binary /usr/lib/systemd/systemd-vconsole-setup
     add_binary loadkeys
     add_binary setfont
