@@ -7,13 +7,25 @@ build() {
 
     [[ "$KERNELVERSION" == 'none' ]] && return 0
 
+    auto_modules() {
+        # Perform auto detection of modules via sysfs.
+
+        local mods=()
+
+        mapfile -t mods < <(find /sys/devices -name uevent \
+            -exec sort -u {} + | sed -n 's/\(DRIVER\|MODALIAS\)=\(.\+\)/\2/p')
+        mapfile -t mods < <(modprobe -S "$KERNELVERSION" -qaR "${mods[@]}" | sort -u)
+
+        (( ${#mods[*]} )) && printf "%s\n" "${mods[@]//-/_}"
+    }
+
     add_if_avail() {
         local r='' resolved=()
 
         # treat this as an alias, since ext3 might be aliased to ext4. also, as
         # of linux 3.9, we can find any filesystem by the alias "fs-$name"
         # rather than having to guess at the corresponding module name.
-        mapfile -t resolved < <(modprobe -Ra {fs-,}"$1" 2>/dev/null)
+        mapfile -t resolved < <(modprobe -S "$KERNELVERSION" -qaR {fs-,}"$1")
 
         for r in "${resolved[@]}"; do
             _autodetect_cache["$r"]=1
@@ -25,7 +37,7 @@ build() {
         return 1
     fi
 
-    mapfile -t mods < <(auto_modules "$KERNELVERSION")
+    mapfile -t mods < <(auto_modules)
     for m in "${mods[@]}"; do
         _autodetect_cache["$m"]=1
     done
