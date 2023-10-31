@@ -2,12 +2,33 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 build() {
+    local mount
+
     # fs_autodetect_failed is assigned in the autodetect hook
     # shellcheck disable=SC2154
     if (( fs_autodetect_failed )); then
         add_all_modules -f 'nls' '/kernel/fs'
     else
         add_checked_modules -f 'nls' '/kernel/fs'
+    fi
+
+    # Some file systems may need `mount.FSTYPE` binaries to properly mount.
+    # See https://man.archlinux.org/man/mount.8.en#EXTERNAL_HELPERS
+    # fs_autodetect_failed is assigned in the autodetect hook
+    # shellcheck disable=SC2154
+    if (( ! fs_autodetect_failed )) && [[ -n "${rootfstype}${usrfstype}" ]]; then
+        if command -v "mount.${rootfstype}" &>/dev/null; then
+            add_binary "mount.${rootfstype}"
+        fi
+        if [[ -n "$usrfstype" && "$usrfstype" != "$rootfstype" ]]; then
+            if command -v "mount.${usrfstype}" &>/dev/null; then
+                add_binary "mount.${usrfstype}"
+            fi
+        fi
+    else
+        for mount in $(compgen -c mount.); do
+            add_binary "$mount"
+        done
     fi
 }
 
