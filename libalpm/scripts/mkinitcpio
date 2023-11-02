@@ -20,6 +20,30 @@ process_preset() {
     fi
 }
 
+# is_kernelcopy checks whether a `*_kver` value from a .preset file is a
+# filename that the .preset expects us to copy the kernel file to.
+is_kernelcopy() {
+    local preset_kver="$1"
+
+    # Check that this is a filepath (e.g. "/boot/vmlinuz-${pkgbase}") rather
+    # than a version number (e.g. "6.5.2-arch-1").
+    #
+    # mkinitcpio:resolve_kernver() does this by checking whether the string
+    # starts with a "/", so do the same check here.
+    if [[ "${preset_kver}" != /* ]]; then
+        return 1
+    fi
+
+    # Check that this isn't the filepath of the original
+    # "/usr/lib/modules/${kver}-${pkgbase}/vmlinuz" file that we'd be copying
+    # from... or really any other file that is actually owned by a package.
+    if pacman -Qoq -- "${preset_kver}" &>/dev/null; then
+        return 1
+    fi
+
+    return 0
+}
+
 read_preset() {
     local pkgbase="$1" p preset_image preset_uki preset_kver
     local unsorted_filelist=() unsorted_kernellist=()
@@ -39,10 +63,14 @@ read_preset() {
                 unsorted_filelist+=("${ALL_uki}")
             fi
             if [[ -v preset_kver ]]; then
-                unsorted_filelist+=("${preset_kver}")
+                if is_kernelcopy "${preset_kver}"; then
+                    unsorted_filelist+=("${preset_kver}")
+                fi
                 unsorted_kernellist+=("${preset_kver}")
             elif [[ -v ALL_kver ]]; then
-                unsorted_filelist+=("${ALL_kver}")
+                if is_kernelcopy "${ALL_kver}"; then
+                    unsorted_filelist+=("${ALL_kver}")
+                fi
                 unsorted_kernellist+=("${ALL_kver}")
             fi
         done
@@ -68,7 +96,7 @@ read_preset() {
 
 install_kernel() {
     local pkgbase="$1"
-    local kernelfile preset="/etc/mkinitcpio.d/${pkgbase}.preset"
+    local kernel preset="/etc/mkinitcpio.d/${pkgbase}.preset"
 
     if [[ ! -e "$preset" ]]; then
         if [[ -e "$preset.pacsave" ]]; then
@@ -88,8 +116,10 @@ install_kernel() {
         read_preset "$pkgbase"
 
         # always install the kernel
-        for kernelfile in "${kernellist[@]}"; do
-            install -Dm644 -- "$line" "${kernelfile}"
+        for kernel in "${kernellist[@]}"; do
+            if is_kernelcopy "${kernel}"; then
+                install -Dm644 -- "${line}" "${kernel}"
+            fi
         done
     )
 
