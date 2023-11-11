@@ -33,6 +33,12 @@ CHANGES WITH v37
 
         Changes in hooks:
 
+        * install/autodetect will now abort if there is no modules found, or
+          when it's encountering an error.
+
+        * install/autodetect will attempt to retry it's uevents lookup to try
+          and avoid a udev race condition during udevadm settle.
+
         * install/consolefont now includes the setfont binary. Meaning the
           console font will now be loaded using the kbd project's setfont
           instead of the busybox's built-in one.
@@ -53,12 +59,36 @@ CHANGES WITH v37
           to find the correct kernel modules.
 
         * install/block will now include Linux voltage and current regulator
-          modules as some MCC controllers require them.
+          modules as some MMC controllers require them.
+
+        * install/sd-vconsole now installs systemd-vconsole-setup.service.
+
+        * install/filesystems now attempts to unconditionally include external
+          mount helpers as some filesystems might need their respective mount
+          binaries.
+
+        * install/block has had changes to it module list. This only affects
+          unconditionally added modules, autodetect will still include them if
+          they are in use.
+
+            Removals:
+                * sr_mod
+                * firewire-sdp2
+
+            Includes:
+                * uas
+                * virtio_scsi
+                * achi
+                * nvme
 
         Changes in packaging:
 
         * The libalpm hook has a new path target (usr/lib/firmware/*) to ensure
           the initrd is rebuilt when firmware packages are updated.
+
+        * The libalpm hook will now rebuild the initramfs when there has been
+          changes to /usr/src/*/dkms.conf. This is to ensure DKMS modules are
+          always updated in the initramfs.
 
         Contributions from: classabbyamp, cvlc12, Damon Harris, Emil Velikov,
         Felix Yan, Gene C, Leo Pham, Morten Linderud, nl6720, solsTiCe
