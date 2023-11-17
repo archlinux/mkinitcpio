@@ -70,6 +70,7 @@ build() {
     map add_binary \
         /usr/bin/journalctl \
         /usr/bin/systemd-tmpfiles \
+        /usr/lib/systemd/systemd-executor \
         /usr/lib/systemd/systemd-hibernate-resume \
         /usr/lib/systemd/systemd-shutdown \
         /usr/lib/systemd/systemd-sulogin-shell \
