@@ -122,8 +122,10 @@ build() {
         rescue.target \
         emergency.target
 
-    # add libraries dlopen()ed by tpm2-util
-    for LIB in tss2-{esys,rc,mu,tcti-'*'}; do
+    # add libraries dlopen()ed (hard and optional dependencies):
+    #  tss2-*   -> tpm2-util
+    #  qrencode -> bsod
+    for LIB in tss2-{esys,rc,mu,tcti-'*'} qrencode; do
         find /usr/lib/ -maxdepth 1 -name "lib${LIB}.so*" | while read -r -d '' FILE; do
             if [[ -L "${FILE}" ]]; then
                 add_symlink "${FILE}"
