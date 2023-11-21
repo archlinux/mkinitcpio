@@ -68,6 +68,7 @@ install-generator: all prepare
 			$(DESTDIR)/usr/lib/systemd/system/shutdown.target.wants/mkinitcpio-generate-shutdown-ramfs.service
 	install -m644 tmpfiles/mkinitcpio.conf $(DESTDIR)/usr/lib/tmpfiles.d/mkinitcpio.conf
 
+	install -m755 kernel-install/40-microcode.install $(DESTDIR)/usr/lib/kernel/install.d/40-microcode.install
 	install -m755 kernel-install/50-mkinitcpio.install $(DESTDIR)/usr/lib/kernel/install.d/50-mkinitcpio.install
 
 	install -m644 man/mkinitcpio.8 $(DESTDIR)/usr/share/man/man8/mkinitcpio.8
