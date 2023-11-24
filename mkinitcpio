@@ -223,11 +223,19 @@ build_image() {
 
     case "$compress" in
         cat)
-            msg "Creating uncompressed initcpio image: '%s'" "$out"
+            if (( initcpio_is_temporary && _optquiet )); then
+                msg 'Creating uncompressed initcpio image'
+            else
+                msg "Creating uncompressed initcpio image: '%s'" "$out"
+            fi
             unset COMPRESSION_OPTIONS
             ;;
         *)
-            msg "Creating %s-compressed initcpio image: '%s'" "$compress" "$out"
+            if (( initcpio_is_temporary && _optquiet )); then
+                msg "Creating %s-compressed initcpio image" "$compress"
+            else
+                msg "Creating %s-compressed initcpio image: '%s'" "$compress" "$out"
+            fi
             ;;&
         xz)
             COMPRESSION_OPTIONS=('-T0' '--check=crc32' "${COMPRESSION_OPTIONS[@]}")
@@ -280,10 +288,10 @@ build_image() {
     fi
 
     if [[ -n "$errmsg" ]]; then
-        error "Image generation FAILED: '%s'" "$errmsg"
+        error "Initcpio image generation FAILED: '%s'" "$errmsg"
         return 1
     elif (( _builderrors == 0 )); then
-        msg "Image generation successful"
+        msg "Initcpio image generation successful"
     fi
 
     # sync and rename as we only wrote to a tempfile so far to ensure consistency
@@ -838,6 +846,7 @@ if [[ -n "$_optuki" && -z "$_optgenimg" ]]; then
     tmpfile="$(mktemp -t mkinitcpio.XXXXXX)"
     _tmpfiles+=("$tmpfile")
     _optgenimg="$tmpfile"
+    declare -i initcpio_is_temporary=1
 fi
 
 # insist that /proc and /dev be mounted (important for chroots)
