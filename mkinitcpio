@@ -368,7 +368,7 @@ build_uki() {
         for stub in /usr/lib/{systemd/boot/efi,gummiboot}/"linux${uefiarch}.efi.stub"; do
             if [[ -f "$stub" ]]; then
                 uefistub="$stub"
-                msg2 "Using UEFI stub: '%s'" "$uefistub"
+                quiet "Using UEFI stub: '%s'" "$uefistub"
                 break
             fi
         done
@@ -390,7 +390,7 @@ build_uki() {
         elif [[ -f "/usr/lib/os-release" ]]; then
             osrelease="/usr/lib/os-release"
         fi
-        msg2 "Using os-release file: '%s'" "$osrelease"
+        quiet "Using os-release file: '%s'" "$osrelease"
     fi
     if [[ ! -f "$osrelease" ]]; then
         error "os-release file '%s' not found" "$osrelease"
@@ -442,7 +442,7 @@ build_uki() {
 
     if [[ -n "$splash" ]]; then
         uki_add_section '.splash' "$splash"
-        msg2 "Using splash image: '%s'" "$splash"
+        quiet "Using splash image: '%s'" "$splash"
     fi
 
     if [[ -z "$kernelimg" ]]; then
@@ -451,7 +451,7 @@ build_uki() {
         for img in "$KERNELIMAGE" "/boot/vmlinuz-linux"; do
             if [[ -f "$img" ]]; then
                 kernelimg="$img"
-                msg2 "Using kernel image: '%s'" "$kernelimg"
+                quiet "Using kernel image: '%s'" "$kernelimg"
                 break
             fi
         done
@@ -469,7 +469,7 @@ build_uki() {
     fi
 
     for image in "${microcode[@]}"; do
-        msg2 "Using microcode image: '%s'" "$image"
+        quiet "Using microcode image: '%s'" "$image"
     done
 
     uki_add_section '.initrd' <(cat -- "${microcode[@]}" "$initramfs")
