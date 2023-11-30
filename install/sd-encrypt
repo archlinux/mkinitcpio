@@ -27,6 +27,7 @@ build() {
     map add_binary \
         '/usr/lib/systemd/system-generators/systemd-cryptsetup-generator' \
         '/usr/lib/systemd/systemd-cryptsetup' \
+        '/usr/lib/systemd/systemd-makefs' \
         '/usr/lib/cryptsetup/libcryptsetup-token-systemd-fido2.so' \
         '/usr/lib/cryptsetup/libcryptsetup-token-systemd-pkcs11.so' \
         '/usr/lib/cryptsetup/libcryptsetup-token-systemd-tpm2.so'
