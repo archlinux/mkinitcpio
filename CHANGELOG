@@ -1,5 +1,16 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v37.1:
+
+        Bugfix release:
+
+        * The 40-microcode.install kernel-install script was missing from the
+        Makefile.
+
+        Contributions from: nl6720, Vladimir Kochnev
+
+        – 2023-12-03
+
 CHANGES WITH v37
 
         Breaking Change:
@@ -299,12 +310,12 @@ CHANGES WITH v34:
 CHANGES WITH v33:
 
         Announcements:
-    
+
         * Development has moved to the Arch Linux GitLab instance. The new
           URL is https://gitlab.archlinux.org/archlinux/mkinitcpio/mkinitcpio
-    
+
         Changes in mkinitcpio:
-        
+
         * Introduce DECOMPRESS_MODULES in mkinitcpio.conf. Allows the user to
           toggle if modules should be recompressed during initramfs creation or
           not. Defaults to "yes".
