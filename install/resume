@@ -2,6 +2,15 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 build() {
+    local systemd_ver
+
+    if command -v systemctl &>/dev/null; then
+        systemd_ver="$(systemctl --version | awk 'NR==1 { print $2 }')"
+        if (( systemd_ver >= 255 )); then
+            add_binary /usr/lib/systemd/systemd-hibernate-resume
+        fi
+    fi
+
     add_runscript
 }
 

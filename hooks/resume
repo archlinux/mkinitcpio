@@ -10,6 +10,13 @@ run_hook() {
         return 0
     fi
 
+    # systemd-hibernate-resume supports resuming from 'HibernateLocation'
+    # EFI variable. $resume can be empty in this case.
+    if [ -x /usr/lib/systemd/systemd-hibernate-resume ]; then
+        /usr/lib/systemd/systemd-hibernate-resume
+        return
+    fi
+
     # assigned by parse_cmdline
     # shellcheck disable=SC2154
     if [ -z "$resume" ]; then
