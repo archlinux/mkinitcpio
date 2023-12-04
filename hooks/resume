@@ -6,6 +6,12 @@ run_hook() {
 
     # assigned by parse_cmdline
     # shellcheck disable=SC2154
+    if [ -n "$noresume" ]; then
+        return 0
+    fi
+
+    # assigned by parse_cmdline
+    # shellcheck disable=SC2154
     if [ -z "$resume" ]; then
         err 'resume: no device specified for hibernation'
         return 1
