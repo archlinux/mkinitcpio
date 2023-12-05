@@ -2,13 +2,21 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 build() {
+    local systemd_ver
+
+    if command -v systemctl &>/dev/null; then
+        systemd_ver="$(systemctl --version | awk 'NR==1 { print $2 }')"
+        if (( systemd_ver >= 255 )); then
+            add_binary /usr/lib/systemd/systemd-hibernate-resume
+        fi
+    fi
+
     add_runscript
 }
 
 help() {
     cat <<HELPEOF
-This hook initializes support for resuming from Disk.  Supports swsusp and
-suspend2.
+This hook initializes support for resuming from disk using swsusp.
 HELPEOF
 }
 

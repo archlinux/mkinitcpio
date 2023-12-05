@@ -178,6 +178,11 @@ parse_cmdline_item() {
                     ;;
             esac
             ;;
+        noresume)
+            # Used in resume hook
+            # shellcheck disable=SC2034
+            noresume=y
+            ;;
         rd.debug)
             rd_debug=y
             ;;
