@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 COMMAND="${1:?}"
+# shellcheck disable=SC2034
 KERNEL_VERSION="${2:?}"
 # shellcheck disable=SC2034
 ENTRY_DIR_ABS="$3"
@@ -11,7 +12,7 @@ KERNEL_IMAGE="$4"
 
 [[ "$COMMAND" == "add" ]] || exit 0
 
-GENERATOR_CMD=(mkinitcpio -k "$KERNEL_VERSION")
+GENERATOR_CMD=(mkinitcpio -k "$KERNEL_IMAGE")
 BLS_ARGS=(-g "$KERNEL_INSTALL_STAGING_AREA/initrd")
 
 case "$KERNEL_INSTALL_LAYOUT" in
