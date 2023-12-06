@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 build() {
-    map add_module ahci? sd_mod? usb_storage? uas? mmc_block? nvme? virtio_scsi? virtio_blk?
+    map add_module 'ahci?' 'sd_mod?' 'usb_storage?' 'uas?' 'mmc_block?' 'nvme?' 'virtio_scsi?' 'virtio_blk?'
 
     # pata, sata, scsi, nvme
     add_checked_modules '/(block|ata|scsi|fusion|nvme)/'
