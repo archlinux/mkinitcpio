@@ -1,5 +1,6 @@
 #!/bin/bash
 # SPDX-License-Identifier: GPL-2.0-only
+# This file is part of mkinitcpio.
 
 COMMAND="${1:?}"
 # shellcheck disable=SC2034
@@ -17,10 +18,10 @@ for dir in "${KERNEL_INSTALL_BOOT_ROOT}" "/boot"; do
     for microcode in "intel-ucode.img" "amd-ucode.img"; do
         if [[ -f "${dir}/${microcode}" ]]; then
             if (( KERNEL_INSTALL_VERBOSE )); then
-                printf '+ Found microcode image %s\n' "$microcode"
+                printf '+ (mkinitcpio) Found microcode image %s\n' "$microcode"
             fi
             install -m 0644 "${dir}/${microcode}" "${KERNEL_INSTALL_STAGING_AREA}/microcode-${microcode}" || {
-                echo "Error: could not copy '$microcode' to the staging area." >&2
+                printf "(mkinitcpio) Error: could not copy '%s' to the staging area." "$microcode" >&2
                 exit 1
             }
         fi
