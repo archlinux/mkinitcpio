@@ -18,8 +18,7 @@ BLS_ARGS=(-g "$KERNEL_INSTALL_STAGING_AREA/initrd")
 
 case "$KERNEL_INSTALL_LAYOUT" in
     uki)
-        #TODO change default to ukify once they have a suitable install script
-        if [[ "${KERNEL_INSTALL_UKI_GENERATOR:-mkinitcpio}" != 'mkinitcpio' ]]; then
+        if [[ "$KERNEL_INSTALL_UKI_GENERATOR" != 'mkinitcpio' ]]; then
             GENERATOR_CMD+=("${BLS_ARGS[@]}")
         else
             GENERATOR_CMD+=(--kernelimage "$KERNEL_IMAGE")
