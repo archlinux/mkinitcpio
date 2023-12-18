@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 VERSION = $(shell if test -f VERSION; then cat VERSION; else git describe | sed 's/-/./g;s/^v//;'; fi)
+JOBS ?= $(shell nproc)
 
 DIRS = \
 	/usr/bin \
@@ -93,7 +94,7 @@ man/%: man/%.adoc Makefile
 		-a manmanual="mkinitcpio manual" $<
 
 check:
-	bats $(BATS_ARGS) test/cases/
+	bats --jobs $(JOBS) $(BATS_ARGS) test/cases/
 
 coverage:
 	kcov \
