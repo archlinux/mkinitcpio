@@ -1,0 +1,4 @@
+#!/usr/bin/ash
+
+echo "mkinitcpio-test-completed"
+poweroff -f

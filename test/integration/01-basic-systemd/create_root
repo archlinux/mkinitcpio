@@ -1,0 +1,23 @@
+#!/usr/bin/ash
+#
+trap 'poweroff -f' EXIT
+
+set -e
+
+. /init_functions
+
+mount_setup
+
+# Setup udev
+/usr/lib/systemd/systemd-udevd --daemon --resolve-names=never
+udevadm trigger --action=add --type=devices
+udevadm settle
+
+mkfs.ext4 /dev/disk/by-id/ata-disk_root
+mkdir /mnt
+mount /dev/disk/by-id/ata-disk_root /mnt
+
+cp -a -t /mnt /rootfs/*
+
+echo "mkinitcpio-test-created-root"
+poweroff -f
