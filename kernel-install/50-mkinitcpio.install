@@ -23,11 +23,6 @@ case "$KERNEL_INSTALL_LAYOUT" in
         else
             GENERATOR_CMD+=(--kernelimage "$KERNEL_IMAGE")
 
-            # Add microcode if found in staging area
-            for microcode in "${KERNEL_INSTALL_STAGING_AREA}"/microcode*; do
-                [[ -f "$microcode" ]] && GENERATOR_CMD+=(--microcode "$microcode")
-            done
-
             GENERATOR_CMD+=(-U "$KERNEL_INSTALL_STAGING_AREA/uki.efi" )
         fi
         ;;

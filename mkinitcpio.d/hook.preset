@@ -2,7 +2,6 @@
 
 #ALL_config="/etc/mkinitcpio.conf"
 ALL_kver="/boot/vmlinuz-%PKGBASE%"
-ALL_microcode=(/boot/*-ucode.img)
 
 PRESETS=('default' 'fallback')
 

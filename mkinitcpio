@@ -26,7 +26,7 @@ _d_presets=mkinitcpio.d
 _optmoduleroot='' _optgenimg=''
 _optcompress='' _opttargetdir=''
 _optosrelease=''
-_optuki='' _optmicrocode=() _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
+_optuki='' _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
 _optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0 _optnocmdline=0
 _optquiet=1 _optcolor=1 _optconfd=1
 _optskiphooks=() _optaddhooks=() _hooks=() _optpreset=() _tmpfiles=() _generated=()
@@ -74,7 +74,6 @@ usage: ${0##*/} [options]
   Options for unified kernel image (-U, --uki):
    --cmdline <path>             Set kernel command line from file
                                 (default: /etc/kernel/cmdline or /proc/cmdline)
-   --microcode <path>           Location of microcode
    --osrelease <path>           Include os-release (default: /etc/os-release)
    --splash <path>              Include bitmap splash
    --kernelimage <path>         Kernel image
@@ -370,7 +369,7 @@ uki_assemble() {
 }
 
 build_uki() {
-    local out="$1" initramfs="$2" cmdline="$3" osrelease="$4" splash="$5" kernelimg="$6" uefistub="$7" microcode=("${@:8}") errmsg='' stub cpuarch uefiarch
+    local out="$1" initramfs="$2" cmdline="$3" osrelease="$4" splash="$5" kernelimg="$6" uefistub="$7" stub cpuarch uefiarch
 
     msg "Creating unified kernel image: '%s'" "$out"
 
@@ -504,11 +503,7 @@ build_uki() {
         return 1
     fi
 
-    for image in "${microcode[@]}"; do
-        quiet "Using microcode image: '%s'" "$image"
-    done
-
-    uki_add_section '.initrd' <(cat -- "${microcode[@]}" "$initramfs")
+    uki_add_section '.initrd' "$initramfs"
 
     uki_assemble "$out"
 
@@ -602,10 +597,10 @@ process_preset() (
         fi
 
         local -n preset_microcode="${p}_microcode"
-        if [[ -n "${preset_microcode[*]}" || -n "${ALL_microcode[*]}" ]]; then
-            mapfile -d '' -O "${#preset_cmd[@]}" -t preset_cmd < <(
-                printf -- '--microcode\0%s\0' "${preset_microcode[@]:-${ALL_microcode[@]}}"
-            )
+        if [[ -n "${preset_microcode[*]}" ]]; then
+            warning "Deprecated option '%s' found. Update '%s' to use the 'microcode' hook instead." "$preset_microcode" "$preset"
+        elif [[ -n "${ALL_microcode[*]}" ]]; then
+            warning "Deprecated option 'ALL_microcode' found. Update '%s' to use the 'microcode' hook instead." "$preset"
         fi
 
         if (( _optremove )); then
@@ -813,9 +808,8 @@ while :; do
             _optshowautomods=1
             ;;
         --microcode)
-            shift
-            _optmicrocode+=("$1")
-            ;;
+            warning "The --microcode option has deprecated. Use the 'microcode' hook instead."
+            ;&
         -P | --allpresets)
             _optpreset=("$_d_presets"/*.preset)
             [[ -e "${_optpreset[0]}" ]] || die 'No presets found in %s' "$_d_presets"
@@ -1045,7 +1039,7 @@ else
 fi
 
 if [[ -n "$_optuki" && -n "$_optgenimg" ]]; then
-    build_uki "$_optuki" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" "${_optmicrocode[@]}" \
+    build_uki "$_optuki" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" \
         && (( ${#_generated[*]} )) && _generated+=("$_optuki")
 fi
 
