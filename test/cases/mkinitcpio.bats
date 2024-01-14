@@ -1,6 +1,9 @@
 #!/usr/bin/env bats
 # SPDX-License-Identifier: GPL-2.0-only
 
+bats_load_library 'bats-assert'
+bats_load_library 'bats-support'
+
 @test "test reproducible builds for initramfs" {
     if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
         skip "No kernel modules available"
@@ -69,4 +72,29 @@
 
     run objdump -j .uname -s "${tmpdir}/uki.efi"
     run -1 objdump -j .cmdline -s "${tmpdir}/uki.efi"
+}
+
+@test "test early cpio creation" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
+    local tmpdir
+    tmpdir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+
+    echo "HOOKS=(base test)" >> "$tmpdir/mkinitcpio.conf"
+    install -dm755 "$tmpdir/install"
+    cat << EOH >> "$tmpdir/install/test"
+#!/usr/bin/env bash
+build() {
+    echo "this is a test" > "\${EARLYROOT}/some_file"
+}
+EOH
+
+    run ./mkinitcpio \
+        -D "${PWD}" -D "$tmpdir" \
+        -c "$tmpdir/mkinitcpio.conf" \
+        -g "$tmpdir/initramfs.img"
+
+    assert_output --partial '-> Early uncompressed CPIO image generation successful'
 }

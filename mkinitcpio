@@ -218,8 +218,43 @@ compute_hookset() {
     done
 }
 
+create_image() {
+    # create_image <root> <output file> <compression type>
+    local root="$1" out="$2" compress="$3" compress_cmd="$3" pipestatus
+
+    if [[ "$compress" == 'early' ]]; then
+        # early image should never be compressed
+        compress_cmd='cat'
+        unset COMPRESSION_OPTIONS
+    fi
+
+    pushd "$root" >/dev/null || return
+
+    # Reproducibility: set all timestamps to 0
+    find . -mindepth 1 -execdir touch -hcd '@0' '{}' +
+
+    # If this pipeline changes, |pipeprogs| below needs to be updated as well.
+    find . -mindepth 1 -printf '%P\0' \
+        | sort -z \
+        | LC_ALL=C bsdtar --uid 0 --gid 0 --null -cnf - -T - \
+        | LC_ALL=C bsdtar --null -cf - --format=newc @- \
+        | "$compress_cmd" "${COMPRESSION_OPTIONS[@]}" >>"$compressout"
+
+    pipestatus=("${PIPESTATUS[@]}")
+    pipeprogs=('find' 'sort' 'bsdtar (step 1)' 'bsdtar (step 2)' "$compress_cmd")
+
+    popd >/dev/null || return
+
+    for (( i = 0; i < ${#pipestatus[*]}; ++i )); do
+        if (( pipestatus[i] )); then
+            printf '%s' "${pipeprogs[i]}"
+            return 1
+        fi
+    done
+}
+
 build_image() {
-    local out="$1" compressout="$1" compress="$2" errmsg pipestatus
+    local out="$1" compressout="$1" compress="$2" errprog pipestatus
 
     case "$compress" in
         cat)
@@ -259,39 +294,32 @@ build_image() {
         (( $((curr_size + (curr_size/4))) < space_left_on_device )) && compressout="$out".tmp
     fi
 
-    pushd "$BUILDROOT" >/dev/null || return
+    # initialize an empty output file
+    : >"$compressout"
 
-    # Reproducibility: set all timestamps to 0
-    find . -mindepth 1 -execdir touch -hcd "@0" "{}" +
-
-    # If this pipeline changes, |pipeprogs| below needs to be updated as well.
-    find . -mindepth 1 -printf '%P\0' \
-        | sort -z \
-        | LANG=C bsdtar --uid 0 --gid 0 --null -cnf - -T - \
-        | LANG=C bsdtar --null -cf - --format=newc @- \
-        | $compress "${COMPRESSION_OPTIONS[@]}" >"$compressout"
-
-    pipestatus=("${PIPESTATUS[@]}")
-    pipeprogs=('find' 'sort' 'bsdtar (step 1)' 'bsdtar (step 2)' "$compress")
-
-    popd >/dev/null || return
-
-    for (( i = 0; i < ${#pipestatus[*]}; ++i )); do
-        if (( pipestatus[i] )); then
-            errmsg="${pipeprogs[i]} reported an error"
-            break
+    # if the EARLYROOT is not empty (except for the flag file), prepend it to the image
+    if [[ -n "$(find "$EARLYROOT" -mindepth 1 -not -name early_cpio)" ]]; then
+        errprog="$(create_image "$EARLYROOT" "$compressout" early)"
+        ret="$?"
+        if (( ret )); then
+            error "Early uncompressed CPIO image generation FAILED: '%s' reported an error" "$errprog"
+            return 1
+        elif (( _builderrors == 0 )); then
+            msg2 "Early uncompressed CPIO image generation successful"
         fi
-    done
-
-    if (( _builderrors )); then
-        warning "errors were encountered during the build. The image may not be complete."
     fi
 
-    if [[ -n "$errmsg" ]]; then
-        error "Initcpio image generation FAILED: '%s'" "$errmsg"
+    errprog="$(create_image "$BUILDROOT" "$compressout" "$compress")"
+    ret="$?"
+    if (( ret )); then
+        error "Initcpio image generation FAILED: '%s' reported an error" "$errprog"
         return 1
     elif (( _builderrors == 0 )); then
         msg "Initcpio image generation successful"
+    fi
+
+    if (( _builderrors )); then
+        warning "errors were encountered during the build. The image may not be complete."
     fi
 
     # sync and rename as we only wrote to a tempfile so far to ensure consistency
@@ -912,7 +940,8 @@ fi
 MODULES_DECOMPRESS="${MODULES_DECOMPRESS:-"yes"}"
 
 _d_workdir="$(initialize_buildroot "$KERNELVERSION" "$_opttargetdir")" || exit 1
-BUILDROOT="${_opttargetdir:-$_d_workdir/root}"
+BUILDROOT="$_d_workdir/root"
+EARLYROOT="$_d_workdir/early"
 
 # Source additional configuration files, if no configuration file has been defined either with "-c" or via preset file
 if [[ -d "$_d_config" ]] && (( _optconfd )); then

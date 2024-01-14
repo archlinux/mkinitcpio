@@ -282,6 +282,14 @@ functions exist to facilitate this.
     added to the image. If the autodetect hook is not present in the image, this
     function is identical to *add_all_modules_from_symbol*.
 
+== About early CPIO
+
+mkinitcpio has support for early CPIO. These are uncompressed CPIO archives
+prepended to the main compressed CPIO archive. They are used for early loading
+CPU microcode or loading ACPI table overrides.
+
+Install hooks can install files to this archive by adding them to _$EARLYROOT_.
+
 == About runtime hooks
 
 Runtime hooks added to the image via the *add_runscript* function from an
