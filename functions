@@ -723,19 +723,25 @@ add_file() {
     #   $3: mode
 
     # determine source and destination
-    local src="$1" dest="${2:-$1}" mode="$3" srcrealpath
+    local src="$1" dest="${2:-$1}" mode="$3" srcrealpath destrealpath
 
     if [[ ! -f "$src" ]]; then
         error "file not found: '%s'" "$src"
         return 1
     fi
 
-    # If the parent directory is a symlink, add the directory symlink.
-    # What if there is a symlink higher up in the file path, you ask? We simply hope that never happens.
-    if [[ -z "$mode" && "$src" == "$dest" && -L "${dest%/*}" && ! -e "${BUILDROOT}${dest%/*}" ]]; then
-        add_full_dir "$(realpath -- "${dest%/*}")"
-        add_symlink "${dest%/*}"
-        [[ -e "$(realpath -- "${BUILDROOT}${dest}")" ]] && return
+    # Handle cases where the parent of the destination is a symlink.
+    # What if there is a symlink higher up in the file path, you ask?
+    # We simply hope that never happens...
+    if [[ -z "$mode" && "$src" == "$dest" && -L "${dest%/*}" ]]; then
+        destrealpath="$(realpath -- "${dest%/*}")"
+        if [[ ! -e "${BUILDROOT}${dest%/*}" ]]; then
+            add_dir "${destrealpath}"
+            add_symlink "${dest%/*}"
+        fi
+
+        # Rewrite destination to reflect real path of target
+        dest="${destrealpath}/${dest##*/}"
     fi
 
     # check if $src is a symlink

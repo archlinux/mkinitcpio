@@ -147,9 +147,14 @@ setup() {
     ln -s -- testsubdir1 "${dir}/testdir/testsubdir2"
     printf 'test\n' >"${dir}/testdir/testsubdir1/1"
     printf 'test\n' >"${dir}/testdir/testsubdir1/2"
+    printf 'test\n' >"${dir}/testdir/testsubdir1/3"
 
     run add_file "${dir}/testdir/testsubdir2/1"
+    run add_file "${dir}/testdir/testsubdir2/2"
+    run add_file "${dir}/testdir/testsubdir1/3"
+
     [[ -e "${BUILDROOT}${dir}/testdir/testsubdir2/1" ]] || return
+    [[ -e "${BUILDROOT}${dir}/testdir/testsubdir2/3" ]] || return
     [[ -L "${BUILDROOT}${dir}/testdir/testsubdir2" && "$(realpath -- "${BUILDROOT}${dir}/testdir/testsubdir2")" == "${BUILDROOT}${dir}/testdir/testsubdir1" ]] || return
     [[ -e "${BUILDROOT}${dir}/testdir/testsubdir1/1" ]] || return
     [[ -e "${BUILDROOT}${dir}/testdir/testsubdir1/2" ]] || return
