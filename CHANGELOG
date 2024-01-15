@@ -1,5 +1,25 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v37.2:
+
+        Bugfix release:
+
+        * Fix tests to use system library loading mechanism instead of absolute
+          paths.
+        * Check if the parent directory is a symlink when adding a file. Add
+          the full target directory and create the symlink to avoid placing
+          duplicate files in the image thus increasing its size.
+        * install/block: quote module names suffixed with "?" to prevent
+          interpreting them as file globs.
+        * 50-mkinitcpio.install: pass path to kernel image to mkinitcpio to
+          avoid issues with a kernel image in a non-standard location.
+        * kernel-install: account for upstream changes to the default value of
+          KERNEL_INSTALL_UKI_GENERATOR.
+
+        Contributions from: Levente Polyak, Thomas Weißschuh, cvlc12, nl6720
+
+        – 2024-01-15
+
 CHANGES WITH v37.1:
 
         Bugfix release:
