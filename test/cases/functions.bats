@@ -140,6 +140,21 @@ setup() {
     assert_output "6.1.0-arch1-2"
 }
 
+@test "add_file parent directory is a symlink" {
+    local dir BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}" _optquiet=1
+    dir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+    install -d -- "$BUILDROOT" "${dir}/testdir/testsubdir1"
+    ln -s -- testsubdir1 "${dir}/testdir/testsubdir2"
+    printf 'test\n' >"${dir}/testdir/testsubdir1/1"
+    printf 'test\n' >"${dir}/testdir/testsubdir1/2"
+
+    run add_file "${dir}/testdir/testsubdir2/1"
+    [[ -e "${BUILDROOT}${dir}/testdir/testsubdir2/1" ]] || return
+    [[ -L "${BUILDROOT}${dir}/testdir/testsubdir2" && "$(realpath -- "${BUILDROOT}${dir}/testdir/testsubdir2")" == "${BUILDROOT}${dir}/testdir/testsubdir1" ]] || return
+    [[ -e "${BUILDROOT}${dir}/testdir/testsubdir1/1" ]] || return
+    [[ -e "${BUILDROOT}${dir}/testdir/testsubdir1/2" ]] || return
+}
+
 @test "add_binary script" {
     local tmp_bin BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}/" interpreter="/usr/local/${BATS_TEST_NAME}.${RANDOM}" _optquiet=1
 
