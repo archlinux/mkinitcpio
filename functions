@@ -730,6 +730,14 @@ add_file() {
         return 1
     fi
 
+    # If the parent directory is a symlink, add the directory symlink.
+    # What if there is a symlink higher up in the file path, you ask? We simply hope that never happens.
+    if [[ -z "$mode" && "$src" == "$dest" && -L "${dest%/*}" && ! -e "${BUILDROOT}${dest%/*}" ]]; then
+        add_full_dir "$(realpath -- "${dest%/*}")"
+        add_symlink "${dest%/*}"
+        [[ -e "$(realpath -- "${BUILDROOT}${dest}")" ]] && return
+    fi
+
     # check if $src is a symlink
     if [[ -L "$src" ]]; then
         srcrealpath="$(realpath -- "$src")"
@@ -743,7 +751,7 @@ add_file() {
     fi
 
     # unlike install, cp does not create directories leading to the destination
-    [[ -z "$mode" ]] && add_dir "${dest%/*}"
+    [[ -z "$mode" && ! -e "${BUILDROOT}${dest%/*}" ]] && add_dir "${dest%/*}"
 
     if [[ -e "${BUILDROOT}${dest}" ]]; then
         quiet 'overwriting file: %s' "$dest"
