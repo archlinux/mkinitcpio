@@ -1,5 +1,15 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v37.3:
+
+        Bugfix release:
+
+        * Fix file copying when parent directory is a symlink.
+
+        Contributions from: Andrew J. Hesford
+
+        – 2024-01-19
+
 CHANGES WITH v37.2:
 
         Bugfix release:
