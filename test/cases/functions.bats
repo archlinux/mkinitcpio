@@ -84,6 +84,15 @@ setup() {
     assert_output "zimg"
 }
 
+@test "detect_compression with offset" {
+    local tmp_img=''
+
+    tmp_img="$(__gen_test_image 'zstd' '-T0')"
+    dd if="$tmp_img" of="$tmp_img.offset" seek=1
+    run detect_compression "$tmp_img.offset" 512
+    assert_output 'zstd'
+}
+
 @test "kver_x86" {
     local kernel_ver='' tmp_knl=''
     kernel_ver="6.0.9-arch1-1 #1 SMP PREEMPT_DYNAMIC Wed, 16 Nov 2022 17:01:17 +0000 x86_64 GNU/Linux"
