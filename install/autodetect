@@ -6,6 +6,10 @@ build() {
     local -a md_devs mods
     local -i attempts_left
 
+    # allow other hooks to customize behavior if autodetect is run them
+    # shellcheck disable=SC2034
+    declare -gri mkinitcpio_autodetect=1
+
     [[ "$KERNELVERSION" == 'none' ]] && return 0
 
     auto_modules() {
