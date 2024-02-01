@@ -13,6 +13,10 @@ stages:
         - pacman -Sy --needed --noconfirm archlinux-keyring
         - pacman --noconfirm -Syu --needed bats bats-assert bats-support diffutils git jq kcov lzop make shellcheck
         - echo -e "\e[0Ksection_end:`date +%s`:pacman\r\e[0K"
+        - echo -e "\e[0Ksection_start:`date +%s`:useradd[collapsed=true]\r\e[0KCreating non-root user..."
+        - useradd -d /builds/${GITLAB_USER_LOGIN} -g users -M -N builder
+        - chown -R builder:users ..
+        - echo -e "\e[0Ksection_end:`date +%s`:useradd\r\e[0K"
 
 check:
     stage: check
@@ -24,7 +28,7 @@ test:
     stage: check
     extends: .pacman_install
     script:
-        - make --silent check BATS_ARGS='-F junit' > bats-report.xml
+        - sudo -HEu builder make --silent check BATS_ARGS='-F junit' > bats-report.xml
     artifacts:
         reports:
             junit: bats-report.xml
@@ -37,7 +41,7 @@ coverage:
     coverage: '/Percent covered\s+\d+\.\d+/'
     allow_failure: true
     script:
-        - make coverage
+        - sudo -HEu builder make coverage
         - jq -r '. |
             ["Percent covered", .percent_covered],
             ["Covered lines", .covered_lines],
