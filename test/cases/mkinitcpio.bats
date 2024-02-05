@@ -12,10 +12,12 @@
     echo "HOOKS=(base)" >> "$tmpdir/mkinitcpio.conf"
 
     run ./mkinitcpio \
+        -D "${PWD}" \
         -c "$tmpdir/mkinitcpio.conf" \
         -g "$tmpdir/initramfs-1.img"
 
     run ./mkinitcpio \
+        -D "${PWD}" \
         -c "$tmpdir/mkinitcpio.conf" \
         -g "$tmpdir/initramfs-2.img"
 
@@ -35,10 +37,12 @@
     echo "HOOKS=(base)" >> "$tmpdir/mkinitcpio.conf"
 
     ./mkinitcpio \
+        -D "${PWD}" \
         -c "$tmpdir/mkinitcpio.conf" \
         --uki "$tmpdir/uki-1.efi"
 
     ./mkinitcpio \
+        -D "${PWD}" \
         -c "$tmpdir/mkinitcpio.conf" \
         --uki "$tmpdir/uki-2.efi"
 
@@ -59,6 +63,7 @@
     printf '%s\n' 'HOOKS=(base)' > "${tmpdir}/mkinitcpio.conf"
 
     ./mkinitcpio \
+        -D "${PWD}" \
         -c "${tmpdir}/mkinitcpio.conf" \
         --uki "${tmpdir}/uki.efi" --no-cmdline
 

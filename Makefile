@@ -94,7 +94,7 @@ man/%: man/%.adoc Makefile
 		-a manmanual="mkinitcpio manual" $<
 
 check:
-	bats --jobs $(JOBS) $(BATS_ARGS) test/cases/
+	LC_ALL=C bats --jobs $(JOBS) $(BATS_ARGS) test/cases/
 
 coverage:
 	kcov \
