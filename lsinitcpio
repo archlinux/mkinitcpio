@@ -32,6 +32,8 @@ usage: ${0##*/} [action] [options] <initramfs>
    -n, --nocolor        disable colorized output
    -V, --version        display version information
    -v, --verbose        more verbose output
+       --cpio           list or extract only the main CPIO image
+       --early          list or extract only the early CPIO image
 
 USAGE
 }
@@ -43,7 +45,12 @@ EOF
 }
 
 decomp() {
-    ${_compress:-cat} ${_compress:+-cd} "$@"
+    local image="$1" offset="$2"
+    if (( offset > 0 )); then
+        dd if="$image" skip=$((offset / 512)) 2>/dev/null | ${_compress:-cat} ${_compress:+-cd}
+    else
+        ${_compress:-cat} ${_compress:+-cd} "$image"
+    fi
 }
 
 # shellcheck source=functions
@@ -77,11 +84,10 @@ size_to_human() {
 }
 
 detect_filetype() {
-    local bytes
+    local file="$1" offset="$2" bytes
 
-    read -rd '' -n 6 bytes <"$1"
-    printf -v bytes '%02x' "'${bytes:0:1}" "'${bytes:1:1}" "'${bytes:2:1}" \
-                           "'${bytes:3:1}" "'${bytes:4:1}" "'${bytes:5:1}"
+    bytes="$(od -An -t x1 -N6 -j "$offset" "$file" | tr -dc '[:alnum:]')"
+
     case $bytes in
         '303730373031')
             # no compression
@@ -90,7 +96,7 @@ detect_filetype() {
             ;;
     esac
 
-    compression="$(detect_compression "$1")"
+    compression="$(detect_compression "$file" "$offset")"
 
     if [[ -n "$compression" ]]; then
         echo "$compression"
@@ -99,16 +105,59 @@ detect_filetype() {
 
     # still nothing? hrmm, maybe the user goofed and it's a kernel
     if kver "$1" >/dev/null; then
-        die "'%s' is a kernel image, not an initramfs image!" "$1"
+        die "'%s' is a kernel image, not an initramfs image!" "$file"
     fi
 
     # out of ideas, we're done here.
-    die "Unexpected file type. Are you sure '%s' is an initramfs?" "$1"
+    die "Unexpected file type. Are you sure '%s' is an initramfs?" "$file"
+}
+
+detect_early_img() {
+    local early=0
+    # early cpio archives can have a file called early_cpio in them
+    early="$(LC_ALL=C bsdtar -xOf "$1" early_cpio 2>/dev/null)"
+    if [[ -z "$early" ]]; then
+        # but not all do
+        if LC_ALL=C bsdtar -tf "$1" 'kernel/*/microcode/*.bin' &>/dev/null; then
+            early=1
+        fi
+    fi
+    printf '%d' "$early"
+}
+
+skip_early_img() {
+    local -i offset
+    local bytes
+
+    # find last entry of the early cpio archive, marked by an entry with the name TRAILER!!!
+    offset="$(grep -Fabom1 'TRAILER!!!' "$1" | cut -d: -f1)" || return 1
+
+    # skip past the TRAILER!!! (10 chars) and to the next multiple of 512 bytes
+    # we can do this in blocks of 512 because bsdtar/bsdcpio use blocksizes that are a multiple of 512
+    offset="$(awk -v offset="$offset" '
+    function ceil(v) {
+        return (v == int(v)) ? v : int(v)+1
+    }
+    BEGIN {
+        offset += 10
+        printf "%d", ceil(offset / 512) * 512
+    }')"
+
+
+    # read a byte, check if it's NUL
+    # if it's not, we've made it through the NULs
+    # otherwise, skip ahead to the start of the next block and repeat
+    bytes="$(od -An -t x1 -N1 -j "$offset" "$1" | tr -dc '[:alnum:]')" || return 1
+    until [[ "$bytes" != '00' ]]; do
+        offset=$(( offset + 512 ))
+        bytes="$(od -An -t x1 -N1 -j "$offset" "$1" | tr -dc '[:alnum:]')" || return 1
+    done
+    printf '%d' "$offset"
 }
 
 analyze_image() {
     local -a binaries explicitmod modules foundhooks hooks imagename
-    local kernver ratio columns image="$1"
+    local kernver ratio columns image="$1" offset="$2"
     columns="$(tput cols)"
 
     workdir="$(mktemp -d --tmpdir lsinitcpio.XXXXXX)"
@@ -121,17 +170,17 @@ analyze_image() {
     # image to ensure that it's in the cache when we decompress. This avoids
     # variance in timing and makes the time spent reading from storage roughly
     # constant.
-    zsize="$(wc -c <"$image")"
+    zsize="$(dd if="$image" skip=$((offset / 512)) 2>/dev/null | wc -c)"
 
     # calculate compression ratio
     if [[ -n "$_compress" ]]; then
-        decomptime="$(TIMEFORMAT=%R; { time decomp "$image" >/dev/null; } 2>&1)"
-        fullsize="$(decomp "$image" | wc -c)"
+        decomptime="$(TIMEFORMAT=%R; { time decomp "$image" "$offset" >/dev/null; } 2>&1)"
+        fullsize="$(decomp "$image" "$offset" | wc -c)"
         ratio=".$(( zsize * 1000 / fullsize % 1000 ))"
     fi
 
     # decompress the image since we need to read from it multiple times.
-    decomp "$image" | bsdtar -C "$workdir" -xf - || die 'Failed to decompress image'
+    decomp "$image" "$offset" | bsdtar -C "$workdir" -xf - || die 'Failed to decompress image'
 
     modules=("$workdir/usr/lib/modules"/*/kernel/**/*.ko*)
     if [[ -f "${modules[0]}" ]]; then
@@ -164,6 +213,12 @@ analyze_image() {
     msg 'Image: %s%s' "${imagename[@]}"
     [[ -n "$version" ]] && msg 'Created with mkinitcpio %s' "$version"
     msg 'Kernel: %s' "${kernver:-unknown}"
+    if (( offset > 0 )); then
+        # the zero-indexed offset of the main image is the same as the size of the early image
+        msg 'Early CPIO: %s' "$(size_to_human "$offset")"
+    else
+        msg 'Early CPIO: none'
+    fi
     msg 'Size: %s' "$(size_to_human "$zsize")"
 
     if [[ -n "$_compress" ]]; then
@@ -220,7 +275,7 @@ analyze_image() {
 }
 
 _opt_short='achlnVvx'
-_opt_long=('analyze' 'config' 'help' 'list' 'nocolor' 'version' 'verbose' 'extract')
+_opt_long=('analyze' 'config' 'cpio' 'early' 'help' 'list' 'nocolor' 'version' 'verbose' 'extract')
 
 parseopts "$_opt_short" "${_opt_long[@]}" -- "$@" || exit
 set -- "${OPTRET[@]}"
@@ -233,6 +288,12 @@ while :; do
             ;;
         -c | --config)
             _optshowconfig=1
+            ;;
+        --cpio)
+            _optcpio=1
+            ;;
+        --early)
+            _optearly=1
             ;;
         -h | --help)
             usage
@@ -281,16 +342,37 @@ case $(( _optanalyze + _optlistcontents + _optshowconfig )) in
         ;;
 esac
 
-# read compression type
-_compress="$(detect_filetype "$_image")" || exit
+case $(( _optearly + _optcpio )) in
+    0)
+        # default to listing/extracting both images
+        _optearly=1
+        _optcpio=1
+        ;;
+    # if == 1, only early or main cpio will be extracted/listed
+    # if >1, same as 0
+esac
+
+if (( $(detect_early_img "$_image") )); then
+    _offset="$(skip_early_img "$_image")"
+else
+    _offset=0
+fi
+
+# read compression type of the cpio image
+_compress="$(detect_filetype "$_image" "$_offset")" || exit
 
 if (( _optanalyze )); then
-    analyze_image "$_image"
+    analyze_image "$_image" "$_offset"
 elif (( _optshowconfig )); then
-    decomp "$_image" | bsdtar xOf - buildconfig 2>/dev/null ||
+    decomp "$_image" "$_offset" | bsdtar xOf - buildconfig 2>/dev/null ||
         die 'Failed to extract config from image (mkinitcpio too old?)'
 else
-    decomp "$_image" | bsdcpio "${bsdcpio_options[@]}"
+    if (( _optearly )); then
+        bsdcpio "${bsdcpio_options[@]}" <"$_image"
+    fi
+    if (( _optcpio )); then
+        decomp "$_image" "$_offset" | bsdcpio "${bsdcpio_options[@]}"
+    fi
 fi
 
 # vim: set ft=sh ts=4 sw=4 et:

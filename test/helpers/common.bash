@@ -104,6 +104,22 @@ __gen_test_zboot_kernel() {
     echo "$tmp_img"
 }
 
+# Generates a temporary initcpio with the specified compression options
+__gen_test_initcpio() {
+    local tmpdir compression="$1"
+    tmpdir=$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")
+
+    cat << EOC >> "$tmpdir/mkinitcpio.conf"
+HOOKS=(base)
+COMPRESSION=$compression
+EOC
+
+    ./mkinitcpio \
+        -D "${PWD}" \
+        -c "$tmpdir/mkinitcpio.conf" \
+        -g "$tmpdir/initramfs.img"
+}
+
 __check_binary(){
     local binary="$1"
     if ! command -v "${binary}" &>/dev/null; then

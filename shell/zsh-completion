@@ -65,7 +65,6 @@ case $service in
             '(-U --uki)'{-U,--uki}'[Build a unified kernel image]:path:_files' \
             '--cmdline[Specify kernel cmdline for the unified kernel image]:path:_files' \
             '--kernelimage[Include a kernel image for the unified kernel image]:path:_files' \
-            '--microcode[Include microcode into the unified kernel image]:path:_files' \
             '--osrelease[Include a os-release file for the unified kernel image]:path:_files' \
             '--splash[Bitmap splash image to include in unified kernel image]:path:_files' \
             '--uefistub[UEFI stub image used for unified kernel image generation]:path:_files' \

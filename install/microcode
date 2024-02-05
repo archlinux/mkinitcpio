@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
+
+get_host_vendor() {
+    if grep -aiq 'vendor_id.*amd' /proc/cpuinfo 2>/dev/null; then
+        echo 'amd'
+    elif grep -aiq 'vendor_id.*intel' /proc/cpuinfo 2>/dev/null; then
+        echo 'intel'
+    fi
+}
+
+get_host_ucode() {
+    local vendor="$1" family model stepping
+    family="$(grep -am1 'cpu family' /proc/cpuinfo | sed 's/.*: //')"
+    model="$(grep -am1 'model[[:space:]]*:' /proc/cpuinfo | sed 's/.*: //')"
+    stepping="$(grep -am1 'stepping' /proc/cpuinfo | sed 's/.*: //')"
+
+    case "$vendor" in
+        amd)
+            # 21 = 15h
+            if (( family >= 21 )); then
+                printf 'amd-ucode/microcode_amd_fam%xh.bin' "$family"
+            else
+                printf 'amd-ucode/microcode_amd.bin'
+            fi
+            ;;
+        intel)
+            printf 'intel-ucode/%02x-%02x-%02x' "$family" "$model" "$stepping"
+            ;;
+    esac
+}
+
+build() {
+    local arch vendor fwpath ucode_file ucode_files
+    local vendors=(intel amd)
+    local ucode_dest="${EARLYROOT}/kernel/x86/microcode"
+    local -A ucode_dir=([intel]=intel-ucode [amd]=amd-ucode)
+    local -A ucode_img=([intel]=intel-ucode.img [amd]=amd-ucode.img)
+    local -A ucode_bin=([intel]=GenuineIntel.bin [amd]=AuthenticAMD.bin)
+    local -A ucode_glob=([intel]='??-??-??' [amd]='*.bin')
+
+    arch="$(uname -m)"
+    if [[ "$arch" != @(i?86|x86_64) ]]; then
+        warning "architecture '%s' not supported, skipping hook" "$arch"
+        return
+    fi
+
+    # mkinitcpio_autodetect is assigned in install/autodetect
+    # shellcheck disable=SC2154
+    if (( mkinitcpio_autodetect )); then
+        vendor="$(get_host_vendor)"
+        ucode_file="$(get_host_ucode "$vendor")"
+        # _d_firmware is assigned in mkinitcpio
+        # shellcheck disable=SC2154
+        for fwpath in "${_d_firmware[@]}"; do
+            if [[ -f "${fwpath}/${ucode_file}" ]]; then
+                if ! [[ -d "${ucode_dest}" ]]; then
+                    install -dm755 "${ucode_dest}"
+                fi
+                quiet "adding microcode file: '%s'" "${fwpath}/${ucode_file}"
+                cat "${fwpath}/${ucode_file}" > "${ucode_dest}/${ucode_bin[$vendor]}"
+                return
+            fi
+        done
+    fi
+
+    for vendor in "${vendors[@]}"; do
+        # find the uncompiled update files and compile them
+        # _d_firmware is assigned in mkinitcpio
+        # shellcheck disable=SC2154
+        for fwpath in "${_d_firmware[@]}"; do
+            if [[ -e "${ucode_dest}/${ucode_bin[$vendor]}" ]]; then
+                break
+            fi
+            if [[ ! -d "${fwpath}/${ucode_dir[$vendor]}" ]]; then
+                continue
+            fi
+            mapfile -t ucode_files < <(find "${fwpath}/${ucode_dir[$vendor]}" -maxdepth 1 -name "${ucode_glob[$vendor]}")
+            if ! (( ${#ucode_files[@]} )); then
+                continue
+            fi
+            if ! [[ -d "${ucode_dest}" ]]; then
+                install -dm755 "${ucode_dest}"
+            fi
+            for ucode_file in "${ucode_files[@]}"; do
+                quiet "adding microcode file: '%s'" "$ucode_file"
+                cat "$ucode_file" >> "${ucode_dest}/${ucode_bin[$vendor]}"
+            done
+            break
+        done
+
+        # as a last resort, find and extract a precompiled image in /boot
+        if [[ ! -e "${ucode_dest}/${ucode_bin[$vendor]}" && -r "/boot/${ucode_img[$vendor]}" ]]; then
+            quiet "extracting precompiled microcode image: '/boot/%s'" "${ucode_img[$vendor]}"
+            LC_ALL=C bsdtar -C "$EARLYROOT" -xf "/boot/${ucode_img[$vendor]}" 'kernel/*/microcode/*.bin'
+        fi
+    done
+}
+
+help() {
+    cat <<HELPEOF
+This hook adds early microcode update files for Intel and AMD processors. If
+/boot/amd-ucode.img or /boot/intel-ucode.img exist, they are included in the
+initcpio. If not, the individual microcode files in /lib/firmware/ are included
+if they exist.
+
+If the autodetect hook runs before this hook, it will only add early microcode
+update files for the processor of the system the image is built on.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:

@@ -84,6 +84,15 @@ setup() {
     assert_output "zimg"
 }
 
+@test "detect_compression with offset" {
+    local tmp_img=''
+
+    tmp_img="$(__gen_test_image 'zstd' '-T0')"
+    dd if="$tmp_img" of="$tmp_img.offset" seek=1
+    run detect_compression "$tmp_img.offset" 512
+    assert_output 'zstd'
+}
+
 @test "kver_x86" {
     local kernel_ver='' tmp_knl=''
     kernel_ver="6.0.9-arch1-1 #1 SMP PREEMPT_DYNAMIC Wed, 16 Nov 2022 17:01:17 +0000 x86_64 GNU/Linux"
@@ -140,6 +149,35 @@ setup() {
     assert_output "6.1.0-arch1-2"
 }
 
+@test "initialize_buildroot success" {
+    local workingdir="${BATS_RUN_TMPDIR}/${BATS_TEST_NAME}/mkinitcpio"
+
+    install -dm755 "$workingdir"
+    run initialize_buildroot 'none' "$workingdir"
+
+    # asserting the entire expected tree would be extremely verbose
+    assert [ -e "${workingdir}/early/early_cpio" ]
+    assert [ -e "${workingdir}/root/VERSION" ]
+}
+
+@test "initialize_buildroot unwriteable parent directory" {
+    local parentdir="${BATS_RUN_TMPDIR}/${BATS_TEST_NAME}/"
+
+    install -dm555 "$parentdir"
+    TMPDIR="$parentdir" run initialize_buildroot 'none'
+    assert_failure
+    assert_output "==> ERROR: Failed to create temporary working directory in $parentdir"
+}
+
+@test "initialize_buildroot unwriteable working directory" {
+    local workdir="${BATS_RUN_TMPDIR}/${BATS_TEST_NAME}/workdir"
+
+    install -dm555 "$workdir"
+    run initialize_buildroot 'none' "$workdir"
+    assert_failure
+    assert_output "==> ERROR: Unable to write to working directory: $workdir"
+}
+
 @test "add_file parent directory is a symlink" {
     local dir BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}" _optquiet=1
     dir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
@@ -167,8 +205,7 @@ setup() {
     printf '#!%s\n\n:\n' "$interpreter" >"$tmp_bin"
 
     install -d -- "$BUILDROOT"
-    # initialize_buildroot unconditionally creates a /tmp/mkinitcpio.XXXXXX work directory
-    rmdir -- "$(initialize_buildroot 'none' "$BUILDROOT")"
+    initialize_buildroot 'none' "$BUILDROOT"
     run add_binary "$tmp_bin"
     assert_output "==> WARNING: Possibly missing '${interpreter}' for script: $tmp_bin"
 }

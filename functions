@@ -155,9 +155,9 @@ kver_x86() {
 }
 
 detect_compression() {
-    local bytes
+    local file="$1" offset="${2:-0}" bytes
 
-    bytes="$(od -An -t x1 -N6 "$1" | tr -dc '[:alnum:]')"
+    bytes="$(od -An -t x1 -N6 -j "$offset" "$file" | tr -dc '[:alnum:]')"
     case "$bytes" in
         'fd377a585a00')
             echo 'xz'
@@ -165,19 +165,19 @@ detect_compression() {
             ;;
     esac
 
-    bytes="$(od -An -t x1 -N4 "$1" | tr -dc '[:alnum:]')"
+    bytes="$(od -An -t x1 -N4 -j "$offset" "$file" | tr -dc '[:alnum:]')"
     if [[ "$bytes" == '894c5a4f' ]]; then
         echo 'lzop'
         return
     fi
 
-    bytes="$(od -An -t x2 -N2 "$1" | tr -dc '[:alnum:]')"
+    bytes="$(od -An -t x2 -N2 -j "$offset" "$file" | tr -dc '[:alnum:]')"
     if [[ "$bytes" == '8b1f' ]]; then
         echo 'gzip'
         return
     fi
 
-    bytes="$(od -An -t x4 -N4 "$1" | tr -dc '[:alnum:]')"
+    bytes="$(od -An -t x4 -N4 -j "$offset" "$file" | tr -dc '[:alnum:]')"
     case "$bytes" in
         '184d2204')
             error 'Newer lz4 stream format detected! This may not boot!'
@@ -194,7 +194,7 @@ detect_compression() {
             ;;
     esac
 
-    bytes="$(od -An -c -N3 "$1" | tr -dc '[:alnum:]')"
+    bytes="$(od -An -c -N3 -j "$offset" "$file" | tr -dc '[:alnum:]')"
     if [[ "$bytes" == 'BZh' ]]; then
         echo 'bzip2'
         return
@@ -204,13 +204,13 @@ detect_compression() {
     # do it without reading large portions of the stream. this
     # check is good enough for GNU tar, apparently, so it's good
     # enough for me.
-    bytes="$(od -An -t x1 -N3 "$1" | tr -dc '[:alnum:]')"
+    bytes="$(od -An -t x1 -N3 -j "$offset" "$file" | tr -dc '[:alnum:]')"
     if [[ "$bytes" == '5d0000' ]]; then
         echo 'lzma'
         return
     fi
 
-    read -rd '' bytes < <(od -An -j0x04 -t c -N4 "$1" | tr -dc '[:alnum:]')
+    read -rd '' bytes < <(od -An -j $((offset + 0x04)) -t c -N4 "$file" | tr -dc '[:alnum:]')
     if [[ "$bytes" == 'zimg' ]]; then
         echo 'zimg'
         return
@@ -958,19 +958,27 @@ initialize_buildroot() {
     # creates a temporary directory for the buildroot and initialize it with a
     # basic set of necessary directories and symlinks
 
-    local workdir='' kernver="$1" arch buildroot osreleasefile
+    local kernver="$1" workdir="$2" arch buildroot osreleasefile
     arch="$(uname -m)"
 
-    if ! workdir="$(mktemp -d --tmpdir mkinitcpio.XXXXXX)"; then
-        error 'Failed to create temporary working directory in %s' "${TMPDIR:-/tmp}"
-        return 1
+    if [[ -z "$workdir" ]]; then
+        if ! workdir="$(mktemp -d --tmpdir mkinitcpio.XXXXXX 2>/dev/null)"; then
+            error 'Failed to create temporary working directory in %s' "${TMPDIR:-/tmp}"
+            return 1
+        fi
     fi
-    buildroot="${2:-$workdir/root}"
+    earlyroot="$workdir/early"
+    buildroot="$workdir/root"
 
-    if [[ ! -w "${2:-$workdir}" ]]; then
-        error 'Unable to write to build root: %s' "$buildroot"
+    if [[ ! -w "$workdir" ]]; then
+        error 'Unable to write to working directory: %s' "$workdir"
         return 1
     fi
+
+    # early root structure
+    install -dm755 "$earlyroot"
+    # this flag file is used by some tools
+    echo 1 > "${earlyroot}/early_cpio"
 
     # base directory structure
     install -dm755 "$buildroot"/{new_root,proc,sys,dev,run,tmp,var,etc,usr/{local{,/bin,/sbin,/lib},lib,bin}}

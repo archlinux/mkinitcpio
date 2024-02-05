@@ -26,7 +26,7 @@ _d_presets=mkinitcpio.d
 _optmoduleroot='' _optgenimg=''
 _optcompress='' _opttargetdir=''
 _optosrelease=''
-_optuki='' _optmicrocode=() _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
+_optuki='' _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
 _optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0 _optnocmdline=0
 _optquiet=1 _optcolor=1 _optconfd=1
 _optskiphooks=() _optaddhooks=() _hooks=() _optpreset=() _tmpfiles=() _generated=()
@@ -74,7 +74,6 @@ usage: ${0##*/} [options]
   Options for unified kernel image (-U, --uki):
    --cmdline <path>             Set kernel command line from file
                                 (default: /etc/kernel/cmdline or /proc/cmdline)
-   --microcode <path>           Location of microcode
    --osrelease <path>           Include os-release (default: /etc/os-release)
    --splash <path>              Include bitmap splash
    --kernelimage <path>         Kernel image
@@ -218,8 +217,43 @@ compute_hookset() {
     done
 }
 
+create_image() {
+    # create_image <root> <output file> <compression type>
+    local root="$1" out="$2" compress="$3" compress_cmd="$3" pipestatus
+
+    if [[ "$compress" == 'early' ]]; then
+        # early image should never be compressed
+        compress_cmd='cat'
+        unset COMPRESSION_OPTIONS
+    fi
+
+    pushd "$root" >/dev/null || return
+
+    # Reproducibility: set all timestamps to 0
+    find . -mindepth 1 -execdir touch -hcd '@0' '{}' +
+
+    # If this pipeline changes, |pipeprogs| below needs to be updated as well.
+    find . -mindepth 1 -printf '%P\0' \
+        | sort -z \
+        | LC_ALL=C bsdtar --uid 0 --gid 0 --null -cnf - -T - \
+        | LC_ALL=C bsdtar --null -cf - --format=newc @- \
+        | "$compress_cmd" "${COMPRESSION_OPTIONS[@]}" >>"$compressout"
+
+    pipestatus=("${PIPESTATUS[@]}")
+    pipeprogs=('find' 'sort' 'bsdtar (step 1)' 'bsdtar (step 2)' "$compress_cmd")
+
+    popd >/dev/null || return
+
+    for (( i = 0; i < ${#pipestatus[*]}; ++i )); do
+        if (( pipestatus[i] )); then
+            printf '%s' "${pipeprogs[i]}"
+            return 1
+        fi
+    done
+}
+
 build_image() {
-    local out="$1" compressout="$1" compress="$2" errmsg pipestatus
+    local out="$1" compressout="$1" compress="$2" errprog pipestatus
 
     case "$compress" in
         cat)
@@ -259,39 +293,32 @@ build_image() {
         (( $((curr_size + (curr_size/4))) < space_left_on_device )) && compressout="$out".tmp
     fi
 
-    pushd "$BUILDROOT" >/dev/null || return
+    # initialize an empty output file
+    : >"$compressout"
 
-    # Reproducibility: set all timestamps to 0
-    find . -mindepth 1 -execdir touch -hcd "@0" "{}" +
-
-    # If this pipeline changes, |pipeprogs| below needs to be updated as well.
-    find . -mindepth 1 -printf '%P\0' \
-        | sort -z \
-        | LANG=C bsdtar --uid 0 --gid 0 --null -cnf - -T - \
-        | LANG=C bsdtar --null -cf - --format=newc @- \
-        | $compress "${COMPRESSION_OPTIONS[@]}" >"$compressout"
-
-    pipestatus=("${PIPESTATUS[@]}")
-    pipeprogs=('find' 'sort' 'bsdtar (step 1)' 'bsdtar (step 2)' "$compress")
-
-    popd >/dev/null || return
-
-    for (( i = 0; i < ${#pipestatus[*]}; ++i )); do
-        if (( pipestatus[i] )); then
-            errmsg="${pipeprogs[i]} reported an error"
-            break
+    # if the EARLYROOT is not empty (except for the flag file), prepend it to the image
+    if [[ -n "$(find "$EARLYROOT" -mindepth 1 -not -name early_cpio)" ]]; then
+        errprog="$(create_image "$EARLYROOT" "$compressout" early)"
+        ret="$?"
+        if (( ret )); then
+            error "Early uncompressed CPIO image generation FAILED: '%s' reported an error" "$errprog"
+            return 1
+        elif (( _builderrors == 0 )); then
+            msg2 "Early uncompressed CPIO image generation successful"
         fi
-    done
-
-    if (( _builderrors )); then
-        warning "errors were encountered during the build. The image may not be complete."
     fi
 
-    if [[ -n "$errmsg" ]]; then
-        error "Initcpio image generation FAILED: '%s'" "$errmsg"
+    errprog="$(create_image "$BUILDROOT" "$compressout" "$compress")"
+    ret="$?"
+    if (( ret )); then
+        error "Initcpio image generation FAILED: '%s' reported an error" "$errprog"
         return 1
     elif (( _builderrors == 0 )); then
         msg "Initcpio image generation successful"
+    fi
+
+    if (( _builderrors )); then
+        warning "errors were encountered during the build. The image may not be complete."
     fi
 
     # sync and rename as we only wrote to a tempfile so far to ensure consistency
@@ -342,7 +369,7 @@ uki_assemble() {
 }
 
 build_uki() {
-    local out="$1" initramfs="$2" cmdline="$3" osrelease="$4" splash="$5" kernelimg="$6" uefistub="$7" microcode=("${@:8}") errmsg='' stub cpuarch uefiarch
+    local out="$1" initramfs="$2" cmdline="$3" osrelease="$4" splash="$5" kernelimg="$6" uefistub="$7" stub cpuarch uefiarch
 
     msg "Creating unified kernel image: '%s'" "$out"
 
@@ -476,11 +503,7 @@ build_uki() {
         return 1
     fi
 
-    for image in "${microcode[@]}"; do
-        quiet "Using microcode image: '%s'" "$image"
-    done
-
-    uki_add_section '.initrd' <(cat -- "${microcode[@]}" "$initramfs")
+    uki_add_section '.initrd' "$initramfs"
 
     uki_assemble "$out"
 
@@ -574,10 +597,10 @@ process_preset() (
         fi
 
         local -n preset_microcode="${p}_microcode"
-        if [[ -n "${preset_microcode[*]}" || -n "${ALL_microcode[*]}" ]]; then
-            mapfile -d '' -O "${#preset_cmd[@]}" -t preset_cmd < <(
-                printf -- '--microcode\0%s\0' "${preset_microcode[@]:-${ALL_microcode[@]}}"
-            )
+        if [[ -n "${preset_microcode[*]}" ]]; then
+            warning "Deprecated option '%s' found. Update '%s' to use the 'microcode' hook instead." "$preset_microcode" "$preset"
+        elif [[ -n "${ALL_microcode[*]}" ]]; then
+            warning "Deprecated option 'ALL_microcode' found. Update '%s' to use the 'microcode' hook instead." "$preset"
         fi
 
         if (( _optremove )); then
@@ -785,9 +808,8 @@ while :; do
             _optshowautomods=1
             ;;
         --microcode)
-            shift
-            _optmicrocode+=("$1")
-            ;;
+            warning "The --microcode option has deprecated. Use the 'microcode' hook instead."
+            ;&
         -P | --allpresets)
             _optpreset=("$_d_presets"/*.preset)
             [[ -e "${_optpreset[0]}" ]] || die 'No presets found in %s' "$_d_presets"
@@ -912,7 +934,8 @@ fi
 MODULES_DECOMPRESS="${MODULES_DECOMPRESS:-"yes"}"
 
 _d_workdir="$(initialize_buildroot "$KERNELVERSION" "$_opttargetdir")" || exit 1
-BUILDROOT="${_opttargetdir:-$_d_workdir/root}"
+BUILDROOT="$_d_workdir/root"
+EARLYROOT="$_d_workdir/early"
 
 # Source additional configuration files, if no configuration file has been defined either with "-c" or via preset file
 if [[ -d "$_d_config" ]] && (( _optconfd )); then
@@ -1016,7 +1039,7 @@ else
 fi
 
 if [[ -n "$_optuki" && -n "$_optgenimg" ]]; then
-    build_uki "$_optuki" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" "${_optmicrocode[@]}" \
+    build_uki "$_optuki" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" \
         && (( ${#_generated[*]} )) && _generated+=("$_optuki")
 fi
 
