@@ -835,7 +835,7 @@ add_binary() {
     # non-binaries
     if ! lddout="$(ldd "$binary" 2>/dev/null)"; then
         # detect if the file has a shebang
-        if IFS='' LC_ALL=C read -rn2 -d '' shebang <"$binary" && [[ "$shebang" == '#!' ]]; then
+        if IFS='' LC_ALL=C.UTF-8 read -rn2 -d '' shebang <"$binary" && [[ "$shebang" == '#!' ]]; then
             read -r shebang <"$binary"
             interpreter="${shebang##\#\!*([[:space:]])}"
             # strip /usr/bin/env and warn if it is missing

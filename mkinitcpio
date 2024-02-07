@@ -235,8 +235,8 @@ create_image() {
     # If this pipeline changes, |pipeprogs| below needs to be updated as well.
     find . -mindepth 1 -printf '%P\0' \
         | sort -z \
-        | LC_ALL=C bsdtar --uid 0 --gid 0 --null -cnf - -T - \
-        | LC_ALL=C bsdtar --null -cf - --format=newc @- \
+        | LC_ALL=C.UTF-8 bsdtar --uid 0 --gid 0 --null -cnf - -T - \
+        | LC_ALL=C.UTF-8 bsdtar --null -cf - --format=newc @- \
         | "$compress_cmd" "${COMPRESSION_OPTIONS[@]}" >>"$compressout"
 
     pipestatus=("${PIPESTATUS[@]}")
@@ -344,9 +344,9 @@ uki_init() {
     # reproducibility, preserve dates of used files
     _uki_objcopy_args+=(-p)
 
-    _uki_alignment="$(LC_ALL=C objdump -p "${uefistub}" \
+    _uki_alignment="$(LC_ALL=C.UTF-8 objdump -p "${uefistub}" \
         | awk '/SectionAlignment/ {print strtonum("0x"$2)}')"
-    _uki_increase_offset "$(LC_ALL=C objdump -h "${uefistub}" \
+    _uki_increase_offset "$(LC_ALL=C.UTF-8 objdump -h "${uefistub}" \
         | awk 'NF==7 {size=strtonum("0x"$3); offset=strtonum("0x"$4)} END {print size + offset}')"
 }
 

@@ -92,7 +92,7 @@ build() {
         # as a last resort, find and extract a precompiled image in /boot
         if [[ ! -e "${ucode_dest}/${ucode_bin[$vendor]}" && -r "/boot/${ucode_img[$vendor]}" ]]; then
             quiet "extracting precompiled microcode image: '/boot/%s'" "${ucode_img[$vendor]}"
-            LC_ALL=C bsdtar -C "$EARLYROOT" -xf "/boot/${ucode_img[$vendor]}" 'kernel/*/microcode/*.bin'
+            LC_ALL=C.UTF-8 bsdtar -C "$EARLYROOT" -xf "/boot/${ucode_img[$vendor]}" 'kernel/*/microcode/*.bin'
         fi
     done
 }

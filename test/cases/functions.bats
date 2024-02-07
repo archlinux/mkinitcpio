@@ -222,7 +222,7 @@ setup() {
     ln -s -- 3 "${dir}/testdir2/testsubdir2/4"
 
     run add_full_dir "$dir"
-    LC_ALL=C diff -r "${dir}/" "${BUILDROOT}/${dir}/"
+    LC_ALL=C.UTF-8 diff -r "${dir}/" "${BUILDROOT}/${dir}/"
 }
 
 @test "add_full_dir glob" {

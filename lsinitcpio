@@ -115,10 +115,10 @@ detect_filetype() {
 detect_early_img() {
     local early=0
     # early cpio archives can have a file called early_cpio in them
-    early="$(LC_ALL=C bsdtar -xOf "$1" early_cpio 2>/dev/null)"
+    early="$(LC_ALL=C.UTF-8 bsdtar -xOf "$1" early_cpio 2>/dev/null)"
     if [[ -z "$early" ]]; then
         # but not all do
-        if LC_ALL=C bsdtar -tf "$1" 'kernel/*/microcode/*.bin' &>/dev/null; then
+        if LC_ALL=C.UTF-8 bsdtar -tf "$1" 'kernel/*/microcode/*.bin' &>/dev/null; then
             early=1
         fi
     fi
