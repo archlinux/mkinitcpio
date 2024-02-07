@@ -3,6 +3,8 @@
 # From: https://github.com/systemd/systemd/blob/main/tools/git-contrib.sh
 set -eu
 
+export LC_ALL=C.UTF-8
+
 tag="$(git describe --abbrev=0 --match 'v[0-9]*')"
 (
     # authors

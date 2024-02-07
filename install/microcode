@@ -75,7 +75,7 @@ build() {
             if [[ ! -d "${fwpath}/${ucode_dir[$vendor]}" ]]; then
                 continue
             fi
-            mapfile -t ucode_files < <(find "${fwpath}/${ucode_dir[$vendor]}" -maxdepth 1 -name "${ucode_glob[$vendor]}")
+            mapfile -t ucode_files < <(LC_ALL=C.UTF-8 find "${fwpath}/${ucode_dir[$vendor]}" -maxdepth 1 -name "${ucode_glob[$vendor]}")
             if ! (( ${#ucode_files[@]} )); then
                 continue
             fi

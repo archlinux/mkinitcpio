@@ -87,11 +87,11 @@ read_preset() {
     filelist=()
     while IFS='' read -r -d '' arrayelement; do
         filelist+=("$arrayelement")
-    done < <(printf '%s\0' "${unsorted_filelist[@]}" | sort -uz)
+    done < <(printf '%s\0' "${unsorted_filelist[@]}" | LC_ALL=C.UTF-8 sort -uz)
     kernellist=()
     while IFS='' read -r -d '' arrayelement; do
         kernellist+=("$arrayelement")
-    done < <(printf '%s\0' "${unsorted_kernellist[@]}" | sort -uz)
+    done < <(printf '%s\0' "${unsorted_kernellist[@]}" | LC_ALL=C.UTF-8 sort -uz)
 }
 
 install_kernel() {

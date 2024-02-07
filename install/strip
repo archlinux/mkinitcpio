@@ -4,7 +4,7 @@
 build() {
     local bin
 
-    find "$BUILDROOT" -type f -perm -u+w -print0 2>/dev/null | while read -r -d '' bin; do
+    LC_ALL=C.UTF-8 find "$BUILDROOT" -type f -perm -u+w -print0 2>/dev/null | while read -r -d '' bin; do
         case $(file -bi "$bin") in
             *application/x-sharedlib*)
                 # Libraries (.so)

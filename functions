@@ -472,7 +472,7 @@ all_modules() {
         mod="${mod##*/}"
         mod="${mod%.ko*}"
         printf '%s\n' "${mod//-/_}"
-    done < <(find "$_d_kmoduledir" -name '*.ko*' -print0 2>/dev/null | grep -EZz "$@")
+    done < <(LC_ALL=C.UTF-8 find "$_d_kmoduledir" -name '*.ko*' -print0 2>/dev/null | grep -EZz "$@")
 
     (( count ))
 }
@@ -689,7 +689,7 @@ add_symlink() {
 
     # find out the link target
     if [[ "$name" == "$target" ]]; then
-        linkobject="$(find "$target" -prune -printf '%l')"
+        linkobject="$(LC_ALL=C.UTF-8 find "$target" -prune -printf '%l')"
         # use relative path if the target is a file in the same directory as the link
         # anything more would lead to the insanity of parsing each element in its path
         if [[ "$linkobject" != *'/'* && ! -L "${name%/*}/${linkobject}" ]]; then
@@ -1168,7 +1168,7 @@ find_module_from_symbol() {
                 mod="${mod%.ko*}"
                 printf '%s\n' "${mod//-/_}"
             fi
-        done < <(find "$moduledir" -name '*.ko*' -print0 2>/dev/null)
+        done < <(LC_ALL=C.UTF-8 find "$moduledir" -name '*.ko*' -print0 2>/dev/null)
     done
 }
 

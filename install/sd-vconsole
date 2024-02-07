@@ -51,7 +51,7 @@ build() {
                 done < <("$cat" "$f")
                 add_dir "${of%/*}"
                 "$cat" "$f" >"$BUILDROOT/$of"
-            done < <(find /usr/share/kbd/keymaps/ -type f -regex ".*/$1\(\.inc\)?\(\.gz\|\.bz2|\.zst\)?")
+            done < <(LC_ALL=C.UTF-8 find /usr/share/kbd/keymaps/ -type f -regex ".*/$1\(\.inc\)?\(\.gz\|\.bz2|\.zst\)?")
         }
 
         add_font_file() {

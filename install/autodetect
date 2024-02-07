@@ -19,7 +19,7 @@ build() {
 
         # Look for uevents
         for (( attempts_left=2; attempts_left; --attempts_left )); do
-            if uevents="$(find /sys/devices -name uevent -exec sort -u {} +)"; then
+            if uevents="$(LC_ALL=C.UTF-8 find /sys/devices -name uevent -exec sort -u {} +)"; then
                 break
             fi
             if (( attempts_left > 1 )); then
@@ -37,7 +37,7 @@ build() {
             fi
         done
         mapfile -t mods < <(sed -n 's/\(DRIVER\|MODALIAS\)=\(.\+\)/\2/p' <<<"$uevents")
-        mapfile -t mods < <(modprobe -S "$KERNELVERSION" -qaR "${mods[@]}" | sort -u)
+        mapfile -t mods < <(modprobe -S "$KERNELVERSION" -qaR "${mods[@]}" | LC_ALL=C.UTF-8 sort -u)
 
         (( ${#mods[*]} )) && printf "%s\n" "${mods[@]//-/_}"
     }

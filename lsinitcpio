@@ -198,7 +198,7 @@ analyze_image() {
         unset foundhooks
     fi
 
-    mapfile -t binaries < <(find "$workdir/usr/bin" -type f -printf %f\\n)
+    mapfile -t binaries < <(LC_ALL=C.UTF-8 find "$workdir/usr/bin" -type f -printf %f\\n)
 
     read -r version <"$workdir/VERSION"
 
@@ -234,12 +234,12 @@ analyze_image() {
             printf '  %s' "$mod"
             in_array "${mod//_/-}" "${explicitmod[@]//_/-}" && printf ' [explicit]'
             printf '\n'
-        done | sort | column -c"${columns}"
+        done | LC_ALL=C.UTF-8 sort | column -c"${columns}"
         printf '\n'
     fi
 
     msg 'Included binaries:'
-    printf '  %s\n' "${binaries[@]}" | sort | column -c"${columns}"
+    printf '  %s\n' "${binaries[@]}" | LC_ALL=C.UTF-8 sort | column -c"${columns}"
     printf '\n'
 
     if [[ -n "$EARLYHOOKS" ]]; then
