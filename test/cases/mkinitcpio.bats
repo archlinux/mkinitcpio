@@ -98,33 +98,65 @@ EOH
 }
 
 @test "image creation zstd" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
     __gen_test_initcpio zstd
 }
 
 @test "image creation gzip" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
     __gen_test_initcpio gzip
 }
 
 @test "image creation bzip2" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
     __gen_test_initcpio bzip2
 }
 
 @test "image creation lzma" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
     __gen_test_initcpio lzma
 }
 
 @test "image creation xz" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
     __gen_test_initcpio xz
 }
 
 @test "image creation lzop" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
     __gen_test_initcpio lzop
 }
 
 @test "image creation lz4" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
     __gen_test_initcpio lz4
 }
 
 @test "image creation uncompressed" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
     __gen_test_initcpio cat
 }
