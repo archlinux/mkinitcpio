@@ -61,6 +61,8 @@ add_systemd_drop_in() {
 build() {
     local rules unit
 
+    map add_module 'crypto-lzo' 'crypto-lz4'
+
     add_binary /usr/bin/kmod /usr/bin/modprobe
     add_binary /usr/bin/mount
     add_binary /usr/bin/sulogin

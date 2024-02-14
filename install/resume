@@ -4,6 +4,8 @@
 build() {
     local systemd_ver
 
+    map add_module 'crypto-lzo' 'crypto-lz4'
+
     if command -v systemctl &>/dev/null; then
         IFS=' .-~^' read -r _ systemd_ver _ < <(systemctl --version)
         if (( systemd_ver >= 255 )); then
