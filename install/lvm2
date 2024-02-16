@@ -10,13 +10,20 @@ build() {
         'dm-mirror' \
         'dm-cache' \
         'dm-cache-smq' \
-        'dm-thin-pool'
+        'dm-writecache' \
+        'dm-thin-pool' \
+        'dm-raid' \
+        'raid0' \
+        'raid1' \
+        'raid10' \
+        'raid456' \
+        'dm-integrity'
 
     # from thin-provisioning-tools
     add_binary 'pdata_tools'
-    for symlink in cache_{check,dump,metadata_size,repair,restore} thin_{check,delta,dump,ls,metadata_size,repair,restore,rmap,trim}; do
-        add_symlink "/usr/bin/${symlink}" 'pdata_tools'
-    done
+    while IFS='' read -r -d '' symlink; do
+        add_symlink "$symlink"
+    done < <(LC_ALL=C.UTF-8 find -L /usr/bin/ -samefile "$(type -P pdata_tools)" -xtype l -print0)
 
     # udev rules and lvm configuration
     map add_udev_rule \
@@ -41,6 +48,6 @@ build() {
 
 help() {
   cat <<HELPEOF
-This hook enables LVM2 volumes in initramfs.
+This hook enables all detected LVM2 volumes in initramfs.
 HELPEOF
 }
