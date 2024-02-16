@@ -12,6 +12,12 @@ build() {
     map add_udev_rule \
         '63-md-raid-arrays.rules' \
         '64-md-raid-assembly.rules'
+
+    # For external metadata arrays (e.g. IMSM)
+    add_binary mdmon
+    if declare -F add_systemd_unit &>/dev/null; then
+        add_systemd_unit 'mdmon@.service'
+    fi
 }
 
 help() {
