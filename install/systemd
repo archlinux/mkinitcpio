@@ -106,7 +106,9 @@ build() {
         sockets.target \
         swap.target \
         systemd-battery-check.service \
+        systemd-bsod.service \
         systemd-fsck@.service \
+        systemd-hibernate-resume.service \
         systemd-journald-audit.socket \
         systemd-journald-dev-log.socket \
         systemd-journald.service \
