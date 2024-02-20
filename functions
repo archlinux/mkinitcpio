@@ -520,9 +520,9 @@ add_firmware() {
     local -i r=1
 
     for fw; do
-        # _d_firmware is assigned in mkinitcpio
+        # _d_fwpath is assigned in mkinitcpio
         # shellcheck disable=SC2154
-        for fwpath in "${_d_firmware[@]}"; do
+        for fwpath in "${_d_fwpath[@]}"; do
             # shellcheck disable=SC2153
             if ! compgen -G "${BUILDROOT}${fwpath}/${fw}?(.*)" &>/dev/null; then
                 # modinfo has firmware entries with globs, read entries into an array
