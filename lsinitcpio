@@ -356,6 +356,7 @@ if (( $(detect_early_img "$_image") )); then
     _offset="$(skip_early_img "$_image")"
 else
     _offset=0
+    _optearly=0
 fi
 
 # read compression type of the cpio image
