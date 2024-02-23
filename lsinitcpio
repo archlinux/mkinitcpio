@@ -331,6 +331,7 @@ fi
 
 [[ -n "$_image" ]] || die 'No image specified (use -h for help)'
 [[ -f "$_image" ]] || die "No such file: '%s'" "$_image"
+[[ -r "$_image" ]] || die "Unable to read file: '%s'" "$_image"
 
 case $(( _optanalyze + _optlistcontents + _optshowconfig )) in
     0)
