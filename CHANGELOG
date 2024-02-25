@@ -23,6 +23,23 @@ CHANGES WITH v38:
           Less important information, such as temporary file paths, will be
           omitted unless the -v/--verbose flag is used.
 
+        Changes to newly merged hooks:
+
+        * install/lvm2 now includes now includes several new kernel modules. It
+          it will also symlink all thin-provisioning-tools to /usr/bin/pdata_tools
+
+            New included kernel modules:
+                * dm-writecache
+                * dm-thin-pool
+                * dm-raid
+                * raid0
+                * raid1
+                * raid10
+                * raid456
+                * dm-integrity
+
+        * install/mdadm_udev now includes the mdmon binary for Intel Matrix
+          Storage Manager (IMSM) and the service file mdmon@.service.
 
         Changes in hooks:
 
