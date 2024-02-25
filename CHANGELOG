@@ -4,50 +4,40 @@ CHANGES WITH v38:
 
         New Features:
 
-        * mkinitcpio has support for an early CPIO image. This allows early
-          loading of microcode and possible ACPI table upgrades in the future.
+        * mkinitcpio gained support for generating an early CPIO image. This
+          allows early loading of microcode and gives the possibility to create
+          an ACPI table upgrade hook in the future. install/microcode is a new
+          hook to install early microcode into the early CPIO.
 
-        * install/microcode is a new hook to install early microcode into the
-          early CPIO.
+        * lsinitcpio has learned to list the content of the early CPIO image.
 
-        * lsinitcpio has learned a list the content of the early CPIO image.
-
-        * install/systemd, install/udev and hook/udev is now provided by
-          mkinitcpio
-
-        * install/encrypt, install/sd-encrypt and hook/encrypt is now provided
-          by mkinitcpio.
-
-        * install/lvm2 is now provided by mkinitcpio.
-
-        * install/mdadm_udev is now provided by mkinitcpio.
+        * The systemd, udev, sd-encrypt, lvm2 and mdadm_udev hooks are now
+          provided by mkinitcpio.
 
         Changes in mkinitcpio:
 
-        * mkinitcpio will now pre-compute the firware directories to avoid
-          uneccesarily lookup paths.
+        * mkinitcpio will filter out non-existing firmware directories to
+          speed up firmware lookup when adding modules.
 
-        * The output of the UKI generation will now be more quiet when printing
-          less important parts of the generation. --verbose will still include
-          the information.
+        * The output of the UKI generation will now be more quiet by default.
+          Less important information, such as temporary file paths, will be
+          omitted unless the -v/--verbose flag is used.
 
-        * All occurances of LC_ALL=C has been replaced with LC_ALL=C.UTF-8
 
         Changes in hooks:
 
-        * hook/resume will now use systemd-hibernate-resume if it's available.
+        * hook/resume will now use systemd-hibernate-resume if it's available
+          and honor the HibernateLocation EFI variable.
 
         * All occurances of LC_ALL=C has been replaced with LC_ALL=C.UTF-8
 
-        * install/resume now strips the new version suffix from the systemd
-          version.
-
         Changes in packaging:
 
-        * The libalm hook will now check if the preset _kver variable contains a
-          kernel or a kernel version before attemping to copy it over to /boot.
+        * The libalm hook will now check if the _kver variable in a preset
+          contains a file path or a kernel version before attemping to copy it
+          over to /boot.
 
-        * The kernel-install hook will now prefix it's output with mkinitcpio.
+        * The kernel-install hook will now prefix its output with mkinitcpio.
 
         Contributions from: Andrew J. Hesford, Christian Hesse,
         Jan Alexander Steffens, Levente Polyak, Luke T. Shumaker, Mike Yuan,
