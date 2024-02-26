@@ -1,5 +1,67 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v38:
+
+        Announcement of future breaking changes:
+
+        * --microcode has been deprecated and replaced by the new microcode hook
+          for early loading microcode files.
+
+        New Features:
+
+        * mkinitcpio gained support for generating an early CPIO image. This
+          allows early loading of microcode and gives the possibility to create
+          an ACPI table upgrade hook in the future. install/microcode is a new
+          hook to install early microcode into the early CPIO.
+
+        * lsinitcpio has learned to list the content of the early CPIO image.
+
+        * The systemd, udev, sd-encrypt, lvm2 and mdadm_udev hooks are now
+          provided by mkinitcpio. The symlinked `sd-lvm2` and `mdadm` names are
+          dropped.
+
+        Changes in mkinitcpio:
+
+        * mkinitcpio will filter out nonexistent firmware directories to
+          speed up firmware lookup when adding modules.
+
+        * The output of the UKI generation will now be more quiet by default.
+          Less important information, such as temporary file paths, will be
+          omitted unless the -v/--verbose flag is used.
+
+        Changes to newly merged hooks:
+
+        * install/lvm2 now includes includes dm-writecache, dm-raid, raid0,
+          raid1, raid10, raid456 and dm-integrity kernel modules. This fixes an
+          issue where devices are not activated in late userspace (after
+          switch root) because pvscan in early userspace (the initramfs phase)
+          failed to activate them because of missing kernel modules.
+          install/lvm2 will also symlink all thin-provisioning-tools to
+          /usr/bin/pdata_tools by searching for symlinks instead of harcoding
+          their file names.
+
+        * install/mdadm_udev now includes the mdmon binary for Intel Matrix
+          Storage Manager (IMSM) and the systemd unit mdmon@.service.
+
+        Changes in hooks:
+
+        * hook/resume will now use systemd-hibernate-resume if it is available
+          and honor the HibernateLocation EFI variable.
+
+        Changes in packaging:
+
+        * The libalm hook will now check if the _kver variable in a preset
+          contains a file path or a kernel version before attemping to copy it
+          over to /boot/.
+
+        * The kernel-install hook will now prefix its output with "(mkinitcpio)".
+
+        Contributions from: Christian Hesse, Jan Alexander Steffens, Luke T. Shumaker,
+        Mike Yuan, Morten Linderud, Maxim Mikityanskiy, Philip H., Tobias Powalowski,
+        cedric cvl, classabbyamp, nl6720
+
+        - 2024-02-28
+
 CHANGES WITH v37.3:
 
         Bugfix release:
