@@ -2,7 +2,7 @@ mkinitcpio - Arch Linux initramfs generation tools
 
 CHANGES WITH v38:
 
-        Announcement of future breaking changes:
+        Announcement of breaking changes:
 
         * --microcode has been deprecated and replaced by the new microcode hook
           for early loading microcode files.
