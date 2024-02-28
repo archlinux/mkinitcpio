@@ -34,7 +34,7 @@ build() {
         '/usr/lib/initcpio/udev/11-dm-initramfs.rules'
 
     # this udev rule is specific for systemd and non-systemd systems
-    if command -v add_systemd_unit >/dev/null; then
+    if declare -F add_systemd_unit &>/dev/null; then
         add_udev_rule '69-dm-lvm.rules'
     else
         add_udev_rule '/usr/lib/initcpio/udev/69-dm-lvm.rules'
