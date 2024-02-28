@@ -2,22 +2,9 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 build() {
-    local major minor
-
     add_checked_modules -f '(_cs|sl811_hcd|isp116x_hcd)' '/usb/host'
-
-    # As of 3.5, modaliases seem to be exported for HID
-    # devices, so we can leverage autodetection.
-    IFS=.- read -r major minor _ <<<"$KERNELVERSION"
-    if (( major > 3 || (major == 3 && minor >= 5) )); then
-        add_checked_modules '/hid/hid'
-    else
-        add_all_modules '/hid/hid'
-    fi
-
     add_module 'usbhid'
-
-    add_checked_modules '/input/(serio|keyboard)'
+    map add_checked_modules '/hid/hid' '/input/(serio|keyboard)'
 }
 
 help() {
