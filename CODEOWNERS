@@ -3,3 +3,21 @@ kernel-install/ @clavelc @lobachevsky
 
 [test suite]
 test/ @rogueai
+
+[cryptsetup]
+hooks/encrypt @eworm
+install/encrypt @eworm
+install/sd-encrypt @eworm @yhndnzj
+
+[lvm2]
+install/lvm2 @eworm
+
+[mdadm]
+install/mdadm_udev @tpowa @felixonmars
+
+[systemd]
+hooks/udev @eworm
+install/sd-shutdown @eworm
+install/sd-vconsole @eworm
+install/systemd @eworm @yhndnzj
+install/udev @eworm
