@@ -4,7 +4,7 @@
 build() {
     add_checked_modules -f '(_cs|sl811_hcd|isp116x_hcd)' '/usb/host'
     add_module 'usbhid'
-    map add_checked_modules '/hid/hid' '/input/(serio|keyboard)'
+    map add_checked_modules '/hid/(hid|.+-hid/)' '/input/(serio|keyboard)'
 }
 
 help() {
