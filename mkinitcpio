@@ -341,6 +341,28 @@ build_image() {
     fi
 }
 
+validate_compression() {
+    local major minor compression_fallback='zstd'
+
+    # Linux < 5.9 does not support zstd-compressed initramfs. Fall back to gzip.
+    IFS=.- read -r major minor _ <<<"$KERNELVERSION"
+    if ! (( major > 5 || (major == 5 && minor >= 9) )); then
+        compression_fallback='gzip'
+        # Show a warning if zstd compression was explicitly configured.
+        if [[ "${_optcompress:-${COMPRESSION}}" == 'zstd' ]]; then
+            _optcompress=''
+            unset COMPRESSION COMPRESSION_OPTIONS
+            warning 'Kernel %s does not support zstd-compressed initramfs. Using gzip compression instead.' "$KERNELVERSION"
+        fi
+    fi
+    _optcompress="${_optcompress:-"${COMPRESSION:-${compression_fallback}}"}"
+
+    if ! type -P "$_optcompress" >/dev/null; then
+        warning "Unable to locate compression method: '%s'" "$_optcompress"
+        _optcompress='cat'
+    fi
+}
+
 # do not invoke directly, this is called by uki_init and uki_add_section
 _uki_increase_offset() {
     local step="$1"
@@ -999,11 +1021,7 @@ if [[ -n "$_optgenimg" ]]; then
         die "Unable to write to '%s'" "$_optgenimg"
     fi
 
-    _optcompress="${_optcompress:-"${COMPRESSION:-zstd}"}"
-    if ! type -P "$_optcompress" >/dev/null; then
-        warning "Unable to locate compression method: '%s'" "$_optcompress"
-        _optcompress='cat'
-    fi
+    validate_compression
 
     msg "Starting build: '%s'" "$KERNELVERSION"
 elif [[ -n "$_opttargetdir" ]]; then

@@ -56,8 +56,9 @@ override the main configuration file.
     Defines a program to filter the generated image through. The kernel
     understands the compression formats yielded by the *zstd*(1), *gzip*(1),
     *bzip2*(1), *lz4*(1), *lzop*(1), *lzma*(1), and *xz*(1) compressors. If
-    unspecified, this setting defaults to _zstd_ compression. In order to create
-    an uncompressed image, define this variable as _cat_.
+    unspecified, this setting defaults to _zstd_ compression for Linux ≥ 5.9 and
+    gzip compression for Linux < 5.9. In order to create an uncompressed image,
+    define this variable as _cat_.
      +
     It is not hard to realize that a filter such as a _tac_ or _rev_ will cause
     *mkinitcpio* to report success but generate a useless image. Similarly,
