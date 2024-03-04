@@ -39,7 +39,7 @@ build() {
     add_binary '/usr/lib/ossl-modules/legacy.so'
 
     # add libraries dlopen()ed by systemd-cryptsetup
-    LC_ALL=C.UTF-8 find /usr/lib/ -maxdepth 1 -name "libfido2.so*" | while read -r -d '' FILE; do
+    LC_ALL=C.UTF-8 find /usr/lib/ -maxdepth 1 -name "libfido2.so*" | while read -r FILE; do
         if [[ -L "${FILE}" ]]; then
             add_symlink "${FILE}"
         else
