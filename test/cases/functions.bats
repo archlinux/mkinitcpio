@@ -150,12 +150,13 @@ setup() {
 }
 
 @test "initialize_buildroot success" {
-    local workingdir="${BATS_RUN_TMPDIR}/${BATS_TEST_NAME}/mkinitcpio"
+    local parentdir="${BATS_RUN_TMPDIR}/${BATS_TEST_NAME}" workingdir=''
 
-    install -dm755 "$workingdir"
-    run initialize_buildroot 'none' "$workingdir"
+    install -dm755 "$parentdir"
+    workingdir="$(TMPDIR="$parentdir" initialize_buildroot 'none')"
 
     # asserting the entire expected tree would be extremely verbose
+    assert [ -n "${workingdir}" ]
     assert [ -e "${workingdir}/early/early_cpio" ]
     assert [ -e "${workingdir}/root/VERSION" ]
 }
@@ -170,12 +171,12 @@ setup() {
 }
 
 @test "initialize_buildroot unwriteable working directory" {
-    local workdir="${BATS_RUN_TMPDIR}/${BATS_TEST_NAME}/workdir"
+    local generatedir="${BATS_RUN_TMPDIR}/${BATS_TEST_NAME}/workdir"
 
-    install -dm555 "$workdir"
-    run initialize_buildroot 'none' "$workdir"
+    install -dm555 "$generatedir"
+    run initialize_buildroot 'none' "$generatedir"
     assert_failure
-    assert_output "==> ERROR: Unable to write to working directory: $workdir"
+    assert_output "==> ERROR: Unable to write to build root: $generatedir"
 }
 
 @test "add_file parent directory is a symlink" {
