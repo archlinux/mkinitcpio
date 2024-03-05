@@ -212,7 +212,7 @@ hook_list() {
 compute_d_fwpath() {
     local fw_dir
     for fw_dir in "${_d_firmware[@]}"; do
-        fw_dir="$(realpath -- "$fw_dir")"
+        fw_dir="$(realpath -qe -- "$fw_dir")"
         if [[ -d "$fw_dir" ]]; then
             # only add if not already in array
             ! in_array "$fw_dir" "${_d_fwpath[@]}" && _d_fwpath+=("$fw_dir")
