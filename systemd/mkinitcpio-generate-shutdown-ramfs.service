@@ -12,3 +12,16 @@ Type=oneshot
 # use /run/initcpio-tmp/ as temporary directory
 RuntimeDirectory=initcpio-tmp
 ExecStart=/usr/bin/mkinitcpio -A sd-shutdown -d /run/initramfs -k none -c /dev/null -t "$RUNTIME_DIRECTORY"
+
+ProtectSystem=strict
+ReadWritePaths=/run/initramfs
+ProtectHome=yes
+ProtectHostname=yes
+ProtectClock=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+PrivateNetwork=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
