@@ -946,7 +946,7 @@ fi
 MODULES_DECOMPRESS="${MODULES_DECOMPRESS:-"yes"}"
 
 _d_workdir="$(initialize_buildroot "$KERNELVERSION" "$_opttargetdir")" || exit 1
-BUILDROOT="$_d_workdir/root"
+BUILDROOT="${_opttargetdir:-$_d_workdir/root}"
 EARLYROOT="$_d_workdir/early"
 
 # Source additional configuration files, if no configuration file has been defined either with "-c" or via preset file
