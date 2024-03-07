@@ -265,8 +265,56 @@ create_image() {
     done
 }
 
+# Decompress firmware files
+decompress_firmware() {
+    local buildroot_fwpath=() fw_files=() fw_file_symlinks=() file linkobject symlink_message
+
+    buildroot_fwpath=("${_d_fwpath[@]/#/$BUILDROOT}")
+
+    mapfile -d '' -t fw_files < <(LC_ALL=C.UTF-8 find "${buildroot_fwpath[@]}" -type f -name '*.zst' -print0 2>/dev/null | LC_ALL=C.UTF-8 sort -uz)
+    if (( ${#fw_files[@]} )); then
+        msg 'Decompressing zstd-compressed firmware files'
+        for file in "${fw_files[@]}"; do
+            quiet "Decompressing '%s'" "$file"
+            zstd -qd --rm -- "$file"
+        done
+        mapfile -d '' -O "${#fw_file_symlinks[@]}" -t fw_file_symlinks \
+            < <(LC_ALL=C.UTF-8 find "${buildroot_fwpath[@]}" -type l -name '*.zst' -print0 2>/dev/null | LC_ALL=C.UTF-8 sort -uz)
+    fi
+    mapfile -d '' -t fw_files < <(LC_ALL=C.UTF-8 find "${buildroot_fwpath[@]}" -type f -name '*.xz' -print0 2>/dev/null | LC_ALL=C.UTF-8 sort -uz)
+    if (( ${#fw_files[@]} )); then
+        msg 'Decompressing xz-compressed firmware files'
+        quiet "Decompressing '%s'" "${fw_files[@]}"
+        xz -q -d -- "${fw_files[@]}"
+        mapfile -d '' -O "${#fw_file_symlinks[@]}" -t fw_file_symlinks \
+            < <(LC_ALL=C.UTF-8 find "${buildroot_fwpath[@]}" -type l -name '*.xz' -print0 2>/dev/null | LC_ALL=C.UTF-8 sort -uz)
+    fi
+
+    # Fix symlinks to point to the uncompressed files
+    if (( ${#fw_file_symlinks[@]} )); then
+        msg2 'Fixing firmware file symlinks'
+        for file in "${fw_file_symlinks[@]}"; do
+            linkobject="$(find "$file" -prune -printf '%l')"
+            symlink_message="Rewriting '${file#"${BUILDROOT}"} -> ${linkobject#"${BUILDROOT}"}' to"
+            # Remove the now invalid symlink
+            rm -- "${file:?}"
+
+            file="${file%.zst}" file="${file%.xz}"
+            linkobject="${linkobject%.zst}" linkobject="${linkobject%.xz}"
+            symlink_message="${symlink_message} '${file#"${BUILDROOT}"} -> ${linkobject#"${BUILDROOT}"}'"
+            quiet "$symlink_message"
+            # Create a new valid symlink
+            ln -sfTn -- "${linkobject:?}" "${file:?}"
+        done
+    fi
+}
+
 build_image() {
     local out="$1" compressout="$1" compress="$2" errprog pipestatus
+
+    if [[ "$MODULES_DECOMPRESS" == 'yes' ]]; then
+        decompress_firmware
+    fi
 
     case "$compress" in
         cat)
