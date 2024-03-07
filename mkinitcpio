@@ -344,6 +344,10 @@ build_image() {
 validate_compression() {
     local major minor compression_fallback='zstd'
 
+    if [[ -z "$_optcompress" && -v COMPRESSION_OPTIONS && ! -v COMPRESSION ]]; then
+        warning 'COMPRESSION_OPTIONS is set without also setting COMPRESSION. Configure COMPRESSION explicitly!'
+    fi
+
     # Linux < 5.9 does not support zstd-compressed initramfs. Fall back to gzip.
     IFS=.- read -r major minor _ <<<"$KERNELVERSION"
     if ! (( major > 5 || (major == 5 && minor >= 9) )); then
