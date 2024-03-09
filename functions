@@ -157,64 +157,51 @@ kver_x86() {
 detect_compression() {
     local file="$1" offset="${2:-0}" bytes
 
-    bytes="$(od -An -t x1 -N6 -j "$offset" "$file" | tr -dc '[:alnum:]')"
+    # The first 8 bytes are enough to detect most formats.
+    bytes="$(od -An -t x1 -j "$offset" -N 8 "$file" | tr -d ' ')"
     case "$bytes" in
-        'fd377a585a00')
+        'fd377a585a00'*)
             echo 'xz'
             return
             ;;
-    esac
-
-    bytes="$(od -An -t x1 -N4 -j "$offset" "$file" | tr -dc '[:alnum:]')"
-    if [[ "$bytes" == '894c5a4f' ]]; then
-        echo 'lzop'
-        return
-    fi
-
-    bytes="$(od -An -t x2 -N2 -j "$offset" "$file" | tr -dc '[:alnum:]')"
-    if [[ "$bytes" == '8b1f' ]]; then
-        echo 'gzip'
-        return
-    fi
-
-    bytes="$(od -An -t x4 -N4 -j "$offset" "$file" | tr -dc '[:alnum:]')"
-    case "$bytes" in
-        '184d2204')
+        '894c5a4f'*)
+            echo 'lzop'
+            return
+            ;;
+        '1f8b'*)
+            echo 'gzip'
+            return
+            ;;
+        '04224d18'*)
             error 'Newer lz4 stream format detected! This may not boot!'
             echo 'lz4'
             return
             ;;
-        '184c2102')
+        '02214c18'*)
             echo 'lz4 -l'
             return
             ;;
-        'fd2fb528')
+        '28b52ffd'*)
             echo 'zstd'
             return
             ;;
+        '425a68'*) # 'BZh' in ASCII
+            echo 'bzip2'
+            return
+            ;;
+        '5d0000'*)
+            # lzma detection sucks and there's really no good way to
+            # do it without reading large portions of the stream. this
+            # check is good enough for GNU tar, apparently, so it's good
+            # enough for me.
+            echo 'lzma'
+            return
+            ;;
+        ????????'7a696d67'*) # 4 discarded bytes, then 'zimg' in ASCII
+            echo 'zimg'
+            return
+            ;;
     esac
-
-    bytes="$(od -An -c -N3 -j "$offset" "$file" | tr -dc '[:alnum:]')"
-    if [[ "$bytes" == 'BZh' ]]; then
-        echo 'bzip2'
-        return
-    fi
-
-    # lzma detection sucks and there's really no good way to
-    # do it without reading large portions of the stream. this
-    # check is good enough for GNU tar, apparently, so it's good
-    # enough for me.
-    bytes="$(od -An -t x1 -N3 -j "$offset" "$file" | tr -dc '[:alnum:]')"
-    if [[ "$bytes" == '5d0000' ]]; then
-        echo 'lzma'
-        return
-    fi
-
-    read -rd '' bytes < <(od -An -j $((offset + 0x04)) -t c -N4 "$file" | tr -dc '[:alnum:]')
-    if [[ "$bytes" == 'zimg' ]]; then
-        echo 'zimg'
-        return
-    fi
 
     # out of ideas, assuming uncompressed
 }
