@@ -1,0 +1,49 @@
+= `+image.bin+`
+
+As described in the comment in `+functions:_arm_zimage_cat()+`, we
+require that the image file is at least 128KiB when compressed; real
+kernels will obviously satisfy this, but would be bulky and present
+license-probems to bundle as testcases. Instead, let’s use a copy of
+Mary Shelly’s Frankenstein (which is in the public domain,
+https://www.gutenberg.org/ebooks/84.txt.utf-8[courtesy of Project
+Gutenberg]). This is about 440KiB uncompressed, and 140KiB when
+compressed with lzma or xz (the best compression ratios of all the
+algorithms).
+
+= `+linux-*.zimage.bin+`
+
+For the compressed versions, I used the script
+https://gitlab.archlinux.org/lukeshu/gen-zimage to use the Linux
+kernel’s build system across a variety of versions and configurations to
+build ARM zImage files with the above `+image.bin+` as a payload. It
+uses a custom `+objcopy+` that replaces all machine code with garbage
+(the string 0xDEADBEEF again and again), as to
+
+* avoid license infringement; the interesting thing for these tests is
+  the shape of the file, not the code in it
+
+* make it easier to verify that nothing unsavory is being smuggled in
+  these files.
+
+I have not included all of the zImage files that I generated (44,585),
+just what I feel to be a representative subset (though I did test
+against all 45k), a matrix of:
+
+* kernel versions:
+** v4.15 (the first version we support)
+** v6.8 (the most recent version at the time of this writing)
+** v4.17 (because unlike v4.15 and v6.8 these have multiple
+   sub-0x20000 values early in the GOT (except for the lz4 files))
+
+* each compression method (gzip, lz4, lzma, lzo, xz)
+
+* a configuration that captures each of:
+** zbootrom builds (for old-school ARMv4 StrongARM machines) (because
+   they have a non-zero `+CONFIG_ZBOOT_ROM_TEXT+`)
+** each endianness:
+*** LE (with and without thumb2)
+*** BE-32
+*** BE-8 (with and without thumb2)
+** ARMv4t efistub builds that merge bootloader args with the args from
+   device tree (becasue of all the kernels I built, these have the
+   largest `+input_data_addr+`)
