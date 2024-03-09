@@ -269,49 +269,34 @@ _zboot_cat() {
     # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/zboot-header.S?h=v6.7
 
     local comp_type="$1" file="$2" offset="${3:-0}"
-    local reader start size
+    local reader start size size_len
 
     # Read a pair of u32s from 0x08 (right after the "zimg" magic
     # identifier) for the starting-offset and size of the compressed
-    # data.  The size may need to be corrected according to the
-    # compression type.
+    # data.
     start="$(od -An -j "$((offset+0x08))" -t u4 -N4 "$file" | tr -dc '[:alnum:]')"
     size="$(od -An -j "$((offset+0x0c))" -t u4 -N4 "$file" | tr -dc '[:alnum:]')"
 
     [[ "$start" =~ ^[0-9]+$ ]] || return 1
     [[ "$size" =~ ^[0-9]+$ ]] || return 1
 
+    size_len=4 # corresponds to Makefile.zboot:zboot-size-len-y or zboot-header.S:ZBOOT_SIZE_LEN
     case "$comp_type" in
-        'gzip')
-            reader='zcat'
-            ;;
-        'lz4')
-            reader='lz4cat'
-            size="$((size + 4))"
-            ;;
-        'lzma')
-            reader='xzcat'
-            size="$((size + 4))"
-            ;;
-        'lzo')
-            reader="lzop -d"
-            size="$((size + 4))"
-            ;;
-        'xzkern')
-            reader='xzcat'
-            size="$((size + 4))"
-            ;;
-        'zstd22')
-            reader='zstdcat'
-            size="$((size + 4))"
-            ;;
+        'gzip') reader='zcat'
+                size_len=0
+                ;;
+        'lz4') reader='lz4cat' ;;
+        'lzma') reader='xzcat' ;;
+        'lzo') reader='lzop -d' ;;
+        'xzkern') reader='xzcat' ;;
+        'zstd22') reader='zstdcat' ;;
         *)
-            reader="$comp_type"
-            size="$((size + 4))"
+            error 'Unknown zboot compression type: %s' "${comp_type#'zboot '}"
+            return 1
             ;;
     esac
 
-    dd if="$file" bs=1 count="$size" skip="$((offset+start))" 2>/dev/null | $reader -
+    tail --bytes=+"$((offset+start+1))" <"$file" | head --bytes="$((size+size_len))" | $reader -
 }
 
 kver_generic() {
