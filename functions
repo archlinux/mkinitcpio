@@ -221,6 +221,18 @@ detect_compression() {
             ;;
     esac
 
+    # Try some formats that require us to sniff bytes at other locations.
+
+    bytes="$(od -An -t x1 -j "$((offset+0x24))" -N4 "$file" | tr -d ' ')"
+    if [[ "$bytes" == '18286f01' || "$bytes" == '016f2818' ]]; then # endian-sensitive
+        # Linux kernel ARM32 self-decompressing "zImage"
+        #
+        # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/arm/boot/compressed/vmlinux.lds.S?h=v6.7#n121
+        # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/arm/boot/compressed/head.S?h=v6.7#n215
+        printf 'ARM zImage'
+        return
+    fi
+
     # out of ideas, assuming uncompressed
 }
 
@@ -241,6 +253,10 @@ decompress_cat() {
         'lzma') reader='xzcat' ;;
         'zboot '*)
             _zboot_cat "${comp_type#'zboot '}" "$file" "$offset"
+            return
+            ;;
+        'ARM zImage')
+            _arm_zimage_cat "$file" "$offset"
             return
             ;;
         *)
@@ -297,6 +313,122 @@ _zboot_cat() {
     esac
 
     tail --bytes=+"$((offset+start+1))" <"$file" | head --bytes="$((size+size_len))" | $reader -
+}
+
+_arm_zimage_cat() {
+    # Linux kernel ARM32 self-decompressing "zImage"
+
+    # The end of the file looks like:
+    #
+    #    input_data: char []<compressed data>
+    #    piggy_size: u32  len(<uncompressed_data>)
+    #    padding:    char []<zeros>               ; <=4096 bytes
+    #    got:        u32  []<global_offsets>
+    #    trailer:    char []<whatever>            ; <512 bytes
+    #
+    # We can find the location of "piggy_size" from the file header,
+    # and then we can ignore some zeros to find the GOT. It is
+    # reasonable to assume (but still a heuristic) that the largest
+    # value in the GOT that is <0x20000 (128KiB) is the location of
+    # input_data.
+    #
+    # Note that piggy_size is *not* at a 4-byte-aligned location.
+    #
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/arm/boot/compressed/vmlinux.lds.S?h=v6.7
+    #
+    # About that 0x20000 heuristic: input_data is put after the
+    # extraction code, and so its location is basically determined by
+    # the size of the extraction code, which will vary based on a
+    # number of factors. So, this heuristic relies on a few things:
+    #
+    #  1. That ${max_extraction_code_size} is less than ~128KiB
+    #  2. That ${min_compressed_kernel_size}+${min_extraction_code_size}
+    #     is more than ~128KiB.
+    #
+    # How safe are those assumptions?
+    #
+    #  1. Using GCC 12.2.0 with kernels 4.15 - 6.8 in a variety of
+    #     configurations, I've observed input_data being placed at
+    #     addresses in the range 0x152e - 0x10f63 (~5.3KiB - ~68KiB).
+    #     This is well within our 128KiB threshold.
+    #  2. Let's just say that at the limit min_extraction_code_size =~
+    #     0; I think it is safe to assume that even compressed,
+    #     kernels are measured in MiB, not KiB. (Though, when writing
+    #     tests for this code, it means we must be careful to use
+    #     files that are large enough!)
+
+    local file="$1" offset="${2:-0}"
+
+    # Read magic numbers.
+    local hdr_endian_indicator cpu_endian_indicator have_table_indicator hdr_endian cpu_endian
+    hdr_endian_indicator="$(od -An -t x1 -j "$((offset+0x24))" -N4 "$file" | tr -d ' ')"
+    cpu_endian_indicator="$(od -An -t x1 -j "$((offset+0x30))" -N4 "$file" | tr -d ' ')"
+    have_table_indicator="$(od -An -t x1 -j "$((offset+0x34))" -N4 "$file" | tr -d ' ')"
+    case "$hdr_endian_indicator" in #
+        '18286f01') hdr_endian='little' ;;
+        '016f2818') hdr_endian='big' ;;
+        *)
+            error '_arm_zimage_cat called, but file does not look like an ARM zImage'
+            return 1
+            ;;
+    esac
+    case "$cpu_endian_indicator" in
+        # Prior to v3.17, hdr_endian and cpu_endian were the same, and
+        # there was no cpu_endian_indicator.
+        '01020304') cpu_endian='little' ;;
+        '04030201') cpu_endian='big' ;;
+        *)          cpu_endian="$hdr_endian" ;;
+    esac
+    if [[ "$have_table_indicator" != '45454545' ]]; then
+        error 'ARM zImage is too old (before v4.15, 2017)'
+        return 1
+    fi
+
+    # Read offsets.
+    local zboot_rom_text magic_table_addr piggy_size_addr aligned_after_piggy
+    zboot_rom_text="$(od --endian="$hdr_endian" -An -t u4 -j "$((offset+0x28))" -N4 "$file" | tr -d ' ')"
+    magic_table_addr="$(od --endian="$hdr_endian" -An -t u4 -j "$((offset+0x38))" -N4 "$file" | tr -d ' ')"
+    piggy_size_addr="$(od --endian="$hdr_endian" -An -t u4 -j $((offset+magic_table_addr+8)) -N4 "$file" | tr -d ' ')"
+    aligned_after_piggy=$((((piggy_size_addr+4+3)/4)*4))
+
+    # Read the padding and GOT.
+    # These values have zboot_rom_text added to them.
+    local -i input_data_addr=0 in_got=0 val size
+    while read -r val; do
+        if (( val == 0 )); then
+            if (( in_got )); then
+                break
+            else
+                continue
+            fi
+        fi
+        in_got=1
+        val="$((val - zboot_rom_text))"
+        if (( val > input_data_addr && val < 0x20000 )); then
+            input_data_addr=$val
+        fi
+    done < <(od --endian="$cpu_endian" -An -v -t u4 -j "$((offset+aligned_after_piggy))" "$file" | xargs printf '%s\n')
+    if (( input_data_addr == 0 )); then
+        error 'Could not find input_data_addr in ARM zImage'
+        return 1
+    fi
+    size="$((piggy_size_addr-input_data_addr))"
+
+    # gzip contains a 4-byte uncompressed-size suffix, so for
+    # CONFIG_KERNEL_GZIP it saves 4 bytes by having the input_data
+    # extend into the piggy_size.
+    #
+    # That is: the Makefile says
+    #    compress-$(CONFIG_KERNEL_GZIP) = gzip
+    # instead of
+    #    compress-$(CONFIG_KERNEL_GZIP) = gzip_with_size
+    #
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/arm/boot/compressed/Makefile?h=v6.7#n79
+    if [[ "$(detect_compression "$file" "$((offset+input_data_addr))")" == 'gzip' ]]; then
+        size=$((size+4))
+    fi
+
+    decompress_cat "$file" "$((offset+input_data_addr))" "$size"
 }
 
 kver_generic() {
