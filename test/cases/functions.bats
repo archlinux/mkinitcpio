@@ -101,6 +101,15 @@ setup() {
     assert_output "6.0.9-arch1-1"
 }
 
+kver_zimage() {
+    # This function can probably go away now that _zboot_cat() has
+    # been factored out of it... but I don't want to rewrite the
+    # tests.
+    read -r _ _ kver _ < <(_zboot_cat "$1" "$2" | grep -m1 -aoE  'Linux version .(\.[-[:alnum:]+]+)+')
+
+    printf '%s' "$kver"
+}
+
 @test "kver_zimage gzip" {
     local kernel_ver='' tmp_knl='' tmp_img=''
     kernel_ver="Linux version 6.1.0-rc5-5 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"

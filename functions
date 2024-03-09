@@ -224,7 +224,40 @@ detect_compression() {
     # out of ideas, assuming uncompressed
 }
 
-kver_zimage() {
+decompress_cat() {
+    local file="$1" offset="${2:-0}" size="${3:-}"
+    local comp_type reader
+
+    comp_type="$(detect_compression "$file" "$offset")"
+    case "$comp_type" in
+        '') reader='cat' ;;
+        'xz') reader='xzcat' ;;
+        'lzop') reader='lzop -d' ;;
+        'gzip') reader='zcat' ;;
+        'lz4') reader='lz4cat' ;;
+        'lz4 -l') reader='lz4cat -l' ;;
+        'zstd') reader='zstdcat' ;;
+        'bzip2') reader='bzcat' ;;
+        'lzma') reader='xzcat' ;;
+        'zboot '*)
+            _zboot_cat "${comp_type#'zboot '}" "$file" "$offset"
+            return
+            ;;
+        *)
+            error 'Unknown compression type: %s' "$comp_type"
+            return 1
+            ;;
+    esac
+    if (( offset == 0 )) && [[ -z "$size" ]]; then
+        $reader - <"$file"
+    elif [[ -z "$size" ]]; then
+        tail --bytes=+"$((offset+1))" "$file" | $reader -
+    else
+        tail --bytes=+"$((offset+1))" "$file" | head --bytes="$size" | $reader -
+    fi
+}
+
+_zboot_cat() {
     # Linux kernel "zboot" self-decompressing EFI images
     # (since kernel 6.1)
     # (as of kernel 6.7: only on arm64, loongarch, and riscv)
@@ -235,14 +268,15 @@ kver_zimage() {
     # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/Makefile.zboot?h=v6.7
     # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/zboot-header.S?h=v6.7
 
-    local comp_type="$1" file="$2" kver='' reader start size
+    local comp_type="$1" file="$2" offset="${3:-0}"
+    local reader start size
 
     # Read a pair of u32s from 0x08 (right after the "zimg" magic
     # identifier) for the starting-offset and size of the compressed
     # data.  The size may need to be corrected according to the
     # compression type.
-    start="$(od -An -j0x08 -t u4 -N4 "$file" | tr -dc '[:alnum:]')"
-    size="$(od -An -j0x0c -t u4 -N4 "$file" | tr -dc '[:alnum:]')"
+    start="$(od -An -j "$((offset+0x08))" -t u4 -N4 "$file" | tr -dc '[:alnum:]')"
+    size="$(od -An -j "$((offset+0x0c))" -t u4 -N4 "$file" | tr -dc '[:alnum:]')"
 
     [[ "$start" =~ ^[0-9]+$ ]] || return 1
     [[ "$size" =~ ^[0-9]+$ ]] || return 1
@@ -277,9 +311,7 @@ kver_zimage() {
             ;;
     esac
 
-    read -r _ _ kver _ < <(dd if="$file" bs=1 count="$size" skip="$start" 2>/dev/null | $reader - | grep -m1 -aoE  'Linux version .(\.[-[:alnum:]+]+)+')
-
-    printf '%s' "$kver"
+    dd if="$file" bs=1 count="$size" skip="$((offset+start))" 2>/dev/null | $reader -
 }
 
 kver_generic() {
@@ -289,24 +321,11 @@ kver_generic() {
     # gzipped /boot/vmlinuz-linuz. On other architectures it may be worth trying
     # rather than bailing, and inform the user if none was found.
 
+    local kver=''
+
     # Loosely grep for `linux_banner`:
     # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/init/version-timestamp.c?h=v6.7#n28
-    local kver='' reader='cat'
-    local comp_type=''
-
-    comp_type="$(detect_compression "$1")"
-
-    if [[ "$comp_type" == 'zboot '* ]]; then
-        # Generic EFI zboot image
-        kver_zimage "${comp_type#'zboot '}" "$1"
-        return 0
-    elif [[ "$comp_type" == 'gzip' ]]; then
-        reader='zcat'
-    fi
-
-    [[ "$(detect_compression "$1")" == 'gzip' ]] && reader='zcat'
-
-    read -r _ _ kver _ < <($reader "$1" | grep -m1 -aoE 'Linux version .(\.[-[:alnum:]+]+)+')
+    read -r _ _ kver _ < <(decompress_cat "$1" | grep -m1 -aoE 'Linux version .(\.[-[:alnum:]+]+)+')
 
     printf '%s' "$kver"
 }
