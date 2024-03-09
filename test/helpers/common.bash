@@ -10,14 +10,7 @@ __gen_test_image() {
     trap '{ rm -f -- "$tmp_img"; }' EXIT
     trap '{ rm -f -- "$tmp_file"; }' EXIT
     echo "this is a test file" > "$tmp_file"
-
-    if [[ ${compress_opts[0]} == "zimg" ]]; then
-        bsdtar -cf - "$tmp_file" > "$tmp_img"
-        # write "zimg" into image at 0x04
-        printf "zimg" | dd of="$tmp_img" seek=$((0x4)) bs=1 count=4 status=none conv=notrunc
-    else
-        bsdtar -cf - "$tmp_file" | "${compress_opts[@]}" > "$tmp_img"
-    fi
+    bsdtar -cf - "$tmp_file" | "${compress_opts[@]}" > "$tmp_img"
     rm -f -- "$tmp_file"
     echo "$tmp_img"
 }
