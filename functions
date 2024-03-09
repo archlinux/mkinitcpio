@@ -142,10 +142,17 @@ parseopts() {
 kver_x86() {
     local kver
     local -i offset
+    # On x86 (since kernel 1.3.73, 1996), regardless of whether it's
+    # an Image, a zImage, or a bzImage: The file header is the same,
+    # and contains the kernel_version string.
+    #
     # scrape the version out of the kernel image. locate the offset
     # to the version string by reading 2 bytes out of image at at
     # address 0x20E. this leads us to a string of, at most, 128 bytes.
     # read the first word from this string as the kernel version.
+    #
+    # https://www.kernel.org/doc/html/v6.7/arch/x86/boot.html
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/boot/header.S?h=v6.7
     offset="$(od -An -j0x20E -dN2 "$1")" || return
 
     read -r kver _ < \
@@ -155,6 +162,8 @@ kver_x86() {
 }
 
 detect_compression() {
+    # Detect standard compressed files. Not Linux-kernel specific.
+
     local file="$1" offset="${2:-0}" bytes
 
     # The first 8 bytes are enough to detect most formats.
@@ -198,8 +207,14 @@ detect_compression() {
             return
             ;;
         ????????'7a696d67'*) # 4 discarded bytes, then 'zimg' in ASCII
-            # Read 36 bytes (before 0x3c) from address 0x18,
-            # which is a nul-terminated string representing the compressed type.
+            # Linux kernel "zboot" self-decompressing EFI images
+            # (since kernel 6.1)
+            # (as of kernel 6.7: only on arm64, loongarch, and riscv)
+
+            # Read 32 bytes (before 0x38) from address 0x18, which is a
+            # null-terminated string representing the compressed type.
+            #
+            # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/zboot-header.S?h=v6.7
             read -rd '' bytes < <(od -An -j0x18 -t a -N32 "$1" | sed 's/ nul//g' | tr -dc '[:alnum:]')
             printf 'zboot %s' "$bytes"
             return
@@ -210,17 +225,23 @@ detect_compression() {
 }
 
 kver_zimage() {
-    # Generic EFI zboot added since kernel 6.1
-    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/Makefile.zboot?h=v6.1
-    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/zboot-header.S?h=v6.1
+    # Linux kernel "zboot" self-decompressing EFI images
+    # (since kernel 6.1)
+    # (as of kernel 6.7: only on arm64, loongarch, and riscv)
+
+    # See zboot-header.S for offsets. See Makefile.zboot for
+    # compression types and size adjustments.
+    #
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/Makefile.zboot?h=v6.7
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/zboot-header.S?h=v6.7
 
     local comp_type="$1" file="$2" kver='' reader start size
 
-    # Reading 4 bytes from address 0x08 is the starting offset of compressed data
+    # Read a pair of u32s from 0x08 (right after the "zimg" magic
+    # identifier) for the starting-offset and size of the compressed
+    # data.  The size may need to be corrected according to the
+    # compression type.
     start="$(od -An -j0x08 -t u4 -N4 "$file" | tr -dc '[:alnum:]')"
-
-    # Reading 4 bytes from address 0x0c is the size of compressed data,
-    # but it needs to be corrected according to the compressed type.
     size="$(od -An -j0x0c -t u4 -N4 "$file" | tr -dc '[:alnum:]')"
 
     [[ "$start" =~ ^[0-9]+$ ]] || return 1
@@ -269,7 +290,7 @@ kver_generic() {
     # rather than bailing, and inform the user if none was found.
 
     # Loosely grep for `linux_banner`:
-    # https://elixir.bootlin.com/linux/v5.7.2/source/init/version.c#L46
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/init/version-timestamp.c?h=v6.7#n28
     local kver='' reader='cat'
     local comp_type=''
 
