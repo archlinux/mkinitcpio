@@ -9,7 +9,9 @@ run_hook() {
     # Get keyfile if specified
     ckeyfile="/crypto_keyfile.bin"
     if [ -n "$cryptkey" ]; then
-        IFS=: read -r ckdev ckarg1 ckarg2 <<EOF
+        # cryptkey can contain : which needs to be escaped.
+        # shellcheck disable=SC2162
+        IFS=: read ckdev ckarg1 ckarg2 <<EOF
 $cryptkey
 EOF
 
@@ -39,7 +41,9 @@ EOF
 
     if [ -n "${cryptdevice}" ]; then
         DEPRECATED_CRYPT=0
-        IFS=: read -r cryptdev cryptname cryptoptions <<EOF
+        # cryptdevice can contain : which needs to be escaped.
+        # shellcheck disable=SC2162
+        IFS=: read cryptdev cryptname cryptoptions <<EOF
 $cryptdevice
 EOF
     else
