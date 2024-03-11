@@ -100,9 +100,10 @@ build() {
 help() {
     cat <<HELPEOF
 This hook adds early microcode update files for Intel and AMD processors. If
-/boot/amd-ucode.img or /boot/intel-ucode.img exist, they are included in the
-initcpio. If not, the individual microcode files in /lib/firmware/ are included
-if they exist.
+individual microcode files exist in /lib/firmware/, they are included in a
+uncompressed initramfs image which is prepended to the main initramfs image.
+If individual microcode files are not available, but /boot/amd-ucode.img or
+/boot/intel-ucode.img exist, they are extracted and used instead.
 
 If the autodetect hook runs before this hook, it will only add early microcode
 update files for the processor of the system the image is built on.
