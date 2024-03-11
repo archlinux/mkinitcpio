@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 run_latehook() {
-    local usr_source mountopts passno realtab=/new_root/etc/fstab
+    local usr_source mountopts passno realtab=/sysroot/etc/fstab
 
     if [ -f "$realtab" ]; then
         if usr_source="$(findmnt -snero source --tab-file="$realtab" -T /usr)"; then
@@ -15,7 +15,7 @@ run_latehook() {
                 fsck_device "$usr_source"
             fi
             msg ":: mounting '$usr_source' on /usr"
-            mount "$usr_source" /new_root/usr -o "$mountopts"
+            mount "$usr_source" /sysroot/usr -o "$mountopts"
         fi
     fi
 }

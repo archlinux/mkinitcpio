@@ -63,8 +63,8 @@ unset rootdev
 
 fsck_root
 
-# Mount root at /new_root
-"$mount_handler" /new_root
+# Mount root at /sysroot
+"$mount_handler" /sysroot
 
 # We rely on word splitting
 # shellcheck disable=SC2086
@@ -74,8 +74,8 @@ run_hookfunctions 'run_latehook' 'late hook' $LATEHOOKS
 # shellcheck disable=SC2086
 run_hookfunctions 'run_cleanuphook' 'cleanup hook' $CLEANUPHOOKS
 
-if [ "$(stat -c %D /)" = "$(stat -c %D /new_root)" ]; then
-    # Nothing got mounted on /new_root. This is the end, we don't know what to do anymore
+if [ "$(stat -c %D /)" = "$(stat -c %D /sysroot)" ]; then
+    # Nothing got mounted on /sysroot. This is the end, we don't know what to do anymore
     # We fall back into a shell, but the shell has now PID 1
     # This way, manual recovery is still possible.
     # shellcheck disable=SC2086
@@ -84,8 +84,8 @@ if [ "$(stat -c %D /)" = "$(stat -c %D /new_root)" ]; then
     echo "Bailing out, you are on your own. Good luck."
     echo
     launch_interactive_shell --exec
-elif [ ! -x "/new_root${init}" ]; then
-    # Successfully mounted /new_root, but ${init} is missing
+elif [ ! -x "/sysroot${init}" ]; then
+    # Successfully mounted /sysroot, but ${init} is missing
     # The same logic as above applies
     # shellcheck disable=SC2086
     run_hookfunctions 'run_emergencyhook' 'emergency hook' $EMERGENCYHOOKS
@@ -107,6 +107,6 @@ rdlogger_stop
 
 exec env -i \
     "TERM=$TERM" \
-    /usr/bin/switch_root /new_root "$init" "$@"
+    /usr/bin/switch_root /sysroot "$init" "$@"
 
 # vim: set ft=sh ts=4 sw=4 et:

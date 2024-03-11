@@ -1185,7 +1185,7 @@ initialize_buildroot() {
 
     # base directory structure
     for root in "$buildroot" "$earlyroot"; do
-        install -dm755 "$root"/{new_root,proc,sys,dev,run,tmp,var,etc,usr/{local{,/bin,/sbin,/lib},lib,bin}}
+        install -dm755 "$root"/{proc,sys,dev,run,tmp,var,etc,usr/{local{,/bin,/sbin,/lib},lib,bin}}
         ln -s "usr/lib" "$root/lib"
         ln -s "bin"     "$root/usr/sbin"
         ln -s "usr/bin" "$root/bin"
@@ -1199,6 +1199,8 @@ initialize_buildroot() {
                 ;;
         esac
     done
+    install -dm755 "$buildroot/sysroot"
+    ln -s "sysroot" "$buildroot/new_root"
 
     # mkinitcpio version stamp
     # shellcheck disable=SC2154
