@@ -133,7 +133,9 @@ EOF
                 return 1
             fi
             exe="cryptsetup open --type plain $resolved $cryptname $cryptargs"
-            IFS=: read -r c_hash c_cipher c_keysize c_offset c_skip <<EOF
+            # c_cipher can contain : which needs to be escaped.
+            # shellcheck disable=SC2162
+            IFS=: read c_hash c_cipher c_keysize c_offset c_skip <<EOF
 $crypto
 EOF
             [ -n "$c_hash" ]    && exe="$exe --hash '$c_hash'"
