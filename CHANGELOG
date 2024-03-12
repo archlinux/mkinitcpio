@@ -1,5 +1,32 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v38.1:
+
+        Bugfix release:
+
+        * Fixed bash completion test on non-i686/x86_64 platforms.
+        * install/systemd & install/sd-encrypt: fixed a regression with reading
+          library paths when looking up libraries to include in the initramfs.
+        * Silenced useless "No such file or directory" messages from realpath
+          when looking up firmware directories.
+        * Fixed regression where the --generatedir flag was not honored. This
+          consequentially fixes mkinitcpio-generate-shutdown-ramfs.service.
+        * install/encrypt & install/sd-encrypt will now always include the
+          hid-generic module which is required for FIDO tokens. Arch kernels
+          previously build hid-generic as a builtin, but have changed it to a
+          loadable module now.
+        * hooks/encrypt: fixed a regression where cryptdevice and cryptkey
+          device paths and crypto cipher containing a colon ":" could no
+          longer be escaped with a backslash "\".
+        * install/microcode: updated help text to match the hook behaviour. I.e.
+          the hook prefers individual microcode files in /lib/firmware/*-ucode/,
+          while /boot/*-ucode.img is only used as a fallback.
+
+        Contributions from: Dang Huynh, Guilherme Silva, Markus Weippert,
+        Mike Yuan, Morten Linderud, nl6720
+
+        - 2024-03-13
+
 CHANGES WITH v38:
 
         Announcement of breaking changes:
