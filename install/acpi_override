@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
+
+build() {
+    local aml amls=()
+
+    mapfile -t amls < <(compgen -G '/usr/lib/initcpio/acpi_override/*.aml')
+    mapfile -O "${#amls[@]}" -t amls < <(compgen -G '/etc/initcpio/acpi_override/*.aml')
+
+    for aml in "${amls[@]}"; do
+        add_file_early "$aml" '/kernel/firmware/acpi/'
+    done
+
+    if (( ${#amls[@]} )); then
+        return 0
+    else
+        error 'No ACPI table override files found!'
+    fi
+
+    # builderrors are defined and used by mkinitcpio
+    # shellcheck disable=SC2034
+    builderrors=$(( ++_builderrors ))
+    return 1
+}
+
+help() {
+    cat <<HELPEOF
+This hook adds ACPI table upgrade files (in .aml format) found in
+/usr/lib/initcpio/acpi_override/ and /etc/initcpio/acpi_override/ to the early
+uncompressed initramfs.
+HELPEOF
+}
