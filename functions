@@ -756,13 +756,15 @@ add_file() {
         fi
     fi
 
-    # unlike install, cp does not create directories leading to the destination
-    [[ -z "$mode" && ! -e "${BUILDROOT}${dest%/*}" ]] && add_dir "${dest%/*}"
+    # cp does not create directories leading to the destination and install
+    # does not create the last directory if the destination is a directory.
+    [[ ! -e "${BUILDROOT}${dest%/*}" && ( -z "$mode" || "$dest" == *'/' ) ]] && add_dir "${dest%/*}"
 
-    if [[ -e "${BUILDROOT}${dest}" ]]; then
-        quiet 'overwriting file: %s' "$dest"
+    # if destination ends with a slash, then use the source file name
+    if [[ -e "${BUILDROOT}${dest/%\//\/${src##*/}}" ]]; then
+        quiet 'overwriting file: %s' "${dest/%\//\/${src##*/}}"
     else
-        quiet 'adding file: %s' "$dest"
+        quiet 'adding file: %s' "${dest/%\//\/${src##*/}}"
     fi
     if [[ -z "$mode" ]]; then
         command cp --remove-destination --preserve=mode,ownership "$src" "${BUILDROOT}${dest}"
