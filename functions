@@ -677,6 +677,16 @@ add_dir() {
     command install -dm"${mode}" "${BUILDROOT}${path}"
 }
 
+add_dir_early() {
+    # add a directory (with parents) to $EARLYROOT
+    #   $1: pathname on initcpio
+    #   $2: mode (optional)
+
+    # $EARLYROOT is assigned by mkinitcpio
+    # shellcheck disable=SC2153
+    BUILDROOT="$EARLYROOT" add_dir "$@" || return
+}
+
 add_symlink() {
     # Add a symlink to the initcpio image. There is no checking done
     # to ensure that the target of the symlink exists.
@@ -771,6 +781,18 @@ add_file() {
     else
         command install -Dm"$mode" "$src" "${BUILDROOT}${dest}"
     fi
+}
+
+add_file_early() {
+    # Add a plain file to $EARLYROOT. No parsing is performed and only
+    # the singular file is added.
+    #   $1: path to file
+    #   $2: destination on initcpio (optional, defaults to same as source)
+    #   $3: mode
+
+    # $EARLYROOT is assigned by mkinitcpio
+    # shellcheck disable=SC2153
+    BUILDROOT="$EARLYROOT" add_file "$@" || return
 }
 
 add_runscript() {

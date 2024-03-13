@@ -224,8 +224,16 @@ functions exist to facilitate this.
     specified. By default, the destination and mode will be taken from the
     source and mode of the file specified by the _path_.
 
+*add_file_early* _path_ [ _destination_ ] [ _mode_ ]::
+    Adds a file and any needed parent directories to the early uncompressed
+    image. Works the same way as *add_file*.
+
 *add_dir* _path_::
     Adds a directory and its parents to the image.
+
+*add_dir_early* _path_::
+    Adds a directory and its parents to the early uncompressed image. Works the
+    same way as *add_dir*.
 
 *add_full_dir* _directory_ [ _glob_ ] [ _strip_prefix_ ]::
     Recursively adds a directory to the image by walking the given path and
