@@ -106,20 +106,20 @@ shellcheck:
 	shellcheck -W 99 --color $(ALL_SCRIPTS)
 
 clean:
-	$(RM) mkinitcpio-$(VERSION).tar.gz.sig mkinitcpio-$(VERSION).tar.gz $(MANPAGES)
+	$(RM) mkinitcpio-$(VERSION).tar.xz.sig mkinitcpio-$(VERSION).tar.xz $(MANPAGES)
 
-dist: doc mkinitcpio-$(VERSION).tar.gz
-mkinitcpio-$(VERSION).tar.gz:
+dist: doc mkinitcpio-$(VERSION).tar.xz
+mkinitcpio-$(VERSION).tar.xz:
 	echo $(VERSION) > VERSION
 	git archive --format=tar --prefix=mkinitcpio-$(VERSION)/ -o mkinitcpio-$(VERSION).tar HEAD
 	bsdtar -rf mkinitcpio-$(VERSION).tar -s ,^,mkinitcpio-$(VERSION)/, $(MANPAGES) VERSION
-	gzip -9 mkinitcpio-$(VERSION).tar
+	xz -z -9e mkinitcpio-$(VERSION).tar
 	$(RM) VERSION
 
-mkinitcpio-$(VERSION).tar.gz.sig: mkinitcpio-$(VERSION).tar.gz
+mkinitcpio-$(VERSION).tar.xz.sig: mkinitcpio-$(VERSION).tar.xz
 	gpg --detach-sign $<
 
-upload: mkinitcpio-$(VERSION).tar.gz mkinitcpio-$(VERSION).tar.gz.sig
+upload: mkinitcpio-$(VERSION).tar.xz mkinitcpio-$(VERSION).tar.xz.sig
 	scp $^ repos.archlinux.org:/srv/ftp/other/mkinitcpio
 
 version:
