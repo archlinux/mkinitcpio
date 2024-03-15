@@ -2,10 +2,16 @@
 Type = Path
 Operation = Install
 Operation = Upgrade
-Target = usr/lib/modules/*/vmlinuz
+Operation = Remove
 Target = usr/lib/initcpio/*
 Target = usr/lib/firmware/*
 Target = usr/src/*/dkms.conf
+
+[Trigger]
+Type = Path
+Operation = Install
+Operation = Upgrade
+Target = usr/lib/modules/*/vmlinuz
 
 [Action]
 Description = Updating linux initcpios...
