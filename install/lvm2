@@ -17,7 +17,8 @@ build() {
         'raid1' \
         'raid10' \
         'raid456' \
-        'dm-integrity'
+        'dm-integrity' \
+        'dm-vdo?'
 
     # from thin-provisioning-tools
     add_binary 'pdata_tools'
