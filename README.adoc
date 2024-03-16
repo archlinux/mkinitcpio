@@ -30,6 +30,7 @@ mkinitcpio has the following dependencies.
 * bzip2: for initramfs compression/decompression
 * lzop for `+lzo+` initramfs compression/decompression
 * lz4 for initramfs compression/decompression
+* systemd-ukify: build UKIs using ukify instead of objcopy
 
 .Build time dependencies:
 * Asciidoctor (or alternatively a2x from AsciiDoc.py) to create man pages

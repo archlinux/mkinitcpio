@@ -140,9 +140,19 @@ other features.
     UEFI executables can show a bitmap file on boot.
 
 *--uefistub* _filename_::
-    UEFI stub image used for unified kernel image generation.
+    UEFI stub image used for unified kernel image generation. Has no effect
+    if _ukify_ is being used.
     Default: Attempts to look for a systemd-boot or gummiboot
     stub loader.
+
+*--ukiconfig* _filename_::
+    Configuration file to pass to _ukify_. If none is specified, try one of the
+    files  _/etc/kernel/uki.conf_ or _/usr/lib/kernel/uki.conf_. If neither of
+    those exists, _ukify_ will use its internal default.
+
+*--no-ukify*::
+    Do not use _ukify_ to build UKIs even if it is available. This is not
+    recommended.
 
 *--kernelimage* _filename_::
     Include a kernel image for the unified kernel image. Default: one of
