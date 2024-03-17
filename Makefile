@@ -94,9 +94,11 @@ install: install-generator install-hooks
 
 doc: $(MANPAGES)
 man/%: man/%.adoc Makefile
-	a2x -d manpage \
-		-f manpage \
-		-a manversion="mkinitcpio $(VERSION)" $<
+ifeq ($(shell command -v asciidoctor 2>/dev/null),)
+	a2x -f manpage -a manversion="mkinitcpio $(VERSION)" $<
+else
+	asciidoctor -b manpage -a manversion="mkinitcpio $(VERSION)" $<
+endif
 
 check:
 	LC_ALL=C.UTF-8 bats --jobs $(JOBS) $(BATS_ARGS) test/cases/
