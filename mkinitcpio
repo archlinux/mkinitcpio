@@ -75,6 +75,7 @@ usage: ${0##*/} [options]
   Options for unified kernel image (-U, --uki):
    --cmdline <path>             Set kernel command line from file
                                 (default: /etc/kernel/cmdline or /proc/cmdline)
+   --no-cmdline                 Do not embed a kernel command line
    --osrelease <path>           Include os-release (default: /etc/os-release)
    --splash <path>              Include bitmap splash
    --kernelimage <path>         Kernel image
