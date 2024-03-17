@@ -179,6 +179,38 @@ setup() {
     assert_output "==> ERROR: Unable to write to build root: $generatedir"
 }
 
+@test "add_file regular file" {
+    local dir BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}" _optquiet=1
+    dir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+    install -d -- "$BUILDROOT" "${dir}/testdir"
+    printf 'test1\n' >"${dir}/testdir/test1"
+    printf 'test2\n' >"${dir}/testdir/test2"
+
+    run add_file "${dir}/testdir/test1"
+    run add_file "${dir}/testdir/test2" '/testdir2/testsubdir/test'
+
+    cmp -s "${dir}/testdir/test1" "${BUILDROOT}${dir}/testdir/test1" || return
+    cmp -s "${dir}/testdir/test2" "${BUILDROOT}/testdir2/testsubdir/test" || return
+    [[ "$(stat -c '%a' "${dir}/testdir/test1")" == "$(stat -c '%a' "${BUILDROOT}${dir}/testdir/test1")" ]] || return
+    [[ "$(stat -c '%a' "${dir}/testdir/test2")" == "$(stat -c '%a' "${BUILDROOT}/testdir2/testsubdir/test")" ]] || return
+}
+
+@test "add_file with mode" {
+    local dir BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}" _optquiet=1
+    dir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+    install -d -- "$BUILDROOT" "${dir}/testdir"
+    printf 'test1\n' >"${dir}/testdir/test1"
+    printf 'test2\n' >"${dir}/testdir/test2"
+
+    run add_file "${dir}/testdir/test1" "${dir}/testdir/test1" 600
+    run add_file "${dir}/testdir/test2" '/testdir2/testsubdir/test' 444
+
+    cmp -s "${dir}/testdir/test1" "${BUILDROOT}${dir}/testdir/test1" || return
+    cmp -s "${dir}/testdir/test2" "${BUILDROOT}/testdir2/testsubdir/test" || return
+    [[ "$(stat -c '%a' "${BUILDROOT}${dir}/testdir/test1")" == '600' ]] || return
+    [[ "$(stat -c '%a' "${BUILDROOT}/testdir2/testsubdir/test")" == '444' ]] || return
+
+}
 @test "add_file parent directory is a symlink" {
     local dir BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}" _optquiet=1
     dir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
@@ -197,6 +229,25 @@ setup() {
     [[ -L "${BUILDROOT}${dir}/testdir/testsubdir2" && "$(realpath -- "${BUILDROOT}${dir}/testdir/testsubdir2")" == "${BUILDROOT}${dir}/testdir/testsubdir1" ]] || return
     [[ -e "${BUILDROOT}${dir}/testdir/testsubdir1/1" ]] || return
     [[ -e "${BUILDROOT}${dir}/testdir/testsubdir1/2" ]] || return
+}
+
+@test "add_file target is a directory" {
+    local dir BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}" _optquiet=1
+    dir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+    install -d -- "$BUILDROOT" "${dir}/testdir/testsubdir1"
+    ln -s -- testsubdir1 "${dir}/testdir/testsubdir2"
+    printf 'test1\n' >"${dir}/testdir/test1"
+    printf 'test2\n' >"${dir}/testdir/test2"
+
+    run add_file "${dir}/testdir/test1" '/testdir2/'
+    run add_file "${dir}/testdir/test2" '/testdir3/testsubdir1/' 400
+
+    [[ -d "${BUILDROOT}/testdir2/" ]] || return
+    [[ -d "${BUILDROOT}/testdir3/testsubdir1/" ]] || return
+    cmp -s "${dir}/testdir/test1" "${BUILDROOT}/testdir2/test1" || return
+    cmp -s "${dir}/testdir/test2" "${BUILDROOT}/testdir3/testsubdir1/test2" || return
+    [[ "$(stat -c '%a' "${dir}/testdir/test1")" == "$(stat -c '%a' "${BUILDROOT}/testdir2/test1")" ]] || return
+    [[ "$(stat -c '%a' "${BUILDROOT}/testdir3/testsubdir1/test2")" == '400' ]] || return
 }
 
 @test "add_binary script" {
