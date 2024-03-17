@@ -5,6 +5,37 @@
 
 mkinitcpio is a modular initramfs image creation utility. 🐏
 
+== Dependencies
+
+mkinitcpio has the following dependencies.
+
+.Dependencies:
+* GNU awk
+* A static build of busybox installed at `+/usr/lib/initcpio/busybox+`
+* kmod
+* util-linux
+* bsdtar from libarchive
+* GNU Coreutils
+* Bash
+* GNU Binutils
+* GNU Diffutils
+* GNU Findutils
+* GNU Grep
+* gzip (the default initramfs compressor for Linux < 5.9)
+* zstd (the default initramfs compressor for Linux ≥ 5.9)
+
+.Optional dependencies:
+* systemd: for systemd-based initramfs
+* xz: for `+lzma+` and `+xz+` initramfs compression/decompression
+* bzip2: for initramfs compression/decompression
+* lzop for `+lzo+` initramfs compression/decompression
+* lz4 for initramfs compression/decompression
+
+.Build time dependencies:
+* Asciidoctor (or alternatively a2x from AsciiDoc.py) to create man pages
+* Bash Automated Testing System (bats) and bats-assert for tests
+* ShellCheck for tests
+
 == Contributing
 
 mkinitcpio development happens on the Arch Linux GitLab instance: https://gitlab.archlinux.org/archlinux/mkinitcpio/mkinitcpio. All issues and merge request should be submitted there.
