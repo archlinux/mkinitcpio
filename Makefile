@@ -96,8 +96,7 @@ doc: $(MANPAGES)
 man/%: man/%.adoc Makefile
 	a2x -d manpage \
 		-f manpage \
-		-a manversion="mkinitcpio $(VERSION)" \
-		-a manmanual="mkinitcpio manual" $<
+		-a manversion="mkinitcpio $(VERSION)" $<
 
 check:
 	LC_ALL=C.UTF-8 bats --jobs $(JOBS) $(BATS_ARGS) test/cases/
