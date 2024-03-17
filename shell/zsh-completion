@@ -37,6 +37,8 @@ case $service in
             '(-n --nocolor)'{-n,--nocolor}'[disable colorized output]' \
             '(-V --version)'{-V,--version}'[display version information]' \
             '(-v --verbose)'{-v,--verbose}'[more verbose output]' \
+            '--cpio[list or extract only the main CPIO image]' \
+            '--early[list or extract only the early CPIO image]' \
             ':image file:_files'
         ;;
     mkinitcpio)
@@ -64,6 +66,7 @@ case $service in
             '(-z --compress)'{-z,--compress}'[Use an alternate compressor on the image]' \
             '(-U --uki)'{-U,--uki}'[Build a unified kernel image]:path:_files' \
             '--cmdline[Specify kernel cmdline for the unified kernel image]:path:_files' \
+            '--no-cmdline[Do not embed a cmdline in the unified kernel image]' \
             '--kernelimage[Include a kernel image for the unified kernel image]:path:_files' \
             '--osrelease[Include a os-release file for the unified kernel image]:path:_files' \
             '--splash[Bitmap splash image to include in unified kernel image]:path:_files' \
