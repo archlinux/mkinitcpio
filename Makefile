@@ -22,10 +22,15 @@ DIRS = \
 	/usr/share/man/man5 \
 	/usr/share/man/man1 \
 	/usr/share/mkinitcpio \
-	/usr/lib/systemd/system/shutdown.target.wants \
 	/usr/lib/tmpfiles.d \
 	/usr/share/libalpm/hooks \
 	/usr/share/libalpm/scripts
+
+SHUTDOWN_DIRS = \
+	/usr/lib/systemd/system/poweroff.target.wants \
+	/usr/lib/systemd/system/halt.target.wants \
+	/usr/lib/systemd/system/reboot.target.wants \
+	/usr/lib/systemd/system/kexec.target.wants
 
 ALL_SCRIPTS=$(shell grep -rIlE '^#! */.+[ /](bash|ash|sh|bats)' --exclude-dir=".git" ./)
 
@@ -37,7 +42,7 @@ MANPAGES = \
 	man/lsinitcpio.1
 
 prepare:
-	install -dm755 $(addprefix $(DESTDIR),$(DIRS))
+	install -dm755 $(addprefix $(DESTDIR),$(DIRS)) $(addprefix $(DESTDIR),$(SHUTDOWN_DIRS))
 
 	sed -e 's|\(^_f_config\)=.*|\1=/etc/mkinitcpio.conf|' \
 	    -e 's|\(^_f_functions\)=.*|\1=/usr/lib/initcpio/functions|' \
@@ -63,10 +68,12 @@ install-generator: all prepare
 
 	cp -at $(DESTDIR)/usr/lib/initcpio hooks install
 	install -m644 -t $(DESTDIR)/usr/share/mkinitcpio mkinitcpio.d/*
+
 	install -m644 systemd/mkinitcpio-generate-shutdown-ramfs.service \
-			$(DESTDIR)/usr/lib/systemd/system/mkinitcpio-generate-shutdown-ramfs.service
-	ln -s ../mkinitcpio-generate-shutdown-ramfs.service \
-			$(DESTDIR)/usr/lib/systemd/system/shutdown.target.wants/mkinitcpio-generate-shutdown-ramfs.service
+		$(DESTDIR)/usr/lib/systemd/system/mkinitcpio-generate-shutdown-ramfs.service
+	for target in $(addprefix $(DESTDIR),$(SHUTDOWN_DIRS)); do \
+		ln -s ../mkinitcpio-generate-shutdown-ramfs.service -t $$target || exit; \
+	done
 	install -m644 tmpfiles/mkinitcpio.conf $(DESTDIR)/usr/lib/tmpfiles.d/mkinitcpio.conf
 
 	install -m755 kernel-install/50-mkinitcpio.install $(DESTDIR)/usr/lib/kernel/install.d/50-mkinitcpio.install
