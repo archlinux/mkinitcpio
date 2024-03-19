@@ -226,3 +226,158 @@ __test_parse() {
         'bar' 'ba az'
 
 }
+
+__test_getarg() {
+    local flag="$1" cmdline expect_fail key expected actual_value
+    local cmdline_cache="${BATS_TEST_TMPDIR}/cmdline"
+
+    if [[ "$flag" = '--expect-fail' ]]; then
+        expect_fail='y'
+        shift
+    fi
+
+    cmdline="$1"
+    key="$2"
+    default="$3"
+    expected="$4"
+
+    [[ -n "$V" ]] && printf 'testing cmdline: %s\n' "$cmdline"
+
+    : > "$cmdline_cache"
+    parse_cmdline "parse_cmdline_item" "$cmdline_cache" <<< "$cmdline"
+
+    run getarg "$key" "$default" "$cmdline_cache"
+
+    if [[ -z "$expect_fail" ]]; then
+        assert_output "$expected"
+    else
+        refute_output "$expected"
+    fi
+}
+
+@test "getarg" {
+    # bare words
+    __test_getarg 'foo' \
+        'foo' '' 'y'
+    __test_getarg 'foo bar' \
+        'bar' '' 'y'
+
+    # overwriting
+    __test_getarg 'foo=bar bar=baz foo bar="no pe"' \
+        'bar' '' 'no pe'
+    __test_getarg 'foo=bar bar=baz foo bar="no pe"' \
+        'foo' '' 'y'
+
+    # simple key=value assignment
+    __test_getarg 'foo=bar' \
+        'foo' '' 'bar'
+    __test_getarg 'foo=bar bar=baz' \
+        'bar' '' 'baz'
+    __test_getarg '_derpy=hooves' \
+        '_derpy' '' 'hooves'
+    __test_getarg 'f5=abc f_5_=abc' \
+        'f5' '' 'abc'
+    __test_getarg 'f5=abc f_5_=abc' \
+        'f_5_' '' 'abc'
+    __test_getarg 'v="foo bar=baz"' \
+        'v' '' 'foo bar=baz'
+
+    # double quoting
+    __test_getarg 'foo="bar"' \
+        'foo' '' 'bar'
+    __test_getarg 'foo="bar baz"' \
+        'foo' '' 'bar baz'
+
+    # single quoting
+    __test_getarg "foo='bar'" \
+        'foo' '' 'bar'
+    __test_getarg "foo='bar baz'" \
+        'foo' '' 'bar baz'
+
+    # dangling quotes
+    __test_getarg 'foo="bar' \
+        'foo' '' '"bar'
+    __test_getarg 'foo=bar"' \
+        'foo' '' 'bar"'
+
+    # nested quotes
+    __test_getarg "foo='\"bar baz\"' herp='\"de\"rp'" \
+        'foo' '' '"bar baz"'
+    __test_getarg "foo='\"bar baz\"' herp='\"de\"rp'" \
+        'herp' '' '"de"rp'
+
+    # escaped quotes
+    __test_getarg 'foo=bar"baz' \
+        'foo' '' 'bar"baz'
+
+    # neighboring quoted regions
+    __test_getarg --expect-fail 'foo="bar""baz"' \
+        'foo' '' 'barbaz'
+    __test_getarg --expect-fail "foo=\"bar\"'baz'" \
+        'foo' '' "barbaz"
+    __test_getarg --expect-fail "foo='bar'\"baz\"" \
+        'foo' '' "barbaz"
+
+    # comments
+    __test_getarg 'foo=bar # ignored content' \
+        'foo' '' 'bar'
+    __test_getarg 'foo=bar # ignored content' \
+        'ignored' '' ''
+    __test_getarg 'foo=bar # ignored content' \
+        'content' '' ''
+    __test_getarg 'foo=bar #ignored content' \
+        'foo' '' 'bar'
+    __test_getarg 'foo=bar #ignored content' \
+        'ignored' '' ''
+    __test_getarg 'foo=bar #ignored content' \
+        'content' '' ''
+    __test_getarg 'foo="bar #baz" parse=this' \
+        'foo' '' 'bar #baz'
+    __test_getarg 'foo="bar #baz" parse=this' \
+        'parse' '' 'this'
+
+    # shell metachars
+    __test_getarg 'foo=*' \
+        'foo' '' '*'
+    __test_getarg 'Make*' \
+        'Makefile' '' ''
+    __test_getarg '[Makefile]*' \
+        'Makefile' '' ''
+    __test_getarg '[Makefile]*' \
+        'init' '' ''
+    __test_getarg '[Makefile]*' \
+        'functions' '' ''
+
+    # invalid shell variables
+    __test_getarg 'in-valid=name' \
+        'in-valid' '' 'name'
+    __test_getarg '6foo=bar' \
+        '6foo' '' 'bar'
+    __test_getarg '"gar bage"' \
+        'gar' '' ''
+    __test_getarg '"gar bage"' \
+        'bage' '' ''
+    __test_getarg 'foo.bar=bage' \
+        'foo.bar' '' 'bage'
+
+    # a mix of stuff
+    __test_getarg 'foo=bar bareword bar="ba az"' \
+        'foo' '' 'bar'
+    __test_getarg 'foo=bar bareword bar="ba az"' \
+        'bareword' '' 'y'
+    __test_getarg 'foo=bar bareword bar="ba az"' \
+        'bar' '' 'ba az'
+
+    # defaults
+    __test_getarg 'foo=bar' \
+        'foo' 'default' 'bar'
+    __test_getarg 'foo' \
+        'foo' 'default' 'y'
+    __test_getarg 'foo' \
+        'bar' 'default' 'default'
+
+    # pass through escaped characters
+    # https://gitlab.archlinux.org/archlinux/mkinitcpio/mkinitcpio/-/issues/257
+    __test_getarg 'foo=bar\:baz:qux' \
+        'foo' '' 'bar\:baz:qux'
+}
