@@ -1,0 +1,48 @@
+#!/usr/bin/bash
+
+build() {
+    add_binary '/usr/lib/cryptsetup/libcryptsetup-token-systemd-pkcs11.so'
+
+    for FILE in /usr/lib/libp11-kit.so* /usr/lib/libpcsclite.so* /usr/lib/libpcsclite_real.so*; do
+        if [[ -L "${FILE}" ]]; then
+            add_symlink "${FILE}"
+        else
+            add_binary "${FILE}"
+        fi
+    done
+
+    printf 'module: opensc-pkcs11.so\n' | add_file - '/usr/share/p11-kit/modules/opensc.module' 644
+
+    add_binary '/usr/lib/pkcs11/opensc-pkcs11.so'
+
+    add_systemd_unit 'pcscd.service'
+    printf '%s\n' \
+        '[Unit]' \
+        'DefaultDependencies=no' \
+        '[Service]' \
+        'ExecStart=' \
+        'ExecStart=/usr/bin/pcscd --foreground --disable-polkit' \
+    | add_systemd_drop_in 'pcscd.service' 'mkinitcpio'
+
+    add_systemd_unit 'pcscd.socket'
+    printf '[Unit]\nDefaultDependencies=no\n' | add_systemd_drop_in 'pcscd.socket' 'mkinitcpio'
+
+    # pcscd.socket -> cryptsetup-pre.target -> systemd-cryptsetup@.service -> cryptsetup.target
+    add_systemd_unit 'cryptsetup-pre.target'
+    add_symlink '/usr/lib/systemd/system/cryptsetup-pre.target.wants/pcscd.socket' '/usr/lib/systemd/system/pcscd.socket'
+    add_symlink '/usr/lib/systemd/system/cryptsetup.target.wants/cryptsetup-pre.target' '/usr/lib/systemd/system/cryptsetup-pre.target'
+
+    add_file '/usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist'
+    add_binary '/usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so'
+}
+
+help() {
+    cat <<HELPEOF
+This hook allows systemd to unlock LUKS2 volumes with the OpenSC PKCS#11 module and CCID driver.
+
+The full list of supported devices is available on [1], but be aware that the device may require a different PC/SC driver. Information about some drivers is available on [2].
+
+[1] https://github.com/OpenSC/OpenSC/wiki/Supported-hardware-%28smart-cards-and-USB-tokens%29
+[2] https://github.com/OpenSC/OpenSC/wiki/Smart-card-readers-%28Linux-and-Mac-OS-X%29
+HELPEOF
+}

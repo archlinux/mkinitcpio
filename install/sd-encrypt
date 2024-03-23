@@ -28,7 +28,6 @@ build() {
         '/usr/lib/systemd/systemd-cryptsetup' \
         '/usr/lib/systemd/systemd-makefs' \
         '/usr/lib/cryptsetup/libcryptsetup-token-systemd-fido2.so' \
-        '/usr/lib/cryptsetup/libcryptsetup-token-systemd-pkcs11.so' \
         '/usr/lib/cryptsetup/libcryptsetup-token-systemd-tpm2.so'
 
     # cryptsetup calls pthread_create(), which dlopen()s libgcc_s.so.1
@@ -54,7 +53,7 @@ build() {
 
 help() {
     cat <<HELPEOF
-This hook allows for an encrypted root device with systemd initramfs.
+This hook allows systemd to unlock encrypted LUKS1 volumes with a password, and encrypted LUKS2 volumes with a password, FIDO2 token or TPM2 key. Unlocking of LUKS2 volumes with a PKCS#11 token is supported for some tokens by additional 'sd-encrypt-opensc' hook.
 
 See the manpage of systemd-cryptsetup-generator(8) for available kernel
 command line options. Alternatively, if the file /etc/crypttab.initramfs
