@@ -250,6 +250,29 @@ setup() {
     [[ "$(stat -c '%a' "${BUILDROOT}/testdir3/testsubdir1/test2")" == '400' ]] || return
 }
 
+@test "add_file from stdin" {
+    local dir BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}" _optquiet=1
+    dir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+    install -d -- "$BUILDROOT"
+
+    file_from_stdin1() {
+        printf 'test1\n' | add_file - '/testdir/test1' 600
+    }
+
+    file_from_stdin2() {
+        printf 'test2\n' | add_file - '/testdir/test2'
+    }
+
+    run file_from_stdin1
+    assert_success
+    cmp -s <(printf 'test1\n') "${BUILDROOT}/testdir/test1" || return
+    run file_from_stdin2
+    assert_failure
+    run add_file /dev/null '/testdir/test3' 644
+    assert_success
+    cmp -s /dev/null "${BUILDROOT}/testdir/test3" || return
+}
+
 @test "add_binary script" {
     local tmp_bin BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}/" interpreter="/usr/local/${BATS_TEST_NAME}.${RANDOM}" _optquiet=1
 

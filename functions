@@ -735,7 +735,21 @@ add_file() {
     # determine source and destination
     local src="$1" dest="${2:-$1}" mode="$3" srcrealpath destrealpath
 
-    if [[ ! -f "$src" ]]; then
+    # Treat '-' as /dev/stdin
+    if [[ "$src" == '-' ]]; then
+        src='/dev/stdin'
+    fi
+
+    if [[ -c "$src" || -p "$src" ]]; then
+        if [[ "$src" == "$dest" || "$dest" == *'/' ]]; then
+            error "no destination file specified for: '%s'" "$src"
+            return 1
+        fi
+        if [[ -z "$mode" ]]; then
+            error "no file mode specified for: '%s'" "$dest"
+            return 1
+        fi
+    elif [[ ! -f "$src" ]]; then
         error "file not found: '%s'" "$src"
         return 1
     fi
@@ -755,7 +769,7 @@ add_file() {
     fi
 
     # check if $src is a symlink
-    if [[ -L "$src" ]]; then
+    if [[ -L "$src" && ! -c "$src" && ! -p "$src" ]]; then
         srcrealpath="$(realpath -- "$src")"
         if [[ "$srcrealpath" != "$dest" ]]; then
             # add the target file
