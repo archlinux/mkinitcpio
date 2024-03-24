@@ -502,7 +502,7 @@ build_uki() {
         fi
 
         if (( ! ${#cmdline_files[@]} )); then
-            warning "Note: no cmdline files where found and --cmdline is not set!"
+            warning "Note: no cmdline files were found and --cmdline is not set!"
             cmdline_files=("/proc/cmdline")
             warning "Reusing current kernel cmdline from ${cmdline_files[*]}"
         else
