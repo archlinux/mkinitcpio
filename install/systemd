@@ -142,14 +142,15 @@ build() {
     add_symlink "/usr/lib/systemd/system/default.target" "initrd.target"
     add_symlink "/usr/lib/systemd/system/ctrl-alt-del.target" "reboot.target"
 
-    printf '%s\n' >"$BUILDROOT/etc/nsswitch.conf" \
+    printf '%s\n' \
         'passwd: files' \
         'group: files' \
-        'shadow: files'
+        'shadow: files' \
+        | add_file - '/etc/nsswitch.conf' 0644
 
-    echo "root:x:0:0:root:/root:/bin/sh" >"$BUILDROOT/etc/passwd"
-    echo 'root:*:::::::' >"$BUILDROOT/etc/shadow"
-    getent group root audio disk input kmem kvm lp optical render sgx storage tty uucp video | awk -F: ' { print $1 ":x:" $3 ":" }' >"$BUILDROOT/etc/group"
+    printf 'root:x:0:0:root:/root:/bin/sh\n' | add_file - '/etc/passwd' 0644
+    printf 'root:*:::::::\n' | add_file - '/etc/shadow' 0400
+    getent group root audio disk input kmem kvm lp optical render sgx storage tty uucp video | awk -F: ' { print $1 ":x:" $3 ":" }' | add_file - '/etc/group' 0644
 
     add_dir "/etc/modules-load.d"
     (
@@ -157,7 +158,7 @@ build() {
       # shellcheck disable=SC1091,SC2154 source=mkinitcpio.conf
       . "$_f_config"
       set -f
-      printf '%s\n' "${MODULES[@]}" >"$BUILDROOT/etc/modules-load.d/MODULES.conf"
+      printf '%s\n' "${MODULES[@]}" | add_file - '/etc/modules-load.d/MODULES.conf' 644
     )
 
     [[ -f /etc/fstab.initramfs ]] && add_file "/etc/fstab.initramfs" "/etc/fstab"

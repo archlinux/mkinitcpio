@@ -21,11 +21,11 @@ build() {
         LANG="$l"
 
         if [[ "$LOCALE" == *[Uu][Tt][Ff]?(-)8 ]]; then
-            touch "$BUILDROOT/keymap.utf8"
+            add_file /dev/null '/keymap.utf8' 644
             loadkeys_opts+=('-u')
         fi
         if [[ "$KEYMAP" != '@kernel' ]]; then
-            loadkeys "${loadkeys_opts[@]}" "${KEYMAP:-us}" -b >"$BUILDROOT/keymap.bin"
+            loadkeys "${loadkeys_opts[@]}" "${KEYMAP:-us}" -b | add_file - '/keymap.bin' 644
         fi
     ) && add_runscript
 }

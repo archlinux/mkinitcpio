@@ -50,7 +50,7 @@ build() {
                     fi
                 done < <("$cat" "$f")
                 add_dir "${of%/*}"
-                "$cat" "$f" >"$BUILDROOT/$of"
+                "$cat" "$f" | add_file - "$of" 644
             done < <(LC_ALL=C.UTF-8 find /usr/share/kbd/keymaps/ -type f -regex ".*/$1\(\.inc\)?\(\.gz\|\.bz2|\.zst\)?")
         }
 
@@ -58,7 +58,7 @@ build() {
             local cat file filename fontfile="$1"
             get_decompressor "$fontfile"
             add_dir "${of%/*}"
-            "$cat" "$fontfile" >"$BUILDROOT/$of"
+            "$cat" "$fontfile" | add_file - "$of" 644
             if [[ "$(head -c 23 "$BUILDROOT/$of" | tr -d '\0')" == '# combine partial fonts' ]]; then
                 while read -r filename; do
                     for file in "/usr/share/kbd/consolefonts/partialfonts/$filename"?('.gz'|'.bz2'|'.zst'); do

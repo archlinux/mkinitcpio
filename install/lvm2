@@ -41,9 +41,8 @@ build() {
     fi
 
     # config file
-    add_file '/etc/lvm/lvm.conf'
-    sed -i -e 's/^[[:space:]#]*monitoring = [[:digit:]]\+\s*$/\tmonitoring = 0/' \
-        -e '/^$/d' -e '/^[[:space:]]*#/d' "${BUILDROOT}/etc/lvm/lvm.conf"
+    sed -e 's/^[[:space:]#]*monitoring = [[:digit:]]\+\s*$/\tmonitoring = 0/' \
+        -e '/^$/d' -e '/^[[:space:]]*#/d' "/etc/lvm/lvm.conf" | add_file - '/etc/lvm/lvm.conf' 644
 }
 
 help() {

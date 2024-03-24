@@ -18,9 +18,9 @@ build() {
                 if [[ -e "$file" ]]; then
                     [[ "$file" =~ (\.(fnt|psfu?))(\.gz|\.zst)?$ ]] && ext="${BASH_REMATCH[2]}"
                     if [[ "$file" == *'.gz' ]]; then
-                        gzip -cd "$file" >"$BUILDROOT/consolefont.$ext"
+                        gzip -cd "$file" | add_file - "/consolefont.$ext" 644
                     elif [[ "$file" == *'.zst' ]]; then
-                        zstd -qd "$file" -o "$BUILDROOT/consolefont.$ext"
+                        zstd -qd "$file" | add_file - "/consolefont.$ext" 644
                     else
                         add_file "$file" "/consolefont.$ext"
                     fi
