@@ -232,7 +232,7 @@ compute_hookset() {
 
 create_image() {
     # create_image <root> <output file> <compression type>
-    local root="$1" out="$2" compress="$3" compress_cmd="$3" pipestatus
+    local root="$1" out="$2" compress="$3" compress_cmd="$3" pipestatus pipeprogs
 
     if [[ "$compress" == 'early' ]]; then
         # early image should never be compressed
@@ -250,7 +250,7 @@ create_image() {
         | LC_ALL=C.UTF-8 sort -z \
         | LC_ALL=C.UTF-8 bsdtar --uid 0 --gid 0 --null -cnf - -T - \
         | LC_ALL=C.UTF-8 bsdtar --null -cf - --format=newc @- \
-        | "$compress_cmd" "${COMPRESSION_OPTIONS[@]}" >>"$compressout"
+        | "$compress_cmd" "${COMPRESSION_OPTIONS[@]}" >>"$out"
 
     pipestatus=("${PIPESTATUS[@]}")
     pipeprogs=('find' 'sort' 'bsdtar (step 1)' 'bsdtar (step 2)' "$compress_cmd")
@@ -266,7 +266,7 @@ create_image() {
 }
 
 build_image() {
-    local out="$1" compressout="$1" compress="$2" errprog pipestatus
+    local out="$1" compressout="$1" compress="$2" errprog
 
     case "$compress" in
         cat)
