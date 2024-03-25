@@ -1,9 +1,9 @@
 #!/usr/bin/ash
 
 run_hook() {
+    local quiet rootdelay
     modprobe -a -q dm-crypt >/dev/null 2>&1
-    # assigned by parse_cmdline
-    # shellcheck disable=SC2154
+    quiet="$(getarg quiet)"
     [ "${quiet}" = "y" ] && CSQUIET=">/dev/null"
 
     # Get keyfile if specified
@@ -15,8 +15,7 @@ run_hook() {
 $cryptkey
 EOF
 
-        # rootdelay is assigned by parse_cmdline
-        # shellcheck disable=SC2154
+        rootdelay="$(getarg rootdelay)"
         if [ "$ckdev" = "rootfs" ]; then
             ckeyfile=$ckarg1
         elif resolved=$(resolve_device "${ckdev}" "${rootdelay}"); then

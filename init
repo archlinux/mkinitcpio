@@ -18,10 +18,9 @@ parse_cmdline </proc/cmdline
 # setup logging as early as possible
 rdlogger_start
 
+disablehooks="$(getarg disablehooks)"
 # busybox ash supports string replacements
 # shellcheck disable=SC3060
-# assigned by parse_cmdline
-# shellcheck disable=SC2154
 for d in ${disablehooks//,/ }; do
     [ -e "/hooks/$d" ] && chmod 644 "/hooks/$d"
 done
@@ -44,8 +43,7 @@ fi
 run_hookfunctions 'run_hook' 'hook' $HOOKS
 
 # honor the old behavior of break=y as a synonym for break=premount
-# assigned by parse_cmdline
-# shellcheck disable=SC2154
+break="$(getarg break)"
 if [ "${break}" = "y" ] || [ "${break}" = "premount" ]; then
     # shellcheck disable=SC2086
     run_hookfunctions 'run_emergencyhook' 'emergency hook' $EMERGENCYHOOKS
