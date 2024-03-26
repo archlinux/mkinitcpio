@@ -310,7 +310,7 @@ build_image() {
     : >"$compressout"
 
     # remove emtpy dirs and symlinks from EARLYROOT
-    find "$EARLYROOT" -depth \( -type d -empty -delete \) -or \( -xtype l -delete \)
+    find "$EARLYROOT" -depth '(' -type d -empty -delete ')' -or '(' -xtype l -delete ')'
     # if the EARLYROOT is not empty (except for the flag file), prepend it to the image
     if [[ -n "$(LC_ALL=C.UTF-8 find "$EARLYROOT" -mindepth 1 -not -name early_cpio)" ]]; then
         errprog="$(create_image "$EARLYROOT" "$compressout" early)"
