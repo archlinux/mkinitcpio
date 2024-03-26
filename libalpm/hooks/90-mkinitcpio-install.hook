@@ -13,6 +13,13 @@ Operation = Install
 Operation = Upgrade
 Target = usr/lib/modules/*/vmlinuz
 
+[Trigger]
+Type = Package
+Operation = Install
+Operation = Upgrade
+Target = mkinitcpio
+Target = mkinitcpio-git
+
 [Action]
 Description = Updating linux initcpios...
 When = PostTransaction
