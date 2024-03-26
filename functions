@@ -1009,7 +1009,7 @@ initialize_buildroot() {
         ln -s "bin"     "$root/usr/sbin"
         ln -s "usr/bin" "$root/bin"
         ln -s "usr/bin" "$root/sbin"
-        ln -s "/run"    "$root/var/run"
+        ln -s "../run"  "$root/var/run"
 
         case "$arch" in
             x86_64)
