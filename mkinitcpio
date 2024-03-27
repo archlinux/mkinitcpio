@@ -778,6 +778,26 @@ run_post_hooks() {
     return 0
 }
 
+check_path() {
+    # mode can be any combination of drw (directory/readable/writable)
+    local mode="$1" opt="$2" path="$3" mesg
+    mesg="Invalid option $opt"
+    # realpath will reject file/file and dirs without the x flag
+    path="$(realpath -qs "$path")" || die "%s -- '%s' is an invalid path" "$mesg" "$3"
+    mesg+=" -- '$path'"
+    if [[ "$mode" == *d* ]]; then
+        [[ ! -d "$path" ]] && die '%s must be a directory' "$mesg"
+        [[ "$mode" == *w* && ! -w "$path" ]] && die '%s must be writable' "$mesg"
+    else
+        [[ -d "$path" ]] && die '%s must not be a directory' "$mesg"
+        # if the file doesn't exist, check if we can write to the parent directory
+        [[ "$mode" == *w* && ! ( -w "$path" || ! -e "$path" && -d "${path%/*}/." && -w "${path%/*}/." ) ]] \
+            && die '%s must be writable' "$mesg"
+    fi
+    [[ "$mode" == *r* && ! -r "$path" ]] && die '%s must be readable' "$mesg"
+    echo "$path"
+}
+
 # shellcheck source=functions
 . "$_f_functions"
 
@@ -803,34 +823,35 @@ while :; do
             unset add
             ;;
         -c | --config)
-            shift
-            _f_config="$1"
+            _f_config="$(check_path r "$1" "$2")" || exit
             _optconfd=0
+            shift
             ;;
         --cmdline)
+            _optcmdline="$(check_path r "$1" "$2")" || exit
             shift
-            _optcmdline="$1"
             ;;
         --no-cmdline)
             _optnocmdline=1
             ;;
         -k | --kernel)
+            if [[ "$KERNELVERSION" == /* ]]; then
+                KERNELVERSION="$(check_path r "$1" "$2")" || exit
+            else
+                KERNELVERSION="$2"
+            fi
             shift
-            KERNELVERSION="$1"
             ;;
         -s | --save)
             _optsavetree=1
             ;;
         -d | --generatedir)
+            _opttargetdir="$(check_path dw "$1" "$2")" || exit
             shift
-            _opttargetdir="$1"
             ;;
         -g | --generate)
+            _optgenimg="$(check_path w "$1" "$2")" || exit
             shift
-            [[ -d "$1" ]] && die 'Invalid image path -- must not be a directory'
-            if ! _optgenimg="$(readlink -f "$1")" || [[ ! -e "${_optgenimg%/*}" ]]; then
-                die "Unable to write to path: '%s'" "$1"
-            fi
             ;;
         -h | --help)
             usage
@@ -854,11 +875,8 @@ while :; do
             warning 'The --uefi option is deprecated. Use --uki instead.'
             ;&
         -U | --uki)
+            _optuki="$(check_path w "$1" "$2")" || exit
             shift
-            [[ -d "$1" ]] && die "Invalid image path -- must not be a directory"
-            if ! _optuki="$(readlink -f "$1")" || [[ ! -e "${_optuki%/*}" ]]; then
-                die "Unable to write to path: '%s'" "$1"
-            fi
             ;;
         -v | --verbose)
             _optquiet=0
@@ -879,17 +897,16 @@ while :; do
             exit 0
             ;;
         --splash)
+            _optsplash="$(check_path r "$1" "$2")" || exit
             shift
-            [[ -f "$1" ]] || die 'Invalid file -- must be a file'
-            _optsplash="$1"
             ;;
         --kernelimage)
+            _optkernelimage="$(check_path r "$1" "$2")" || exit
             shift
-            _optkernelimage="$1"
             ;;
         --uefistub)
+            _optuefistub="$(check_path r "$1" "$2")" || exit
             shift
-            _optuefistub="$1"
             ;;
         -M | --automods)
             _optshowautomods=1
@@ -902,27 +919,29 @@ while :; do
             [[ -e "${_optpreset[0]}" ]] || die 'No presets found in %s' "$_d_presets"
             ;;
         --osrelease)
+            _optosrelease="$(check_path r "$1" "$2")" || exit
             shift
-            [[ ! -f "$1" ]] && die 'Invalid file -- must be a file'
-            _optosrelease="$1"
             ;;
         -t | --builddir)
+            TMPDIR="$(check_path dw "$1" "$2")" || exit
+            export TMPDIR
             shift
-            export TMPDIR="$1"
             ;;
         -z | --compress)
             shift
             _optcompress="$1"
             ;;
         -r | --moduleroot)
+            _optmoduleroot="$(check_path dr "$1" "$2")" || exit
             shift
-            _optmoduleroot="$1"
             ;;
         -D | --hookdir)
+            tmp="$(check_path dr "$1" "$2")" || exit
             shift
-            _d_flag_hooks+="$1/hooks:"
-            _d_flag_install+="$1/install:"
-            _d_flag_post+="$1/post:"
+            _d_flag_hooks+="$tmp/hooks:"
+            _d_flag_install+="$tmp/install:"
+            _d_flag_post+="$tmp/post:"
+            unset tmp
             ;;
         --)
             shift
@@ -1066,15 +1085,7 @@ if (( _optshowautomods )); then
 fi
 
 if [[ -n "$_optgenimg" ]]; then
-    # check for permissions. if the image doesn't already exist,
-    # then check the directory
-    if [[ ( -e $_optgenimg && ! -w $_optgenimg ) ||
-            ( ! -d ${_optgenimg%/*} || ! -w ${_optgenimg%/*} ) ]]; then
-        die "Unable to write to '%s'" "$_optgenimg"
-    fi
-
     validate_compression
-
     msg "Starting build: '%s'" "$KERNELVERSION"
 elif [[ -n "$_opttargetdir" ]]; then
     msg "Starting build: '%s'" "$KERNELVERSION"
