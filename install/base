@@ -20,8 +20,7 @@ build() {
     map add_binary mount umount
     add_binary switch_root
 
-    add_file "/usr/lib/initcpio/init_functions" "/init_functions"
-    add_file "/usr/lib/initcpio/init" "/init"
+    add_init_scripts
 }
 
 help() {

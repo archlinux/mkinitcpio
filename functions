@@ -1246,4 +1246,16 @@ add_checked_modules_from_symbol() {
     map add_module "${mods[@]}"
 }
 
+add_init_scripts() {
+    # Ensure we are only adding relevant initscripts either from source,
+    # or from the install directories
+    if [[ "${BASH_SOURCE[0]}" == "functions" ]]; then
+        add_file "$PWD/functions" "/init_functions"
+        add_file "$PWD/init" "/init"
+    else
+        add_file "/usr/lib/initcpio/init_functions" "/init_functions"
+        add_file "/usr/lib/initcpio/init" "/init"
+    fi
+}
+
 # vim: set ft=sh ts=4 sw=4 et:
