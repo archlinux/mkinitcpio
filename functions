@@ -1018,16 +1018,16 @@ initialize_buildroot() {
 
     # base directory structure
     install -dm755 "$buildroot"/{new_root,proc,sys,dev,run,tmp,var,etc,usr/{local{,/bin,/sbin,/lib},lib,bin}}
-    ln -s "usr/lib" "$buildroot/lib"
-    ln -s "bin"     "$buildroot/usr/sbin"
-    ln -s "usr/bin" "$buildroot/bin"
-    ln -s "usr/bin" "$buildroot/sbin"
-    ln -s "/run"    "$buildroot/var/run"
+    ln -sf "usr/lib" "$buildroot/lib"
+    ln -sf "bin"     "$buildroot/usr/sbin"
+    ln -sf "usr/bin" "$buildroot/bin"
+    ln -sf "usr/bin" "$buildroot/sbin"
+    ln -sf "run"     "$buildroot/var/run"
 
     case "$arch" in
         x86_64)
-            ln -s "lib"     "$buildroot/usr/lib64"
-            ln -s "usr/lib" "$buildroot/lib64"
+            ln -sf "lib"     "$buildroot/usr/lib64"
+            ln -sf "usr/lib" "$buildroot/lib64"
             ;;
     esac
 
@@ -1039,7 +1039,7 @@ initialize_buildroot() {
     [[ "$kernver" != 'none' ]] && install -dm755 "$buildroot/usr/lib/modules/$kernver/kernel"
 
     # mount tables
-    ln -s ../proc/self/mounts "$buildroot/etc/mtab"
+    ln -sf ../proc/self/mounts "$buildroot/etc/mtab"
     : >"$buildroot/etc/fstab"
 
     # add os-release and initrd-release for systemd
