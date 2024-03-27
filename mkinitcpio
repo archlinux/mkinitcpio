@@ -31,6 +31,7 @@ _optuki='' _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
 _optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0 _optnocmdline=0
 _optquiet=1 _optcolor=1 _optconfd=1
 _optskiphooks=() _optaddhooks=() _hooks=() _optpreset=() _tmpfiles=() _generated=()
+_optincludefiles=()
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
 
 # export a sane PATH
@@ -71,6 +72,7 @@ usage: ${0##*/} [options]
    -V, --version                Display version information and exit
    -v, --verbose                Verbose output (default: no)
    -z, --compress <program>     Use an alternate compressor on the image (cat, xz, lz4, zstd)
+   -i, --include
 
   Options for unified kernel image (-U, --uki):
    --cmdline <path>             Set kernel command line from file
@@ -784,10 +786,13 @@ run_post_hooks() {
 trap 'cleanup' EXIT
 
 _opt_short='A:c:D:g:H:hk:nLMPp:Rr:S:sd:t:U:Vvz:'
+_opt_short='A:c:D:g:H:hk:nLMPp:Rr:S:sd:t:U:Vvz:i:'
 _opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
            'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets'
            'preset:' 'remove' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:'
            'uki:' 'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:' 'no-cmdline')
+           'uki:' 'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:' 'no-cmdline'
+           'include:')
 
 parseopts "$_opt_short" "${_opt_long[@]}" -- "$@" || exit 1
 set -- "${OPTRET[@]}"
@@ -923,6 +928,10 @@ while :; do
             _d_flag_hooks+="$1/hooks:"
             _d_flag_install+="$1/install:"
             _d_flag_post+="$1/post:"
+            ;;
+        -i | --include)
+            shift
+            _optincludefiles+=("${1}")
             ;;
         --)
             shift
@@ -1100,6 +1109,8 @@ trap '(( ++_builderrors ))' ERR
 set -o errtrace
 
 install_modules "${!_modpaths[@]}"
+
+include_files "${_optincludefiles[@]}" 
 
 # unset errtrace and trap
 set +o functrace

@@ -1169,6 +1169,17 @@ install_modules() {
     rm "${BUILDROOT}${_d_kmoduledir}"/modules.!(*.bin|devname|softdep)
 }
 
+include_files(){
+    for f in "$@"; do
+        IFS=':' read -r file target <<<"${f}"
+        [[ -f "$file" ]] && add_binary "$file" "$target"
+        if [[ -d "$file" ]]; then
+            add_full_dir "$file"
+            mv "$BUILDROOT/$file" "$BUILDROOT/$target"
+        fi
+    done
+}
+
 find_module_from_symbol() {
     # Find a module based off on the symbol
     #   $1: symbol to find

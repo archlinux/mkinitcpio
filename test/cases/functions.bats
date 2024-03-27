@@ -328,3 +328,13 @@ setup() {
     run find_module_from_symbol "drm_privacy_screen_register" "=drivers/platform"
     assert_output --partial "thinkpad_acpi"
 }
+
+@test "include_files" {
+    local dir BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}" _optquiet=0
+    dir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+    install -d -- "$BUILDROOT" "${dir}"
+    touch "${dir}/create_root"
+    run include_files "${dir}/create_root:/sbin/init"
+    [[ ! -e "${BUILDROOT}/create_root" ]] || return
+    [[ -e "${BUILDROOT}/sbin/init" ]] || return
+}
