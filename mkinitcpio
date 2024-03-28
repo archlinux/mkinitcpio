@@ -271,7 +271,7 @@ decompress_firmware() {
 
     buildroot_fwpath=("${_d_fwpath[@]/#/$BUILDROOT}")
 
-    mapfile -d '' -t fw_files < <(LC_ALL=C.UTF-8 find "${buildroot_fwpath[@]}" -type f -name '*.zst' -print0 2>/dev/null | LC_ALL=C.UTF-8 sort -uz)
+    mapfile -d '' -t fw_files < <(LC_ALL=C.UTF-8 find "${buildroot_fwpath[@]:?}" -type f -name '*.zst' -print0 2>/dev/null | LC_ALL=C.UTF-8 sort -uz)
     if (( ${#fw_files[@]} )); then
         msg 'Decompressing zstd-compressed firmware files'
         for file in "${fw_files[@]}"; do
@@ -279,15 +279,15 @@ decompress_firmware() {
             zstd -qd --rm -- "$file"
         done
         mapfile -d '' -O "${#fw_file_symlinks[@]}" -t fw_file_symlinks \
-            < <(LC_ALL=C.UTF-8 find "${buildroot_fwpath[@]}" -type l -name '*.zst' -print0 2>/dev/null | LC_ALL=C.UTF-8 sort -uz)
+            < <(LC_ALL=C.UTF-8 find "${buildroot_fwpath[@]:?}" -type l -name '*.zst' -print0 2>/dev/null | LC_ALL=C.UTF-8 sort -uz)
     fi
-    mapfile -d '' -t fw_files < <(LC_ALL=C.UTF-8 find "${buildroot_fwpath[@]}" -type f -name '*.xz' -print0 2>/dev/null | LC_ALL=C.UTF-8 sort -uz)
+    mapfile -d '' -t fw_files < <(LC_ALL=C.UTF-8 find "${buildroot_fwpath[@]:?}" -type f -name '*.xz' -print0 2>/dev/null | LC_ALL=C.UTF-8 sort -uz)
     if (( ${#fw_files[@]} )); then
         msg 'Decompressing xz-compressed firmware files'
         quiet "Decompressing '%s'" "${fw_files[@]}"
         xz -q -d -- "${fw_files[@]}"
         mapfile -d '' -O "${#fw_file_symlinks[@]}" -t fw_file_symlinks \
-            < <(LC_ALL=C.UTF-8 find "${buildroot_fwpath[@]}" -type l -name '*.xz' -print0 2>/dev/null | LC_ALL=C.UTF-8 sort -uz)
+            < <(LC_ALL=C.UTF-8 find "${buildroot_fwpath[@]:?}" -type l -name '*.xz' -print0 2>/dev/null | LC_ALL=C.UTF-8 sort -uz)
     fi
 
     # Fix symlinks to point to the uncompressed files
@@ -312,7 +312,7 @@ decompress_firmware() {
 build_image() {
     local out="$1" compressout="$1" compress="$2" errprog pipestatus
 
-    if [[ "$MODULES_DECOMPRESS" == 'yes' ]]; then
+    if [[ "$MODULES_DECOMPRESS" == 'yes' ]] && (( ${#_d_fwpath[@]} )); then
         decompress_firmware
     fi
 
