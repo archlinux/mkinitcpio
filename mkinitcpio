@@ -783,7 +783,7 @@ check_path() {
     local mode="$1" opt="$2" path="$3" mesg
     mesg="Invalid option $opt"
     # realpath will reject file/file and dirs without the x flag
-    path="$(realpath -qs "$path")" || die "%s -- '%s' is an invalid path" "$mesg" "$3"
+    path="$(realpath -qs -- "$path")" || die "%s -- '%s' is an invalid path" "$mesg" "$3"
     mesg+=" -- '$path'"
     if [[ "$mode" == *d* ]]; then
         [[ ! -d "$path" ]] && die '%s must be a directory' "$mesg"
