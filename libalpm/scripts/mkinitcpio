@@ -33,7 +33,7 @@ generate_presets() {
     done
 }
 
-process_preset() {
+remove_preset() {
     if [[ -n "$pkgbase" && -e "$preset" ]]; then
         if ! cmp "$preset" <(sed "s|%PKGBASE%|${pkgbase}|g" /usr/share/mkinitcpio/hook.preset) &>/dev/null; then
             if [[ ! -e "$preset.pacsave" ]]; then
@@ -162,7 +162,7 @@ remove_kernel() {
         rm -f -- "${filelist[@]}"
     ) || return
     # remove the preset
-    process_preset "$pkgbase" "$preset"
+    remove_preset "$pkgbase" "$preset"
 }
 
 while read -r line; do
@@ -201,7 +201,7 @@ if (( package )) && compgen -G /etc/mkinitcpio.d/"*.preset" > /dev/null; then
             for preset in /etc/mkinitcpio.d/*.preset; do
                 pkgbase=${preset##*/}
                 pkgbase=${pkgbase%.preset}
-                process_preset "$pkgbase" "$preset"
+                remove_preset "$pkgbase" "$preset"
             done
             shopt -u nullglob
             ;;
