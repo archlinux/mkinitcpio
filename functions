@@ -996,7 +996,7 @@ initialize_buildroot() {
     # creates a temporary directory for the buildroot and initialize it with a
     # basic set of necessary directories and symlinks
 
-    local kernver="$1" generatedir="$2" workdir arch buildroot osreleasefile
+    local kernver="$1" generatedir="$2" workdir arch buildroot osreleasefile root
     arch="$(uname -m)"
 
     if ! workdir="$(mktemp -d --tmpdir mkinitcpio.XXXXXX 2>/dev/null)"; then
@@ -1017,19 +1017,21 @@ initialize_buildroot() {
     echo 1 > "${earlyroot}/early_cpio"
 
     # base directory structure
-    install -dm755 "$buildroot"/{new_root,proc,sys,dev,run,tmp,var,etc,usr/{local{,/bin,/sbin,/lib},lib,bin}}
-    ln -s "usr/lib" "$buildroot/lib"
-    ln -s "bin"     "$buildroot/usr/sbin"
-    ln -s "usr/bin" "$buildroot/bin"
-    ln -s "usr/bin" "$buildroot/sbin"
-    ln -s "/run"    "$buildroot/var/run"
+    for root in "$buildroot" "$earlyroot"; do
+        install -dm755 "$root"/{new_root,proc,sys,dev,run,tmp,var,etc,usr/{local{,/bin,/sbin,/lib},lib,bin}}
+        ln -s "usr/lib" "$root/lib"
+        ln -s "bin"     "$root/usr/sbin"
+        ln -s "usr/bin" "$root/bin"
+        ln -s "usr/bin" "$root/sbin"
+        ln -s "../run"  "$root/var/run"
 
-    case "$arch" in
-        x86_64)
-            ln -s "lib"     "$buildroot/usr/lib64"
-            ln -s "usr/lib" "$buildroot/lib64"
-            ;;
-    esac
+        case "$arch" in
+            x86_64)
+                ln -s "lib"     "$root/usr/lib64"
+                ln -s "usr/lib" "$root/lib64"
+                ;;
+        esac
+    done
 
     # mkinitcpio version stamp
     # shellcheck disable=SC2154
