@@ -97,6 +97,42 @@ EOH
     assert_output --partial '-> Early uncompressed CPIO image generation successful'
 }
 
+@test "test moving compressed files to early cpio" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
+    local tmpdir
+    tmpdir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+
+    echo "HOOKS=(test) COMPRESSION=zstd" >> "$tmpdir/mkinitcpio.conf"
+    install -dm755 "$tmpdir/install"
+    cat << EOH >> "$tmpdir/install/test"
+#!/usr/bin/env bash
+build() {
+    mkdir -p "\$BUILDROOT"/test/{compressed,mixed,uncompressed}
+    touch "\$BUILDROOT"/test/{compressed/dummy,mixed/dummy}.zst
+    touch "\$BUILDROOT"/test/{mixed/dummy,uncompressed/dummy}
+}
+EOH
+
+    ./mkinitcpio \
+        -D "$tmpdir" \
+        -c "$tmpdir/mkinitcpio.conf" \
+        -g "$tmpdir/initramfs.img"
+
+    run ./lsinitcpio --early "$tmpdir/initramfs.img"
+    assert_line 'test/compressed/dummy.zst'
+    assert_line 'test/mixed/dummy.zst'
+    refute_line 'test/uncompressed'
+
+    run ./lsinitcpio --cpio "$tmpdir/initramfs.img"
+    refute_line 'test/compressed'
+    assert_line 'test/mixed/dummy'
+    assert_line 'test/uncompressed/dummy'
+    refute_output --regexp '.*\.zst$'
+}
+
 @test "image creation zstd" {
     if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
         skip "No kernel modules available"
