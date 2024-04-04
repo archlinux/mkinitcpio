@@ -10,8 +10,8 @@ _rdlog_cons="$(( 1 << 2 ))"
 _rdlog_all="$(( (1 << 3) - 1 ))"
 
 msg() {
-    # assigned by parse_cmdline
-    # shellcheck disable=SC2154
+    local quiet
+    quiet="$(getarg quiet)"
     [ "${quiet}" != "y" ] && echo "$@"
 }
 err() {
@@ -178,11 +178,6 @@ parse_cmdline_item() {
                     ;;
             esac
             ;;
-        noresume)
-            # Used in resume hook
-            # shellcheck disable=SC2034
-            noresume=y
-            ;;
         rd.debug)
             rd_debug=y
             ;;
@@ -204,7 +199,7 @@ parse_cmdline_item() {
 }
 
 process_cmdline_param() {
-    local item_callback="$1" key="$2" value="$3"
+    local item_callback="$1" key="$2" value="$3" cmdline_cache="$4"
 
     # maybe unquote the value
     # busybox ash supports string indexing
@@ -213,11 +208,15 @@ process_cmdline_param() {
         value="${value#?}" value="${value%?}"
     fi
 
+    # store the parsed cmdline for getarg
+    printf '%s=%s\n' "$key" "${value:-y}" >> "$cmdline_cache"
+
     "$item_callback" "$key" "$value"
 }
 
 parse_cmdline() {
     local item_callback="${1:-parse_cmdline_item}"
+    local cmdline_cache="${2:-/tmp/cmdline}"
     local cmdline word quoted key value
 
     set -f
@@ -258,12 +257,25 @@ parse_cmdline() {
             fi
         fi
 
-        process_cmdline_param "$item_callback" "$key" "$value"
+        process_cmdline_param "$item_callback" "$key" "$value" "$cmdline_cache"
         unset key value
     done
 
     if [ -n "$key" ]; then
-        process_cmdline_param "$item_callback" "$key" "$value"
+        process_cmdline_param "$item_callback" "$key" "$value" "$cmdline_cache"
+    fi
+}
+
+getarg() {
+    local arg="$1" default="$2" cmdline_cache="${3:-/tmp/cmdline}" raw value
+
+    raw="$(grep -s "^$arg=" "$cmdline_cache" | tail -1)"
+
+    if [ -n "$raw" ]; then
+        value="${raw#*=}"
+        printf '%s' "${value:-$default}"
+    else
+        printf '%s' "$default"
     fi
 }
 
@@ -294,8 +306,8 @@ fsck_device() {
 }
 
 fsck_root() {
-    # assigned by parse_cmdline
-    # shellcheck disable=SC2154
+    local root
+    root="$(getarg root)"
     fsck_device "$root"
     fsckret="$?"
 
@@ -363,7 +375,7 @@ tag_to_udev_path() {
 }
 
 resolve_device() {
-    local major minor dev device="$1"
+    local major minor dev device="$1" rootdelay
 
     # attempt to resolve devices immediately. if this fails
     # and udev is running, fall back on lazy resolution using
@@ -384,8 +396,7 @@ resolve_device() {
     case "$device" in
         # path to kernel named block device
         /dev/*)
-            # rootdelay is assigned by parse_cmdline
-            # shellcheck disable=SC2154
+            rootdelay="$(getarg rootdelay)"
             if poll_device "$device" "$rootdelay"; then
                 echo "$device"
                 return 0

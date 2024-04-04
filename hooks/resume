@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 run_hook() {
-    local resumedev
+    local resumedev noresume resume rootdelay
 
-    # assigned by parse_cmdline
-    # shellcheck disable=SC2154
+    noresume="$(getarg noresume)"
     if [ -n "$noresume" ]; then
         return 0
     fi
@@ -17,8 +16,7 @@ run_hook() {
         return
     fi
 
-    # assigned by parse_cmdline
-    # shellcheck disable=SC2154
+    resume="$(getarg resume)"
     if [ -z "$resume" ]; then
         err 'resume: no device specified for hibernation'
         return 1
@@ -29,8 +27,7 @@ run_hook() {
         return 1
     fi
 
-    # assigned by parse_cmdline
-    # shellcheck disable=SC2154
+    rootdelay="$(getarg rootdelay)"
     if resumedev="$(resolve_device "$resume" "$rootdelay")"; then
         # shellcheck disable=SC3001
         read -r major minor < <(stat -Lc '0x%t 0x%T' "$resumedev")

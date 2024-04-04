@@ -331,6 +331,13 @@ run in reverse.
     of boot failure. For example this allows boot splash screens to terminate
     their process, so users will notice the failure.
 
+*getarg* _argument_ [ _default_ ]::
+    This function can be used in runtime hooks to get an argument from the
+    kernel cmdline. If _argument_ exists with a value, the value is returned. If
+    _argument_ exists without a value, _y_ is returned. If _argument_ does not
+    exist, _default_ is returned. If _default_ is not specified, nothing is
+    returned.
+
 == About post hooks
 
 Post hooks are executables or scripts that get executed after the image has been
