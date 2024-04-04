@@ -331,6 +331,26 @@ build_image() {
             else
                 msg "Creating %s-compressed initcpio image: '%s'" "$compress" "$out"
             fi
+            # move all compressed files to the early cpio to avoid double compression
+            local compressed_files=()
+            mapfile -td '' compressed_files < <(find "$BUILDROOT" -type f \
+                -regextype posix-extended -regex '.*\.(bz2|gz|lz4|lzma|lzo|xz|zst)' -printf './%P\0')
+            if (( ${#compressed_files[@]} )) && pushd "$BUILDROOT" >/dev/null; then
+                quiet "moving to early root: '%s'" "${compressed_files[@]}"
+                # try to hard link files, fall back to copy if that fails
+                cp -flt "$EARLYROOT" --parents "${compressed_files[@]}" 2>/dev/null \
+                    || cp -fat "$EARLYROOT" --parents "${compressed_files[@]}"
+                rm -f "${compressed_files[@]}"
+                # delete moved directories if they are empty, sorted by depth ascending
+                local moved_dirs=()
+                mapfile -td '' moved_dirs < <(printf '%s\0' "${compressed_files[@]%/*}" \
+                    | awk -vRS='\0' '{printf("%d\t%s\0", split($0, _, "/"), $0)}' \
+                    | LC_ALL=C.UTF-8 sort -uz -k1n,1 -k2 | cut -zf2-)
+                while (( ${#moved_dirs[@]} )); do
+                    mapfile -td '' moved_dirs < <(find "${moved_dirs[@]}" -maxdepth 0 -empty -delete -printf '%h\0' | uniq -z)
+                done
+                popd >/dev/null || return
+            fi
             ;;&
         xz)
             COMPRESSION_OPTIONS=('-T0' '--check=crc32' "${COMPRESSION_OPTIONS[@]}")
