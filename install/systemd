@@ -52,10 +52,9 @@ add_systemd_unit() {
 }
 
 add_systemd_drop_in() {
-    local unit=$1
+    local unit="$1" dropin_name="$2"
 
-    mkdir -p "$BUILDROOT/etc/systemd/system/$unit.d"
-    cat >"$BUILDROOT/etc/systemd/system/$unit.d/$2.conf"
+    add_file - "/etc/systemd/system/${unit}.d/${dropin_name}.conf" 644
 }
 
 build() {

@@ -59,12 +59,12 @@ build() {
             get_decompressor "$fontfile"
             add_dir "${of%/*}"
             "$cat" "$fontfile" | add_file - "$of" 644
-            if [[ "$(head -c 23 "$BUILDROOT/$of" | tr -d '\0')" == '# combine partial fonts' ]]; then
+            if [[ "$("$cat" "$fontfile" | head -c 23 | tr -d '\0')" == '# combine partial fonts' ]]; then
                 while read -r filename; do
                     for file in "/usr/share/kbd/consolefonts/partialfonts/$filename"?('.gz'|'.bz2'|'.zst'); do
                         add_font_file "$file"
                     done
-                done < <(sed '/^#/d' "$BUILDROOT/$of")
+                done < <("$cat" "$fontfile" | sed '/^#/d')
             fi
         }
 
