@@ -202,6 +202,9 @@ analyze_image() {
 
     # decompress the image since we need to read from it multiple times.
     install -dm755 "$workdir/initcpio"
+    if (( offset > 0 )); then
+        bsdtar -C "$workdir/initcpio" -xf "$image" || die 'Failed to decompress early cpio'
+    fi
     decomp "$image" "$offset" | bsdtar -C "$workdir/initcpio" -xf - || die 'Failed to decompress image'
 
     modules=("$workdir/initcpio/usr/lib/modules"/*/kernel/**/*.ko*)
