@@ -1215,7 +1215,12 @@ add_all_modules_from_symbol() {
     local -a mods paths=("${@:2}")
 
     mapfile -t mods < <(find_module_from_symbol "$symbol" "${paths[@]}")
-    (( ${#mods[@]} )) || return 1
+    if (( ! ${#mods[@]} )); then
+        paths=("${paths[@]#=}") paths=("${paths[@]/#/\'}") paths=("${paths[@]/%/\',}")
+        local path_string="${paths[*]}"
+        warning "No module containing the symbol '%s' found in: %s" "$symbol" "${path_string%,}"
+        return 1
+    fi
 
     # add_checked_modules_from_symbol
     if [[ "${FUNCNAME[1]}" == 'add_checked_modules_from_symbol' ]]; then
