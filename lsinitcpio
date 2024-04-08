@@ -62,6 +62,7 @@ unpack_uki() {
         --dump-section .initrd="$workdir"/initcpio.img \
         --dump-section .cmdline="$workdir"/cmdline.txt \
         --dump-section .osrel="$workdir"/os-release.txt \
+        --dump-section .uname="$workdir"/uname.txt \
         "$image" /dev/null 2>/dev/null
     printf '%s/initcpio.img' "$workdir"
 }
@@ -238,6 +239,7 @@ analyze_image() {
     msg 'Image: %s%s' "${imagename[@]}"
     [[ -n "$version" ]] && msg 'Created with mkinitcpio %s' "$version"
     msg 'Kernel: %s' "${kernver:-unknown}"
+    [[ -f "$workdir"/uname.txt ]] && msg 'uname: %s' "$(tr -d '\0' < "$workdir"/uname.txt)"
     if [[ -f "$workdir"/os-release.txt ]]; then
         (
             unset -v PRETTY_NAME NAME ID VERSION_ID BUILD_ID
