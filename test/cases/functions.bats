@@ -328,3 +328,50 @@ setup() {
     run find_module_from_symbol "drm_privacy_screen_register" "=drivers/platform"
     assert_output --partial "thinkpad_acpi"
 }
+
+@test "add_all_modules_from_symbol" {
+    local KERNELVERSION _optquiet=0
+    local -A _addedmodules _modpaths _autodetect_cache
+    KERNELVERSION="$(uname -r)"
+
+    if ! find "/lib/modules/${KERNELVERSION}/kernel/drivers/platform/" -name 'thinkpad_acpi.ko*' &>/dev/null; then
+        skip "No kernel modules available"
+    fi
+
+    run add_all_modules_from_symbol 'drm_privacy_screen_register' '=drivers/platform'
+    assert_success
+    assert_output --partial 'adding module: thinkpad_acpi'
+
+    run add_all_modules_from_symbol 'mkinitcpio_test_fake_symbol' '=drivers/platform'
+    assert_failure
+    assert_output --partial "No module containing the symbol 'mkinitcpio_test_fake_symbol' found in: 'drivers/platform'"
+}
+
+@test "add_checked_modules_from_symbol" {
+    local KERNELVERSION _optquiet=0
+    local -A _addedmodules _modpaths _autodetect_cache
+    KERNELVERSION="$(uname -r)"
+
+    if ! find "/lib/modules/${KERNELVERSION}/kernel/drivers/platform/" -name 'thinkpad_acpi.ko*' &>/dev/null; then
+        skip "No kernel modules available"
+    fi
+
+    # autodetection is used and the thinkpad_acpi module is loaded
+    _autodetect_cache[thinkpad_acpi]=1
+    run add_checked_modules_from_symbol 'drm_privacy_screen_register' '=drivers/platform'
+    assert_success
+    assert_output --partial 'adding module: thinkpad_acpi'
+
+    # autodetection is not used (falls back to add_all_modules_from_symbol)
+    _autodetect_cache=()
+    run add_checked_modules_from_symbol 'drm_privacy_screen_register' '=drivers/platform'
+    assert_success
+    assert_output --partial 'adding module: thinkpad_acpi'
+
+    # autodetection is used, but the thinkpad_acpi module is not loaded
+    _autodetect_cache=()
+    _autodetect_cache[placeholder_module]=1
+    run add_checked_modules_from_symbol 'drm_privacy_screen_register' '=drivers/platform'
+    assert_success
+    refute_output
+}
