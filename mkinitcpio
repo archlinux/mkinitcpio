@@ -336,7 +336,7 @@ build_image() {
             mapfile -td '' compressed_files < <(find "$BUILDROOT" -type f \
                 -regextype posix-extended -regex '.*\.(bz2|gz|lz4|lzma|lzo|xz|zst)' -printf './%P\0')
             if (( ${#compressed_files[@]} )) && pushd "$BUILDROOT" >/dev/null; then
-                quiet "moving to early root: '%s'" "${compressed_files[@]}"
+                quiet "Moving to early root: '%s'" "${compressed_files[@]#.}"
                 # try to hard link files, fall back to copy if that fails
                 cp -flt "$EARLYROOT" --parents "${compressed_files[@]}" 2>/dev/null \
                     || cp -fat "$EARLYROOT" --parents "${compressed_files[@]}"
