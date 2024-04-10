@@ -1227,9 +1227,9 @@ add_all_modules_from_symbol() {
         # _autodetect_cache is declared in mkinitcpio and assigned in install/autodetect
         # shellcheck disable=SC2154
         if (( ${#_autodetect_cache[@]} )); then
-            mapfile -t mods < <(grep -xFf <(printf '%s\n' "${!_autodetect_cache[@]}") <<<"${mods[@]}")
+            mapfile -t mods < <(printf '%s\n' "${mods[@]}" | grep -xFf <(printf '%s\n' "${!_autodetect_cache[@]}"))
             # Do not fail if no autodetected module has the symbol
-            if (( ${#mods[@]} )); then
+            if (( ! ${#mods[@]} )); then
                 return 0
             fi
         fi
