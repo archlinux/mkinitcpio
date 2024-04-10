@@ -161,32 +161,32 @@ detect_compression() {
     bytes="$(od -An -t x1 -j "$offset" -N 8 "$file" | tr -d ' ')"
     case "$bytes" in
         'fd377a585a00'*)
-            echo 'xz'
+            printf 'xz'
             return
             ;;
         '894c5a4f'*)
-            echo 'lzop'
+            printf 'lzop'
             return
             ;;
         '1f8b'*)
-            echo 'gzip'
+            printf 'gzip'
             return
             ;;
         '04224d18'*)
             error 'Newer lz4 stream format detected! This may not boot!'
-            echo 'lz4'
+            printf 'lz4'
             return
             ;;
         '02214c18'*)
-            echo 'lz4 -l'
+            printf 'lz4 -l'
             return
             ;;
         '28b52ffd'*)
-            echo 'zstd'
+            printf 'zstd'
             return
             ;;
         '425a68'*) # 'BZh' in ASCII
-            echo 'bzip2'
+            printf 'bzip2'
             return
             ;;
         '5d0000'*)
@@ -194,11 +194,11 @@ detect_compression() {
             # do it without reading large portions of the stream. this
             # check is good enough for GNU tar, apparently, so it's good
             # enough for me.
-            echo 'lzma'
+            printf 'lzma'
             return
             ;;
         ????????'7a696d67'*) # 4 discarded bytes, then 'zimg' in ASCII
-            echo 'zimg'
+            printf 'zimg'
             return
             ;;
     esac
