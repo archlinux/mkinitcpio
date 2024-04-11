@@ -127,7 +127,7 @@ other features.
 
 *--cmdline* _filename_::
     Use kernel command line with unified kernel image. If none is specified,
-    try one of the files _/etc/kernel/cmdline_, _/usr/share/kernel/cmdline_
+    try one of the files _/etc/kernel/cmdline_, _/usr/lib/kernel/cmdline_
     or _/proc/cmdline_.
 
 *--no-cmdline*::
