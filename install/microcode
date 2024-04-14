@@ -31,13 +31,14 @@ get_host_ucode() {
 }
 
 build() {
-    local arch vendor fwpath ucode_file ucode_files
+    local arch vendor fwpath ucode_file
     local vendors=(intel amd)
-    local ucode_dest="${EARLYROOT}/kernel/x86/microcode"
+    local ucode_dest='/kernel/x86/microcode'
     local -A ucode_dir=([intel]=intel-ucode [amd]=amd-ucode)
     local -A ucode_img=([intel]=intel-ucode.img [amd]=amd-ucode.img)
     local -A ucode_bin=([intel]=GenuineIntel.bin [amd]=AuthenticAMD.bin)
     local -A ucode_glob=([intel]='??-??-??' [amd]='*.bin')
+    local -a ucode_files
 
     arch="$(uname -m)"
     if [[ "$arch" != @(i?86|x86_64) ]]; then
@@ -54,14 +55,13 @@ build() {
         # shellcheck disable=SC2154
         for fwpath in "${_d_fwpath[@]}"; do
             if [[ -f "${fwpath}/${ucode_file}" ]]; then
-                if ! [[ -d "${ucode_dest}" ]]; then
-                    install -dm755 "${ucode_dest}"
-                fi
                 quiet "adding microcode file: '%s'" "${fwpath}/${ucode_file}"
-                cat "${fwpath}/${ucode_file}" > "${ucode_dest}/${ucode_bin[$vendor]}"
+                add_file_early "${fwpath}/${ucode_file}" "${ucode_dest}/${ucode_bin[$vendor]}" 644
                 return
             fi
         done
+        # if no host-specific microcode is found, don't continue and add all microcode
+        return
     fi
 
     for vendor in "${vendors[@]}"; do
@@ -69,7 +69,7 @@ build() {
         # _d_fwpath is assigned in mkinitcpio
         # shellcheck disable=SC2154
         for fwpath in "${_d_fwpath[@]}"; do
-            if [[ -e "${ucode_dest}/${ucode_bin[$vendor]}" ]]; then
+            if [[ -e "${EARLYROOT}/${ucode_dest}/${ucode_bin[$vendor]}" ]]; then
                 break
             fi
             if [[ ! -d "${fwpath}/${ucode_dir[$vendor]}" ]]; then
@@ -79,20 +79,16 @@ build() {
             if ! (( ${#ucode_files[@]} )); then
                 continue
             fi
-            if ! [[ -d "${ucode_dest}" ]]; then
-                install -dm755 "${ucode_dest}"
-            fi
-            for ucode_file in "${ucode_files[@]}"; do
-                quiet "adding microcode file: '%s'" "$ucode_file"
-                cat "$ucode_file" >> "${ucode_dest}/${ucode_bin[$vendor]}"
-            done
+            quiet "adding microcode files: '%s'" "${ucode_files[*]}"
+            cat "${ucode_files[@]}" | add_file_early - "${ucode_dest}/${ucode_bin[$vendor]}" 644
             break
         done
 
         # as a last resort, find and extract a precompiled image in /boot
-        if [[ ! -e "${ucode_dest}/${ucode_bin[$vendor]}" && -r "/boot/${ucode_img[$vendor]}" ]]; then
+        if [[ ! -e "${EARLYROOT}/${ucode_dest}/${ucode_bin[$vendor]}" && -r "/boot/${ucode_img[$vendor]}" ]]; then
             quiet "extracting precompiled microcode image: '/boot/%s'" "${ucode_img[$vendor]}"
-            LC_ALL=C.UTF-8 bsdtar -C "$EARLYROOT" -xf "/boot/${ucode_img[$vendor]}" 'kernel/*/microcode/*.bin'
+            LC_ALL=C.UTF-8 bsdtar -xOf "/boot/${ucode_img[$vendor]}" "${ucode_dest#/}/${ucode_bin[$vendor]}" | \
+                add_file_early - "${ucode_dest}/${ucode_bin[$vendor]}" 644
         fi
     done
 }
