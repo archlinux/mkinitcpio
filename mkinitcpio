@@ -275,7 +275,7 @@ decompress_firmware() {
     if (( ${#fw_files[@]} )); then
         msg 'Decompressing zstd-compressed firmware files'
         for file in "${fw_files[@]}"; do
-            quiet "Decompressing '%s'" "$file"
+            quiet "Decompressing '%s'" "${file#"$BUILDROOT"}"
             zstd -qd --rm -- "$file"
         done
         mapfile -d '' -O "${#fw_file_symlinks[@]}" -t fw_file_symlinks \
@@ -284,7 +284,7 @@ decompress_firmware() {
     mapfile -d '' -t fw_files < <(LC_ALL=C.UTF-8 find "${buildroot_fwpath[@]:?}" -type f -name '*.xz' -print0 2>/dev/null | LC_ALL=C.UTF-8 sort -uz)
     if (( ${#fw_files[@]} )); then
         msg 'Decompressing xz-compressed firmware files'
-        quiet "Decompressing '%s'" "${fw_files[@]}"
+        quiet "Decompressing '%s'" "${fw_files[@]#"$BUILDROOT"}"
         xz -q -d -- "${fw_files[@]}"
         mapfile -d '' -O "${#fw_file_symlinks[@]}" -t fw_file_symlinks \
             < <(LC_ALL=C.UTF-8 find "${buildroot_fwpath[@]:?}" -type l -name '*.xz' -print0 2>/dev/null | LC_ALL=C.UTF-8 sort -uz)
