@@ -58,12 +58,18 @@ prepare:
 	    -e 's|%VERSION%|$(VERSION)|g' \
 	    < lsinitcpio > $(DESTDIR)/usr/bin/lsinitcpio
 
+	sed -e 's|\./functions|/usr/lib/initcpio/functions|' \
+	    < shell/bash-completion > $(DESTDIR)/usr/share/bash-completion/completions/mkinitcpio
+
+	sed -e 's|\./functions|/usr/lib/initcpio/functions|' \
+	    < shell/zsh-completion > $(DESTDIR)/usr/share/zsh/site-functions/_mkinitcpio
+
 install-generator: all prepare
 	chmod 755 $(DESTDIR)/usr/bin/lsinitcpio $(DESTDIR)/usr/bin/mkinitcpio
 
 	install -m644 mkinitcpio.conf $(DESTDIR)/etc/mkinitcpio.conf
-	install -m755 -t $(DESTDIR)/usr/lib/initcpio init shutdown
-	install -m644 -t $(DESTDIR)/usr/lib/initcpio init_functions functions
+	install -m755 -t $(DESTDIR)/usr/lib/initcpio init shutdown functions
+	install -m644 -t $(DESTDIR)/usr/lib/initcpio init_functions
 	install -m644 udev/01-memdisk.rules $(DESTDIR)/usr/lib/initcpio/udev/01-memdisk.rules
 
 	cp -at $(DESTDIR)/usr/lib/initcpio hooks install
@@ -81,9 +87,7 @@ install-generator: all prepare
 	install -m644 man/mkinitcpio.8 $(DESTDIR)/usr/share/man/man8/mkinitcpio.8
 	install -m644 man/mkinitcpio.conf.5 $(DESTDIR)/usr/share/man/man5/mkinitcpio.conf.5
 	install -m644 man/lsinitcpio.1 $(DESTDIR)/usr/share/man/man1/lsinitcpio.1
-	install -m644 shell/bash-completion $(DESTDIR)/usr/share/bash-completion/completions/mkinitcpio
 	ln -s mkinitcpio $(DESTDIR)/usr/share/bash-completion/completions/lsinitcpio
-	install -m644 shell/zsh-completion $(DESTDIR)/usr/share/zsh/site-functions/_mkinitcpio
 
 install-hooks: prepare
 	install -m644 libalpm/hooks/90-mkinitcpio-install.hook $(DESTDIR)/usr/share/libalpm/hooks/90-mkinitcpio-install.hook

@@ -142,10 +142,17 @@ parseopts() {
 kver_x86() {
     local kver
     local -i offset
+    # On x86 (since kernel 1.3.73, 1996), regardless of whether it's
+    # an Image, a zImage, or a bzImage: The file header is the same,
+    # and contains the kernel_version string.
+    #
     # scrape the version out of the kernel image. locate the offset
     # to the version string by reading 2 bytes out of image at at
     # address 0x20E. this leads us to a string of, at most, 128 bytes.
     # read the first word from this string as the kernel version.
+    #
+    # https://www.kernel.org/doc/html/v6.7/arch/x86/boot.html
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/boot/header.S?h=v6.7
     offset="$(od -An -j0x20E -dN2 "$1")" || return
 
     read -r kver _ < \
@@ -155,124 +162,273 @@ kver_x86() {
 }
 
 detect_compression() {
+    # Detect standard compressed files. Not Linux-kernel specific.
+
     local file="$1" offset="${2:-0}" bytes
 
-    bytes="$(od -An -t x1 -N6 -j "$offset" "$file" | tr -dc '[:alnum:]')"
+    # The first 8 bytes are enough to detect most formats.
+    bytes="$(od -An -t x1 -j "$offset" -N 8 "$file" | tr -d ' ')"
     case "$bytes" in
-        'fd377a585a00')
-            echo 'xz'
+        'fd377a585a00'*)
+            printf 'xz'
             return
             ;;
-    esac
-
-    bytes="$(od -An -t x1 -N4 -j "$offset" "$file" | tr -dc '[:alnum:]')"
-    if [[ "$bytes" == '894c5a4f' ]]; then
-        echo 'lzop'
-        return
-    fi
-
-    bytes="$(od -An -t x2 -N2 -j "$offset" "$file" | tr -dc '[:alnum:]')"
-    if [[ "$bytes" == '8b1f' ]]; then
-        echo 'gzip'
-        return
-    fi
-
-    bytes="$(od -An -t x4 -N4 -j "$offset" "$file" | tr -dc '[:alnum:]')"
-    case "$bytes" in
-        '184d2204')
+        '894c5a4f'*)
+            printf 'lzop'
+            return
+            ;;
+        '1f8b'*)
+            printf 'gzip'
+            return
+            ;;
+        '04224d18'*)
             error 'Newer lz4 stream format detected! This may not boot!'
-            echo 'lz4'
+            printf 'lz4'
             return
             ;;
-        '184c2102')
-            echo 'lz4 -l'
+        '02214c18'*)
+            printf 'lz4 -l'
             return
             ;;
-        'fd2fb528')
-            echo 'zstd'
+        '28b52ffd'*)
+            printf 'zstd'
+            return
+            ;;
+        '425a68'*) # 'BZh' in ASCII
+            printf 'bzip2'
+            return
+            ;;
+        '5d0000'*)
+            # lzma detection sucks and there's really no good way to
+            # do it without reading large portions of the stream. this
+            # check is good enough for GNU tar, apparently, so it's good
+            # enough for me.
+            printf 'lzma'
+            return
+            ;;
+        ????????'7a696d67'*) # 4 discarded bytes, then 'zimg' in ASCII
+            # Linux kernel "zboot" self-decompressing EFI images
+            # (since kernel 6.1)
+            # (as of kernel 6.7: only on arm64, loongarch, and riscv)
+
+            # Read 32 bytes (before 0x38) from address 0x18, which is a
+            # null-terminated string representing the compressed type.
+            #
+            # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/zboot-header.S?h=v6.7
+            read -rd '' bytes < <(od -An -j0x18 -t a -N32 "$1" | sed 's/ nul//g' | tr -dc '[:alnum:]')
+            printf 'zboot %s' "$bytes"
             return
             ;;
     esac
 
-    bytes="$(od -An -c -N3 -j "$offset" "$file" | tr -dc '[:alnum:]')"
-    if [[ "$bytes" == 'BZh' ]]; then
-        echo 'bzip2'
-        return
-    fi
+    # Try some formats that require us to sniff bytes at other locations.
 
-    # lzma detection sucks and there's really no good way to
-    # do it without reading large portions of the stream. this
-    # check is good enough for GNU tar, apparently, so it's good
-    # enough for me.
-    bytes="$(od -An -t x1 -N3 -j "$offset" "$file" | tr -dc '[:alnum:]')"
-    if [[ "$bytes" == '5d0000' ]]; then
-        echo 'lzma'
-        return
-    fi
-
-    read -rd '' bytes < <(od -An -j $((offset + 0x04)) -t c -N4 "$file" | tr -dc '[:alnum:]')
-    if [[ "$bytes" == 'zimg' ]]; then
-        echo 'zimg'
+    bytes="$(od -An -t x1 -j "$((offset+0x24))" -N4 "$file" | tr -d ' ')"
+    if [[ "$bytes" == '18286f01' || "$bytes" == '016f2818' ]]; then # endian-sensitive
+        # Linux kernel ARM32 self-decompressing "zImage"
+        #
+        # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/arm/boot/compressed/vmlinux.lds.S?h=v6.7#n121
+        # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/arm/boot/compressed/head.S?h=v6.7#n215
+        printf 'ARM zImage'
         return
     fi
 
     # out of ideas, assuming uncompressed
 }
 
-kver_zimage() {
-    # Generic EFI zboot added since kernel 6.1
-    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/Makefile.zboot?h=v6.1
-    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/zboot-header.S?h=v6.1
+decompress_cat() {
+    local file="$1" offset="${2:-0}" size="${3:-}"
+    local comp_type reader
 
-    local kver='' reader start size comp_type
+    comp_type="$(detect_compression "$file" "$offset")"
+    case "$comp_type" in
+        '') reader='cat' ;;
+        'xz') reader='xzcat' ;;
+        'lzop') reader='lzop -d' ;;
+        'gzip') reader='zcat' ;;
+        'lz4') reader='lz4cat' ;;
+        'lz4 -l') reader='lz4cat -l' ;;
+        'zstd') reader='zstdcat' ;;
+        'bzip2') reader='bzcat' ;;
+        'lzma') reader='xzcat' ;;
+        'zboot '*)
+            _zboot_cat "${comp_type#'zboot '}" "$file" "$offset"
+            return
+            ;;
+        'ARM zImage')
+            _arm_zimage_cat "$file" "$offset"
+            return
+            ;;
+        *)
+            error 'Unknown compression type: %s' "$comp_type"
+            return 1
+            ;;
+    esac
+    if (( offset == 0 )) && [[ -z "$size" ]]; then
+        $reader - <"$file"
+    elif [[ -z "$size" ]]; then
+        tail --bytes=+"$((offset+1))" "$file" | $reader -
+    else
+        tail --bytes=+"$((offset+1))" "$file" | head --bytes="$size" | $reader -
+    fi
+}
 
-    # Reading 4 bytes from address 0x08 is the starting offset of compressed data
-    start="$(od -An -j0x08 -t u4 -N4 "$1" | tr -dc '[:alnum:]')"
+_zboot_cat() {
+    # Linux kernel "zboot" self-decompressing EFI images
+    # (since kernel 6.1)
+    # (as of kernel 6.7: only on arm64, loongarch, and riscv)
 
-    # Reading 4 bytes from address 0x0c is the size of compressed data,
-    # but it needs to be corrected according to the compressed type.
-    size="$(od -An -j0x0c -t u4 -N4 "$1" | tr -dc '[:alnum:]')"
+    # See zboot-header.S for offsets. See Makefile.zboot for
+    # compression types and size adjustments.
+    #
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/Makefile.zboot?h=v6.7
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/firmware/efi/libstub/zboot-header.S?h=v6.7
 
-    # Read 36 bytes (before 0x3c) from address 0x18,
-    # which is a nul-terminated string representing the compressed type.
-    read -rd '' comp_type < <(od -An -j0x18 -t a -N32 "$1" | sed 's/ nul//g' | tr -dc '[:alnum:]')
+    local comp_type="$1" file="$2" offset="${3:-0}"
+    local reader start size size_len
+
+    # Read a pair of u32s from 0x08 (right after the "zimg" magic
+    # identifier) for the starting-offset and size of the compressed
+    # data.
+    start="$(od -An -j "$((offset+0x08))" -t u4 -N4 "$file" | tr -dc '[:alnum:]')"
+    size="$(od -An -j "$((offset+0x0c))" -t u4 -N4 "$file" | tr -dc '[:alnum:]')"
 
     [[ "$start" =~ ^[0-9]+$ ]] || return 1
     [[ "$size" =~ ^[0-9]+$ ]] || return 1
 
+    size_len=4 # corresponds to Makefile.zboot:zboot-size-len-y or zboot-header.S:ZBOOT_SIZE_LEN
     case "$comp_type" in
-        'gzip')
-            reader='zcat'
-            ;;
-        'lz4')
-            reader='lz4cat'
-            size="$((size + 4))"
-            ;;
-        'lzma')
-            reader='xzcat'
-            size="$((size + 4))"
-            ;;
-        'lzo')
-            reader="lzop -d"
-            size="$((size + 4))"
-            ;;
-        'xzkern')
-            reader='xzcat'
-            size="$((size + 4))"
-            ;;
-        'zstd22')
-            reader='zstdcat'
-            size="$((size + 4))"
-            ;;
+        'gzip') reader='zcat'
+                size_len=0
+                ;;
+        'lz4') reader='lz4cat' ;;
+        'lzma') reader='xzcat' ;;
+        'lzo') reader='lzop -d' ;;
+        'xzkern') reader='xzcat' ;;
+        'zstd22') reader='zstdcat' ;;
         *)
-            reader="$comp_type"
-            size="$((size + 4))"
+            error 'Unknown zboot compression type: %s' "${comp_type#'zboot '}"
+            return 1
             ;;
     esac
 
-    read -r _ _ kver _ < <(dd if="$1" bs=1 count="$size" skip="$start" 2>/dev/null | $reader - | grep -m1 -aoE  'Linux version .(\.[-[:alnum:]+]+)+')
+    tail --bytes=+"$((offset+start+1))" <"$file" | head --bytes="$((size+size_len))" | $reader -
+}
 
-    printf '%s' "$kver"
+_arm_zimage_cat() {
+    # Linux kernel ARM32 self-decompressing "zImage"
+
+    # The end of the file looks like:
+    #
+    #    input_data: char []<compressed data>
+    #    piggy_size: u32  len(<uncompressed_data>)
+    #    padding:    char []<zeros>               ; <=4096 bytes
+    #    got:        u32  []<global_offsets>
+    #    trailer:    char []<whatever>            ; <512 bytes
+    #
+    # We can find the location of "piggy_size" from the file header,
+    # and then we can ignore some zeros to find the GOT. It is
+    # reasonable to assume (but still a heuristic) that the largest
+    # value in the GOT that is <0x20000 (128KiB) is the location of
+    # input_data.
+    #
+    # Note that piggy_size is *not* at a 4-byte-aligned location.
+    #
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/arm/boot/compressed/vmlinux.lds.S?h=v6.7
+    #
+    # About that 0x20000 heuristic: input_data is put after the
+    # extraction code, and so its location is basically determined by
+    # the size of the extraction code, which will vary based on a
+    # number of factors. So, this heuristic relies on a few things:
+    #
+    #  1. That ${max_extraction_code_size} is less than ~128KiB
+    #  2. That ${min_compressed_kernel_size}+${min_extraction_code_size}
+    #     is more than ~128KiB.
+    #
+    # How safe are those assumptions?
+    #
+    #  1. Using GCC 12.2.0 with kernels 4.15 - 6.8 in a variety of
+    #     configurations, I've observed input_data being placed at
+    #     addresses in the range 0x152e - 0x10f63 (~5.3KiB - ~68KiB).
+    #     This is well within our 128KiB threshold.
+    #  2. Let's just say that at the limit min_extraction_code_size =~
+    #     0; I think it is safe to assume that even compressed,
+    #     kernels are measured in MiB, not KiB. (Though, when writing
+    #     tests for this code, it means we must be careful to use
+    #     files that are large enough!)
+
+    local file="$1" offset="${2:-0}"
+
+    # Read magic numbers.
+    local hdr_endian_indicator cpu_endian_indicator have_table_indicator hdr_endian cpu_endian
+    hdr_endian_indicator="$(od -An -t x1 -j "$((offset+0x24))" -N4 "$file" | tr -d ' ')"
+    cpu_endian_indicator="$(od -An -t x1 -j "$((offset+0x30))" -N4 "$file" | tr -d ' ')"
+    have_table_indicator="$(od -An -t x1 -j "$((offset+0x34))" -N4 "$file" | tr -d ' ')"
+    case "$hdr_endian_indicator" in #
+        '18286f01') hdr_endian='little' ;;
+        '016f2818') hdr_endian='big' ;;
+        *)
+            error '_arm_zimage_cat called, but file does not look like an ARM zImage'
+            return 1
+            ;;
+    esac
+    case "$cpu_endian_indicator" in
+        # Prior to v3.17, hdr_endian and cpu_endian were the same, and
+        # there was no cpu_endian_indicator.
+        '01020304') cpu_endian='little' ;;
+        '04030201') cpu_endian='big' ;;
+        *)          cpu_endian="$hdr_endian" ;;
+    esac
+    if [[ "$have_table_indicator" != '45454545' ]]; then
+        error 'ARM zImage is too old (before v4.15, 2017)'
+        return 1
+    fi
+
+    # Read offsets.
+    local zboot_rom_text magic_table_addr piggy_size_addr aligned_after_piggy
+    zboot_rom_text="$(od --endian="$hdr_endian" -An -t u4 -j "$((offset+0x28))" -N4 "$file" | tr -d ' ')"
+    magic_table_addr="$(od --endian="$hdr_endian" -An -t u4 -j "$((offset+0x38))" -N4 "$file" | tr -d ' ')"
+    piggy_size_addr="$(od --endian="$hdr_endian" -An -t u4 -j $((offset+magic_table_addr+8)) -N4 "$file" | tr -d ' ')"
+    aligned_after_piggy=$((((piggy_size_addr+4+3)/4)*4))
+
+    # Read the padding and GOT.
+    # These values have zboot_rom_text added to them.
+    local -i input_data_addr=0 in_got=0 val size
+    while read -r val; do
+        if (( val == 0 )); then
+            if (( in_got )); then
+                break
+            else
+                continue
+            fi
+        fi
+        in_got=1
+        val="$((val - zboot_rom_text))"
+        if (( val > input_data_addr && val < 0x20000 )); then
+            input_data_addr=$val
+        fi
+    done < <(od --endian="$cpu_endian" -An -v -t u4 -j "$((offset+aligned_after_piggy))" "$file" | xargs printf '%s\n')
+    if (( input_data_addr == 0 )); then
+        error 'Could not find input_data_addr in ARM zImage'
+        return 1
+    fi
+    size="$((piggy_size_addr-input_data_addr))"
+
+    # gzip contains a 4-byte uncompressed-size suffix, so for
+    # CONFIG_KERNEL_GZIP it saves 4 bytes by having the input_data
+    # extend into the piggy_size.
+    #
+    # That is: the Makefile says
+    #    compress-$(CONFIG_KERNEL_GZIP) = gzip
+    # instead of
+    #    compress-$(CONFIG_KERNEL_GZIP) = gzip_with_size
+    #
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/arm/boot/compressed/Makefile?h=v6.7#n79
+    if [[ "$(detect_compression "$file" "$((offset+input_data_addr))")" == 'gzip' ]]; then
+        size=$((size+4))
+    fi
+
+    decompress_cat "$file" "$((offset+input_data_addr))" "$size"
 }
 
 kver_generic() {
@@ -282,24 +438,11 @@ kver_generic() {
     # gzipped /boot/vmlinuz-linuz. On other architectures it may be worth trying
     # rather than bailing, and inform the user if none was found.
 
+    local kver=''
+
     # Loosely grep for `linux_banner`:
-    # https://elixir.bootlin.com/linux/v5.7.2/source/init/version.c#L46
-    local kver='' reader='cat'
-    local comp_type=''
-
-    comp_type="$(detect_compression "$1")"
-
-    if [[ "$comp_type" == 'zimg' ]]; then
-        # Generic EFI zboot image
-        kver_zimage "$1"
-        return 0
-    elif [[ "$comp_type" == 'gzip' ]]; then
-        reader='zcat'
-    fi
-
-    [[ "$(detect_compression "$1")" == 'gzip' ]] && reader='zcat'
-
-    read -r _ _ kver _ < <($reader "$1" | grep -m1 -aoE 'Linux version .(\.[-[:alnum:]+]+)+')
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/init/version-timestamp.c?h=v6.7#n28
+    read -r _ _ kver _ < <(decompress_cat "$1" | grep -m1 -aoE 'Linux version .(\.[-[:alnum:]+]+)+')
 
     printf '%s' "$kver"
 }
@@ -1238,10 +1381,16 @@ add_all_modules_from_symbol() {
     map add_module "${mods[@]}"
 }
 
+
 add_checked_modules_from_symbol() {
     if ! add_all_modules_from_symbol "$@"; then
         return 1
     fi
 }
+
+if [[ "$0" == *'/functions' && "$1" == 'run_mkinitcpio_func' ]]; then
+    shift
+    "$@"
+fi
 
 # vim: set ft=sh ts=4 sw=4 et:

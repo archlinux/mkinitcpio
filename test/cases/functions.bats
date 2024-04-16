@@ -77,11 +77,11 @@ setup() {
 }
 
 @test "detect_compression zimg" {
-    local tmp_img=''
-
-    tmp_img="$(__gen_test_image 'zimg')"
+    local kernel_ver='' tmp_knl='' tmp_img=''
+    kernel_ver="Linux version 6.1.0-rc5-5 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"
+    tmp_img="$(__gen_test_zboot_kernel "$kernel_ver" 'gzip')"
     run detect_compression "$tmp_img"
-    assert_output "zimg"
+    assert_output 'zboot gzip'
 }
 
 @test "detect_compression with offset" {
@@ -101,11 +101,22 @@ setup() {
     assert_output "6.0.9-arch1-1"
 }
 
+kver_zimage() {
+    # This function can probably go away now that _zboot_cat() has
+    # been factored out of it... but I don't want to rewrite the
+    # tests.
+    read -r _ _ kver _ < <(_zboot_cat "$1" "$2" | grep -m1 -aoE  'Linux version .(\.[-[:alnum:]+]+)+')
+
+    printf '%s' "$kver"
+}
+
 @test "kver_zimage gzip" {
     local kernel_ver='' tmp_knl='' tmp_img=''
     kernel_ver="Linux version 6.1.0-rc5-5 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"
     tmp_img="$(__gen_test_zboot_kernel "$kernel_ver" 'gzip')"
-    run kver_zimage "$tmp_img"
+    run detect_compression "$tmp_img"
+    assert_output 'zboot gzip'
+    run kver_zimage gzip "$tmp_img"
     assert_output "6.1.0-rc5-5"
 }
 
@@ -113,7 +124,9 @@ setup() {
     local kernel_ver='' tmp_knl='' tmp_img=''
     kernel_ver="Linux version 6.1.0-rc5-5 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"
     tmp_img="$(__gen_test_zboot_kernel "$kernel_ver" 'lz4')"
-    run kver_zimage "$tmp_img"
+    run detect_compression "$tmp_img"
+    assert_output 'zboot lz4'
+    run kver_zimage lz4 "$tmp_img"
     assert_output "6.1.0-rc5-5"
 }
 
@@ -121,7 +134,9 @@ setup() {
     local kernel_ver='' tmp_knl='' tmp_img=''
     kernel_ver="Linux version 6.1.0-rc5-5 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"
     tmp_img="$(__gen_test_zboot_kernel "$kernel_ver" 'lzma')"
-    run kver_zimage "$tmp_img"
+    run detect_compression "$tmp_img"
+    assert_output 'zboot lzma'
+    run kver_zimage lzma "$tmp_img"
     assert_output "6.1.0-rc5-5"
 }
 
@@ -129,7 +144,9 @@ setup() {
     local kernel_ver='' tmp_knl='' tmp_img=''
     kernel_ver="Linux version 6.1.0-rc5-5 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"
     tmp_img="$(__gen_test_zboot_kernel "$kernel_ver" 'lzo')"
-    run kver_zimage "$tmp_img"
+    run detect_compression "$tmp_img"
+    assert_output 'zboot lzo'
+    run kver_zimage lzo "$tmp_img"
     assert_output "6.1.0-rc5-5"
 }
 
@@ -137,7 +154,9 @@ setup() {
     local kernel_ver='' tmp_knl='' tmp_img=''
     kernel_ver="Linux version 6.1.0-rc5-5 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"
     tmp_img="$(__gen_test_zboot_kernel "$kernel_ver" 'xzkern')"
-    run kver_zimage "$tmp_img"
+    run detect_compression "$tmp_img"
+    assert_output 'zboot xzkern'
+    run kver_zimage xzkern "$tmp_img"
     assert_output "6.1.0-rc5-5"
 }
 
@@ -145,7 +164,9 @@ setup() {
     local kernel_ver='' tmp_knl='' tmp_img=''
     kernel_ver="Linux version 6.1.0-arch1-2 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"
     tmp_img="$(__gen_test_zboot_kernel "$kernel_ver" 'zstd22')"
-    run kver_zimage "$tmp_img"
+    run detect_compression "$tmp_img"
+    assert_output 'zboot zstd22'
+    run kver_zimage zstd22 "$tmp_img"
     assert_output "6.1.0-arch1-2"
 }
 
