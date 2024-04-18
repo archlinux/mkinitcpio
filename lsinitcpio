@@ -266,7 +266,7 @@ analyze_image() {
     printf '\n'
 
     if (( ${#modules[*]} )); then
-        msg 'Included modules:'
+        msg 'Included modules (%d):' "${#modules[@]}"
         for mod in "${modules[@]}"; do
             printf '  %s' "$mod"
             in_array "${mod//_/-}" "${explicitmod[@]//_/-}" && printf ' [explicit]'
@@ -275,7 +275,7 @@ analyze_image() {
         printf '\n'
     fi
 
-    msg 'Included binaries:'
+    msg 'Included binaries (%d):' "${#binaries[@]}"
     printf '  %s\n' "${binaries[@]}" | LC_ALL=C.UTF-8 sort | column -c"${columns}"
     printf '\n'
 
