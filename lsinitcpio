@@ -231,7 +231,9 @@ analyze_image() {
     # shellcheck disable=SC1090,SC1091
     . "$workdir/initcpio/config"
 
-    explicitmod=("${MODULES[@]}")
+    # MODULES in /config is a sting
+    # shellcheck disable=SC2128
+    read -ra explicitmod <<<"$MODULES"
 
     # print results
     imagename=("$optimage")
