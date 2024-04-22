@@ -1059,7 +1059,7 @@ if [[ "$KERNELVERSION" != 'none' ]]; then
     fi
 fi
 
-MODULES_DECOMPRESS="${MODULES_DECOMPRESS:-"yes"}"
+MODULES_DECOMPRESS="${MODULES_DECOMPRESS:-"no"}"
 
 _d_workdir="$(initialize_buildroot "$KERNELVERSION" "$_opttargetdir")" || exit 1
 BUILDROOT="${_opttargetdir:-$_d_workdir/root}"
