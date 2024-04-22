@@ -67,6 +67,8 @@ case $service in
             '--osrelease[Include a os-release file for the unified kernel image]:path:_files' \
             '--splash[Bitmap splash image to include in unified kernel image]:path:_files' \
             '--uefistub[UEFI stub image used for unified kernel image generation]:path:_files' \
+            '--ukiconfig[Config file for ukify for unified kernel image generation]:path:_files' \
+            '--no-ukify[Do not use ukify for unified kernel image generation]:path:_files' \
         ;;
     *)
         return 1;

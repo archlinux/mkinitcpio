@@ -26,9 +26,9 @@ _d_presets=mkinitcpio.d
 # options and runtime data
 _optmoduleroot='' _optgenimg=''
 _optcompress='' _opttargetdir=''
-_optosrelease=''
+_optosrelease='' _optukiconfig=''
 _optuki='' _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
-_optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0 _optnocmdline=0
+_optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0 _optnocmdline=0 _optnoukify=0
 _optquiet=1 _optcolor=1 _optconfd=1
 _optskiphooks=() _optaddhooks=() _hooks=() _optpreset=() _tmpfiles=() _generated=()
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
@@ -80,6 +80,7 @@ usage: ${0##*/} [options]
    --splash <path>              Include bitmap splash
    --kernelimage <path>         Kernel image
    --uefistub <path>            Location of UEFI stub loader
+   --ukiconfig <path>           Location of configuration file for UKIs, used for signing, etc.
 
 EOF
 }
@@ -437,52 +438,39 @@ validate_compression() {
     fi
 }
 
-# do not invoke directly, this is called by uki_init and uki_add_section
-_uki_increase_offset() {
-    local step="$1"
-    _uki_offset+="$(((step + _uki_alignment - 1) / _uki_alignment * _uki_alignment))"
-}
-
 uki_init() {
-    local uefistub="$1"
+    local uefistub="$1" ukiconfig="$2"
+    declare -ga _uki_build_args=()
+    command -v ukify &>/dev/null || _optnoukify=1
 
-    # global variables shared between uki functions
-    declare -gi _uki_offset=0 _uki_alignment=0
-    declare -ga _uki_objcopy_args=("$uefistub")
-
-    # reproducibility, preserve dates of used files
-    _uki_objcopy_args+=(-p)
-
-    _uki_alignment="$(LC_ALL=C.UTF-8 objdump -p "${uefistub}" \
-        | awk '/SectionAlignment/ {print strtonum("0x"$2)}')"
-    _uki_increase_offset "$(LC_ALL=C.UTF-8 objdump -h "${uefistub}" \
-        | awk 'NF==7 {size=strtonum("0x"$3); offset=strtonum("0x"$4)} END {print size + offset}')"
-}
-
-uki_add_section() {
-    local secname="$1" filename="${2:-/dev/stdin}"
-    if [[ ! -f "$filename" ]]; then
-        local tmpfile
-        tmpfile="$(mktemp -t 'mkinitcpio.XXXXXX')"
-        _tmpfiles+=("$tmpfile")
-        cat -- "$filename" > "$tmpfile"
-        filename="$tmpfile"
+    if (( ! _optnoukify )); then
+        msg2 'Using ukify to build UKI'
+        declare -gA _ukify_section_map=(
+            [.linux]='--linux='
+            [.initrd]='--initrd='
+            [.cmdline]='--cmdline=@'
+            [.osrel]='--os-release=@'
+            [.splash]='--splash='
+        )
+        if [[ -z "$ukiconfig" ]]; then
+            for ukiconfig in {/etc,/usr/lib}/kernel/uki.conf ''; do
+                if [[ -f "$ukiconfig" ]]; then
+                    quiet "Using ukify config: '%s'" "$ukiconfig"
+                    break
+                fi
+            done
+        fi
+        _uki_build_args+=(ukify build --uname="$KERNELVERSION")
+        [[ -z "$ukiconfig" ]] || _uki_build_args+=("--config=$ukiconfig")
+        [[ -z "$uefistub" ]] || warning '--uefistub given but using ukify'
+        return 0
     fi
-    _uki_objcopy_args+=(--add-section "$secname=$filename" --change-section-vma "$secname=$(printf 0x%x "$_uki_offset")")
-    _uki_increase_offset "$(stat -Lc%s "$filename")"
-}
 
-uki_assemble() {
-    local out="$1"
-    objcopy "${_uki_objcopy_args[@]}" "$out"
-}
-
-build_uki() {
-    local out="$1" initramfs="$2" cmdline="$3" osrelease="$4" splash="$5" kernelimg="$6" uefistub="$7" stub cpuarch uefiarch
-
-    msg "Creating unified kernel image: '%s'" "$out"
+    quiet 'Using objcopy to build UKI'
+    [[ -z "$ukiconfig" ]] || warning '--ukiconfig given but not using ukify'
 
     if [[ -z "$uefistub" ]]; then
+        local cpuarch stub uefiarch
         cpuarch="$(uname -m)"
         case "$cpuarch" in
             x86_64)
@@ -526,7 +514,60 @@ build_uki() {
         return 1
     fi
 
-    uki_init "$uefistub"
+    # global variables shared between uki functions
+    _uki_build_args+=(objcopy "$uefistub" -p)
+    declare -gi _uki_offset=0 _uki_alignment=0
+    _uki_increase_offset() {
+        local step="$1"
+        _uki_offset+="$(((step + _uki_alignment - 1) / _uki_alignment * _uki_alignment))"
+    }
+
+    _uki_alignment="$(LC_ALL=C.UTF-8 objdump -p "${uefistub}" \
+        | awk '/SectionAlignment/ {print strtonum("0x"$2)}')"
+    _uki_increase_offset "$(LC_ALL=C.UTF-8 objdump -h "${uefistub}" \
+        | awk 'NF==7 {size=strtonum("0x"$3); offset=strtonum("0x"$4)} END {print size + offset}')"
+
+    # always add the uname section
+    uki_add_section '.uname' <(printf '%s' "$KERNELVERSION")
+}
+
+uki_add_section() {
+    local secname="$1" filename="${2:-/dev/stdin}"
+    if [[ ! -f "$filename" ]]; then
+        local tmpfile
+        tmpfile="$(mktemp -t 'mkinitcpio.XXXXXX')"
+        _tmpfiles+=("$tmpfile")
+        cat -- "$filename" > "$tmpfile"
+        filename="$tmpfile"
+    fi
+    if (( ! _optnoukify )); then
+        _uki_build_args+=("${_ukify_section_map["$secname"]:-"--section=$secname:@"}$filename")
+    else
+        _uki_build_args+=(--add-section "$secname=$filename" --change-section-vma "$secname=$(printf '0x%x' "$_uki_offset")")
+        _uki_increase_offset "$(stat -Lc '%s' "$filename")"
+    fi
+}
+
+uki_assemble() {
+    local out="$1"
+    if (( ! _optnoukify )); then
+        _uki_build_args+=("--output=$out")
+    else
+        _uki_build_args+=("$out")
+    fi
+    quiet 'Assembling UKI: %s' "${_uki_build_args[*]}"
+    if (( _optquiet )); then
+        "${_uki_build_args[@]}" >/dev/null
+    else
+        "${_uki_build_args[@]}"
+    fi
+}
+
+build_uki() {
+    local out="$1" initramfs="$2" cmdline="$3" osrelease="$4" splash="$5" kernelimg="$6" uefistub="$7" ukiconfig="$8"
+
+    msg "Creating unified kernel image: '%s'" "$out"
+    uki_init "$uefistub" "$ukiconfig" || return 1
 
     if [[ -z "$osrelease" ]]; then
         if [[ -f "/etc/os-release" ]]; then
@@ -547,7 +588,6 @@ build_uki() {
         printf 'VERSION_ID=%s%s\n' "$KERNELVERSION" "${suffix:+"~$suffix"}"
         grep -v '^VERSION_ID=' "$osrelease"
     )
-    uki_add_section '.uname' <(printf %s "$KERNELVERSION")
 
     local cmdline_files=()
     if [[ -n "$cmdline" ]]; then
@@ -614,13 +654,11 @@ build_uki() {
 
     uki_add_section '.initrd' "$initramfs"
 
-    uki_assemble "$out"
-
-    status="$?"
-    if (( status )) ; then
-        error 'Unified kernel image generation FAILED'
-    else
+    if uki_assemble "$out"; then
         msg 'Unified kernel image generation successful'
+    else
+        error 'Unified kernel image generation FAILED'
+        return 1
     fi
 }
 
@@ -829,7 +867,8 @@ _opt_short='A:c:D:g:H:hk:nLMPp:Rr:S:sd:t:U:Vvz:'
 _opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
            'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets'
            'preset:' 'remove' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:'
-           'uki:' 'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:' 'no-cmdline')
+           'uki:' 'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:' 'no-cmdline'
+           'ukiconfig:' 'no-ukify')
 
 parseopts "$_opt_short" "${_opt_long[@]}" -- "$@" || exit 1
 set -- "${OPTRET[@]}"
@@ -929,6 +968,13 @@ while :; do
         --uefistub)
             _optuefistub="$(check_path r "$1" "$2")" || exit
             shift
+            ;;
+        --ukiconfig)
+            _optukiconfig="$(check_path r "$1" "$2")" || exit
+            shift
+            ;;
+        --no-ukify)
+            _optnoukify=1
             ;;
         -M | --automods)
             _optshowautomods=1
@@ -1157,11 +1203,15 @@ else
 fi
 
 if [[ -n "$_optuki" && -n "$_optgenimg" ]]; then
-    build_uki "$_optuki" "$_optgenimg" "$_optcmdline" "$_optosrelease" "$_optsplash" "$_optkernelimage" "$_optuefistub" \
-        && (( ${#_generated[*]} )) && _generated+=("$_optuki")
+    if build_uki "$_optuki" "$_optgenimg" "$_optcmdline" "$_optosrelease" \
+            "$_optsplash" "$_optkernelimage" "$_optuefistub" "$_optukiconfig"; then
+        (( ${#_generated[@]} )) && _generated+=("$_optuki")
+    else
+        (( ++_builderrors ))
+    fi
 fi
 
-if (( ${#_generated[*]} )); then
+if (( ${#_generated[@]} )); then
     run_post_hooks "${_generated[@]}" || (( ++_builderrors ))
 fi
 
