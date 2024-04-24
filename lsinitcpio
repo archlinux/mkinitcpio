@@ -231,7 +231,7 @@ analyze_image() {
     # shellcheck disable=SC1090,SC1091
     . "$workdir/initcpio/config"
 
-    # MODULES in /config is a sting
+    # MODULES in /config is a string
     # shellcheck disable=SC2128
     read -ra explicitmod <<<"$MODULES"
 
