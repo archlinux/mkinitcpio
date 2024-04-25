@@ -80,7 +80,7 @@ install-generator: all prepare
 	for target in $(addprefix $(DESTDIR),$(SHUTDOWN_DIRS)); do \
 		ln -s ../mkinitcpio-generate-shutdown-ramfs.service -t $$target || exit; \
 	done
-	install -m644 tmpfiles/mkinitcpio.conf $(DESTDIR)/usr/lib/tmpfiles.d/mkinitcpio.conf
+	install -m644 tmpfiles/20-mkinitcpio.conf $(DESTDIR)/usr/lib/tmpfiles.d/20-mkinitcpio.conf
 
 	install -m755 kernel-install/50-mkinitcpio.install $(DESTDIR)/usr/lib/kernel/install.d/50-mkinitcpio.install
 
