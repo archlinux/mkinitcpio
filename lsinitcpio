@@ -4,7 +4,7 @@
 # lsinitcpio - dump the contents of an initramfs image
 #
 
-shopt -s extglob globstar
+shopt -s extglob
 
 _list='--list'
 _optcolor=1
@@ -181,7 +181,7 @@ skip_early_img() {
 }
 
 analyze_image() {
-    local -a binaries explicitmod modules foundhooks hooks imagename
+    local -a binaries explicitmod modules imagename
     local kernver ratio columns image="$1" optimage="$2" offset="$3" workdir="$4"
     columns="$(tput cols)"
 
@@ -208,21 +208,11 @@ analyze_image() {
     fi
     decomp "$image" "$offset" | bsdtar -C "$workdir/initcpio" -xf - || die 'Failed to decompress image'
 
-    modules=("$workdir/initcpio/usr/lib/modules"/*/kernel/**/*.ko*)
-    if [[ -f "${modules[0]}" ]]; then
-        IFS=/ read -r _ _ _ kernver _ <<<"${modules[0]#$workdir/initcpio/}"
-        modules=("${modules[@]##*/}")
-        modules=("${modules[@]%.ko*}")
-    else
-        unset modules
-    fi
 
-    foundhooks=("$workdir"/initcpio/hooks/*)
-    if [[ -f "${foundhooks[0]}" ]]; then
-        foundhooks=("${foundhooks[@]##*/}")
-    else
-        unset foundhooks
-    fi
+    shopt -s globstar nullglob
+    modules=("$workdir/initcpio/usr/lib/modules"/*/{kernel/**,extramodules}/*.ko*)
+    IFS=/ read -r _ _ _ kernver _ <<<"${modules[0]#$workdir/initcpio/}"
+    shopt -d globstar nullglob
 
     mapfile -t binaries < <(LC_ALL=C.UTF-8 find "$workdir/initcpio/usr/bin" -type f -printf %f\\n)
 
@@ -267,7 +257,9 @@ analyze_image() {
     fi
     printf '\n'
 
-    if (( ${#modules[*]} )); then
+    if (( ${#modules[@]} )); then
+        modules=("${modules[@]##*/}")
+        modules=("${modules[@]%.ko*}")
         msg 'Included modules (%d):' "${#modules[@]}"
         for mod in "${modules[@]}"; do
             printf '  %s' "$mod"
