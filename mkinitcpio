@@ -1161,6 +1161,9 @@ else
     msg "Starting dry run: '%s'" "$KERNELVERSION"
 fi
 
+# Set umask to so hooks install files with 644 permissions by default
+umask 022
+
 # set functrace and trap to catch errors in add_* functions
 declare -i _builderrors=0
 set -o functrace
