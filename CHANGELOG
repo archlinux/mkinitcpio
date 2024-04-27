@@ -1,5 +1,116 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v39:
+
+       Announcement of future breaking changes:
+
+        * The use of global variables for getting the value of cmdline parameters
+          is now deprecated. Hook authors should update their hooks to use the
+          getarg function instead. See mkinitcpio(8) for more information on
+          getarg's usage. In a future release, global variables will no longer be
+          assigned for cmdline parameters.
+
+        New Features:
+
+        * ARM zImage is now supported. The relevant code paths have also been
+          cleaned up with more code sharing between the main implementation and
+          the shell completions.
+
+        * install/acpi_override is a new hook that allows ACPI table upgrades
+          and overrides. It will look for `.aml` files in
+          `/usr/initcpio/acpi_override/` and `/etc/initcpio/acpi_override/`
+          which will be copied to `/kernel/firmware/acpi/` in the early
+          uncompressed initramfs.
+
+        Changes in mkinitcpio:
+
+        * Compressed files are now placed in the uncompressed early cpio
+          instead of the compressed cpio. This change ensures we are not double
+          compressing files.
+
+        * As compressed files are included in the early cpio, module
+          decompression has been disabled by default to avoid compressing
+          them using a weaker compression and improve boot speed for some
+          weak CPUs.
+
+        * MODULES_DECOMPRESS will now also decompress firmware files.
+
+        * The values of arbitrary cmdline arguments can now be retrieved at runtime
+          using the getarg function.
+
+        * The default umask is now 022 to ensure files installed with hooks have
+          the permission set to 644 by default.
+
+        * gzip is used instead of zstd if the kernel version is below 5.9.
+
+        * `add_all_modules_from_symbol` has been fixed to ensure we are not
+          failing if no symbols can be found.
+
+        * `add_file` will now use the source file name if the destination ends
+          with a slash.
+
+        * `add_file` now supports copying from file descriptors. This is useful
+          for cases where you want to pipe files into the initramfs.
+
+        * `add_file_early` and `add_dir_early` has been added to include files
+          into the early CPIO.
+
+        * Include `--no-cmdline` in the help output along with some missing
+          options in the shell completion.
+
+        * UKIs will now be created with `ukify` if it is available on the
+          system.
+
+        Changes in lsinitcpio:
+
+        * lsinitcpio now supports listing, analyzing and extracting UKIs.
+
+        * It will now provide a count of the number of included modules and
+          binaries
+
+        * Fixed a bug where the `[explicit]` marks in the output was lost.
+
+        Changes in hooks:
+
+        * install/resume and install/systemd includes the lzo and lz4 kernel
+          modules to support resuming from hibernation when using a hibernation
+          image compression algorithm other than the compile-time default.
+
+        * install/keyboard now includes all modules under `kernel/hid/*-hid`
+          directories, which may be required by some keyboards.
+
+        * install/keyboard removed a workaround for Linux 3.5.
+
+        * install/base now includes the umount binary. This avoids the
+          mismatch where mount was from util-linux, while umount was provided
+          by busybox.
+
+        * install/lvm2 now includes the dm-vdo module introduced in Linux 6.9.
+
+        Changes in packaging:
+
+        * The libalpm hook will now rebuild the initramfs when kernel modules
+          and firmware files are removed.
+
+        * mkinitcpio-generate-shutdown-ramfs.service has gotten cleanups and
+          hardening options enabled. `systemctl soft-reboot` pulls
+          shutdown.target so the service is now removed from the mentioned
+          target and included into `poweroff.target`, `halt.target`,
+          `reboot.target` and `kexec.target`.
+
+        * The distributed tarball now uses xz instead of gzip.
+
+        * The Makefile now prefers to use asciidoctor if available.
+
+        * Presets are now generated when mkinitcpio is installed.
+
+        Contributions from: Bill Auger, Eva Kurchatova, Luke T. Shumaker,
+        Markus Weippert, Mike Yuan, Morten Linderud, Onur Ankut, Ron Brown,
+        classabbyamp, jay-wilkinson, nl6720
+
+        - 2024-05-03
+
+
 CHANGES WITH v38.1:
 
         Bugfix release:
