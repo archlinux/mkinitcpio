@@ -50,6 +50,7 @@ case $service in
             '(-L --listhooks)'{-L,--listhooks}'[List all available hooks]' \
             '(-M --automods)'{-M,--automods}'[Display modules found via autodetection]' \
             '(-n --nocolor)'{-n,--nocolor}'[Disable colorized output messages]' \
+            '--nopost[Disable post hooks]' \
             '(-P --allpresets)'{-P,--allpresets}'[Process all presets in /etc/mkinitcpio.d]' \
             '(-p --preset)'{-p,--preset}'[Build specified preset from /etc/mkinitcpio.d]:presets:_files -g "*(\:r)" -W /etc/mkinitcpio.d' \
             '--remove[Remove specified preset images]' \
