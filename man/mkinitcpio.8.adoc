@@ -156,8 +156,9 @@ other features.
 
 *--kernelimage* _filename_::
     Include a kernel image for the unified kernel image. Default: one of
-    _/lib/modules/${KERNELVERSION}/vmlinuz_, _/boot/vmlinuz-${KERNELVERSION}_,
-    or _/boot/vmlinuz-linux_.
+    _/lib/modules/${KERNELVERSION}/vmlinuz_, _/lib/modules/${KERNELVERSION}/vmlinux_,
+    _/boot/vmlinuz-${KERNELVERSION}_, _/boot/vmlinux-${KERNELVERSION}_,
+    _/boot/vmlinuz-linux_, or _/boot/vmlinux-linux_.
 
 *--osrelease* _filename_::
     Include a os-release file for the unified kernel image.
