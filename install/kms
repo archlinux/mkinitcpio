@@ -2,11 +2,16 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 build() {
+    local major minor
+
     # AGP and DRM modules for GPUs
     map add_checked_modules '/drivers/char/agp/' '/drivers/gpu/drm/'
 
     # modules that implement the privacy screen interface
-    add_checked_modules_from_symbol 'drm_privacy_screen_register' '=drivers/platform'
+    IFS=.- read -r major minor _ <<<"$KERNELVERSION"
+    if (( major > 5 || (major == 5 && minor >= 17) )); then
+        add_checked_modules_from_symbol 'drm_privacy_screen_register' '=drivers/platform'
+    fi
 }
 
 help() {
