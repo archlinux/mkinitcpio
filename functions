@@ -1390,7 +1390,11 @@ add_checked_modules_from_symbol() {
 
 if [[ "$0" == *'/functions' && "$1" == 'run_mkinitcpio_func' ]]; then
     shift
-    "$@"
+    if declare -F "$1" >/dev/null; then
+        "$@"
+    else
+        exit 2
+    fi
 fi
 
 # vim: set ft=sh ts=4 sw=4 et:
