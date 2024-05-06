@@ -27,6 +27,13 @@ build() {
         fi
     else
         for mount in $(compgen -c mount.); do
+            # skip FUSE, clustered file systems, ecryptfs, cloud storage, pam_mount and etc.
+            case "${mount#mount.}" in
+                *fuse*|ecryptfs*|ddi|glusterfs|moosefs|crypt{,{,o}_LUKS}|rclone|sshfs)
+                    continue
+                    ;;
+            esac
+
             add_binary "$mount"
         done
     fi
