@@ -38,12 +38,13 @@ __validate_uki() {
     tmpdir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
     kver="$(uname -r)"
 
-    ln -s "/lib/modules/$kver/vmlinuz" "$tmpdir/linux.in"
+    tmp_knl="$(__gen_test_kernel "$kver")"
+    ln -s "$tmp_knl" "$tmpdir/linux.in"
     printf '%s' "$kver" > "$tmpdir/uname.in"
     printf 'VERSION_ID=%s\n' "$kver" > "$tmpdir/osrel.in"
     grep -v '^VERSION_ID=' /etc/os-release >> "$tmpdir/osrel.in"
     printf '%s' 'root=gpt-auto rw' > "$tmpdir/cmdline.in"
-    ln -s /usr/share/systemd/bootctl/splash-arch.bmp "$tmpdir/splash.in"
+    ln -s "$BATS_TEST_DIRNAME/../fixtures/uki/splash.bmp" "$tmpdir/splash.in"
 
     echo 'HOOKS=(base)' > "$tmpdir/mkinitcpio.conf"
     run ./mkinitcpio \
