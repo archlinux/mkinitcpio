@@ -81,6 +81,9 @@ __validate_uki() {
 }
 
 @test "test creating UKI with ukify" {
+    if ! command -v ukify &>/dev/null; then
+        skip "ukify is not available"
+    fi
     __validate_uki ukify --ukiconfig /dev/null
 }
 
