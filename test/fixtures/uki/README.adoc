@@ -1,0 +1,10 @@
+`+splash.bmp+` generated with:
+
+[,sh]
+----
+magick montage -size 256x256 xc:magenta xc:black xc:black xc:magenta -mode Concatenate ppm:- | \
+    pnmdepth 4 | \
+    ppmtobmp > splash.bmp
+----
+
+Requires `+magick+` from imagemagick and `+pnmdepth+` and `+ppmtobmp+` from netpbm.
