@@ -182,6 +182,7 @@ kver_zimage() {
     assert [ -e "${workingdir}/root/VERSION" ]
 }
 
+# bats test_tags=no_root
 @test "initialize_buildroot unwriteable parent directory" {
     local parentdir="${BATS_RUN_TMPDIR}/${BATS_TEST_NAME}/"
 
@@ -191,6 +192,7 @@ kver_zimage() {
     assert_output "==> ERROR: Failed to create temporary working directory in $parentdir"
 }
 
+# bats test_tags=no_root
 @test "initialize_buildroot unwriteable working directory" {
     local generatedir="${BATS_RUN_TMPDIR}/${BATS_TEST_NAME}/workdir"
 
