@@ -4,24 +4,34 @@
 # mkinitcpio - modular tool for building an initramfs images
 #
 
-declare -r version=%VERSION%
+declare -r version='@VERSION@'
 
 shopt -s extglob
 ### globals within mkinitcpio, but not intended to be used by hooks
 
 # needed files/directories
-_f_functions=functions
-_f_config=mkinitcpio.conf
-_d_config=mkinitcpio.conf.d
-_d_hooks="$PWD/hooks:/usr/lib/initcpio/hooks:/lib/initcpio/hooks"
-_d_install="$PWD/install:/usr/lib/initcpio/install:/lib/initcpio/install"
-_d_post="$PWD/post:/usr/lib/initcpio/post:/lib/initcpio/post"
+_f_functions='@INITCPIO_LIBDIR@/functions'
+_f_config='@SYSCONFDIR@/mkinitcpio.conf'
+_d_config='@SYSCONFDIR@/mkinitcpio.conf.d'
+_d_hooks='@INITCPIO_SYSCONFDIR@/hooks:@INITCPIO_LIBDIR@/hooks'
+_d_install='@INITCPIO_SYSCONFDIR@/install:@INITCPIO_LIBDIR@/install'
+_d_post='@INITCPIO_SYSCONFDIR@/post:@INITCPIO_LIBDIR@/post'
 _d_flag_hooks=
 _d_flag_install=
 _d_flag_post=
 _d_firmware=({/usr,}/lib/firmware/updates {/usr,}/lib/firmware)
 _d_fwpath=() # the actual firmware lookup path, a subset of _d_firmware listed above
-_d_presets=mkinitcpio.d
+_d_presets='@SYSCONFDIR@/mkinitcpio.d'
+
+if (( MESON_TEST )); then
+    _f_functions="$PWD/functions"
+    _f_config="$PWD/mkinitcpio.conf"
+    _d_config="$PWD/mkinitcpio.conf.d"
+    _d_hooks="$PWD/hooks"
+    _d_install="$PWD/install"
+    _d_post="$PWD/post"
+    _d_presets="$PWD/mkinitcpio.d"
+fi
 
 # options and runtime data
 _optmoduleroot='' _optgenimg=''
@@ -34,7 +44,7 @@ _optskiphooks=() _optaddhooks=() _hooks=() _optpreset=() _tmpfiles=() _generated
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
 
 # export a sane PATH
-export PATH='/usr/bin'
+export PATH="@BINDIR@:/bin"
 
 # Sanitize environment further
 # GREP_OPTIONS="--color=always" will break everything
@@ -57,7 +67,7 @@ usage: ${0##*/} [options]
    -L, --listhooks              List all available hooks
    -M, --automods               Display modules found via autodetection
    -n, --nocolor                Disable colorized output messages
-       --nopost                 Disable post hooks 
+       --nopost                 Disable post hooks
    -p, --preset <file>          Build specified preset from /etc/mkinitcpio.d
    -P, --allpresets             Process all preset files in /etc/mkinitcpio.d
    -R, --remove                 Remove specified preset images
