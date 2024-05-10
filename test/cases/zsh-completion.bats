@@ -9,7 +9,7 @@ load "../helpers/common"
 
 setup() {
     # shellcheck disable=SC1091
-    source ./shell/zsh-completion || true
+    source ./shell/_mkinitcpio || true
 }
 
 @test "_detect_kver" {

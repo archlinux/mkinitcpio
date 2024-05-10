@@ -3,7 +3,11 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 _detect_kver() {
-    "@INITCPIO_LIBDIR@/functions" run_mkinitcpio_func kver "$1" 2>/dev/null
+    if (( MESON_TEST )); then
+        './functions' run_mkinitcpio_func kver "$1" 2>/dev/null
+    else
+        '@INITCPIO_LIBDIR@/functions' run_mkinitcpio_func kver "$1" 2>/dev/null
+    fi
 }
 
 _find_kernel_versions() {
