@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 _detect_kver() {
-    ./functions run_mkinitcpio_func kver "$1" 2>/dev/null
+    "@INITCPIO_LIBDIR@/functions" run_mkinitcpio_func kver "$1" 2>/dev/null
 }
 
 _find_kernel_versions() {
@@ -20,7 +20,7 @@ _find_kernel_versions() {
     compadd ${(u)version}
 }
 
-local -a hookdirs=(/usr/lib/initcpio/install /lib/initcpio/install)
+local -a hookdirs=("@INITCPIO_LIBDIR@/install")
 
 case $service in
     lsinitcpio)
@@ -40,7 +40,7 @@ case $service in
     mkinitcpio)
         _arguments : \
             '(-A --addhooks)'{-A,--addhooks}'[Add specified hooks, comma separated, to image]:hook(s):_sequence -s , _path_files -W hookdirs' \
-            '(-c --config)'{-c,--config}'[Use alternate config file (default: /etc/mkinitcpio.conf)]:config file:_files' \
+            '(-c --config)'{-c,--config}'[Use alternate config file (default: @SYSCONFDIR@/mkinitcpio.conf)]:config file:_files' \
             '(-D --hookdir)'{-D,--hookdir}'[Specify where to look for hooks]:directory:_files -/' \
             '(-d --generatedir)'{-d,--generatedir}'[Specify where to build the initramfs]:directory:_files -/' \
             '(-g --generate)'{-g,--generate}'[Generate cpio image and write to specified path]:output filename:_files' \
@@ -51,8 +51,8 @@ case $service in
             '(-M --automods)'{-M,--automods}'[Display modules found via autodetection]' \
             '(-n --nocolor)'{-n,--nocolor}'[Disable colorized output messages]' \
             '--nopost[Disable post hooks]' \
-            '(-P --allpresets)'{-P,--allpresets}'[Process all presets in /etc/mkinitcpio.d]' \
-            '(-p --preset)'{-p,--preset}'[Build specified preset from /etc/mkinitcpio.d]:presets:_files -g "*(\:r)" -W /etc/mkinitcpio.d' \
+            '(-P --allpresets)'{-P,--allpresets}'[Process all presets in @SYSCONFDIR@/mkinitcpio.d]' \
+            '(-p --preset)'{-p,--preset}'[Build specified preset from @SYSCONFDIR@/mkinitcpio.d]:presets:_files -g "*(\:r)" -W @SYSCONFDIR@/mkinitcpio.d' \
             '--remove[Remove specified preset images]' \
             '(-r --moduleroot)'{-r,--moduleroot}'[Root directory for modules (default: /)]:directory:_files -/' \
             '(-S --skiphooks)'{-S,--skiphooks}'[Skip specified hooks, comma-separated, during build]:hook(s):_sequence -s , _path_files -W hookdirs' \
