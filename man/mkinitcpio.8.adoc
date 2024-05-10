@@ -4,6 +4,8 @@ SPDX-License-Identifier: GPL-2.0-only
 ////
 :doctype: manpage
 :manmanual: mkinitcpio manual
+:mansource: mkinitcpio @VERSION@
+:manversion: mkinitcpio @VERSION@
 
 = mkinitcpio(8)
 
@@ -34,8 +36,8 @@ other features.
     comma-separated. This option can be specified multiple times.
 
 *-c*, *--config* _config_::
-    Use _config_ file to generate the ramdisk. Default: _/etc/mkinitcpio.conf_.
-    If specified, drop-in files in _/etc/mkinitcpio.conf.d/_ will be ignored.
+    Use _config_ file to generate the ramdisk. Default: _@SYSCONFDIR@/mkinitcpio.conf_.
+    If specified, drop-in files in _@SYSCONFDIR@/mkinitcpio.conf.d_ will be ignored.
 
 *-d*, *--generatedir* _directory_::
     Set _directory_ as the location where the initramfs is built. This might be
@@ -84,12 +86,12 @@ other features.
     For a list of relevant options see _Options for unified kernel image_ below.
 
 *-P*, *--allpresets*::
-    Process all presets contained in _/etc/mkinitcpio.d_. See the *-p* option
+    Process all presets contained in _@SYSCONFDIR@/mkinitcpio.d_. See the *-p* option
     for more detail about presets.
 
 *-p*, *--preset* _preset_::
     Build initramfs image(s) according to specified _preset_. This may be a file
-    in /etc/mkinitcpio.d (without the .preset extension) or a full, absolute
+    in _@SYSCONFDIR@/mkinitcpio.d_ (without the .preset extension) or a full, absolute
     path to a file. This option may be specified multiple times to process
     multiple presets.
 
@@ -174,8 +176,8 @@ Instead of specifying the configuration file and which output file, every time
 you generate a new initial ramdisk, you define a preset and use the *-p* switch
 to generate an initial ramdisk according to your preset.
 
-Typically, presets are files located in _/etc/mkinitcpio.d/_ with the extension
-_.preset_, e.g. _/etc/mkinitcpio.d/linux.preset_ for the *linux* preset.
+Typically, presets are files located in _@SYSCONFDIR@/mkinitcpio.d_ with the extension
+_.preset_, e.g. _@SYSCONFDIR@/mkinitcpio.d/linux.preset_ for the *linux* preset.
 It is possible to use files in other locations, too. Then the path to this
 file needs to be specified.
 
@@ -475,24 +477,24 @@ More information can be found at https://reproducible-builds.org.
 
 == Files
 
-_/etc/mkinitcpio.conf_::
+_@SYSCONFDIR@/mkinitcpio.conf_::
     Default configuration file for mkinitcpio.
-_/etc/mkinitcpio.conf.d_::
+_@SYSCONFDIR@/mkinitcpio.conf.d_::
 	Directory containing drop-in configuration files.
 
-_/etc/mkinitcpio.d_::
+_@SYSCONFDIR@/mkinitcpio.d_::
     Directory containing mkinitcpio presets.
 
-_/etc/initcpio/install_::
-_/usr/lib/initcpio/install_::
+_@INITCPIO_SYSCONFDIR@/install_::
+_@INITCPIO_LIBDIR@/install_::
     Search path for build time hooks.
 
-_/etc/initcpio/hooks_::
-_/usr/lib/initcpio/hooks_::
+_@INITCPIO_SYSCONFDIR@/hooks_::
+_@INITCPIO_LIBDIR@/hooks_::
     Search path for early userspace runtime hooks.
 
-_/etc/initcpio/post_::
-_/usr/lib/initcpio/post_::
+_@INITCPIO_SYSCONFDIR@/post_::
+_@INITCPIO_LIBDIR@/post_::
     Search path for post generation hooks.
 
 == Examples
