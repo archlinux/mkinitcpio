@@ -6,7 +6,7 @@ build() {
     add_binary lsblk
     add_binary findmnt
     add_binary umount
-    add_file "/usr/lib/initcpio/shutdown" "/shutdown" 755
+    add_binary "/usr/lib/initcpio/shutdown" "/shutdown" 755
 
     add_runscript
 }
