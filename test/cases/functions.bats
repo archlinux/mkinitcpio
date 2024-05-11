@@ -308,6 +308,18 @@ kver_zimage() {
     assert_output "==> WARNING: Possibly missing '${interpreter}' for script: $tmp_bin"
 }
 
+@test "add_binary mode" {
+    local tmp_bin BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}/"
+
+    tmp_bin="$(mktemp --tmpdir="$BATS_RUN_TMPDIR" tmp_bin.XXXXXX)"
+    printf '#!/bin/sh\n\n:\n' >"$tmp_bin"
+
+    install -d -- "$BUILDROOT"
+    initialize_buildroot 'none' "$BUILDROOT"
+    run add_binary "$tmp_bin" "" 750
+    assert_equal "$(stat -c '%a' "${BUILDROOT}/${tmp_bin}")" '750'
+}
+
 @test "add_full_dir" {
     local i dir BUILDROOT="${BATS_RUN_TMPDIR}/buildroot.${BATS_TEST_NAME}/" _optquiet=1
     dir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"

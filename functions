@@ -997,8 +997,9 @@ add_binary() {
     # be discovered and added.
     #   $1: path to binary
     #   $2: destination on initcpio (optional, defaults to same as source)
+    #   $3: mode (optional)
 
-    local line='' regex='' binary='' dest='' mode='' sodep='' resolved='' shebang='' interpreter=''
+    local line='' regex='' binary='' dest='' mode='' sodep='' resolved='' shebang='' interpreter='' args=()
 
     if [[ "${1:0:1}" != '/' ]]; then
         if ! binary="$(type -P "$1")"; then
@@ -1010,8 +1011,15 @@ add_binary() {
     fi
 
     dest="${2:-$binary}"
+    mode="$3"
 
-    add_file "$binary" "$dest" || return 1
+    args=("$binary" "$dest")
+
+    if [[ -n "$mode" ]]; then
+        args+=("$mode")
+    fi
+
+    add_file "${args[@]}" || return 1
 
     # non-binaries
     if ! lddout="$(ldd "$binary" 2>/dev/null)"; then
