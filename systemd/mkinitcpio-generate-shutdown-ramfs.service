@@ -4,6 +4,7 @@
 Description=Generate shutdown-ramfs
 DefaultDependencies=no
 Before=shutdown.target
+ConditionPathExists=/run/initramfs/mkinitcpio-shutdown.conf
 ConditionFileIsExecutable=!/run/initramfs/shutdown
 
 [Service]
@@ -11,7 +12,7 @@ Type=oneshot
 # /tmp/ could be unmounted at this point
 # use /run/initcpio-tmp/ as temporary directory
 RuntimeDirectory=initcpio-tmp
-ExecStart=/usr/bin/mkinitcpio -A sd-shutdown -d /run/initramfs -k none -c /dev/null -t "$RUNTIME_DIRECTORY"
+ExecStart=/usr/bin/mkinitcpio -c /run/initramfs/mkinitcpio-shutdown.conf -d /run/initramfs -k none -t "$RUNTIME_DIRECTORY"
 
 ProtectSystem=strict
 ReadWritePaths=/run/initramfs
