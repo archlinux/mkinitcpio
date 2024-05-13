@@ -1,5 +1,29 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v39.1:
+
+        Bugfix release:
+
+        * Allow UKI tests to work outside Arch Linux by not relying on an Arch
+          Linux specific /usr/share/systemd/bootctl/splash-arch.bmp file.
+        * Skip tests using ukify if ukify is not available.
+        * Tag tests that fail as root with a "no_root" tag to allow skipping
+          them in CIs that run as root. E.g. set the environment variable
+          BATS_ARGS="--filter-tags '!no_root'"
+        * install/keyboard: revert inclusion of kernel modules from
+          kernel/hid/*-hid directories to avoid triggering a kernel bug. The
+          availability of i2c-hid* modules in early userspace somehow breaks the
+          touchpad on Framework 16 laptops.
+        * lsinitcpio: show out-of-tree modules (from the extramodules directory)
+          in module list. This was accidentally lost in mkinitcpio v33.
+        * functions: make sure to only execute functions when called with the
+          run_mkinitcpio_func argument.
+
+        Contributions from: Markus Weippert, Morten Linderud, classabbyamp,
+        nl6720
+
+        – 2024-05-13
+
 CHANGES WITH v39:
 
        Announcement of future breaking changes:
