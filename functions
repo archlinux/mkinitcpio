@@ -442,7 +442,7 @@ kver_generic() {
 
     # Loosely grep for `linux_banner`:
     # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/init/version-timestamp.c?h=v6.7#n28
-    read -r _ _ kver _ < <(decompress_cat "$1" | grep -m1 -aoE 'Linux version .(\.[-[:alnum:]+]+)+')
+    read -r _ _ kver _ < <(decompress_cat "$1" | grep -m1 -aoE 'Linux version .(\.[-_[:alnum:]+]+)+')
 
     printf '%s' "$kver"
 }

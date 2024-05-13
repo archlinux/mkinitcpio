@@ -1071,13 +1071,14 @@ if [[ "$KERNELVERSION" != 'none' ]]; then
 
     if [[ -z "$KERNELIMAGE" ]]; then
         # search well-known locations for the kernel image
-        for img in "$_d_kmoduledir/vmlinuz" "/lib/modules/$KERNELVERSION/vmlinuz"; do
+        for img in "$_d_kmoduledir/vmlinuz" "/lib/modules/$KERNELVERSION/vmlinuz" \
+            "$_d_kmoduledir/vmlinux" "/lib/modules/$KERNELVERSION/vmlinux"; do
             if [[ -f "$img" ]]; then
                 KERNELIMAGE="$img"
                 if read -r pkgbase &>/dev/null <"${img%/*}/pkgbase"; then
-                    KERNELDESTINATION="/boot/vmlinuz-$pkgbase"
+                    KERNELDESTINATION="/boot/${img##*/}-${pkgbase}"
                 else
-                    KERNELDESTINATION="/boot/vmlinuz-$KERNELVERSION"
+                    KERNELDESTINATION="/boot/${img##*/}-${KERNELVERSION}"
                 fi
                 quiet "located kernel image: '%s'" "$KERNELIMAGE"
                 break
@@ -1087,8 +1088,8 @@ if [[ "$KERNELVERSION" != 'none' ]]; then
 
     if [[ -z "$KERNELIMAGE" ]]; then
         # check version of all kernels in /boot
-        for img in /boot/vmlinuz-*; do
-            if [[ "$(kver "$img")" == "$KERNELVERSION" ]]; then
+        for img in /boot/vmlinuz-* /boot/vmlinux-*; do
+            if [[ -f "$img" && "$(kver "$img")" == "$KERNELVERSION" ]]; then
                 KERNELIMAGE="$img"
                 quiet "located kernel image: '%s'" "$KERNELIMAGE"
                 break
