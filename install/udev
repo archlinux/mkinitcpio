@@ -6,7 +6,8 @@ build() {
         '/usr/bin/udevadm' \
         '/usr/bin/systemd-tmpfiles' \
         '/usr/lib/udev/ata_id' \
-        '/usr/lib/udev/scsi_id'
+        '/usr/lib/udev/scsi_id' \
+        '/usr/lib/libkmod.so.2'
 
     map add_udev_rule \
         '50-udev-default.rules' \
