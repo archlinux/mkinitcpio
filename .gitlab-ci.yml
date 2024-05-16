@@ -14,8 +14,8 @@ stages:
         - pacman --noconfirm -Syu --needed bats bats-assert bats-support diffutils git jq kcov lzop make shellcheck systemd-ukify
         - echo -e "\e[0Ksection_end:`date +%s`:pacman\r\e[0K"
         - echo -e "\e[0Ksection_start:`date +%s`:useradd[collapsed=true]\r\e[0KCreating non-root user..."
-        - useradd -d /builds/${GITLAB_USER_LOGIN} -g users -M -N builder
-        - chown -R builder:users ..
+        - useradd -d /builds/${GITLAB_USER_LOGIN} -M builder
+        - chown -R builder:builder ..
         - echo -e "\e[0Ksection_end:`date +%s`:useradd\r\e[0K"
 
 check:
