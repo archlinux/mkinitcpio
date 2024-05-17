@@ -212,7 +212,7 @@ analyze_image() {
     shopt -s globstar nullglob
     modules=("$workdir/initcpio/usr/lib/modules"/*/{kernel/**,extramodules}/*.ko*)
     IFS=/ read -r _ _ _ kernver _ <<<"${modules[0]#$workdir/initcpio/}"
-    shopt -d globstar nullglob
+    shopt -u globstar nullglob
 
     mapfile -t binaries < <(LC_ALL=C.UTF-8 find "$workdir/initcpio/usr/bin" -type f -printf %f\\n)
 
