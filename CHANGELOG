@@ -1,5 +1,23 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v39.2:
+
+        Bugfix release:
+
+        * install/udev: add libkmod.so. Instead of linking against it,
+          systemd 256 now uses dlopen to load it which prevents it from being
+          detected by add_binary. This is a stop-gap measure until add_binary
+          gains support for parsing .note.dlopen.
+        * lsinitcpio: fix typo in shopt command option. The issue is harmless,
+          but it makes bash complain about it when lsinitcpio is run.
+        * install/lvm2: do not show errors when kernel modules for optional LVM
+          features are not available. E.g. when a kernel built without those
+          modules is used.
+
+        Contributions from: Christian Hesse, Markus Weippert, ltsdw
+
+        – 2024-05-25
+
 CHANGES WITH v39.1:
 
         Bugfix release:
