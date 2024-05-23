@@ -6,18 +6,18 @@ build() {
     # device mapper modules
     map add_module \
         'dm-mod' \
-        'dm-snapshot' \
-        'dm-mirror' \
-        'dm-cache' \
-        'dm-cache-smq' \
-        'dm-writecache' \
-        'dm-thin-pool' \
-        'dm-raid' \
-        'raid0' \
-        'raid1' \
-        'raid10' \
-        'raid456' \
-        'dm-integrity' \
+        'dm-snapshot?' \
+        'dm-mirror?' \
+        'dm-cache?' \
+        'dm-cache-smq?' \
+        'dm-writecache?' \
+        'dm-thin-pool?' \
+        'dm-raid?' \
+        'raid0?' \
+        'raid1?' \
+        'raid10?' \
+        'raid456?' \
+        'dm-integrity?' \
         'dm-vdo?'
 
     # from thin-provisioning-tools
