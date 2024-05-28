@@ -4,7 +4,20 @@
 set -e
 
 args=()
+rebuildwithhooks=()
 declare -i package=0 extramodules=0
+declare -A hooktriggers=(
+    ['usr/bin/cryptsetup']='encrypt'
+    ['usr/bin/lvm']='lvm2'
+    ['usr/bin/mdadm']='mdadm_udev'
+    ['usr/bin/pdata_tools']='lvm2'
+    ['usr/lib/libcryptsetup.so']='sd-encrypt'
+    ['usr/lib/libp11-kit.so']='sd-encrypt-opensc'
+    ['usr/lib/libpcsclite.so']='sd-encrypt-opensc'
+    ['usr/lib/modprobe.d/']='modconf'
+    ['usr/lib/systemd/systemd']='systemd'
+    ['usr/lib/systemd/systemd-udevd']='udev'
+)
 
 install_preset() {
     local pkgbase="$1" preset="$2"
@@ -177,6 +190,54 @@ add_pkgbase_to_args() {
     args+=(-p "$pkgbase")
 }
 
+add_presets_with_hooks() {
+    local -a rebuild_hooks=("$@") rebuild_presets=()
+    local PRESETS HOOKS hook preset_name preset_file preset_config confd_files pkgbase
+
+    (( ${#rebuild_hooks[@]} )) || return 0
+
+    for preset_file in $(compgen -G /etc/mkinitcpio.d/'*.preset'); do
+        [[ -e "$preset_file" ]] || continue
+        pkgbase="${preset_file##/etc/mkinitcpio.d/}"
+        pkgbase="${pkgbase%.preset}"
+
+        (
+            # shellcheck disable=SC1090
+            . "$preset_file" &>/dev/null
+            [[ -v PRESETS ]] || exit 1
+            for preset_name in "${PRESETS[@]}"; do
+                preset_config="${preset_name}_config"
+                (
+                    if [[ -n "${!preset_config:-$ALL_config}" ]]; then
+                        # shellcheck disable=SC1090
+                        . "${!preset_config:-$ALL_config}" &>/dev/null
+                    else
+                        if [[ -d /etc/mkinitcpio.conf.d ]]; then
+                            mapfile -d '' confd_files < <(LC_ALL=C.UTF-8 find /etc/mkinitcpio.conf.d -maxdepth 1 -xtype f -name '*.conf' -print0 | LC_ALL=C.UTF-8 sort -zVu)
+                        fi
+                        # shellcheck disable=SC1091 source=mkinitcpio.conf
+                        source <(cat /etc/mkinitcpio.conf "${confd_files[@]}") &>/dev/null
+                    fi
+
+                    [[ -v HOOKS ]] || exit 1
+                    for hook in "${rebuild_hooks[@]}"; do
+                        # shellcheck disable=SC2076
+                        [[ " ${HOOKS[*]} " =~ " ${hook} " ]] && exit 0
+                    done
+                    exit 1
+                ) && exit 0
+            done
+            exit 1
+        ) && rebuild_presets+=("$pkgbase")
+
+    done
+
+    (( ${#rebuild_presets[@]} )) || return 0
+    for pkgbase in "${rebuild_presets[@]}"; do
+        add_pkgbase_to_args "$pkgbase"
+    done
+}
+
 while read -r line; do
     if [[ "${line%%-git}" == "mkinitcpio" && "$1" == "install" ]]; then
         # generate presets for each kernel on package install
@@ -186,8 +247,12 @@ while read -r line; do
     fi
 
     if [[ "$line" != */vmlinuz && "$line" != 'usr/lib/modules/'*'/extramodules/' ]]; then
-        # triggers when it's a change other than to the kernel and its modules
-        package=1
+        if ! [[ -v hooktriggers["$line"] ]]; then
+            # triggers when it's a change to usr/lib/initcpio/*
+            package=1
+        else
+            rebuildwithhooks+=("${hooktriggers["$line"]}")
+        fi
         continue
     fi
 
@@ -231,6 +296,10 @@ if (( package )) && compgen -G /etc/mkinitcpio.d/"*.preset" > /dev/null; then
             shopt -u nullglob
             ;;
     esac
+fi
+
+if (( ! package && ${#rebuildwithhooks} )) && compgen -G /etc/mkinitcpio.d/'*.preset' > /dev/null; then
+    add_presets_with_hooks "${rebuildwithhooks[@]}"
 fi
 
 if [[ "$1" == "install" ]] && (( ${#args[@]} )); then
