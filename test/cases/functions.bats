@@ -170,6 +170,25 @@ kver_zimage() {
     assert_output "6.1.0-arch1-2"
 }
 
+@test "decompress_cat ARM zImage" {
+    local dir zimage basename status=0
+    dir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+    # The *.zimage.bin files and what each checks for is described in
+    # test/fixtures/arm-zimage/README.md
+    shopt -s nullglob
+    for zimage in test/fixtures/arm-zimage/*.zimage.bin; do
+        basename=${zimage##*/}
+        basename=${basename%.zimage.bin}
+        echo >&2
+        echo "subtest: $basename" >&2
+        decompress_cat "$zimage" >"${dir}/${basename}.image.bin" 2>"${dir}/${basename}.stderr" ||
+            { status=1; cat "${dir}/${basename}.stderr"; continue; }
+        cmp test/fixtures/arm-zimage/image.bin "${dir}/${basename}.image.bin" || status=1
+        diff -u /dev/null "${dir}/${basename}.stderr" || status=1
+    done
+    (( status == 0 ))
+}
+
 @test "initialize_buildroot success" {
     local parentdir="${BATS_RUN_TMPDIR}/${BATS_TEST_NAME}" workingdir=''
 
