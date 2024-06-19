@@ -28,7 +28,7 @@ _optmoduleroot='' _optgenimg=''
 _optcompress='' _opttargetdir=''
 _optosrelease='' _optukiconfig=''
 _optuki='' _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
-_optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0 _optnocmdline=0 _optnoukify=0
+_optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0 _optnocmdline=0 _optnoukify=0 _optnopost=0
 _optquiet=1 _optcolor=1 _optconfd=1
 _optskiphooks=() _optaddhooks=() _hooks=() _optpreset=() _tmpfiles=() _generated=()
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
@@ -57,6 +57,7 @@ usage: ${0##*/} [options]
    -L, --listhooks              List all available hooks
    -M, --automods               Display modules found via autodetection
    -n, --nocolor                Disable colorized output messages
+       --nopost                 Disable post hooks 
    -p, --preset <file>          Build specified preset from /etc/mkinitcpio.d
    -P, --allpresets             Process all preset files in /etc/mkinitcpio.d
    -R, --remove                 Remove specified preset images
@@ -865,7 +866,7 @@ trap 'cleanup' EXIT
 
 _opt_short='A:c:D:g:H:hk:nLMPp:Rr:S:sd:t:U:Vvz:'
 _opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
-           'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'allpresets'
+           'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'nopost' 'allpresets'
            'preset:' 'remove' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:'
            'uki:' 'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:' 'no-cmdline'
            'ukiconfig:' 'no-ukify')
@@ -931,6 +932,9 @@ while :; do
             ;;
         -n | --nocolor)
             _optcolor=0
+            ;;
+        --nopost)
+            _optnopost=1
             ;;
         --uefi)
             warning 'The --uefi option is deprecated. Use --uki instead.'
@@ -1215,7 +1219,7 @@ if [[ -n "$_optuki" && -n "$_optgenimg" ]]; then
     fi
 fi
 
-if (( ${#_generated[@]} )); then
+if (( ${#_generated[@]} && ! _optnopost )); then
     run_post_hooks "${_generated[@]}" || (( ++_builderrors ))
 fi
 

@@ -71,6 +71,9 @@ other features.
 
 *-n*, *--nocolor*::
     Disable color output.
+    
+*--nopost*::
+    Do not run post hooks. 
 
 *-U*, *--uki* _filename_::
     Generate a unified kernel image as _filename_. If a CPIO image is
@@ -351,14 +354,15 @@ run in reverse.
 
 == About post hooks
 
-Post hooks are executables or scripts that get executed after the image has been
-successfully generated and can be used for further processing (i.e. signing).
+Post hooks are executables or scripts executed after successful image generation for 
+further processing, like signing. When *kernel-install*(8) invokes mkinitcpio, post 
+hooks are disabled.
+
 They receive the kernel as the first argument, the image as second and
 optionally the unified kernel image as a third.
 
-Note that the first argument will be empty when the mkinitcpio has been invoked
-with *-k* _none_ or *-k* _version_ and the kernel image cannot be found on the
-file system.
+Note: If mkinitcpio is invoked with *-k* _none_ or *-k* _version_ and the kernel image 
+is not found, the first argument will be empty.
 
 The following enviroment variables are passed:
 
