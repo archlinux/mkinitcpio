@@ -217,7 +217,7 @@ CHANGES WITH v38:
           switch root) because pvscan in early userspace (the initramfs phase)
           failed to activate them because of missing kernel modules.
           install/lvm2 will also symlink all thin-provisioning-tools to
-          /usr/bin/pdata_tools by searching for symlinks instead of harcoding
+          /usr/bin/pdata_tools by searching for symlinks instead of hardcoding
           their file names.
 
         * install/mdadm_udev now includes the mdmon binary for Intel Matrix
@@ -231,7 +231,7 @@ CHANGES WITH v38:
         Changes in packaging:
 
         * The libalm hook will now check if the _kver variable in a preset
-          contains a file path or a kernel version before attemping to copy it
+          contains a file path or a kernel version before attempting to copy it
           over to /boot/.
 
         * The kernel-install hook will now prefix its output with "(mkinitcpio)".
@@ -395,7 +395,7 @@ CHANGES WITH v36:
         * The --no-cmdline option omits embedding the kernel command line files,
           allowing to pass kernel command line options directly through the boot
           entry. This is practical if you need to retain the ability to edit
-          these options, or overrride them during boot.
+          these options, or override them during boot.
 
         Changes in mkinitcpio:
 

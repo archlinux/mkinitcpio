@@ -364,7 +364,7 @@ optionally the unified kernel image as a third.
 Note: If mkinitcpio is invoked with *-k* _none_ or *-k* _version_ and the kernel image 
 is not found, the first argument will be empty.
 
-The following enviroment variables are passed:
+The following environment variables are passed:
 
 *KERNELVERSION*::
     Contains the full version of the kernel the image has been built from.

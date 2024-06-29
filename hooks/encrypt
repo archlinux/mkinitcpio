@@ -162,7 +162,7 @@ EOF
                 return 1
             fi
         else
-            err "Failed to open encryption mapping: The device ${cryptdev} is not a LUKS volume and the crypto= paramater was not specified."
+            err "Failed to open encryption mapping: The device ${cryptdev} is not a LUKS volume and the crypto= parameter was not specified."
         fi
     fi
     rm -f "${ckeyfile}"
