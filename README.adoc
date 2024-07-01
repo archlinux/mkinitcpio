@@ -47,7 +47,7 @@ Before contributing, make yourself familiar with the https://terms.archlinux.org
 
 == User documentation
 
-Primary usage documention is available in the xref:man/mkinitcpio.8.adoc[mkinitcpio(8)], xref:man/lsinitcpio.1.adoc[lsinitcpio(1)] and xref:man/mkinitcpio.conf.5.adoc[mkinitcpio.conf(5)] man pages.
+Primary usage documentation is available in the xref:man/mkinitcpio.8.adoc[mkinitcpio(8)], xref:man/lsinitcpio.1.adoc[lsinitcpio(1)] and xref:man/mkinitcpio.conf.5.adoc[mkinitcpio.conf(5)] man pages.
 
 A comprehensible user guide is available in the https://wiki.archlinux.org/title/mkinitcpio[mkinitcpio article on ArchWiki].
 

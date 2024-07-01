@@ -45,5 +45,5 @@ against all 45k), a matrix of:
 *** BE-32
 *** BE-8 (with and without thumb2)
 ** ARMv4t efistub builds that merge bootloader args with the args from
-   device tree (becasue of all the kernels I built, these have the
+   device tree (because of all the kernels I built, these have the
    largest `+input_data_addr+`)
