@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 _detect_kver() {
-    ./functions run_mkinitcpio_func kver "$1"
+    ./functions run_mkinitcpio_func kver "$1" 2>/dev/null
 }
 
 _lsinitcpio() {
