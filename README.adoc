@@ -33,9 +33,12 @@ mkinitcpio has the following dependencies.
 * systemd-ukify: build UKIs using ukify instead of objcopy
 
 .Build time dependencies:
+* Meson
 * Asciidoctor (or alternatively a2x from AsciiDoc.py) to create man pages
 * Bash Automated Testing System (bats) and bats-assert for tests
 * ShellCheck for tests
+
+Instructions for building are available in xref:CONTRIBUTING.adoc#_building[CONTRIBUTING.adoc].
 
 == Contributing
 
