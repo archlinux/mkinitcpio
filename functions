@@ -1343,16 +1343,17 @@ find_module_from_symbol() {
         esac
 
 
-        decomp_to_stdout() {
+        module_to_stdout() {
             case "$1" in
                 *.xz) xz -d "$1" -c ;;
                 *.gz) gzip -d "$1" -c ;;
                 *.zst) zstd -q -d "$1" -c ;;
+                *) cat "$1" ;;
             esac
         }
 
         while read -r -d '' mod; do
-            if decomp_to_stdout "$mod" | grep -Eq "^($symbols)" &> /dev/null; then
+            if module_to_stdout "$mod" | grep -Eq "^($symbols)" &> /dev/null; then
                 mod=${mod##*/}
                 mod="${mod%.ko*}"
                 printf '%s\n' "${mod//-/_}"
