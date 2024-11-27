@@ -11,27 +11,31 @@ stages:
         # https://gitlab.archlinux.org/archlinux/archlinux-keyring/-/issues/4
         - echo -e "\e[0Ksection_start:`date +%s`:pacman[collapsed=true]\r\e[0KInstalling dependencies"
         - pacman -Sy --needed --noconfirm archlinux-keyring
-        - pacman --noconfirm -Syu --needed bats bats-assert bats-support diffutils git jq kcov lzop make shellcheck systemd-ukify
+        - pacman --noconfirm -Syu --needed bats bats-assert bats-support diffutils git jq kcov lzop meson pkg-config shellcheck systemd-ukify
         - echo -e "\e[0Ksection_end:`date +%s`:pacman\r\e[0K"
         - echo -e "\e[0Ksection_start:`date +%s`:useradd[collapsed=true]\r\e[0KCreating non-root user..."
         - useradd -d /builds/${GITLAB_USER_LOGIN} -M builder
         - chown -R builder:builder ..
         - echo -e "\e[0Ksection_end:`date +%s`:useradd\r\e[0K"
 
-check:
+shellcheck:
     stage: check
     extends: .pacman_install
     script:
-        - make shellcheck
+        - sudo -HEu builder meson setup build -Ddocs=false
+        - sudo -HEu builder meson test -C build --suite shellcheck
+    tags:
+        - vm
 
 test:
     stage: check
     extends: .pacman_install
     script:
-        - sudo -HEu builder make --silent check BATS_ARGS='-F junit' > bats-report.xml
+        - sudo -HEu builder meson setup build -Ddocs=false
+        - sudo -HEu builder meson test -C build --suite bats
     artifacts:
         reports:
-            junit: bats-report.xml
+            junit: build/meson-logs/testlog.junit.xml
     tags:
         - vm
 
@@ -41,17 +45,18 @@ coverage:
     coverage: '/Percent covered\s+\d+\.\d+/'
     allow_failure: true
     script:
-        - sudo -HEu builder make coverage
+        - sudo -HEu builder meson setup build -Ddocs=false
+        - sudo -HEu builder meson test -C build --suite coverage
         - jq -r '. |
             ["Percent covered", .percent_covered],
             ["Covered lines", .covered_lines],
             ["Total lines", .total_lines],
             ["Percent low", .percent_low],
-            ["Percent high", .percent_high] | @tsv' coverage/bats.*/coverage.json
+            ["Percent high", .percent_high] | @tsv' build/coverage/kcov-merged/coverage.json
     artifacts:
         reports:
             coverage_report:
                 coverage_format: cobertura
-                path: coverage/bats.*/cobertura.xml
+                path: build/coverage/kcov-merged/cobertura.xml
     tags:
         - vm

@@ -4,6 +4,8 @@ SPDX-License-Identifier: GPL-2.0-only
 ////
 :doctype: manpage
 :manmanual: mkinitcpio manual
+:mansource: mkinitcpio @VERSION@
+:manversion: mkinitcpio @VERSION@
 
 = mkinitcpio.conf(5)
 
@@ -13,15 +15,15 @@ mkinitcpio.conf - mkinitcpio configuration file
 
 == Synopsis
 
-_/etc/mkinitcpio.conf_
+_@SYSCONFDIR@/mkinitcpio.conf_
 
 == Description
 
 mkinitcpio will attempt to read from a configuration file each time it is
-invoked, _/etc/mkinitcpio.conf_ by default. This file defines several variables
+invoked, _@SYSCONFDIR@/mkinitcpio.conf_ by default. This file defines several variables
 which describe the contents of the image to be generated. In addition to the "main"
 configuration file, drop-in configuration snippets are read
-from _/etc/mkinitcpio.conf.d/*.conf_. These drop-ins have higher precedence and
+from _@SYSCONFDIR@/mkinitcpio.conf.d/*.conf_. These drop-ins have higher precedence and
 override the main configuration file.
 
 == Variables

@@ -11,7 +11,7 @@ build() {
     # subshell to avoid namespace pollution
     (
         # shellcheck disable=SC1091
-        [[ -s /etc/vconsole.conf ]] && . /etc/vconsole.conf
+        [[ -s '@VCONSOLE_CONF@' ]] && . '@VCONSOLE_CONF@'
 
         if [[ -n "$FONT" ]]; then
             for file in "/usr/share/kbd/consolefonts/$FONT".@(fnt|psf?(u))?(.gz|.zst); do
@@ -38,7 +38,7 @@ build() {
 
 help() {
     cat <<HELPEOF
-This hook loads consolefont specified in vconsole.conf during early userspace.
+This hook loads consolefont specified in @VCONSOLE_CONF@ during early userspace.
 HELPEOF
 }
 

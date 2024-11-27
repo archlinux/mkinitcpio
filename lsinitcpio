@@ -8,7 +8,11 @@ shopt -s extglob
 
 _list='--list'
 _optcolor=1
-_f_functions=functions
+if (( MESON_TEST )); then
+    _f_functions='./functions'
+else
+    _f_functions='@INITCPIO_LIBDIR@/functions'
+fi
 
 declare -A bsdcpio_options=(
     [list]='--list'
@@ -18,7 +22,7 @@ declare -A bsdcpio_options=(
 
 usage() {
     cat <<USAGE
-lsinitcpio %VERSION%
+lsinitcpio @VERSION@
 usage: ${0##*/} [action] [options] <initramfs>
 
   Actions:
@@ -40,7 +44,7 @@ USAGE
 
 version() {
     cat <<EOF
-lsinitcpio %VERSION%
+lsinitcpio @VERSION@
 EOF
 }
 

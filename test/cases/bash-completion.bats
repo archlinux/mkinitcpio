@@ -8,7 +8,8 @@ bats_load_library 'bats-support'
 load "../helpers/common"
 
 setup() {
-    source ./shell/bash-completion || true
+    # shellcheck disable=SC1091
+    source ./shell/mkinitcpio || true
 }
 
 @test "_detect_kver" {

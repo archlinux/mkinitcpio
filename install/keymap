@@ -12,7 +12,7 @@ build() {
         l="$LANG"
         unset LANG
 
-        for cfg in /etc/{vconsole,locale}.conf; do
+        for cfg in '@VCONSOLE_CONF@' /etc/locale.conf; do
             # shellcheck disable=SC1090
             [[ -s "$cfg" ]] && . "$cfg"
         done
@@ -32,7 +32,7 @@ build() {
 
 help() {
     cat <<HELPEOF
-This hook loads keymap(s) specified in vconsole.conf during early userspace.
+This hook loads keymap(s) specified in @VCONSOLE_CONF@ during early userspace.
 HELPEOF
 }
 

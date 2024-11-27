@@ -4,6 +4,8 @@ SPDX-License-Identifier: GPL-2.0-only
 ////
 :doctype: manpage
 :manmanual: mkinitcpio manual
+:mansource: mkinitcpio @VERSION@
+:manversion: mkinitcpio @VERSION@
 
 = lsinitcpio(1)
 

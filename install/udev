@@ -2,12 +2,17 @@
 
 build() {
     map add_binary \
-        '/usr/lib/systemd/systemd-udevd' \
+        '@UDEVD_PATH@' \
         '/usr/bin/udevadm' \
-        '/usr/bin/systemd-tmpfiles' \
         '/usr/lib/udev/ata_id' \
         '/usr/lib/udev/scsi_id' \
         '/usr/lib/libkmod.so.2'
+
+    # meson-templated path
+    # shellcheck disable=SC2157
+    if [[ -n '@TMPFILES_PATH@' ]]; then
+        add_binary '@TMPFILES_PATH@'
+    fi
 
     map add_udev_rule \
         '50-udev-default.rules' \

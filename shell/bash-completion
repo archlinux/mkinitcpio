@@ -2,7 +2,11 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 _detect_kver() {
-    ./functions run_mkinitcpio_func kver "$1" 2>/dev/null
+    if (( MESON_TEST )); then
+        './functions' run_mkinitcpio_func kver "$1" 2>/dev/null
+    else
+        '@INITCPIO_LIBDIR@/functions' run_mkinitcpio_func kver "$1" 2>/dev/null
+    fi
 }
 
 _lsinitcpio() {
@@ -69,10 +73,10 @@ _mkinitcpio() {
             _find_kernel_versions
             ;;
         -p | --preset)
-            mapfile -t COMPREPLY < <(compgen -W "$(_files_from_dirs -s .preset /etc/mkinitcpio.d)" -- "$cur")
+            mapfile -t COMPREPLY < <(compgen -W "$(_files_from_dirs -s .preset "@SYSCONFDIR@/mkinitcpio.d")" -- "$cur")
             ;;
         -[AHS] | --add | --hookhelp | --skiphooks)
-            mapfile -t COMPREPLY < <(compgen -W "$(_files_from_dirs {/usr,}/lib/initcpio/install)" -- "$cur")
+            mapfile -t COMPREPLY < <(compgen -W "$(_files_from_dirs "@INITCPIO_LIBDIR@/install")" -- "$cur")
             ;;
         *)
             mapfile -t COMPREPLY < <(compgen -W "${opts[*]}" -- "$cur")

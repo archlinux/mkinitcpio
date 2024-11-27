@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: GPL-2.0-only
+
+option('systemd', type: 'feature', value: 'enabled',
+       description: 'install systemd hooks')
+option('kernel_install', type: 'boolean', value: true,
+       description: 'install kernel-install hook')
+option('alpm', type: 'boolean', value: true,
+       description: 'install ALPM hooks and scripts')
+option('presets', type: 'boolean', value: true,
+       description: 'install presets')
+option('docs', type: 'boolean', value: true,
+       description: 'install manual pages')
+option('vconsole_conf', type: 'string', value: 'vconsole.conf',
+       description: 'name of vconsole configuration file')

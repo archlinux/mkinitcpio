@@ -5,3 +5,4 @@ lsinitcpio.1
 *.bak
 mkinitcpio-*.tar.gz
 coverage/
+build/
