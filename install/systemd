@@ -163,8 +163,9 @@ build() {
 
     [[ -f /etc/fstab.initramfs ]] && add_file "/etc/fstab.initramfs" "/etc/fstab"
 
-    # Add default systemd tmpfile
+    # Add default systemd tmpfiles, and tmpfile to copy stuff from .extra to /run/systemd
     add_file "/usr/lib/tmpfiles.d/systemd.conf"
+    add_file "/usr/lib/tmpfiles.d/20-systemd-stub.conf"
 }
 
 help() {
