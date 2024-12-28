@@ -21,3 +21,6 @@ install/sd-shutdown @eworm
 install/sd-vconsole @eworm
 install/systemd @eworm @yhndnzj
 install/udev @eworm
+
+[sd-encrypt PKCS11]
+install/sd-encrypt-opensc @vstoiakin
