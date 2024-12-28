@@ -160,6 +160,7 @@ shellcheck_files = [
     'install/modconf',
     'install/resume',
     'install/sd-encrypt',
+    'install/sd-encrypt-opensc',
     'install/sd-shutdown',
     'install/sd-vconsole',
     'install/shutdown',

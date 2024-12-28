@@ -28,6 +28,7 @@ hooks = [
 
 systemd_hooks = [
     'sd-encrypt',
+    'sd-encrypt-opensc',
     'sd-shutdown',
     'sd-vconsole',
     'systemd',
