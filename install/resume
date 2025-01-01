@@ -7,7 +7,7 @@ build() {
     map add_module 'crypto-lzo' 'crypto-lz4'
 
     if command -v systemctl &>/dev/null; then
-        IFS=' .-~^' read -r _ systemd_ver _ < <(systemctl --version)
+        IFS=' .-~^' read -r _ systemd_ver _ < <(SYSTEMD_COLORS=0 systemctl --version)
         if (( systemd_ver >= 255 )); then
             add_binary /usr/lib/systemd/systemd-hibernate-resume
         fi
