@@ -1,7 +1,7 @@
 #!/bin/bash
 
 build() {
-    local mod
+    local mod crypttab
 
     map add_module 'dm-crypt' 'dm-integrity' 'hid-generic?'
     if [[ -n "$CRYPTO_MODULES" ]]; then
@@ -52,7 +52,12 @@ build() {
     # add NVPCR definition files
     map add_file /usr/lib/nvpcr/*.nvpcr
 
-    [[ -f /etc/crypttab.initramfs ]] && add_file '/etc/crypttab.initramfs' '/etc/crypttab'
+    if [[ -f /etc/crypttab.initramfs ]]; then
+        add_file '/etc/crypttab.initramfs' '/etc/crypttab' 600
+        warning '/etc/crypttab.initramfs is deprecated. Merge it into /etc/crypttab and add a x-initrd.attach option to the devices that need to be unlocked in the initramfs.'
+    elif crypttab="$(awk '!/^\s*($|#)/ && $4 ~ /x-initrd\.attach/' /etc/crypttab 2>/dev/null)" && [[ -n "$crypttab" ]]; then
+        printf '%s\n' "$crypttab" | add_file - '/etc/crypttab' 600
+    fi
 }
 
 help() {
@@ -60,9 +65,10 @@ help() {
 This hook allows systemd to unlock encrypted LUKS1 volumes with a password, and encrypted LUKS2 volumes with a password, FIDO2 token or TPM2 key. Unlocking of LUKS2 volumes with a PKCS#11 token is supported for some tokens by additional 'sd-encrypt-opensc' hook.
 
 See the manpage of systemd-cryptsetup-generator(8) for available kernel
-command line options. Alternatively, if the file /etc/crypttab.initramfs
-exists, it will be added to the initramfs as /etc/crypttab. See the
-crypttab(5) manpage for more information on crypttab syntax.
+command line options. Alternatively, if /etc/crypttab contains lines with
+x-initrd.attach in the fourth field, those lines will be added to /etc/crypttab
+in the initramfs. See the crypttab(5) manpage for more information on crypttab
+syntax.
 HELPEOF
 }
 
