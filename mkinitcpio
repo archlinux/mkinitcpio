@@ -568,9 +568,9 @@ uki_assemble() {
     fi
     quiet 'Assembling UKI: %s' "${_uki_build_args[*]}"
     if (( _optquiet )); then
-        "${_uki_build_args[@]}" >/dev/null
+        (umask 0177 && "${_uki_build_args[@]}" >/dev/null)
     else
-        "${_uki_build_args[@]}"
+        (umask 0177 && "${_uki_build_args[@]}")
     fi
 }
 
