@@ -365,7 +365,7 @@ build_image() {
             fi
             ;;&
         xz)
-            COMPRESSION_OPTIONS=('-T0' '--check=crc32' "${COMPRESSION_OPTIONS[@]}")
+            COMPRESSION_OPTIONS=('--check=crc32' "${COMPRESSION_OPTIONS[@]}")
             ;;
         lz4)
             COMPRESSION_OPTIONS=('-l' "${COMPRESSION_OPTIONS[@]}")
