@@ -1,0 +1,38 @@
+#!/bin/bash
+
+build() {
+    local mod
+
+    map add_module 'dm-verity' 'sha256' 'sha512'
+
+    map add_udev_rule \
+        '10-dm.rules' \
+        '13-dm-disk.rules' \
+        '95-dm-notify.rules' \
+	'/usr/lib/initcpio/udev/11-dm-initramfs.rules'
+
+    map add_systemd_unit 'veritysetup.target' \
+    	'systemd-veritysetup@.service'
+
+    # Add systemd verity-related binaries
+    map add_binary '/usr/lib/systemd/system-generators/systemd-veritysetup-generator' \
+        '/usr/lib/systemd/systemd-veritysetup'
+
+    # Add veritysetup binary from cryptsetup package
+    add_binary '/usr/bin/veritysetup'
+
+    # Add veritytab if present
+    [[ -f /etc/veritytab.initramfs ]] && add_file '/etc/veritytab.initramfs' '/etc/veritytab'
+}
+
+help() {
+    cat <<HELPEOF
+This hook sets up dm-verity in the initramfs environment.
+
+Ensure your kernel command line contains valid parameters for dm-verity.
+If /etc/veritytab.initramfs exists, it will be included in the initramfs as
+/etc/veritytab. See veritytab(5) for details.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:

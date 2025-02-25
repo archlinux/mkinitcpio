@@ -27,6 +27,8 @@ hooks = [
 ]
 
 systemd_hooks = [
+    'sd-verity',
+    'sd-volatile',
     'sd-encrypt',
     'sd-encrypt-opensc',
     'sd-shutdown',
