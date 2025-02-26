@@ -5,15 +5,9 @@ build() {
 
     map add_module 'overlay'
 
-    map add_udev_rule \
-        '10-dm.rules' \
-        '13-dm-disk.rules' \
-        '95-dm-notify.rules' \
-	'/usr/lib/initcpio/udev/11-dm-initramfs.rules'
-
     map add_systemd_unit 'systemd-volatile-root.service'
 
-    # Add systemd verity-related binaries
+    # Add systemd volatile binary
     map add_binary '/usr/lib/systemd/systemd-volatile-root'
 }
 

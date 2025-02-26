@@ -8,11 +8,11 @@ build() {
     map add_udev_rule \
         '10-dm.rules' \
         '13-dm-disk.rules' \
-        '95-dm-notify.rules' \
-	'/usr/lib/initcpio/udev/11-dm-initramfs.rules'
+        '95-dm-notify.rules'
 
-    map add_systemd_unit 'veritysetup.target' \
-    	'systemd-veritysetup@.service'
+    map add_systemd_unit 'veritysetup-pre.target' \
+        'veritysetup.target' \
+        'systemd-veritysetup@.service'
 
     # Add systemd verity-related binaries
     map add_binary '/usr/lib/systemd/system-generators/systemd-veritysetup-generator' \
