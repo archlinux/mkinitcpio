@@ -85,6 +85,7 @@ build() {
         60-persistent-storage.rules \
         64-btrfs.rules \
         80-drivers.rules \
+        90-image-dissect.rules \
         99-systemd.rules
 
     # systemd units
