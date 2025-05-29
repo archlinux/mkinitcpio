@@ -10,14 +10,16 @@ ALL_kver='/boot/vmlinuz-linux'
 #ALL_config='/etc/mkinitcpio.conf'
 #ALL_cmdline='/etc/kernel/cmdline'
 #ALL_splash='/usr/share/systemd/bootctl/splash-arch.bmp'
+#ALL_kerneldest='/boot/vmlinuz-linux'
 
-# presetname_kver    - the kernel version (omit if ALL_kver should be used)
-# presetname_config  - the configuration file (omit if ALL_config should be used)
-# presetname_image   - the filename of generated image
-# presetname_uki     - the filename of generated unified kernel image
-# presetname_cmdline - the kernel command line file (omit if ALL_cmdline should be used)
-# presetname_splash  - the splash image file (omit if ALL_splash should be used)
-# presetname_options - any extra options
+# presetname_kver        - the kernel version (omit if ALL_kver should be used)
+# presetname_config      - the configuration file (omit if ALL_config should be used)
+# presetname_image       - the filename of generated image
+# presetname_uki         - the filename of generated unified kernel image
+# presetname_cmdline     - the kernel command line file (omit if ALL_cmdline should be used)
+# presetname_splash      - the splash image file (omit if ALL_splash should be used)
+# presetname_kerneldest  - the kernel destination path for post hooks (omit if ALL_kerneldest should be used)
+# presetname_options     - any extra options
 
 #default_kver="3.0-ARCH"
 #default_config="/etc/mkinitcpio.conf"

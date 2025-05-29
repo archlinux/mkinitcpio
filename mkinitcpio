@@ -717,6 +717,9 @@ process_preset() (
             continue
         fi
 
+        preset_kerneldest="${p}_kerneldest"
+        preset_kerneldest_value="${!preset_kerneldest:-$ALL_kerneldest}"
+
         preset_config="${p}_config"
         if [[ -n "${!preset_config:-$ALL_config}" ]]; then
             preset_cmd+=(-c "${!preset_config:-$ALL_config}")
@@ -790,7 +793,11 @@ process_preset() (
             preset_cmd+=("${OPTREST[@]}")
             msg2 "${preset_cmd[*]}"
             # we won't be calling mkinitcpio recursively, so no need to set MKINITCPIO_PROCESS_PRESET
-            MKINITCPIO_PROCESS_PRESET="$preset_name" "$0" "${preset_cmd[@]}"
+            if [[ -n "$preset_kerneldest_value" ]]; then
+                MKINITCPIO_PROCESS_PRESET="$preset_name" MKINITCPIO_KERNELDEST="$preset_kerneldest_value" "$0" "${preset_cmd[@]}"
+            else
+                MKINITCPIO_PROCESS_PRESET="$preset_name" "$0" "${preset_cmd[@]}"
+            fi
         fi
         # shellcheck disable=SC2181
         (( $? )) && ret=1
@@ -1100,9 +1107,19 @@ if [[ "$KERNELVERSION" != 'none' ]]; then
             if [[ -f "$img" ]]; then
                 KERNELIMAGE="$img"
                 if read -r pkgbase &>/dev/null <"${img%/*}/pkgbase"; then
-                    KERNELDESTINATION="/boot/${img##*/}-${pkgbase}"
+                    if [[ -n "$MKINITCPIO_KERNELDEST" ]]; then
+                        # If kernel destination is specified in preset, use it directly
+                        KERNELDESTINATION="$MKINITCPIO_KERNELDEST"
+                    else
+                        KERNELDESTINATION="/boot/${img##*/}-${pkgbase}"
+                    fi
                 else
-                    KERNELDESTINATION="/boot/${img##*/}-${KERNELVERSION}"
+                    if [[ -n "$MKINITCPIO_KERNELDEST" ]]; then
+                        # If kernel destination is specified in preset, use it directly
+                        KERNELDESTINATION="$MKINITCPIO_KERNELDEST"
+                    else
+                        KERNELDESTINATION="/boot/${img##*/}-${KERNELVERSION}"
+                    fi
                 fi
                 quiet "located kernel image: '%s'" "$KERNELIMAGE"
                 break
@@ -1122,7 +1139,13 @@ if [[ "$KERNELVERSION" != 'none' ]]; then
     fi
 
     if [[ -f "$KERNELIMAGE" ]]; then
-        [[ -z "$KERNELDESTINATION" ]] && KERNELDESTINATION="$KERNELIMAGE"
+        if [[ -z "$KERNELDESTINATION" ]]; then
+            if [[ -n "$MKINITCPIO_KERNELDEST" ]]; then
+                KERNELDESTINATION="$MKINITCPIO_KERNELDEST"
+            else
+                KERNELDESTINATION="$KERNELIMAGE"
+            fi
+        fi
     else
         # this is not fatal, initramfs will still be generated but post
         # hooks will not know what kernel image is used
