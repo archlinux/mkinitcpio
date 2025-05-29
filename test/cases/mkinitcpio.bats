@@ -268,3 +268,160 @@ EOH
 
     __gen_test_initcpio cat
 }
+
+@test "preset with ALL_cmdline and ALL_splash" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
+    local tmpdir kver
+    tmpdir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+    kver="$(uname -r)"
+
+    # Create test kernel
+    tmp_knl="$(__gen_test_kernel "$kver")"
+    ln -s "$tmp_knl" "$tmpdir/vmlinuz-test"
+
+    # Create config file
+    echo 'HOOKS=(base)' > "$tmpdir/mkinitcpio.conf"
+
+    # Create cmdline file
+    echo 'root=/dev/sda1 rw quiet' > "$tmpdir/cmdline"
+
+    # Create splash file
+    dd if=/dev/zero of="$tmpdir/splash.bmp" bs=1K count=1
+
+    # Create preset file
+    cat > "$tmpdir/test.preset" <<EOF
+PRESETS=('default' 'fallback')
+
+ALL_kver='$tmpdir/vmlinuz-test'
+ALL_config='$tmpdir/mkinitcpio.conf'
+ALL_cmdline='$tmpdir/cmdline'
+ALL_splash='$tmpdir/splash.bmp'
+
+default_uki='$tmpdir/default.efi'
+fallback_uki='$tmpdir/fallback.efi'
+EOF
+
+    # Build from preset
+    run ./mkinitcpio -p "$tmpdir/test.preset" --no-ukify
+    assert_success
+    assert_output --partial "Building image from preset"
+
+    # Verify UKIs were created
+    [[ -f "$tmpdir/default.efi" ]]
+    [[ -f "$tmpdir/fallback.efi" ]]
+
+    # Extract sections from default UKI to verify cmdline and splash
+    objcopy --dump-section ".cmdline=$tmpdir/default.cmdline" "$tmpdir/default.efi"
+    objcopy --dump-section ".splash=$tmpdir/default.splash" "$tmpdir/default.efi"
+
+    # Verify cmdline content (with added null terminator and space)
+    printf 'root=/dev/sda1 rw quiet \n\0' > "$tmpdir/expected.cmdline"
+    cmp "$tmpdir/expected.cmdline" "$tmpdir/default.cmdline"
+
+    # Verify splash was included
+    cmp "$tmpdir/splash.bmp" "$tmpdir/default.splash"
+}
+
+@test "preset with individual cmdline overrides" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
+    local tmpdir kver
+    tmpdir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+    kver="$(uname -r)"
+
+    # Create test kernel
+    tmp_knl="$(__gen_test_kernel "$kver")"
+    ln -s "$tmp_knl" "$tmpdir/vmlinuz-test"
+
+    # Create config file
+    echo 'HOOKS=(base)' > "$tmpdir/mkinitcpio.conf"
+
+    # Create different cmdline files
+    echo 'root=/dev/sda1 rw' > "$tmpdir/cmdline-default"
+    echo 'root=/dev/sda1 rw single' > "$tmpdir/cmdline-rescue"
+
+    # Create preset file
+    cat > "$tmpdir/test.preset" <<EOF
+PRESETS=('default' 'rescue')
+
+ALL_kver='$tmpdir/vmlinuz-test'
+ALL_config='$tmpdir/mkinitcpio.conf'
+ALL_cmdline='$tmpdir/cmdline-default'
+
+default_uki='$tmpdir/default.efi'
+rescue_uki='$tmpdir/rescue.efi'
+rescue_cmdline='$tmpdir/cmdline-rescue'
+EOF
+
+    # Build from preset
+    run ./mkinitcpio -p "$tmpdir/test.preset" --no-ukify
+    assert_success
+
+    # Extract cmdline sections
+    objcopy --dump-section ".cmdline=$tmpdir/default.cmdline.out" "$tmpdir/default.efi"
+    objcopy --dump-section ".cmdline=$tmpdir/rescue.cmdline.out" "$tmpdir/rescue.efi"
+
+    # Verify default uses ALL_cmdline
+    printf 'root=/dev/sda1 rw \n\0' > "$tmpdir/expected.default"
+    cmp "$tmpdir/expected.default" "$tmpdir/default.cmdline.out"
+
+    # Verify rescue uses its own cmdline
+    printf 'root=/dev/sda1 rw single \n\0' > "$tmpdir/expected.rescue"
+    cmp "$tmpdir/expected.rescue" "$tmpdir/rescue.cmdline.out"
+}
+
+@test "preset cmdline and splash work with options array" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
+    local tmpdir kver
+    tmpdir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+    kver="$(uname -r)"
+
+    # Create test kernel
+    tmp_knl="$(__gen_test_kernel "$kver")"
+    ln -s "$tmp_knl" "$tmpdir/vmlinuz-test"
+
+    # Create config files
+    echo 'HOOKS=(base)' > "$tmpdir/mkinitcpio.conf"
+    echo 'HOOKS=(base udev)' > "$tmpdir/mkinitcpio-custom.conf"
+
+    # Create cmdline and splash
+    echo 'root=/dev/sda1 rw' > "$tmpdir/cmdline"
+    dd if=/dev/zero of="$tmpdir/splash.bmp" bs=1K count=1
+
+    # Create preset file that mixes preset variables with options
+    cat > "$tmpdir/test.preset" <<EOF
+PRESETS=('default')
+
+ALL_kver='$tmpdir/vmlinuz-test'
+ALL_cmdline='$tmpdir/cmdline'
+ALL_splash='$tmpdir/splash.bmp'
+
+default_uki='$tmpdir/default.efi'
+default_options='-c $tmpdir/mkinitcpio-custom.conf'
+EOF
+
+    # Build from preset
+    run ./mkinitcpio -p "$tmpdir/test.preset" --no-ukify
+    assert_success
+    assert_output --partial "$tmpdir/mkinitcpio-custom.conf"
+
+    # Verify UKI was created
+    [[ -f "$tmpdir/default.efi" ]]
+
+    # Verify cmdline was still used despite options
+    objcopy --dump-section ".cmdline=$tmpdir/default.cmdline.out" "$tmpdir/default.efi"
+    printf 'root=/dev/sda1 rw \n\0' > "$tmpdir/expected.cmdline"
+    cmp "$tmpdir/expected.cmdline" "$tmpdir/default.cmdline.out"
+
+    # Verify splash was included (preset variables are processed after options)
+    objcopy --dump-section ".splash=$tmpdir/default.splash.out" "$tmpdir/default.efi"
+    cmp "$tmpdir/splash.bmp" "$tmpdir/default.splash.out"
+}

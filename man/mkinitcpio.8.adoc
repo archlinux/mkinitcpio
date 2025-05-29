@@ -208,6 +208,14 @@ line arguments for more information about a particular option.
 *<preset>_image* (one of *<preset>_uki* and *<preset>_image* is *required*)::
     Output file path for the generated image (passed via *-g* to mkinitcpio).
 
+*<preset>_cmdline* (defaults to value of *ALL_cmdline*)::
+    Path to the kernel command line file (passed via *--cmdline* to mkinitcpio).
+    This option is only used when generating unified kernel images.
+
+*<preset>_splash* (defaults to value of *ALL_splash*)::
+    Path to the splash image file (passed via *--splash* to mkinitcpio).
+    This option is only used when generating unified kernel images.
+
 *<preset>_options*::
     Further command line arguments to pass to mkinitcpio as a string or array.
     They will get appended at the end of the call to mkinitcpio (after all the
