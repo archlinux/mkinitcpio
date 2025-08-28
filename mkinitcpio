@@ -674,7 +674,7 @@ build_uki() {
 }
 
 # The function is invoked via `map process_preset`
-# shellcheck disable=SC2317
+# shellcheck disable=SC2329
 process_preset() (
     local preset="$1" preset_image='' preset_options=''
     local -a preset_mkopts preset_cmd preset_remove_cmd
