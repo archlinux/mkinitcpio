@@ -305,7 +305,7 @@ _zboot_cat() {
         'lzma') reader='xzcat' ;;
         'lzo') reader='lzop -d' ;;
         'xzkern') reader='xzcat' ;;
-        'zstd22') reader='zstdcat' ;;
+        'zstd'|'zstd22') reader='zstdcat' ;;
         *)
             error 'Unknown zboot compression type: %s' "${comp_type#'zboot '}"
             return 1
