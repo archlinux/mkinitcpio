@@ -17,8 +17,7 @@ build() {
         '10-dm.rules' \
         '13-dm-disk.rules' \
         '60-fido-id.rules' \
-        '95-dm-notify.rules' \
-        '/usr/lib/initcpio/udev/11-dm-initramfs.rules'
+        '95-dm-notify.rules'
 
     map add_systemd_unit 'cryptsetup.target' \
         'systemd-ask-password-console.path' \
