@@ -305,7 +305,7 @@ _zboot_cat() {
         'lzma') reader='xzcat' ;;
         'lzo') reader='lzop -d' ;;
         'xzkern') reader='xzcat' ;;
-        'zstd22') reader='zstdcat' ;;
+        'zstd'|'zstd22') reader='zstdcat' ;;
         *)
             error 'Unknown zboot compression type: %s' "${comp_type#'zboot '}"
             return 1
@@ -1177,7 +1177,7 @@ initialize_buildroot() {
         ln -s "../run"  "$root/var/run"
 
         case "$arch" in
-            x86_64)
+            x86_64|loongarch64)
                 ln -s "lib"     "$root/usr/lib64"
                 ln -s "usr/lib" "$root/lib64"
                 ;;

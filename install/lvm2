@@ -31,8 +31,7 @@ build() {
         '10-dm.rules' \
         '11-dm-lvm.rules' \
         '13-dm-disk.rules' \
-        '95-dm-notify.rules' \
-        '/usr/lib/initcpio/udev/11-dm-initramfs.rules'
+        '95-dm-notify.rules'
 
     # this udev rule is specific for systemd and non-systemd systems
     if declare -F add_systemd_unit &>/dev/null; then
