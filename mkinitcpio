@@ -736,6 +736,16 @@ process_preset() (
             preset_remove_cmd+=("${!preset_uki}")
         fi
 
+        preset_cmdline="${p}_cmdline"
+        if [[ -n "${!preset_cmdline:-$ALL_cmdline}" ]]; then
+            preset_cmd+=(--cmdline "${!preset_cmdline:-$ALL_cmdline}")
+        fi
+
+        preset_splash="${p}_splash"
+        if [[ -n "${!preset_splash:-$ALL_splash}" ]]; then
+            preset_cmd+=(--splash "${!preset_splash:-$ALL_splash}")
+        fi
+
         preset_image="${p}_image"
         if [[ -n "${!preset_image}" ]]; then
             preset_cmd+=(-g "${!preset_image}")
