@@ -66,6 +66,8 @@ build() {
     add_binary /usr/bin/mount
     add_binary /usr/bin/sulogin
     add_binary /usr/bin/umount
+    add_binary /usr/bin/swapon
+    add_binary /usr/bin/swapoff
     add_binary /usr/lib/systemd/systemd /init
 
     map add_binary \
