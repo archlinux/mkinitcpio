@@ -1,0 +1,22 @@
+#!/bin/bash
+
+build() {
+    local mod
+
+    map add_module 'overlay'
+
+    map add_systemd_unit 'systemd-volatile-root.service'
+
+    # Add systemd volatile binary
+    map add_binary '/usr/lib/systemd/systemd-volatile-root'
+}
+
+help() {
+    cat <<HELPEOF
+This hook sets up systemd-volatile in the initramfs environment.
+
+Ensure your kernel command line contains valid parameters for it.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:
