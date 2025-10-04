@@ -289,7 +289,7 @@ EOH
     echo 'root=/dev/sda1 rw quiet' > "$tmpdir/cmdline"
 
     # Create splash file
-    dd if=/dev/zero of="$tmpdir/splash.bmp" bs=1K count=1
+    __gen_bmp > "$tmpdir/splash.bmp"
 
     # Create preset file
     cat > "$tmpdir/test.preset" <<EOF
@@ -407,6 +407,8 @@ ALL_splash='$tmpdir/splash.bmp'
 default_uki='$tmpdir/default.efi'
 default_options='-c $tmpdir/mkinitcpio-custom.conf'
 EOF
+
+    __gen_bmp > "$tmpdir/splash.bmp"
 
     # Build from preset
     run ./mkinitcpio -p "$tmpdir/test.preset" --no-ukify

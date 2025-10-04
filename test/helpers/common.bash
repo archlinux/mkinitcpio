@@ -119,3 +119,14 @@ __check_binary(){
         skip "${binary} not installed"
     fi
 }
+
+__gen_bmp() {
+    printf '\x42\x4d'
+    printf -- '\x00%0.s' {1..8}
+    printf '\x36\x00\x00\x00'
+    printf '\x28\x00\x00\x00'
+    printf -- '\x01\x00\x00\x00%0.s' {1..2}
+    printf '\x01\x00'
+    printf '\x18\x00'
+    printf -- '\x00%0.s' {1..24}
+}
