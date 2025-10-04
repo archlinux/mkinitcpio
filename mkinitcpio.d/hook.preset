@@ -2,6 +2,7 @@
 
 #ALL_config="/etc/mkinitcpio.conf"
 ALL_kver="/boot/vmlinuz-%PKGBASE%"
+#ALL_kerneldest="/boot/vmlinuz-%PKGBASE%"
 
 PRESETS=('default' 'fallback')
 

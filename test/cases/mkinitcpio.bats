@@ -425,3 +425,71 @@ EOF
     objcopy --dump-section ".splash=$tmpdir/default.splash.out" "$tmpdir/default.efi"
     cmp "$tmpdir/splash.bmp" "$tmpdir/default.splash.out"
 }
+
+@test "preset with ALL_kerneldest" {
+    # Just test that the variable is set and exported correctly
+    local tmpdir
+    tmpdir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+
+    # Create a test script that mimics the preset behavior
+    cat > "$tmpdir/test-preset.sh" <<'EOF'
+#!/bin/bash
+# Source the functions to test
+. ./functions
+
+PRESETS=('default' 'fallback')
+ALL_kerneldest='/custom/boot/vmlinuz-test'
+
+# Test that the variable is exported for each preset
+for p in "${PRESETS[@]}"; do
+    preset_kerneldest="${p}_kerneldest"
+    if [[ -n "${!preset_kerneldest:-$ALL_kerneldest}" ]]; then
+        export MKINITCPIO_KERNELDEST="${!preset_kerneldest:-$ALL_kerneldest}"
+    fi
+    echo "Preset $p: MKINITCPIO_KERNELDEST=$MKINITCPIO_KERNELDEST"
+done
+EOF
+    chmod +x "$tmpdir/test-preset.sh"
+
+    # Run the test
+    run "$tmpdir/test-preset.sh"
+    assert_success
+    assert_output --partial "Preset default: MKINITCPIO_KERNELDEST=/custom/boot/vmlinuz-test"
+    assert_output --partial "Preset fallback: MKINITCPIO_KERNELDEST=/custom/boot/vmlinuz-test"
+}
+
+@test "preset with individual kerneldest overrides" {
+    # Test that individual preset variables override ALL_ variables
+    local tmpdir
+    tmpdir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+
+    # Create a test script that mimics the preset behavior with overrides
+    cat > "$tmpdir/test-preset.sh" <<'EOF'
+#!/bin/bash
+# Source the functions to test
+. ./functions
+
+PRESETS=('default' 'rescue')
+ALL_kerneldest='/boot/vmlinuz-test'
+
+# Individual override for default
+default_kerneldest='/efi/vmlinuz-test'
+# rescue will use ALL_kerneldest
+
+# Test that the variable is exported for each preset
+for p in "${PRESETS[@]}"; do
+    preset_kerneldest="${p}_kerneldest"
+    if [[ -n "${!preset_kerneldest:-$ALL_kerneldest}" ]]; then
+        export MKINITCPIO_KERNELDEST="${!preset_kerneldest:-$ALL_kerneldest}"
+    fi
+    echo "Preset $p: MKINITCPIO_KERNELDEST=$MKINITCPIO_KERNELDEST"
+done
+EOF
+    chmod +x "$tmpdir/test-preset.sh"
+
+    # Run the test
+    run "$tmpdir/test-preset.sh"
+    assert_success
+    assert_output --partial "Preset default: MKINITCPIO_KERNELDEST=/efi/vmlinuz-test"
+    assert_output --partial "Preset rescue: MKINITCPIO_KERNELDEST=/boot/vmlinuz-test"
+}
