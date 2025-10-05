@@ -924,7 +924,7 @@ while :; do
             _optnocmdline=1
             ;;
         -k | --kernel)
-            if [[ "$KERNELVERSION" == /* ]]; then
+            if [[ "$2" == /* ]]; then
                 KERNELVERSION="$(check_path r "$1" "$2")" || exit
             else
                 KERNELVERSION="$2"
