@@ -34,6 +34,12 @@ want_alpm = get_option('alpm')
 want_presets = get_option('presets')
 want_docs = get_option('docs')
 vconsole_conf = get_option('vconsole_conf')
+want_systemd_hooks = get_option('systemd_hooks')
+
+hooks = 'base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck'
+if want_systemd_hooks
+    hooks = 'base systemd autodetect microcode modconf kms keyboard keymap sd-vconsole block filesystems fsck'
+endif
 
 conf_data = configuration_data({
     'VERSION': meson.project_version(),
@@ -42,6 +48,7 @@ conf_data = configuration_data({
     'INITCPIO_LIBDIR': initcpio_libdir,
     'INITCPIO_SYSCONFDIR': initcpio_sysconfdir,
     'VCONSOLE_CONF': sysconfdir / vconsole_conf,
+    'MKINITCPIO_HOOKS': hooks,
 })
 
 systemd = dependency('systemd', method: 'pkg-config', required: want_systemd)

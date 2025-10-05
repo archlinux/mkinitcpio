@@ -12,3 +12,5 @@ option('docs', type: 'boolean', value: true,
        description: 'install manual pages')
 option('vconsole_conf', type: 'string', value: 'vconsole.conf',
        description: 'name of vconsole configuration file')
+option('systemd_hooks', type: 'boolean', value: false,
+       description: 'default to systemd hooks')
