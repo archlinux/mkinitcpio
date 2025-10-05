@@ -301,11 +301,13 @@ ALL_cmdline='$tmpdir/cmdline'
 ALL_splash='$tmpdir/splash.bmp'
 
 default_uki='$tmpdir/default.efi'
+default_options='--no-ukify'
 fallback_uki='$tmpdir/fallback.efi'
+fallback_options='--no-ukify'
 EOF
 
     # Build from preset
-    run ./mkinitcpio -p "$tmpdir/test.preset" --no-ukify
+    run ./mkinitcpio -p "$tmpdir/test.preset"
     assert_success
     assert_output --partial "Building image from preset"
 
@@ -354,12 +356,14 @@ ALL_config='$tmpdir/mkinitcpio.conf'
 ALL_cmdline='$tmpdir/cmdline-default'
 
 default_uki='$tmpdir/default.efi'
+default_options='--no-ukify'
 rescue_uki='$tmpdir/rescue.efi'
 rescue_cmdline='$tmpdir/cmdline-rescue'
+rescue_options='--no-ukify'
 EOF
 
     # Build from preset
-    run ./mkinitcpio -p "$tmpdir/test.preset" --no-ukify
+    run ./mkinitcpio -p "$tmpdir/test.preset"
     assert_success
 
     # Extract cmdline sections
@@ -405,11 +409,11 @@ ALL_cmdline='$tmpdir/cmdline'
 ALL_splash='$tmpdir/splash.bmp'
 
 default_uki='$tmpdir/default.efi'
-default_options='-c $tmpdir/mkinitcpio-custom.conf'
+default_options='-c $tmpdir/mkinitcpio-custom.conf --no-ukify'
 EOF
 
     # Build from preset
-    run ./mkinitcpio -p "$tmpdir/test.preset" --no-ukify
+    run ./mkinitcpio -p "$tmpdir/test.preset"
     assert_success
     assert_output --partial "$tmpdir/mkinitcpio-custom.conf"
 
