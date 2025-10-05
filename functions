@@ -1342,18 +1342,17 @@ find_module_from_symbol() {
                 ;;
         esac
 
-
-        module_to_stdout() {
-            case "$1" in
-                *.xz) xz -d "$1" -c ;;
-                *.gz) gzip -d "$1" -c ;;
-                *.zst) zstd -q -d "$1" -c ;;
-                *) cat "$1" ;;
+        module_matches() {
+            case "$2" in
+                *.xz) xzgrep -Eq "$1" "$2" ;;
+                *.gz) zgrep -Eq "$1" "$2" ;;
+                *.zst) zstdgrep -Eq "$1" "$2" ;;
+                *) grep -Eq "$1" "$2" ;;
             esac
         }
 
         while read -r -d '' mod; do
-            if module_to_stdout "$mod" | grep -Eq "^($symbols)" &> /dev/null; then
+            if module_matches "^($symbols)" "$mod" &> /dev/null; then
                 mod=${mod##*/}
                 mod="${mod%.ko*}"
                 printf '%s\n' "${mod//-/_}"
