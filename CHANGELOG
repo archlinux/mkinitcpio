@@ -485,7 +485,7 @@ CHANGES WITH v35:
           of the previous hard coded values.
 
         * xz compression is now always executed in "multithreaded mode" through
-          the -T0 switch after the xz utilitiy's recent improvements in reproducibility.
+          the -T0 switch after the xz utility's recent improvements in reproducibility.
 
         * Several fixups to improve consistency for msg/error/warning messages.
 
