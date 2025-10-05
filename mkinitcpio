@@ -1100,23 +1100,18 @@ if [[ "$KERNELVERSION" != 'none' ]]; then
     _d_kmoduledir="$_optmoduleroot/lib/modules/$KERNELVERSION"
     [[ -d "$_d_kmoduledir" ]] || die "'$_d_kmoduledir' is not a valid kernel module directory"
 
+    # If kernel destination is specified in preset, use it directly
+    KERNELDESTINATION="$MKINITCPIO_KERNELDEST"
+
     if [[ -z "$KERNELIMAGE" ]]; then
         # search well-known locations for the kernel image
         for img in "$_d_kmoduledir/vmlinuz" "/lib/modules/$KERNELVERSION/vmlinuz" \
             "$_d_kmoduledir/vmlinux" "/lib/modules/$KERNELVERSION/vmlinux"; do
             if [[ -f "$img" ]]; then
                 KERNELIMAGE="$img"
-                if read -r pkgbase &>/dev/null <"${img%/*}/pkgbase"; then
-                    if [[ -n "$MKINITCPIO_KERNELDEST" ]]; then
-                        # If kernel destination is specified in preset, use it directly
-                        KERNELDESTINATION="$MKINITCPIO_KERNELDEST"
-                    else
+                if [[ -z "$KERNELDESTINATION" ]]; then
+                    if read -r pkgbase &>/dev/null <"${img%/*}/pkgbase"; then
                         KERNELDESTINATION="/boot/${img##*/}-${pkgbase}"
-                    fi
-                else
-                    if [[ -n "$MKINITCPIO_KERNELDEST" ]]; then
-                        # If kernel destination is specified in preset, use it directly
-                        KERNELDESTINATION="$MKINITCPIO_KERNELDEST"
                     else
                         KERNELDESTINATION="/boot/${img##*/}-${KERNELVERSION}"
                     fi
@@ -1139,13 +1134,7 @@ if [[ "$KERNELVERSION" != 'none' ]]; then
     fi
 
     if [[ -f "$KERNELIMAGE" ]]; then
-        if [[ -z "$KERNELDESTINATION" ]]; then
-            if [[ -n "$MKINITCPIO_KERNELDEST" ]]; then
-                KERNELDESTINATION="$MKINITCPIO_KERNELDEST"
-            else
-                KERNELDESTINATION="$KERNELIMAGE"
-            fi
-        fi
+        [[ -z "$KERNELDESTINATION" ]] && KERNELDESTINATION="$KERNELIMAGE"
     else
         # this is not fatal, initramfs will still be generated but post
         # hooks will not know what kernel image is used
