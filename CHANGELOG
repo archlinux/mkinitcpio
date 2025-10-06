@@ -6,7 +6,7 @@ CHANGES WITH v40
 
         * The build system has moved to meson. This enables configuration
           options for `mkinitcpio` to support build-time features. The
-          `Makefile` is still being used for some auxillary helper scripts.
+          `Makefile` is still being used for some auxiliary helper scripts.
 
         New Features:
 
@@ -18,8 +18,8 @@ CHANGES WITH v40
           initramfs. This hook replaces the root directory with a volatile
           in-memory file system. This enables stateless systems.
 
-        * install/sd-encrypt-opensc support unlocking LUKS2 volumes with the
-          OpenSC PKCS#11 module and CCID drivers.
+        * install/sd-encrypt-opensc enables support for unlocking LUKS2 volumes
+          with the OpenSC PKCS#11 module and CCID driver.
 
         Changes in mkinitcpio:
 
@@ -55,8 +55,7 @@ CHANGES WITH v40
         * install/systemd includes the 20-systemd-stub.conf tmpfiles.d
           configuration file to preserve things like the tpm2 pcr public key.
 
-        * install/systemd now supports systemd v258 and onwards. Involves a
-          change where
+        * install/systemd now supports systemd v258 and onwards.
 
         * install/systemd supports appending multiple shutdown hooks by placing
           a tmpfiles.d file into the initramfs that writes to the file
@@ -69,7 +68,7 @@ CHANGES WITH v40
           escape codes would be emitted.
 
         * install/filesystems will now omit the mount binaries of several
-          filesystems that has no use in the early boot environment.
+          filesystems that have no use in the early boot environment.
 
         * install/kms will now omit checking for privacy screens on kernel
           versions before 5.17.
