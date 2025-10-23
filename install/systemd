@@ -63,11 +63,16 @@ build() {
     map add_module 'crypto-lzo' 'crypto-lz4'
 
     add_binary /usr/bin/kmod /usr/bin/modprobe
-    add_binary /usr/bin/mount
-    add_binary /usr/bin/sulogin
-    add_binary /usr/bin/umount
     add_binary /usr/lib/systemd/systemd /init
 
+    # Generic utility binaries
+    map add_binary /usr/bin/mount \
+        /usr/bin/sulogin \
+        /usr/bin/umount \
+        /usr/bin/swapon \
+        /usr/bin/swapoff
+
+    # Systemd specific binaries
     map add_binary \
         /usr/bin/journalctl \
         /usr/bin/systemd-tmpfiles \
