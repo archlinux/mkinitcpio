@@ -1,0 +1,38 @@
+#!/usr/bin/bash
+
+kernels=()
+
+while read -r line; do
+    if [[ "${line%%-git}" == "mkinitcpio" || "$line" == *"/dkms.conf" ]]; then
+        kernels+=(/usr/lib/modules/*/pkgbase)
+        continue
+    fi
+
+    if [[ "$line" != *"/vmlinuz" && "$line" != "usr/lib/modules/"*"/extramodules/" ]]; then
+        # triggers when it's a change other than to the kernel and its modules
+        continue
+    fi
+
+    if [[ "$line" == "usr/lib/modules/"*"/extramodules/" ]]; then
+        line="${line%/extramodules/}"
+        kernels+=("/${line}/pkgbase")
+    fi
+
+    if [[ ! -f "${line%/vmlinuz}/pkgbase" ]]; then
+        continue
+    fi
+done
+
+for k in "${kernels[@]}"; do
+    kimage="${k%/*}/vmlinuz"
+    [[ ! -f "$k" || ! -f "$kimage" ]] && continue
+
+    kver="${k##/usr/lib/modules/}"
+    kver="${kver%%/*}"
+    cmd=""
+    case "$1" in
+        install) cmd="add" ;;
+        remove) cmd="remove" ;;
+    esac
+    kernel-install "$cmd" "$kver" "$kimage" || true
+done

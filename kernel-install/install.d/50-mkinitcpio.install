@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
+# This file is part of mkinitcpio.
+
+COMMAND="${1:?}"
+# shellcheck disable=SC2034
+KERNEL_VERSION="${2:?}"
+# shellcheck disable=SC2034
+ENTRY_DIR_ABS="$3"
+KERNEL_IMAGE="$4"
+
+[[ "${KERNEL_INSTALL_INITRD_GENERATOR:-mkinitcpio}" == 'mkinitcpio' ]] || exit 0
+
+[[ "$COMMAND" == "add" ]] || exit 0
+
+IMAGE_FILE="$ENTRY_DIR_ABS/linux"
+
+GENERATOR_CMD=(mkinitcpio)
+GENERATOR_ARGS=(-k "$IMAGE_FILE")
+BLS_ARGS=(-g "$KERNEL_INSTALL_STAGING_AREA/initrd")
+
+case "$KERNEL_INSTALL_LAYOUT" in
+    uki)
+        if [[ "$KERNEL_INSTALL_UKI_GENERATOR" != 'mkinitcpio' ]]; then
+            GENERATOR_ARGS+=("${BLS_ARGS[@]}")
+        else
+            GENERATOR_ARGS+=(--kernelimage "$IMAGE_FILE")
+            GENERATOR_ARGS+=(-U "$KERNEL_INSTALL_STAGING_AREA/uki.efi" )
+        fi
+        ;;
+    bls)
+        GENERATOR_ARGS+=("${BLS_ARGS[@]}")
+        ;;
+    *)
+        exit 0
+        ;;
+esac
+
+# If we have a preset file. We use that instead of other options.
+# We override the initrd and kernel locations.
+pkgbase="${KERNEL_IMAGE%/vmlinuz}/pkgbase"
+if [[ -f "$pkgbase" ]]; then
+    preset_name="$(< "$pkgbase")"
+    if [[ -f "/etc/mkinitcpio.d/$preset_name.preset" ]]; then
+        GENERATOR_ARGS=(-p "$preset_name" -- "${GENERATOR_ARGS[@]}")
+    fi
+fi
+
+GENERATOR_CMD+=("${GENERATOR_ARGS[@]}")
+
+(( KERNEL_INSTALL_VERBOSE )) && printf "+ %s\n" "${GENERATOR_CMD[*]} ${GENERATOR_ARGS[*]}"
+"${GENERATOR_CMD[@]}"
+
+# vim: set ft=sh ts=4 sw=4 et:

@@ -26,6 +26,7 @@ bashcompletiondir = datadir / 'bash-completion' / 'completions'
 zshcompletiondir = datadir / 'zsh' / 'site-functions'
 
 initcpio_libdir = libdir / 'initcpio'
+mkinitcpio_libdir = libdir / 'mkinitcpio'
 initcpio_sysconfdir = sysconfdir / 'initcpio'
 
 want_systemd = get_option('systemd')
@@ -40,6 +41,7 @@ conf_data = configuration_data({
     'BINDIR': bindir,
     'SYSCONFDIR': sysconfdir,
     'INITCPIO_LIBDIR': initcpio_libdir,
+    'MKINITCPIO_LIBDIR': mkinitcpio_libdir,
     'INITCPIO_SYSCONFDIR': initcpio_sysconfdir,
     'VCONSOLE_CONF': sysconfdir / vconsole_conf,
 })

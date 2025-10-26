@@ -1,0 +1,56 @@
+#!/usr/bin/bash
+
+do_status=0
+set_kernel_install=0
+set_libalpm=0
+
+KERNEL_INSTALL_FILE="/etc/kernel/mkinitcpio-kernel-install"
+
+usage() {
+    cat <<EOF
+usage: ${0##*/} [options]
+
+  Commands:
+   -A, --addhooks <hooks>       Add specified hooks, comma separated, to image
+
+EOF
+}
+
+is_kernel_install() {
+    if [[ ! -f "$KERNEL_INSTALL_FILE" ]]; then
+        return 1
+    fi
+}
+
+case $1 in
+  'status') do_status=1;;
+  'set')
+      case $2 in
+          'kernel-install') set_kernel_install=1 ;;
+          'libalpm') set_libalpm=1 ;;
+          *) echo "not an option"; exit 1;;
+      esac
+      ;;
+  'help' | '--help' | '-h' | '') usage;;
+esac
+
+
+if ((do_status)); then
+    if is_kernel_install; then
+        echo "kernel-install"
+    else
+        echo "libalpm"
+    fi
+fi
+
+if ((set_libalpm)); then
+    if  is_kernel_install; then
+        rm "$KERNEL_INSTALL_FILE" || true
+    fi
+fi
+
+if ((set_kernel_install)); then
+    if ! is_kernel_install; then
+        touch "$KERNEL_INSTALL_FILE" 2> /dev/null
+    fi
+fi

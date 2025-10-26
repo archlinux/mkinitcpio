@@ -177,6 +177,18 @@ add_pkgbase_to_args() {
     args+=(-p "$pkgbase")
 }
 
+KERNEL_INSTALL_FILE="/etc/kernel/mkinitcpio-kernel-install"
+
+is_kernel_install() {
+    if [[ ! -f "$KERNEL_INSTALL_FILE" ]]; then
+        return 1
+    fi
+}
+
+if is_kernel_install; then
+    exec "@MKINITCPIO_LIBDIR@/kernel-install" "$1"
+fi
+
 while read -r line; do
     if [[ "${line%%-git}" == "mkinitcpio" && "$1" == "install" ]]; then
         # generate presets for each kernel on package install
