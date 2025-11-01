@@ -206,6 +206,7 @@ endif
 # Support devenv
 devenv = environment()
 devenv.set('MESON_TEST', '1')
+devenv.prepend('PATH', meson.current_build_dir())
 meson.add_devenv(devenv)
 
 subdir('hooks')
