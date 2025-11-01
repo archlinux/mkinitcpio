@@ -203,6 +203,11 @@ if shellcheck.found()
     )
 endif
 
+# Support devenv
+devenv = environment()
+devenv.set('MESON_TEST', '1')
+meson.add_devenv(devenv)
+
 subdir('hooks')
 subdir('install')
 subdir('kernel-install')
