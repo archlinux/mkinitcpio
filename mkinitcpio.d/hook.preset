@@ -4,7 +4,8 @@
 ALL_kver="/boot/vmlinuz-%PKGBASE%"
 #ALL_kerneldest="/boot/vmlinuz-%PKGBASE%"
 
-PRESETS=('default' 'fallback')
+PRESETS=('default')
+#PRESETS=('default' 'fallback')
 
 #default_config="/etc/mkinitcpio.conf"
 default_image="/boot/initramfs-%PKGBASE%.img"
@@ -12,6 +13,6 @@ default_image="/boot/initramfs-%PKGBASE%.img"
 #default_options="--splash /usr/share/systemd/bootctl/splash-arch.bmp"
 
 #fallback_config="/etc/mkinitcpio.conf"
-fallback_image="/boot/initramfs-%PKGBASE%-fallback.img"
+#fallback_image="/boot/initramfs-%PKGBASE%-fallback.img"
 #fallback_uki="/efi/EFI/Linux/arch-%PKGBASE%-fallback.efi"
-fallback_options="-S autodetect"
+#fallback_options="-S autodetect"
