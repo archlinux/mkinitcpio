@@ -499,3 +499,21 @@ EOF
     assert_output --partial "Preset default: MKINITCPIO_KERNELDEST=/efi/vmlinuz-test"
     assert_output --partial "Preset rescue: MKINITCPIO_KERNELDEST=/boot/vmlinuz-test"
 }
+
+
+@test "test moduleroot" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
+    local tmpdir
+    tmpdir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+
+    mkdir -p "$tmpdir/lib/modules"
+    ln -s "/lib/modules/$(uname -r)" "$tmpdir/lib/modules"
+
+    run ./mkinitcpio --moduleroot "$tmpdir" --addhooks base --generate "$tmpdir/initramfs"
+    run ./lsinitcpio "$tmpdir/initramfs"
+    assert_success
+    refute_output --partial "bats-run"
+}
