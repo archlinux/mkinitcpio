@@ -449,6 +449,33 @@ validate_compression() {
     fi
 }
 
+want_file() {
+    # Find the first existing file and inform the user about the choice.
+    #   $1: variable the filename should be assigned to
+    #   $2: user readable purpose of the variable
+    #   ${@:3}: filenames to search through
+    #
+    # If the variable is already set to something, it is checked before all alternatives.
+    #
+    # Assigns the found filename to the variable.
+    # Returns 0 if a file is found, 1 if not.
+    # If a file is found, a debug message is generated.
+    # If not and alternatives were given, an error message is displayed.
+
+    local -n var="$1"
+    local what="$2" alternatives=("${@:3}") file
+    [[ -n "$var" ]] && alternatives=("$var" "${alternatives[@]}")
+    for file in "${alternatives[@]}"; do
+        if [[ -e "$file" && ! -d "$file" ]]; then
+            quiet "Using %s: '%s'" "$what" "$file"
+            var="$file"
+            return 0
+        fi
+    done
+    (( ${#alternatives[@]} )) && error "${what^} not found: '%s'" "${alternatives[@]}"
+    return 1
+}
+
 uki_init() {
     local uefistub="$1" ukiconfig="$2"
     declare -ga _uki_build_args=()
@@ -456,6 +483,7 @@ uki_init() {
 
     if (( ! _optnoukify )); then
         msg2 'Using ukify to build UKI'
+        [[ -z "$uefistub" ]] || warning '--uefistub given but using ukify'
         declare -gA _ukify_section_map=(
             [.linux]='--linux='
             [.initrd]='--initrd='
@@ -463,25 +491,17 @@ uki_init() {
             [.osrel]='--os-release=@'
             [.splash]='--splash='
         )
-        if [[ -z "$ukiconfig" ]]; then
-            for ukiconfig in {/etc,/usr/lib}/kernel/uki.conf ''; do
-                if [[ -f "$ukiconfig" ]]; then
-                    quiet "Using ukify config: '%s'" "$ukiconfig"
-                    break
-                fi
-            done
-        fi
         _uki_build_args+=(ukify build --uname="$KERNELVERSION")
-        [[ -z "$ukiconfig" ]] || _uki_build_args+=("--config=$ukiconfig")
-        [[ -z "$uefistub" ]] || warning '--uefistub given but using ukify'
+        want_file ukiconfig 'ukify config' {/etc,/usr/lib}/kernel/uki.conf 2>/dev/null \
+            && _uki_build_args+=("--config=$ukiconfig")
         return 0
     fi
 
     quiet 'Using objcopy to build UKI'
     [[ -z "$ukiconfig" ]] || warning '--ukiconfig given but not using ukify'
 
-    if [[ -z "$uefistub" ]]; then
-        local cpuarch stub uefiarch
+    if ! want_file uefistub 'UEFI stub'; then
+        local cpuarch uefiarch
         cpuarch="$(uname -m)"
         case "$cpuarch" in
             x86_64)
@@ -508,21 +528,7 @@ uki_init() {
                 uefiarch="$cpuarch"
                 ;;
         esac
-        for stub in /usr/lib/{systemd/boot/efi,gummiboot}/"linux${uefiarch}.efi.stub"; do
-            if [[ -f "$stub" ]]; then
-                uefistub="$stub"
-                quiet "Using UEFI stub: '%s'" "$uefistub"
-                break
-            fi
-        done
-        if [[ -z "$uefistub" ]]; then
-            error "UEFI stub for architecture '%s' not found" "$uefiarch"
-            return 1
-        fi
-    fi
-    if [[ ! -f "$uefistub" ]]; then
-        error "UEFI stub '%s' not found" "$uefistub"
-        return 1
+        want_file uefistub 'UEFI stub' /usr/lib/{systemd/boot/efi,gummiboot}/"linux${uefiarch}.efi.stub" || return
     fi
 
     # global variables shared between uki functions
@@ -580,19 +586,7 @@ build_uki() {
     msg "Creating unified kernel image: '%s'" "$out"
     uki_init "$uefistub" "$ukiconfig" || return 1
 
-    if [[ -z "$osrelease" ]]; then
-        if [[ -f "/etc/os-release" ]]; then
-            osrelease="/etc/os-release"
-        elif [[ -f "/usr/lib/os-release" ]]; then
-            osrelease="/usr/lib/os-release"
-        fi
-        quiet "Using os-release file: '%s'" "$osrelease"
-    fi
-    if [[ ! -f "$osrelease" ]]; then
-        error "os-release file '%s' not found" "$osrelease"
-        return 1
-    fi
-
+    want_file osrelease 'os-release file' {/etc,/usr/lib}/os-release || return
     uki_add_section '.osrel' <(
         suffix="${MKINITCPIO_PROCESS_PRESET##*-}"
         [[ "$suffix" == 'default' ]] && suffix=""
@@ -600,69 +594,36 @@ build_uki() {
         grep -v '^VERSION_ID=' "$osrelease"
     )
 
-    local cmdline_files=()
-    if [[ -n "$cmdline" ]]; then
-        if [[ -f "$cmdline" ]]; then
+    if (( ! _optnocmdline )); then
+        local cmdline_files=()
+        if want_file cmdline 'cmdline file'; then
             cmdline_files+=("$cmdline")
         else
-            error "Kernel cmdline file '%s' not found" "$cmdline"
-            return 1
-        fi
-    fi
-
-    if (( ! _optnocmdline )); then
-        if [[ -z "$cmdline" ]]; then
-            if [[ -f "/etc/kernel/cmdline" ]]; then
-                cmdline_files+=("/etc/kernel/cmdline")
-            elif [[ -f "/usr/lib/kernel/cmdline" ]]; then
-                cmdline_files+=("/usr/lib/kernel/cmdline")
-            fi
+            want_file cmdline 'cmdline file' {/etc,/usr/lib}/kernel/cmdline &>/dev/null && cmdline_files+=("$cmdline")
             if [[ -d '/etc/cmdline.d' ]]; then
                 mapfile -d '' -O "${#cmdline_files[@]}" cmdline_files < <(LC_ALL=C.UTF-8 find "/etc/cmdline.d" -xtype f -name '*.conf' -print0 | LC_ALL=C.UTF-8 sort -zVu)
             fi
+            if (( ! ${#cmdline_files[@]} )); then
+                warning "Note: no cmdline files were found and --cmdline is not set!"
+                cmdline_files=("/proc/cmdline")
+                warning "Reusing current kernel cmdline from ${cmdline_files[*]}"
+            else
+                quiet "Using cmdline file: '%s'" "${cmdline_files[@]}"
+            fi
         fi
-
-        if (( ! ${#cmdline_files[@]} )); then
-            warning "Note: no cmdline files were found and --cmdline is not set!"
-            cmdline_files=("/proc/cmdline")
-            warning "Reusing current kernel cmdline from ${cmdline_files[*]}"
-        else
-            msg2 "Using cmdline file: '%s'" "${cmdline_files[@]}"
-        fi
-
         uki_add_section '.cmdline' <(printf '%s\n\0' "$(grep -ha -- '^[^#]' "${cmdline_files[@]}" | tr -s '\n' ' ')")
     else
         quiet 'Kernel cmdline will not be embedded.'
     fi
 
-    if [[ -n "$splash" ]]; then
-        uki_add_section '.splash' "$splash"
-        quiet "Using splash image: '%s'" "$splash"
-    fi
+    want_file splash 'splash image' && uki_add_section '.splash' "$splash"
 
-    if [[ -z "$kernelimg" ]]; then
-        # FIXME: fallback to /boot/vmlinuz-linux can probably be removed as
-        #   $KERNELIMAGE should point to an image with the correct version
-        for img in "$KERNELIMAGE" "/boot/vmlinuz-linux"; do
-            if [[ -f "$img" ]]; then
-                kernelimg="$img"
-                quiet "Using kernel image: '%s'" "$kernelimg"
-                break
-            fi
-        done
-    fi
-    if [[ ! -f "$kernelimg" ]]; then
-        error "Kernel image '%s' not found" "$kernelimg"
-        return 1
-    fi
-
+    # FIXME: fallback to /boot/vmlinuz-linux can probably be removed as
+    #   $KERNELIMAGE should point to an image with the correct version
+    want_file kernelimg 'kernel image' "$KERNELIMAGE" "/boot/vmlinuz-linux" || return
     uki_add_section '.linux' "$kernelimg"
 
-    if [[ -z "$initramfs" ]]; then
-        error "Initramfs '%s' not found" "$initramfs"
-        return 1
-    fi
-
+    want_file initramfs 'initramfs' || return
     uki_add_section '.initrd' "$initramfs"
 
     if uki_assemble "$out"; then
