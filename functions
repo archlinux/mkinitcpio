@@ -1282,7 +1282,8 @@ try_enable_color() {
 }
 
 install_modules() {
-    local m
+    local m p
+    local moduledest="/lib/modules/${KERNELVERSION}"
     local -a xz_comp gz_comp zst_comp
 
     [[ "$KERNELVERSION" == 'none' ]] && return 0
@@ -1293,7 +1294,7 @@ install_modules() {
     fi
 
     for m in "$@"; do
-        add_file "$m" "/lib/modules/${KERNELVERSION}"
+        add_file "$m" "${moduledest}${m##*"${moduledest}"}"
         # unzip modules prior to recompression
         if [[ "$MODULES_DECOMPRESS" == 'yes' ]]; then
             case "$m" in
@@ -1315,13 +1316,13 @@ install_modules() {
     (( ${#zst_comp[*]} )) && zstd -d --rm -q "${zst_comp[@]}"
 
     msg "Generating module dependencies"
-    add_file "$_d_kmoduledir"/modules.builtin "/lib/modules/${KERNELVERSION}"
-    add_file "$_d_kmoduledir"/modules.builtin.modinfo "/lib/modules/${KERNELVERSION}"
-    add_file "$_d_kmoduledir"/modules.order "/lib/modules/${KERNELVERSION}"
+    for p in "$_d_kmoduledir"/modules.{builtin,builtin.modinfo,order}; do
+        add_file "${p}" "$moduledest"
+    done
+
     depmod -b "$BUILDROOT" "$KERNELVERSION"
 
-    # remove all non-binary module.* files (except devname for on-demand module loading)
-    rm "${BUILDROOT}/lib/modules/${KERNELVERSION}"/modules.!(*.bin|devname|softdep)
+    rm "${BUILDROOT}${moduledest}"/modules.!(*.bin|devname|softdep)
 }
 
 find_module_from_symbol() {

@@ -1058,7 +1058,7 @@ if [[ "$KERNELVERSION" != 'none' ]]; then
     fi
 
     KERNELVERSION="$(resolve_kernver "$KERNELVERSION")" || exit 1
-    _d_kmoduledir="$_optmoduleroot/lib/modules/$KERNELVERSION"
+    _d_kmoduledir="${_optmoduleroot%/}/lib/modules/$KERNELVERSION"
     [[ -d "$_d_kmoduledir" ]] || die "'$_d_kmoduledir' is not a valid kernel module directory"
 
     # If kernel destination is specified in preset, use it directly
