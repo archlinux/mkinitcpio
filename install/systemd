@@ -80,6 +80,7 @@ build() {
         /usr/lib/systemd/systemd-hibernate-resume \
         /usr/lib/systemd/systemd-shutdown \
         /usr/lib/systemd/systemd-sulogin-shell \
+        /usr/lib/systemd/systemd-validatefs \
         /usr/lib/systemd/system-generators/systemd-fstab-generator \
         /usr/lib/systemd/system-generators/systemd-gpt-auto-generator \
         /usr/lib/systemd/system-generators/systemd-hibernate-resume-generator \
@@ -128,6 +129,7 @@ build() {
         systemd-udevd-kernel.socket \
         systemd-udevd.service \
         systemd-udev-trigger.service \
+        systemd-validatefs@.service \
         timers.target \
         rescue.target \
         emergency.target \
