@@ -1,5 +1,119 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v40
+
+        Breaking Change:
+
+        * The build system has moved to meson. This enables configuration
+          options for `mkinitcpio` to support build-time features. The
+          `Makefile` is still being used for some auxiliary helper scripts.
+
+            To build mkinitcpio:
+              meson setup build
+              meson compile -C build
+
+            Run test suite:
+              meson test -C build
+
+            Install:
+              meson install -C build
+
+          See `meson.options` for a list of available options.
+
+        * install/sd-encrypt no longer includes the cryptsetup plugin for
+          pkcs11. This has been moved to install/sd-encrypt-opensc.
+
+
+        New Features:
+
+        * install/sd-verity enables dm-verity support in the initramfs. This
+          allows one to specify the dm-verity protected drives to systemd. This
+          enables support for authenticated encryption in the initramfs.
+
+        * install/sd-volatile enables support for systemd-volatile in the
+          initramfs. This hook replaces the root directory with a volatile
+          in-memory file system. This enables stateless systems.
+
+        * install/sd-encrypt-opensc enables support for unlocking LUKS2 volumes
+          with the OpenSC PKCS#11 module and CCID driver.
+
+        Changes in mkinitcpio:
+
+        * --moduleroot would previously include the entire module root path into
+          the initramfs. This has been fixed.
+
+        * find_module_from_symbol now understands uncompressed kernel modules.
+
+        * UKIs will no longer be outputted as executable files.
+
+        * Now supports the new gzip/zstd-only compression mode 'zstd' introduced
+          in Linux 6.13 and onwards.
+
+        * /lib64 and /usr/lib64 is now properly symlinked on loongarch64.
+
+        * A new --nopost flag is implemented to disable running mkinitcpio
+          hooks.
+
+        * mkinitcpio will now also look for vmlinux files.
+
+        * add_binary now properly supports filemodes.
+
+        Changes in mkinitcpio.conf:
+
+        * <preset>_cmdline allows the preset to select which
+          kernel command line file to be used with the UKI.
+
+        * <preset>_splash allows the preset to select which splash image to be
+          used with the UKI.
+
+        * <preset>_kerneldest allows the preset to select the destination
+          location for the kernel to boot with.
+
+        Changes in hooks:
+
+        * install/systemd includes the 20-systemd-stub.conf tmpfiles.d
+          configuration file to preserve things like the tpm2 pcr public key.
+
+        * install/systemd now supports systemd v258 and onwards.
+
+        * install/systemd supports appending multiple shutdown hooks by placing
+          a tmpfiles.d file into the initramfs that writes to the file
+          /run/initramfs/mkinitcpio-shutdown.conf.
+
+        * install/systemd now installs the appropriate systemd tmpfiles to
+          enable PCR unlocking.
+
+        * install/systemd now includes the services and binaries needed for
+          validatefs.
+
+        * install/resume had a bug where SYSTEMD_COLORS=1 would fail the hook as
+          escape codes would be emitted.
+
+        * install/filesystems will now omit the mount binaries of several
+          filesystems that have no use in the early boot environment.
+
+        * install/kms will now omit checking for privacy screens on kernel
+          versions before 5.17.
+
+        * install/block now includes low-level drivers for some pci/usb
+          controllers.
+
+        Changes in packaging:
+
+        * The libalpm hooks will now properly trigger a rebuild when
+          extramodules change.
+
+        * The default kernel preset files no longer includes the fallback image.
+
+        Contributions from: Andrew J. Hesford, Balakrishnan Balasubramanian,
+        Christian Hesse, Christian Heusel, Diego Viola, Dmytro Bagrii,
+        Felix Pehla, Felix Yan, Jonas Zinn, Josephine Pfeiffer,
+        Luke T. Shumaker, Markus Weippert, Martin Stolpe, Mike Yuan,
+        Morten Linderud, Philip H., Tiago de Paula, Vladimir Stoiakin,
+        Xiaotian Wu, classabbyamp, cvlc12, kastik, ltsdw, nl6720
+
+        - 2025-11-04
+
 CHANGES WITH v39.2:
 
         Bugfix release:
