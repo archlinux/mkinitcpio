@@ -777,6 +777,7 @@ preload_builtin_modules() {
 
     if [[ -r $_d_kmoduledir/modules.builtin.modinfo ]]; then
         while IFS=.= read -rd '' modname field value; do
+            [[ -z "$modname" ]] && continue
             _addedmodules[${modname//-/_}]=2
             case "$field" in
                 alias)
