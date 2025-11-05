@@ -38,7 +38,7 @@ want_systemd_hooks = get_option('systemd_hooks')
 
 hooks = 'base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck'
 if want_systemd_hooks
-    hooks = 'base systemd autodetect microcode modconf kms keyboard keymap sd-vconsole block filesystems fsck'
+    hooks = 'base systemd autodetect microcode modconf kms keyboard sd-vconsole block filesystems fsck'
 endif
 
 conf_data = configuration_data({
