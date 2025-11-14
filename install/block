@@ -36,6 +36,9 @@ build() {
     add_checked_modules '/drivers/mfd/'
     add_checked_modules '/drivers/clk/'
     add_checked_modules '/drivers/phy/'
+
+    # ufs
+    add_checked_modules '/drivers/ufs/'
 }
 
 help() {
