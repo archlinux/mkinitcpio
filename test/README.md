@@ -8,4 +8,4 @@ $ meson devenv -C build
 $ bats --verbose-run ../test/cases/mkinitcpio.bats --filter "some test"
 ```
 
-We need this as `meson` does not allow us to instrument the test runnign with a filter.
+We need this as `meson` does not allow us to instrument the test running with a filter.
