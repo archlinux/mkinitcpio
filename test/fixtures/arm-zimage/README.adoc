@@ -3,7 +3,7 @@
 As described in the comment in `+functions:_arm_zimage_cat()+`, we
 require that the image file is at least 128KiB when compressed; real
 kernels will obviously satisfy this, but would be bulky and present
-license-probems to bundle as testcases. Instead, let’s use a copy of
+license-problems to bundle as testcases. Instead, let’s use a copy of
 Mary Shelly’s Frankenstein (which is in the public domain,
 https://www.gutenberg.org/ebooks/84.txt.utf-8[courtesy of Project
 Gutenberg]). This is about 440KiB uncompressed, and 140KiB when
