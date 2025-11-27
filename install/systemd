@@ -143,7 +143,8 @@ build() {
     #  kmod     -> systemd-shared
     #  qrencode -> bsod
     #  seccomp  -> systemd
-    for LIB in kmod tss2-{esys,rc,mu,tcti-'*'} qrencode seccomp; do
+    #  acl      -> systemd-tmpfiles
+    for LIB in kmod tss2-{esys,rc,mu,tcti-'*'} qrencode seccomp acl; do
         LC_ALL=C.UTF-8 find /usr/lib/ -maxdepth 1 -name "lib${LIB}.so*" | while read -r FILE; do
             if [[ -L "${FILE}" ]]; then
                 add_symlink "${FILE}"
