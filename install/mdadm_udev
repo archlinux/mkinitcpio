@@ -17,6 +17,9 @@ build() {
     add_binary mdmon
     if declare -F add_systemd_unit &>/dev/null; then
         add_systemd_unit 'mdmon@.service'
+        # support activation of degraded arrays
+        add_systemd_unit 'mdadm-last-resort@.service'
+        add_systemd_unit 'mdadm-last-resort@.timer'
     fi
 }
 
