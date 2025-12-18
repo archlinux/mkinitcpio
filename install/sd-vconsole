@@ -10,7 +10,12 @@ build() {
     add_binary /usr/lib/systemd/systemd-vconsole-setup
     add_binary loadkeys
     add_binary setfont
-    add_file /etc/vconsole.conf
+    if [[ -s /etc/vconsole.conf ]]; then
+        add_file /etc/vconsole.conf
+    else
+        warning 'sd-vconsole: "/etc/vconsole.conf" not found, will use default values'
+    fi
+
     add_udev_rule 90-vconsole.rules
 
     # subshell to avoid namespace pollution
