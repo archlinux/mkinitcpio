@@ -63,7 +63,8 @@ build() {
     map add_module 'crypto-lzo' 'crypto-lz4'
 
     add_binary /usr/bin/kmod /usr/bin/modprobe
-    add_binary /usr/lib/systemd/systemd /init
+    add_binary /usr/lib/systemd/systemd
+    add_symlink /init usr/lib/systemd/systemd
 
     # Generic utility binaries
     map add_binary /usr/bin/mount \
