@@ -145,7 +145,13 @@ build() {
     #  qrencode -> bsod
     #  seccomp  -> systemd
     #  acl      -> systemd-tmpfiles
-    for LIB in kmod tss2-{esys,rc,mu,tcti-'*'} qrencode seccomp acl; do
+    #  Things that should be gone with the new .dlopen note section
+    #  acl     -> libsystemd-shared
+    #  blkid   -> libsystemd-shared
+    #  mount   -> libsystemd-shared
+    #  audit   -> libsystemd-shared
+    #  pam     -> libsystemd-shared
+    for LIB in kmod tss2-{esys,rc,mu,tcti-'*'} qrencode seccomp acl blkid mount audit pam; do
         LC_ALL=C.UTF-8 find /usr/lib/ -maxdepth 1 -name "lib${LIB}.so*" | while read -r FILE; do
             if [[ -L "${FILE}" ]]; then
                 add_symlink "${FILE}"

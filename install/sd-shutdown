@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 build() {
+    # TODO: should be pulled inn by .notes.dlopen in the future
+    add_binary /usr/lib/libmount.so
     add_binary /usr/lib/systemd/systemd-shutdown /shutdown
 
     if type -P kexec >/dev/null; then
