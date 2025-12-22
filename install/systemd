@@ -5,6 +5,8 @@ add_systemd_unit() {
     # and other unit files will be discovered and added.
     #   $1: path to rules file (or name of rules file)
 
+    local -
+    shopt -s nullglob
     local unit key dep
 
     unit=$(PATH=/usr/lib/systemd/system:/lib/systemd/system type -P "$1")
@@ -14,6 +16,7 @@ add_systemd_unit() {
     fi
 
     add_file "$unit"
+    map add_file /{etc,usr/lib}/systemd/system/"${unit##*/}".d/*.conf
 
     while IFS='=' read -r key values; do
         read -ra values <<< "$values"
