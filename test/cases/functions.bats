@@ -142,6 +142,7 @@ kver_zimage() {
 
 @test "kver_zimage lzo" {
     local kernel_ver='' tmp_knl='' tmp_img=''
+    __check_binary "lzop"
     kernel_ver="Linux version 6.1.0-rc5-5 #1 SMP Sat, 17 Dec 2022 05:05:29 +0000 loongarch64 GNU/Linux"
     tmp_img="$(__gen_test_zboot_kernel "$kernel_ver" 'lzo')"
     run detect_compression "$tmp_img"
