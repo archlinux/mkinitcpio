@@ -20,6 +20,11 @@ build() {
         '64-btrfs.rules' \
         '80-drivers.rules'
 
+    # add hwdb binaries to the initramfs
+    map add_file \
+        /usr/lib/udev/hwdb.bin \
+        /etc/udev/hwdb.bin
+
     add_runscript
 }
 
