@@ -16,6 +16,8 @@ KERNEL_IMAGE="$4"
 GENERATOR_CMD=(mkinitcpio --nopost -k "$KERNEL_IMAGE")
 BLS_ARGS=(-g "$KERNEL_INSTALL_STAGING_AREA/initrd")
 
+(( KERNEL_INSTALL_VERBOSE )) && GENERATOR_CMD+=("-v")
+
 case "$KERNEL_INSTALL_LAYOUT" in
     uki)
         if [[ "$KERNEL_INSTALL_UKI_GENERATOR" != 'mkinitcpio' ]]; then
