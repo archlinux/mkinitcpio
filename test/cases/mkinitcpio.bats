@@ -144,6 +144,33 @@ __validate_uki() {
     assert_output --partial ' .uname '
 }
 
+@test "test creating UKI with cmdline directory" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
+    local tmpdir
+    tmpdir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+
+    echo 'HOOKS=(base)' > "$tmpdir/mkinitcpio.conf"
+
+    mkdir "$tmpdir/cmdline.d"
+    echo 'root=/dev/sda1 rw' > "$tmpdir/cmdline.d/10-root.conf"
+    echo 'quiet' > "$tmpdir/cmdline.d/20-extra.conf"
+
+    run ./mkinitcpio \
+        -D "${PWD}" \
+        -c "$tmpdir/mkinitcpio.conf" \
+        --cmdline "$tmpdir/cmdline.d" \
+        --uki "$tmpdir/uki.efi" \
+        --no-ukify
+    assert_success
+
+    objcopy --dump-section ".cmdline=$tmpdir/cmdline.out" "$tmpdir/uki.efi"
+    printf 'root=/dev/sda1 rw quiet \n\0' > "$tmpdir/expected.cmdline"
+    cmp "$tmpdir/expected.cmdline" "$tmpdir/cmdline.out"
+}
+
 @test "test early cpio creation" {
     if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
         skip "No kernel modules available"

@@ -84,8 +84,8 @@ usage: ${0##*/} [options]
    -z, --compress <program>     Use an alternate compressor on the image (cat, xz, lz4, zstd)
 
   Options for unified kernel image (-U, --uki):
-   --cmdline <path>             Set kernel command line from file
-                                (default: /etc/kernel/cmdline or /proc/cmdline)
+   --cmdline <path>             Set kernel command line from file or drop-in directory
+                                (default: /etc/kernel/cmdline, /etc/cmdline.d or /proc/cmdline)
    --no-cmdline                 Do not embed a kernel command line
    --osrelease <path>           Include os-release (default: /etc/os-release)
    --splash <path>              Include bitmap splash
@@ -595,21 +595,24 @@ build_uki() {
     )
 
     if (( ! _optnocmdline )); then
-        local cmdline_files=()
-        if want_file cmdline 'cmdline file'; then
+        local cmdline_files=() cmdline_dir='/etc/cmdline.d'
+        if [[ -n "$cmdline" && -d "$cmdline" ]]; then
+            cmdline_dir="$cmdline"
+        elif want_file cmdline 'cmdline file'; then
             cmdline_files+=("$cmdline")
+            cmdline_dir='' # user gave an explicit file, skip the default drop-in directory
         else
             want_file cmdline 'cmdline file' {/etc,/usr/lib}/kernel/cmdline &>/dev/null && cmdline_files+=("$cmdline")
-            if [[ -d '/etc/cmdline.d' ]]; then
-                mapfile -d '' -O "${#cmdline_files[@]}" cmdline_files < <(LC_ALL=C.UTF-8 find "/etc/cmdline.d" -xtype f -name '*.conf' -print0 | LC_ALL=C.UTF-8 sort -zVu)
-            fi
-            if (( ! ${#cmdline_files[@]} )); then
-                warning "Note: no cmdline files were found and --cmdline is not set!"
-                cmdline_files=("/proc/cmdline")
-                warning "Reusing current kernel cmdline from ${cmdline_files[*]}"
-            else
-                quiet "Using cmdline file: '%s'" "${cmdline_files[@]}"
-            fi
+        fi
+        if [[ -d "$cmdline_dir" ]]; then
+            mapfile -d '' -O "${#cmdline_files[@]}" cmdline_files < <(LC_ALL=C.UTF-8 find "$cmdline_dir" -xtype f -name '*.conf' -print0 | LC_ALL=C.UTF-8 sort -zVu)
+        fi
+        if (( ! ${#cmdline_files[@]} )); then
+            warning "Note: no cmdline files were found and --cmdline is not set!"
+            cmdline_files=("/proc/cmdline")
+            warning "Reusing current kernel cmdline from ${cmdline_files[*]}"
+        else
+            quiet "Using cmdline file: '%s'" "${cmdline_files[@]}"
         fi
         uki_add_section '.cmdline' <(printf '%s\n\0' "$(grep -ha -- '^[^#]' "${cmdline_files[@]}" | tr -s '\n' ' ')")
     else
@@ -879,7 +882,11 @@ while :; do
             shift
             ;;
         --cmdline)
-            _optcmdline="$(check_path r "$1" "$2")" || exit
+            if [[ -d "$2" ]]; then
+                _optcmdline="$(check_path dr "$1" "$2")" || exit
+            else
+                _optcmdline="$(check_path r "$1" "$2")" || exit
+            fi
             shift
             ;;
         --no-cmdline)
