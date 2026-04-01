@@ -203,11 +203,17 @@ if shellcheck.found()
     )
 endif
 
-# Support devenv
-devenv = environment()
-devenv.set('MESON_TEST', '1')
-devenv.prepend('PATH', meson.current_build_dir())
-meson.add_devenv(devenv)
+# Set the global test environment we will be using for devenv and tests
+test_env = environment({
+    'MKINITCPIO_LIBRARY': meson.current_build_dir(),
+    'MKINITCPIO_CONF': meson.current_build_dir() / 'mkinitcpio.conf',
+    'MKINITCPIO_HOOKS': meson.current_build_dir() / 'hooks',
+    'MKINITCPIO_INSTALL': meson.current_build_dir() / 'install',
+    'MKINITCPIO_POST_HOOKS': meson.current_build_dir() / 'post',
+    'MKINITCPIO_PRESETS': meson.current_build_dir() / 'mkinitcpio.d',
+})
+test_env.prepend('PATH', meson.current_build_dir())
+meson.add_devenv(test_env)
 
 subdir('hooks')
 subdir('install')
