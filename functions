@@ -1169,7 +1169,7 @@ initialize_buildroot() {
 
     # base directory structure
     for root in "$buildroot" "$earlyroot"; do
-        install -dm755 "$root"/{new_root,proc,sys,dev,run,tmp,var,etc,usr/{local{,/bin,/sbin,/lib},lib,bin}}
+        install -dm755 "$root"/{new_root,boot,efi,proc,sys,dev,run,tmp,var,etc,usr/{local{,/bin,/sbin,/lib},lib,bin}}
         ln -s "usr/lib" "$root/lib"
         ln -s "bin"     "$root/usr/sbin"
         ln -s "usr/bin" "$root/bin"
