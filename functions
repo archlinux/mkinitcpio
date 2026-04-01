@@ -1065,6 +1065,15 @@ add_binary() {
     return 0
 }
 
+add_initcpio_script() {
+    # Add a script from the initcpio library
+    #   $1: path to binary
+    #   $2: destination on initcpio
+    #   $3: mode (optional)
+    local f="$1" dest="$2" mode="$3"
+    add_binary "${_d_library}/$f" "$dest" "$mode"
+}
+
 add_udev_rule() {
     # Add an udev rules file to the initcpio image. Dependencies on binaries
     # will be discovered and added.
