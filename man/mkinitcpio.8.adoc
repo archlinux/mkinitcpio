@@ -318,6 +318,11 @@ functions exist to facilitate this.
     added to the image. If the autodetect hook is not present in the image, this
     function is identical to *add_all_modules_from_symbol*.
 
+*add_initcpio_binary* _binary_ [ _destination_ ] [ _mode_ ]::
+    Similiar to *add_binary* except it will look into _@INITCPIO_LIBDIR@_ for
+    the binary to include into the image. This is usefull for hooks that have
+    files inside the directory without hardcoding the path.
+
 == About early CPIO
 
 mkinitcpio has support for early CPIO. These are uncompressed CPIO archives
