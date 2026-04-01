@@ -8,11 +8,11 @@ shopt -s extglob
 
 _list='--list'
 _optcolor=1
-if (( MESON_TEST )); then
-    _f_functions='./functions'
-else
-    _f_functions='@INITCPIO_LIBDIR@/functions'
-fi
+
+
+# needed files/directories
+_d_library=${MKINITCPIO_LIBRARY:-'@INITCPIO_LIBDIR@'}
+_f_functions="${_d_library}/functions"
 
 declare -A bsdcpio_options=(
     [list]='--list'
