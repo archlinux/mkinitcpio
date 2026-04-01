@@ -14,10 +14,8 @@ test_files = [
 
 coverage_dirs = []
 
-test_env = environment({
-    'LC_ALL': 'C.UTF-8',
-    'MESON_TEST': '1',
-})
+test_env.set('LC_ALL', 'C.UTF-8')
+test_env.set('MESON_TEST', '1')
 
 if not bats.found()
     subdir_done()

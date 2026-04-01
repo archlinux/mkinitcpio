@@ -2,11 +2,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 _detect_kver() {
-    if (( MESON_TEST )); then
-        './functions' run_mkinitcpio_func kver "$1" 2>/dev/null
-    else
-        '@INITCPIO_LIBDIR@/functions' run_mkinitcpio_func kver "$1" 2>/dev/null
-    fi
+    _d_library=${MKINITCPIO_LIBRARY:-'@INITCPIO_LIBDIR@'}
+    "${_d_library}/functions" run_mkinitcpio_func kver "$1" 2>/dev/null
 }
 
 _lsinitcpio() {
