@@ -47,6 +47,19 @@ other features.
     Set _directory_ as the location where hooks will be searched for when
     generating the image.
 
+*-I*, *--include* _path_::
+	Add additional _files_ or _directories_ to the image. These will be
+	processed in order after all other files have been included into the image.
+	 +
+	If the path is a file, you can comma seperate the source and the destination
+	on the image. Example: _source:destination:mode_.
+	 +
+	If the path is a directory, it will only accept the full directory and
+	include the directory from the root of the image.
+	 +
+	Multiple paths should be comma-seperated. This option can be specific
+	multiple times.
+
 *-g*, *--generate* _filename_::
     Generate a CPIO image as _filename_. Default: no; this means nothing will be
     written to the file system unless this option is specified.
