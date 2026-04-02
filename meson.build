@@ -92,6 +92,17 @@ configure_file(
     install_mode: 'rwxr-xr-x',
 )
 
+if systemd.found()
+    # Depends on systemd utilities
+    configure_file(
+        input: 'testinitcpio',
+        output: 'testinitcpio',
+        configuration: conf_data,
+        install_dir: bindir,
+        install_mode: 'rwxr-xr-x',
+    )
+endif
+
 configure_file(
     input: 'mkinitcpio.conf',
     output: 'mkinitcpio.conf',
@@ -178,6 +189,7 @@ shellcheck_files = [
     'install/usr',
     'lsinitcpio',
     'mkinitcpio',
+    'testinitcpio',
     'shell/bash-completion',
     'shutdown',
     'test/cases/bash-completion.bats',

@@ -1,0 +1,248 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# testinitcpio - tool for testing an mkinitcpio image
+#
+
+declare -r version='@VERSION@'
+
+shopt -s extglob
+
+# needed files/directories
+_f_functions="${MKINITCPIO_LIBRARY:-'@INITCPIO_LIBDIR@'}/functions"
+_f_config=${MKINITCPIO_CONF:-'@SYSCONFDIR@/mkinitcpio.conf'}
+
+# export a sane PATH
+export PATH=${MKINITCPIO_BINDIR:-'@BINDIR@:/bin'}
+
+# options and runtime data
+_optencrypt='no' _optbreak=''
+_optquiet=1 _optcolor=1 _optconfd=1 _optdebug=0
+_optsystemd=0
+
+# Sanitize environment further
+# GREP_OPTIONS="--color=always" will break everything
+# CDPATH can affect cd and pushd
+# LIBMOUNT_* options can affect findmnt and other tools
+unset GREP_OPTIONS CDPATH "${!LIBMOUNT_@}"
+
+usage() {
+    cat <<EOF
+testinitcpio $version
+usage: ${0##*/} [options] -- [qemu args]
+
+  Options:
+   -c, --config <file>       Build with a given mkinitcpio.conf.
+   -h, --hook <file>         Build with a given hook.
+   -i, --install <file>      Build with a given install.
+   --modules <modules>       Include kernel modules.
+   --cmdline <string>        Build with a given kernel command line.
+   --repart-config <path>    Supply a custom set of repart configurations.
+   --rootfs <type>           Root filesystem (default: ext4)
+   --image <path>            Supply a custom disk image.
+   --encrypt
+
+  Debug Options:
+   --break <when>            When to break the initramfs booting. Implies --debug
+
+EOF
+}
+
+version() {
+    cat <<EOF
+testinitcpio "$version"
+EOF
+}
+
+cleanup(){
+    rm -rf "$TMPDIR"
+}
+
+# shellcheck source=functions
+. "$_f_functions"
+
+TMPDIR=$(mktemp -d  "testinitcpio.XXXXXX")
+
+trap 'cleanup' EXIT
+
+_opt_short='c'
+_opt_long=('config:' 'encrypt' 'break:')
+
+parseopts "$_opt_short" "${_opt_long[@]}" -- "$@" || exit 1
+set -- "${OPTRET[@]}"
+unset _opt_short _opt_long OPTRET
+
+while :; do
+    case "$1" in
+        -c | --config)
+            _f_config="$(check_path r "$1" "$2")" || exit
+            shift
+            ;;
+        --encrypt)
+            _optencrypt='key-file'
+            ;;
+        --break)
+            _optbreak="$2"
+            _optdebug=1
+            shift
+            ;;
+        --)
+            shift
+            break 2
+            ;;
+    esac
+    shift
+done
+
+# OPTREST=("$@")
+
+if [[ -t 1 ]] && (( _optcolor )); then
+    try_enable_color
+fi
+
+# shellcheck disable=SC1091 source=mkinitcpio.conf
+. "$_f_config" || die "Failed to read configuration '%s'" "$_f_config"
+
+msg "Creating a test initramfs to boot..."
+
+# Make sure we enable encryption if we have the encrypt hooks
+if in_array "encrypt" "${HOOKS[@]}" || in_array "sd-encrypt" "${HOOKS[@]}"; then
+    msg2 "Enabling encryption"
+    _optencrypt="key-file"
+fi
+
+if in_array "systemd" "${HOOKS[@]}"; then
+    _optsystemd=1
+fi
+
+KERNELCMDLINE="rw console=hvc0 TERM=xterm-256color"
+
+mkdir -p "$TMPDIR/rootfs/efi/EFI/BOOT/"
+
+msg2 "Creating a rootfs:"
+mkinitcpio \
+    -d "$TMPDIR/rootfs" \
+    -A base \
+    -c "/dev/null"
+
+# rm the file as it could be a symlink pointing at the busybox binary
+rm "$TMPDIR/rootfs/sbin/init"
+cat << EOF > "$TMPDIR/rootfs/sbin/init"
+#!/usr/bin/ash
+
+echo "system-booted"
+poweroff -f
+EOF
+chmod +x "$TMPDIR/rootfs/sbin/init"
+
+touch "$TMPDIR/keyfile.bin"
+if [[ "$_optencrypt" == "key-file" ]]; then
+    printf "12345" > "$TMPDIR/keyfile.bin"
+    # For a systemd enabled initramfs
+fi
+
+msg2 "Writing a root filesystem..."
+mkinitcpio \
+    --no-cmdline \
+    --include "$TMPDIR/keyfile.bin:/crypto_keyfile.bin" \
+    -U "$TMPDIR/rootfs/efi/EFI/BOOT/BOOTX64.EFI"
+
+mkdir "$TMPDIR"/repart.d
+
+
+cat << EOF > "$TMPDIR"/repart.d/00-boot.conf
+[Partition]
+Type=esp
+Format=vfat
+SizeMinBytes=512M
+SizeMaxBytes=512M
+CopyFiles=/efi:/
+CopyFiles=/boot:/
+EOF
+
+cat << EOF > "$TMPDIR"/repart.d/30-root.conf
+[Partition]
+Format=ext4
+Label=root
+Type=root
+CopyFiles=/
+Minimize=guess
+UUID=deadbeef-dead-dead-beef-000000000000
+Encrypt=${_optencrypt}
+EOF
+
+if [[ -f "$TMPDIR"/image.raw ]]; then
+    rm "$TMPDIR"/image.raw
+fi
+
+systemd-repart \
+    --definitions "$TMPDIR/repart.d" \
+    --root "$TMPDIR/rootfs" \
+    --key-file="$TMPDIR/keyfile.bin" \
+    --empty=create \
+    --size=auto \
+    --json=short "$TMPDIR/image.raw" 2> /dev/null 1> "$TMPDIR"/repart.json
+
+msg "Filesystem:"
+
+if ((_optdebug)); then
+    cat "$TMPDIR"/repart.json
+fi
+
+# We have predictable root UUIDs here. So we don't read off the repart.json for this
+# ROOT_UUID=$(jq --raw-output0 '.[-1].uuid' "$TMPDIR"/repart.json)
+if [[ "$_optencrypt" == "key-file" ]]; then
+    ROOT_UUID="0d318174-56b0-4d6e-a324-ac1e7e7d235d"
+else
+    ROOT_UUID="5dda4b7c-96ff-475b-aebb-94f3c0ec607e"
+fi
+
+ESP_UUID=$(jq --raw-output0 '.[0].uuid' "$TMPDIR"/repart.json)
+
+msg2 "ESP UUID: %s" "$ESP_UUID"
+msg2 "root UUID: %s" "$ROOT_UUID"
+
+if [[ "$_optencrypt" == "key-file" ]]; then
+    if ((_optsystemd)); then
+        KERNELCMDLINE="$KERNELCMDLINE rd.luks.name=0d318174-56b0-4d6e-a324-ac1e7e7d235d=root rd.luks.key=/crypto_keyfile.bin"
+    else
+        KERNELCMDLINE="$KERNELCMDLINE cryptdevice=UUID=0d318174-56b0-4d6e-a324-ac1e7e7d235d:root root=/dev/mapper/root"
+    fi
+else
+    KERNELCMDLINE="$KERNELCMDLINE root=UUID=5dda4b7c-96ff-475b-aebb-94f3c0ec607e"
+fi
+
+if ((_optsystemd)); then
+    KERNELCMDLINE="$KERNELCMDLINE systemd.tty.term.hvc0=xterm-256color systemd.tty.columns.hvc0=153 systemd.tty.rows.hvc0=30 loglevel=4 SYSTEMD_SULOGIN_FORCE=1 systemd.tty.term.console=xterm-256color systemd.tty.columns.console=153 systemd.tty.rows.console=30"
+fi
+
+if [[ -n "$_optbreak" ]]; then
+    KERNELCMDLINE="$KERNELCMDLINE rd.systemd.debug_shell=1 systemd.log_level=debug rd.systemd.break=$_optbreak break=$_optbreak"
+fi
+
+if ((_optdebug)); then
+    warning "Debug enabled"
+    KERNELCMDLINE="$KERNELCMDLINE rd.systemd.debug_shell=1 systemd.log_level=debug loglevel=4 SYSTEMD_SULOGIN_FORCE=1"
+fi
+
+msg "Running with kernel cmdline: '%s'" "$KERNELCMDLINE"
+
+cp /usr/share/edk2/x64/OVMF_VARS.4m.fd "$TMPDIR"/OVMF_VARS.4m.fd
+
+/usr/bin/qemu-system-x86_64 \
+    -machine type=q35,smm=on,hpet=off -smp 1 -m 2048M \
+    -object rng-random,filename=/dev/urandom,id=rng0 \
+    -device virtio-rng-pci,rng=rng0,id=rng-device0 \
+    -device virtio-balloon,free-page-reporting=on -no-user-config \
+    -nic user,model=virtio-net-pci \
+    -cpu host -accel kvm \
+    -nographic -nodefaults \
+    -chardev stdio,mux=on,id=console,signal=off \
+    -device virtio-serial-pci,id=testinitcpio-virtio-serial-pci \
+    -device virtconsole,chardev=console -mon console \
+    -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd -drive file="$TMPDIR"/OVMF_VARS.4m.fd,if=pflash,format=raw -global ICH9-LPC.disable_s3=1 -global driver=cfi.pflash01,property=secure,value=on \
+    -device virtio-scsi-pci,id=testinitcpio -blockdev driver=raw,node-name=testinitcpio,discard=unmap,file.driver=file,file.filename="$TMPDIR"/image.raw,file.aio=io_uring,cache.direct=yes,cache.no-flush=no \
+    -device virtio-blk-pci,drive=testinitcpio,bootindex=1 \
+    -smbios type=11,value=io.systemd.stub.kernel-cmdline-extra="test" \
+    -append "$KERNELCMDLINE" \
+    -kernel "$TMPDIR"/rootfs/efi/EFI/BOOT/BOOTX64.EFI
