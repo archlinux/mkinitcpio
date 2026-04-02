@@ -36,7 +36,7 @@ _optskiphooks=() _optaddhooks=() _hooks=() _optpreset=() _tmpfiles=() _generated
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
 
 # export a sane PATH
-export PATH="@BINDIR@:/bin"
+export PATH=${MKINITCPIO_BINDIR:-'@BINDIR@:/bin'}
 
 # Sanitize environment further
 # GREP_OPTIONS="--color=always" will break everything
