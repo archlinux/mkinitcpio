@@ -544,3 +544,28 @@ EOF
     assert_success
     refute_output --partial "bats-run"
 }
+
+
+@test "test addfiles" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
+    local tmpdir
+    tmpdir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+
+    touch "$tmpdir/find_this_file"
+    touch "$tmpdir/find_another_file"
+
+    run ./mkinitcpio -v \
+        --addhooks base \
+        --generate "$tmpdir/initramfs.img" \
+        --include "$tmpdir/find_this_file" \
+        -I "$tmpdir/find_another_file:/at_root"
+    assert_success
+
+    run ./lsinitcpio "${tmpdir}/initramfs.img"
+    assert_line "${tmpdir#/}/find_this_file"
+    assert_line 'at_root'
+    refute_line 'find_another_file'
+}

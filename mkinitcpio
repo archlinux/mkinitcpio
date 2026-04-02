@@ -31,6 +31,7 @@ _optosrelease='' _optukiconfig=''
 _optuki='' _optcmdline='' _optsplash='' _optkernelimage='' _optuefistub=''
 _optshowautomods=0 _optsavetree=0 _optshowmods=0 _optremove=0 _optnocmdline=0 _optnoukify=0 _optnopost=0
 _optquiet=1 _optcolor=1 _optconfd=1
+_optincludes=()
 _optskiphooks=() _optaddhooks=() _hooks=() _optpreset=() _tmpfiles=() _generated=()
 declare -A _runhooks _addedmodules _modpaths _autodetect_cache
 
@@ -59,6 +60,7 @@ usage: ${0##*/} [options]
    -M, --automods               Display modules found via autodetection
    -n, --nocolor                Disable colorized output messages
        --nopost                 Disable post hooks
+   -I, --include <paths>        Add a list of files or directories, comma seperated, to image.
    -p, --preset <file>          Build specified preset from /etc/mkinitcpio.d
    -P, --allpresets             Process all preset files in /etc/mkinitcpio.d
    -R, --remove                 Remove specified preset images
@@ -847,8 +849,8 @@ check_path() {
 
 trap 'cleanup' EXIT
 
-_opt_short='A:c:D:g:H:hk:nLMPp:Rr:S:sd:t:U:Vvz:'
-_opt_long=('add:' 'addhooks:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
+_opt_short='A:c:D:I:g:H:hk:nLMPp:Rr:S:sd:t:U:Vvz:'
+_opt_long=('add:' 'addhooks:' 'include:' 'config:' 'generate:' 'hookdir': 'hookhelp:' 'help'
            'kernel:' 'listhooks' 'automods' 'moduleroot:' 'nocolor' 'nopost' 'allpresets'
            'preset:' 'remove' 'skiphooks:' 'save' 'generatedir:' 'builddir:' 'version' 'verbose' 'compress:'
            'uki:' 'uefi:' 'microcode:' 'splash:' 'kernelimage:' 'uefistub:' 'cmdline:' 'osrelease:' 'no-cmdline'
@@ -866,6 +868,12 @@ while :; do
             IFS=, read -r -a add <<<"$1"
             _optaddhooks+=("${add[@]}")
             unset add
+            ;;
+        -I | --include)
+            shift
+            IFS=, read -r -a f <<<"$1"
+            _optincludes+=("${f[@]}")
+            unset f
             ;;
         -c | --config)
             _f_config="$(check_path r "$1" "$2")" || exit
@@ -1189,6 +1197,18 @@ trap -- ERR
 ldconfig -r "$BUILDROOT" &>/dev/null
 # remove /var/cache/ldconfig/aux-cache for reproducibility
 rm -f -- "$BUILDROOT/var/cache/ldconfig/aux-cache"
+
+# TODO: Do we want to parse the FILES=() array the same way?
+# include files from --include
+for h in "${_optincludes[@]}"; do
+    IFS=: read -r src dest mode <<< "$h"
+    if [[ -f "$src" ]]; then
+        add_file "$src" "$dest" "$mode"
+    fi
+    if [[ -d "$src" ]]; then
+        add_full_dir "$src" "" "${src%/*}"
+    fi
+done
 
 # Set umask to create initramfs images and unified kernel images as 600
 umask 077
