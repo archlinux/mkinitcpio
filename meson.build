@@ -217,6 +217,7 @@ endif
 
 # Set the global test environment we will be using for devenv and tests
 test_env = environment({
+    'MKINITCPIO_BINDIR': ':'.join([meson.current_build_dir(), '/usr/bin','/bin']),
     'MKINITCPIO_LIBRARY': meson.current_build_dir(),
     'MKINITCPIO_CONF': meson.current_build_dir() / 'mkinitcpio.conf',
     'MKINITCPIO_HOOKS': meson.current_build_dir() / 'hooks',
