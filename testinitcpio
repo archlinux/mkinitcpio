@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# testinitcpio - tool for testing an mkinitcpio image
+#
+
+set -x
+
+declare -r version='@VERSION@'
+
+shopt -s extglob
+
+# export a sane PATH
+# export PATH="@BINDIR@:/bin"
+export PATH="/usr/bin:/bin"
+
+# Sanitize environment further
+# GREP_OPTIONS="--color=always" will break everything
+# CDPATH can affect cd and pushd
+# LIBMOUNT_* options can affect findmnt and other tools
+unset GREP_OPTIONS CDPATH "${!LIBMOUNT_@}"
+
+usage() {
+    cat <<EOF
+testinitcpio $version
+usage: ${0##*/} [options] -- [qemu args]
+
+  Options:
+   -c, --config <file>       Build with a given mkinitcpio.conf.
+   -h, --hook <file>         Build with a given hook.
+   -i, --install <file>      Build with a given install.
+   --modules <modules>       Include kernel modules.
+   --cmdline <string>        Build with a given kernel command line.
+   --repart-config <path>    Supply a custom set of repart configurations.
+   --rootfs <type>           Root filesystem (default: ext4)
+   --image <path>            Supply a custom disk image.
+
+  Debug Options:
+   --break <when>            When to break the initramfs booting
+
+EOF
+}
+
+
+# needed files/directories
+_f_functions=${MKINITCPIO_LIBRARY:-'@INITCPIO_LIBDIR@/functions'}
+
+# shellcheck source=functions
+. "$_f_functions"
+
+
+TMPDIR=$(mktemp -d  "testinitcpio.XXXXXX")
+
+cleanup(){
+    rm -rf "$TMPDIR"
+}
+
+trap 'cleanup' EXIT
+
+mkdir -p "$TMPDIR/rootfs/efi/EFI/BOOT/"
+
+mkinitcpio \
+    -d "$TMPDIR/rootfs" \
+    -A base \
+    -c "/dev/null"
+
+# rm the file as it could be a symlink pointing at the busybox binary
+rm "$TMPDIR/rootfs/sbin/init"
+cat << EOF > rootfs/sbin/init
+#!/usr/bin/ash
+
+echo "system-booted"
+poweroff -f
+EOF
+
+chmod +x "$TMPDIR/rootfs/sbin/init"
+
+mkinitcpio \
+    --no-cmdline \
+    -U "$TMPDIR/rootfs/efi/EFI/BOOT/BOOTX64.EFI"
+
+
+mkdir "$TMPDIR"/repart.d
+
+cat << EOF > "$TMPDIR"/repart.d/00-boot.conf
+[Partition]
+Type=esp
+Format=vfat
+SizeMinBytes=512M
+SizeMaxBytes=512M
+CopyFiles=/efi:/
+CopyFiles=/boot:/
+EOF
+
+cat << EOF > "$TMPDIR"/repart.d/30-root.conf
+[Partition]
+Format=ext4
+Label=root
+Type=root
+CopyFiles=/
+Minimize=guess
+# Encrypt=no
+EOF
+
+if [[ -f "$TMPDIR"/image.raw ]]; then
+    rm "$TMPDIR"/image.raw
+fi
+systemd-repart \
+    --definitions "$TMPDIR/repart.d" \
+    --root "$TMPDIR/rootfs" \
+    --empty=create \
+    --size=auto \
+    --json=short "$TMPDIR/image.raw" > "$TMPDIR"/repart.json
+
+cat "$TMPDIR"/repart.json
+
+PARTUUID=$(jq --raw-output0 '.[-1].uuid' "$TMPDIR"/repart.json)
+
+cp /usr/share/edk2/x64/OVMF_VARS.4m.fd "$TMPDIR"/OVMF_VARS.4m.fd
+
+KERNELCMDLINE="root=PARTUUID=$PARTUUID rw console=hvc0 TERM=xterm-256color"
+
+/usr/bin/qemu-system-x86_64 \
+    -machine type=q35,smm=on,hpet=off -smp 1 -m 2048M \
+    -object rng-random,filename=/dev/urandom,id=rng0 \
+    -device virtio-rng-pci,rng=rng0,id=rng-device0 \
+    -device virtio-balloon,free-page-reporting=on -no-user-config \
+    -nic user,model=virtio-net-pci \
+    -cpu host -accel kvm \
+    -nographic -nodefaults \
+    -chardev stdio,mux=on,id=console,signal=off \
+    -device virtio-serial-pci,id=testinitcpio-virtio-serial-pci \
+    -device virtconsole,chardev=console -mon console \
+    -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd -drive file="$TMPDIR"/OVMF_VARS.4m.fd,if=pflash,format=raw -global ICH9-LPC.disable_s3=1 -global driver=cfi.pflash01,property=secure,value=on \
+    -device virtio-scsi-pci,id=testinitcpio -blockdev driver=raw,node-name=testinitcpio,discard=unmap,file.driver=file,file.filename="$TMPDIR"/image.raw,file.aio=io_uring,cache.direct=yes,cache.no-flush=no \
+    -device virtio-blk-pci,drive=testinitcpio,bootindex=1 \
+    -append "$KERNELCMDLINE" \
+    -kernel "$TMPDIR"/rootfs/efi/EFI/BOOT/BOOTX64.EFI
