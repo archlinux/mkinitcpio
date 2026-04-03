@@ -16,6 +16,8 @@ stages:
         - echo -e "\e[0Ksection_start:`date +%s`:useradd[collapsed=true]\r\e[0KCreating non-root user..."
         - useradd -d /builds/${GITLAB_USER_LOGIN} -M builder
         - chown -R builder:builder ..
+        # We need hwdb available for tests
+        - systemd-hwdb update
         - echo -e "\e[0Ksection_end:`date +%s`:useradd\r\e[0K"
 
 shellcheck:
