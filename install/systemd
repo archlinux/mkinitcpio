@@ -196,6 +196,11 @@ build() {
     map add_file \
         /usr/lib/udev/hwdb.bin \
         /etc/udev/hwdb.bin
+
+    # Include nvpcr files
+    for nvpcr in /usr/lib/nvpcr/*.nvpcr; do
+        add_file "$nvpcr"
+    done
 }
 
 help() {
