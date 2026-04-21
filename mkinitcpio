@@ -10,28 +10,19 @@ shopt -s extglob
 ### globals within mkinitcpio, but not intended to be used by hooks
 
 # needed files/directories
-_f_functions='@INITCPIO_LIBDIR@/functions'
-_f_config='@SYSCONFDIR@/mkinitcpio.conf'
-_d_config='@SYSCONFDIR@/mkinitcpio.conf.d'
-_d_hooks='@INITCPIO_SYSCONFDIR@/hooks:@INITCPIO_LIBDIR@/hooks'
-_d_install='@INITCPIO_SYSCONFDIR@/install:@INITCPIO_LIBDIR@/install'
-_d_post='@INITCPIO_SYSCONFDIR@/post:@INITCPIO_LIBDIR@/post'
+_d_library=${MKINITCPIO_LIBRARY:-'@INITCPIO_LIBDIR@'}
+_f_functions="${_d_library}/functions"
+_f_config=${MKINITCPIO_CONF:-'@SYSCONFDIR@/mkinitcpio.conf'}
+_d_config="${_f_config}.d"
+_d_hooks=${MKINITCPIO_HOOKS:-'@INITCPIO_SYSCONFDIR@/hooks:@INITCPIO_LIBDIR@/hooks'}
+_d_install=${MKINITCPIO_INSTALL:-'@INITCPIO_SYSCONFDIR@/install:@INITCPIO_LIBDIR@/install'}
+_d_post=${MKINITCPIO_POST_HOOKS:-'@INITCPIO_SYSCONFDIR@/post:@INITCPIO_LIBDIR@/post'}
 _d_flag_hooks=
 _d_flag_install=
 _d_flag_post=
 _d_firmware=({/usr,}/lib/firmware/updates {/usr,}/lib/firmware)
 _d_fwpath=() # the actual firmware lookup path, a subset of _d_firmware listed above
-_d_presets='@SYSCONFDIR@/mkinitcpio.d'
-
-if (( MESON_TEST )); then
-    _f_functions="$PWD/functions"
-    _f_config="$PWD/mkinitcpio.conf"
-    _d_config="$PWD/mkinitcpio.conf.d"
-    _d_hooks="$PWD/hooks"
-    _d_install="$PWD/install"
-    _d_post="$PWD/post"
-    _d_presets="$PWD/mkinitcpio.d"
-fi
+_d_presets=${MKINITCPIO_PRESETS:-'@SYSCONFDIR@/mkinitcpio.d'}
 
 # options and runtime data
 _optmoduleroot='' _optgenimg=''
