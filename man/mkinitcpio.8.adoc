@@ -131,9 +131,10 @@ other features.
 == Options for unified kernel image
 
 *--cmdline* _filename_::
-    Use kernel command line with unified kernel image. If none is specified,
-    try one of the files _/etc/kernel/cmdline_, _/usr/lib/kernel/cmdline_
-    or _/proc/cmdline_.
+    Use kernel command line with unified kernel image. If a directory is given,
+    all files matching _*.conf_ in that directory are used. If none is
+    specified, try one of the files _/etc/kernel/cmdline_,
+    _/usr/lib/kernel/cmdline_, _/etc/cmdline.d/*.conf_, _/proc/cmdline_.
 
 *--no-cmdline*::
     Omit embedding a kernel command line string in the unified kernel image.
