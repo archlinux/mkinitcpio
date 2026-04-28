@@ -51,13 +51,13 @@ other features.
 	Add additional _files_ or _directories_ to the image. These will be
 	processed in order after all other files have been included into the image.
 	 +
-	If the path is a file, you can comma seperate the source and the destination
+	If the path is a file, you can comma separate the source and the destination
 	on the image. Example: _source:destination:mode_.
 	 +
 	If the path is a directory, it will only accept the full directory and
 	include the directory from the root of the image.
 	 +
-	Multiple paths should be comma-seperated. This option can be specified
+	Multiple paths should be comma-separated. This option can be specified
 	multiple times.
 
 *-g*, *--generate* _filename_::
@@ -333,8 +333,8 @@ functions exist to facilitate this.
     function is identical to *add_all_modules_from_symbol*.
 
 *add_initcpio_binary* _binary_ [ _destination_ ] [ _mode_ ]::
-    Similiar to *add_binary* except it will look into _@INITCPIO_LIBDIR@_ for
-    the binary to include into the image. This is usefull for hooks that have
+    Similar to *add_binary* except it will look into _@INITCPIO_LIBDIR@_ for
+    the binary to include into the image. This is useful for hooks that have
     files inside the directory without hardcoding the path.
 
 == About early CPIO

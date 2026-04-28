@@ -60,7 +60,7 @@ usage: ${0##*/} [options]
    -M, --automods               Display modules found via autodetection
    -n, --nocolor                Disable colorized output messages
        --nopost                 Disable post hooks
-   -I, --include <paths>        Add a list of files or directories, comma seperated, to image.
+   -I, --include <paths>        Add a list of files or directories, comma separated, to image.
    -p, --preset <file>          Build specified preset from /etc/mkinitcpio.d
    -P, --allpresets             Process all preset files in /etc/mkinitcpio.d
    -R, --remove                 Remove specified preset images
