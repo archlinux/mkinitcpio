@@ -193,9 +193,11 @@ build() {
     add_file "/usr/lib/tmpfiles.d/20-systemd-stub.conf"
 
     # add hwdb binaries to the initramfs
-    map add_file \
-        /usr/lib/udev/hwdb.bin \
-        /etc/udev/hwdb.bin
+    for f in /usr/lib/udev/hwdb.bin /etc/udev/hwdb.bin; do
+        if [[  -f "$f" ]]; then
+            add_file "$f"
+        fi
+    done
 
     # Include nvpcr files
     for nvpcr in /usr/lib/nvpcr/*.nvpcr; do
