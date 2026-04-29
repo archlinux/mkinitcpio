@@ -1,5 +1,79 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v41
+
+        New Features:
+
+        * `--include` is a new switch that allows you to include files or
+          directories into the image. This can be used to overwrite binaries,
+          files or complete directories.
+
+        * `add_initcpio_binary` has been added to help hooks find packaged
+          binaries. This is used in install/base to install the busybox init
+          script and the library functions.
+
+        Changes in mkinitcpio:
+
+        * Previously the mkinitcpio code had several conditions for MESON_TEST
+          to support looking up files in the development directory. This has
+          changed to several new environment flags that can be optionally set
+          and help mkinitcpio find the correct library, configuration and helper
+          files.
+
+        * `--cmdline` now accepts a directory instead of only files.
+
+        Changes in mkinitcpio.conf:
+
+        * In the examples the block hook has been moved infront of sd-encrypt.
+
+        Changes in hooks:
+
+        * install/base now includes the ufs kernel modules.
+
+        * install/systemd now includes the libseccomp and libacl so-names.
+
+        * install/systemd now includes the service overrides into the initramfs
+          image.
+
+        * install/systemd now includes /usr/lib/systemd/systemd and symlinks
+          /init to this binary. This helps support systemctl soft-reboot.
+
+        * install/sd-vconsole now checks if /etc/vconsole.conf exists before
+          attempting to add it into the image.
+
+        * install/systemd has added new libs from the new .dlopen note section.
+
+        * install/sd-shutdown now includes `libmount.so`.
+
+        * install/sd-ecnrypt now includes the nvpcr files from /usr/lib/nvpcr/.
+
+        * install/systemd and install/udev now includes the hardware database
+          files from /usr/lib/udev/hwdb.bin and /etc/udev/hwdb.bin.
+
+        * install/sd-encrypt-opensc now includes a custom pcscd service and
+          socket file into the image.
+
+        * install/mdadm_udev now includes the `mdadm-last-resort@` services.
+
+        Changes in packaging:
+
+        * The kernel-install hook now forwards the verbose flag (-v) to the
+          command.
+
+        * `mkinitcpio-generate-shutdown-ramfs.service` now does word splitting
+          properly.
+
+        * The default systemd hooks from meson.build now has the `keymap` hook
+          removed from the HOOKS array.
+
+        Contributions from: Adam Maroti, Christian Hesse, David Foerster,
+        Diego Viola, Felix Pehla, Gilbert Gilb's, Jelle van der Waa,
+        Marcos Mello, Markus Hansmair, Morten Linderud, Pierre-Alain TORET,
+        Robin Candau, Ronan Pigott, Sebastian Wiesner, Sébastien Luttringer,
+        Vladimir LAVALLADE, Vladimir Stoiakin
+
+        - 2026-04-26
+
 CHANGES WITH v40
 
         Breaking Change:
