@@ -23,7 +23,7 @@ add_systemd_unit() {
         read -ra values <<< "$values"
 
         case $key in
-            Requires|OnFailure)
+            Requires|OnFailure|OnSuccess)
                 # only add hard dependencies (not Wants)
                 map add_systemd_unit "${values[@]}"
                 ;;
