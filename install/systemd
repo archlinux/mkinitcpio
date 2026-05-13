@@ -33,7 +33,7 @@ add_systemd_unit() {
                 case ${values[0]} in
                     -*)  ;;
                     !!*) add_binary "${values[0]#!!}" ;;
-                    *)   add_binary "${values[0]#[@!:+]}" ;;
+                    *)   add_binary "${values[0]#[@!:+|]}" ;;
                 esac
                 ;;
         esac
