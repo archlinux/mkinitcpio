@@ -7,7 +7,7 @@ add_systemd_unit() {
 
     local unit key dep
 
-    unit=$(PATH=/usr/lib/systemd/system:/lib/systemd/system type -P "$1")
+    unit=$(PATH=/usr/lib/systemd/system:/lib/systemd/system:/etc/systemd/system:/usr/local/lib/systemd/system type -P "$1")
     if [[ -z $unit ]]; then
         # complain about not found unit file
         return 1
@@ -23,7 +23,7 @@ add_systemd_unit() {
         read -ra values <<< "$values"
 
         case $key in
-            Requires|OnFailure)
+            Requires|OnFailure|OnSuccess)
                 # only add hard dependencies (not Wants)
                 map add_systemd_unit "${values[@]}"
                 ;;
@@ -33,7 +33,7 @@ add_systemd_unit() {
                 case ${values[0]} in
                     -*)  ;;
                     !!*) add_binary "${values[0]#!!}" ;;
-                    *)   add_binary "${values[0]#[@!:+]}" ;;
+                    *)   add_binary "${values[0]#[@!:+|]}" ;;
                 esac
                 ;;
         esac
