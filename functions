@@ -1126,9 +1126,14 @@ add_udev_rule() {
 parse_config() {
     # parse key global variables set by the config file.
 
+    local f src dest mode
+
     map add_module "${MODULES[@]}"
     map add_binary "${BINARIES[@]}"
-    map add_file "${FILES[@]}"
+    for f in "${FILES[@]}"; do
+        IFS=: read -r src dest mode <<<"$f"
+        add_file "$src" "$dest" "$mode"
+    done
 
     tee "$BUILDROOT/buildconfig" <"$1" | {
         # When MODULES is not an array (but instead implicitly converted at

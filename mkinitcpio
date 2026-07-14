@@ -1198,7 +1198,6 @@ ldconfig -r "$BUILDROOT" &>/dev/null
 # remove /var/cache/ldconfig/aux-cache for reproducibility
 rm -f -- "$BUILDROOT/var/cache/ldconfig/aux-cache"
 
-# TODO: Do we want to parse the FILES=() array the same way?
 # include files from --include
 for h in "${_optincludes[@]}"; do
     IFS=: read -r src dest mode <<< "$h"

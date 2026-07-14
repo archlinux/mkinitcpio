@@ -38,7 +38,9 @@ override the main configuration file.
     Defines an array of additional files which should be added to the image.
     Files are added as is, and parent directories will be added if needed. Files
     specified in this variable will override previously added files of the same
-    path.
+    path. You can colon separate the source and the destination on the image,
+    optionally followed by a file mode. Example: _source:destination:mode_.
+    If no destination is given, the file is placed at its source path.
 
 *BINARIES*::
     Defines an array of additional binaries which should be added to the

@@ -569,3 +569,31 @@ EOF
     assert_line 'at_root'
     refute_line 'find_another_file'
 }
+
+@test "test FILES config array with destination" {
+    if [[ ! -d "/lib/modules/$(uname -r)/" ]]; then
+        skip "No kernel modules available"
+    fi
+
+    local tmpdir
+    tmpdir="$(mktemp -d --tmpdir="$BATS_RUN_TMPDIR" "${BATS_TEST_NAME}.XXXXXX")"
+
+    touch "$tmpdir/find_this_file"
+    touch "$tmpdir/find_another_file"
+
+    {
+        echo 'HOOKS=(base)'
+        echo "FILES=('$tmpdir/find_this_file' '$tmpdir/find_another_file:/at_root')"
+    } >"$tmpdir/mkinitcpio.conf"
+
+    run ./mkinitcpio -v \
+        -D "${PWD}" \
+        -c "$tmpdir/mkinitcpio.conf" \
+        -g "$tmpdir/initramfs.img"
+    assert_success
+
+    run ./lsinitcpio "${tmpdir}/initramfs.img"
+    assert_line "${tmpdir#/}/find_this_file"
+    assert_line 'at_root'
+    refute_line --partial 'find_another_file'
+}
