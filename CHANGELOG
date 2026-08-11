@@ -1,5 +1,29 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v41.1
+
+        Bugfix release:
+
+        * install/systemd checks if the hwdb.bin exists before adding to the
+          image.
+
+        * install/udev checks if the hwdb.bin exists before adding to the image.
+
+        * install/systemd additionally searches for units in
+          /etc/systemd/system/ and /usr/local/lib/systemd/system/.
+
+        * install/systemd now adds unit dependencies specified in OnSuccess.
+
+        * install/systemd strips the "|" prefix from unit executable paths.
+
+        * install/encrypt now explicitly includes libcryptsetup since it cannot
+          be detected with readelf because it is now dlopen'ed.
+
+        Contributions from: Christian Hesse, Felix Pehla, Morten Linderud,
+        nl6720
+
+        - 2026-08-11
+
 CHANGES WITH v41
 
         New Features:
