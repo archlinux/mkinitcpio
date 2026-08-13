@@ -26,19 +26,15 @@ build() {
             case "$1" in
                 *.gz)
                     cat='zcat'
-                    of="${1%.gz}"
                     ;;
                 *.bz2)
                     cat='bzcat'
-                    of="${1%.bz2}"
                     ;;
                 *.zst)
                     cat='zstdcat'
-                    of="${1%.zst}"
                     ;;
                 *)
                     cat='cat'
-                    of="$1"
                     ;;
             esac
         }
@@ -57,7 +53,7 @@ build() {
         }
 
         process_keymap_file() {
-            local cat cmd rest f="$1" of
+            local cat cmd rest f="$1"
             get_decompressor "$f"
             while read -r cmd rest; do
                 if [[ "$cmd" == 'include' ]]; then
@@ -65,15 +61,13 @@ build() {
                     add_keymap_file "$1"
                 fi
             done < <("$cat" "$f")
-            add_dir "${of%/*}"
-            "$cat" "$f" | add_file - "$of" 644
+            add_file "$f"
         }
 
         add_font_file() {
             local cat file filename fontfile="$1"
             get_decompressor "$fontfile"
-            add_dir "${of%/*}"
-            "$cat" "$fontfile" | add_file - "$of" 644
+            add_file "$fontfile"
             if [[ "$("$cat" "$fontfile" | head -c 23 | tr -d '\0')" == '# combine partial fonts' ]]; then
                 while read -r filename; do
                     if [[ "$filename" == /* ]]; then
