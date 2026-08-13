@@ -1335,7 +1335,7 @@ install_modules() {
 
     msg "Generating module dependencies"
     for p in "$_d_kmoduledir"/modules.{builtin,builtin.modinfo,order}; do
-        add_file "${p}" "$moduledest"
+        add_file "${p}" "${moduledest}/"
     done
 
     depmod -b "$BUILDROOT" "$KERNELVERSION"
