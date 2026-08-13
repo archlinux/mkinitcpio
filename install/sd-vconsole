@@ -44,19 +44,29 @@ build() {
         }
 
         add_keymap_file() {
-            local cat cmd rest f of
+            local f
+            if [[ "$1" == /* ]]; then
+                # Use the exact keymap if it is specified with an absolute path
+                process_keymap_file "$1"
+            else
+                # Search for the keymap in /usr/share/kbd/keymaps/
+                while read -r f; do
+                    process_keymap_file "$f"
+                done < <(LC_ALL=C.UTF-8 find /usr/share/kbd/keymaps/ -type f -regex ".*/${1}\(\.map\|\.inc\)?\(\.gz\|\.bz2|\.zst\)?")
+            fi
+        }
 
-            while read -r f; do
-                get_decompressor "$f"
-                while read -r cmd rest; do
-                    if [[ "$cmd" == 'include' ]]; then
-                        eval set "$rest"
-                        add_keymap_file "$1"
-                    fi
-                done < <("$cat" "$f")
-                add_dir "${of%/*}"
-                "$cat" "$f" | add_file - "$of" 644
-            done < <(LC_ALL=C.UTF-8 find /usr/share/kbd/keymaps/ -type f -regex ".*/$1\(\.inc\)?\(\.gz\|\.bz2|\.zst\)?")
+        process_keymap_file() {
+            local cat cmd rest f="$1" of
+            get_decompressor "$f"
+            while read -r cmd rest; do
+                if [[ "$cmd" == 'include' ]]; then
+                    eval set "$rest"
+                    add_keymap_file "$1"
+                fi
+            done < <("$cat" "$f")
+            add_dir "${of%/*}"
+            "$cat" "$f" | add_file - "$of" 644
         }
 
         add_font_file() {
@@ -66,9 +76,13 @@ build() {
             "$cat" "$fontfile" | add_file - "$of" 644
             if [[ "$("$cat" "$fontfile" | head -c 23 | tr -d '\0')" == '# combine partial fonts' ]]; then
                 while read -r filename; do
-                    for file in "/usr/share/kbd/consolefonts/partialfonts/$filename"?('.gz'|'.bz2'|'.zst'); do
-                        add_font_file "$file"
-                    done
+                    if [[ "$filename" == /* ]]; then
+                        add_font_file "$filename"
+                    else
+                        for file in "/usr/share/kbd/consolefonts/partialfonts/$filename"?('.gz'|'.bz2'|'.zst'); do
+                            add_font_file "$file"
+                        done
+                    fi
                 done < <("$cat" "$fontfile" | sed '/^#/d')
             fi
         }
@@ -76,17 +90,18 @@ build() {
         # shellcheck disable=SC1091
         [[ -s /etc/vconsole.conf ]] && . /etc/vconsole.conf
 
-        [[ "$KEYMAP" != '@kernel' ]] && add_keymap_file "${KEYMAP:-us}.map"
-        [[ -n "$KEYMAP_TOGGLE" ]] && add_keymap_file "${KEYMAP_TOGGLE}.map"
+        [[ "$KEYMAP" != '@kernel' ]] && add_keymap_file "${KEYMAP:-us}"
+        [[ -n "$KEYMAP_TOGGLE" ]] && add_keymap_file "${KEYMAP_TOGGLE}"
 
         if [[ -n "$FONT_MAP" ]]; then
-            FONT_MAP="${FONT_MAP%.trans}"
-            if [[ -f "/usr/share/kbd/consoletrans/$FONT_MAP" ]]; then
-                add_file "/usr/share/kbd/consoletrans/$FONT_MAP"
-            elif [[ -f "/usr/share/kbd/consoletrans/$FONT_MAP.trans" ]]; then
-                add_file "/usr/share/kbd/consoletrans/$FONT_MAP.trans"
-            elif [[ -f "/usr/share/kbd/consoletrans/${FONT_MAP}_to_uni.trans" ]]; then
-                add_file "/usr/share/kbd/consoletrans/${FONT_MAP}_to_uni.trans"
+            if [[ "$FONT_MAP" == /* && -f "$FONT_MAP" ]]; then
+                add_file "$FONT_MAP"
+            elif [[ -f "/usr/share/kbd/consoletrans/${FONT_MAP%.trans}" ]]; then
+                add_file "/usr/share/kbd/consoletrans/${FONT_MAP%.trans}"
+            elif [[ -f "/usr/share/kbd/consoletrans/${FONT_MAP%.trans}.trans" ]]; then
+                add_file "/usr/share/kbd/consoletrans/${FONT_MAP%.trans}.trans"
+            elif [[ -f "/usr/share/kbd/consoletrans/${FONT_MAP%.trans}_to_uni.trans" ]]; then
+                add_file "/usr/share/kbd/consoletrans/${FONT_MAP%.trans}_to_uni.trans"
             else
                 error "sd-vconsole: requested font map not found: '%s'" "$FONT_MAP"
                 return 1
@@ -94,9 +109,10 @@ build() {
         fi
 
         if [[ -n "$FONT_UNIMAP" ]]; then
-            FONT_UNIMAP="${FONT_UNIMAP%.uni}"
-            if [[ -f "/usr/share/kbd/unimaps/$FONT_UNIMAP.uni" ]]; then
-                add_file "/usr/share/kbd/unimaps/$FONT_UNIMAP.uni"
+            if [[ "$FONT_UNIMAP" == /* && -f "$FONT_UNIMAP" ]]; then
+                add_file "$FONT_UNIMAP"
+            elif [[ -f "/usr/share/kbd/unimaps/${FONT_UNIMAP%.uni}.uni" ]]; then
+                add_file "/usr/share/kbd/unimaps/${FONT_UNIMAP%.uni}.uni"
             else
                 error "sd-vconsole: requested font unimap not found: '%s'" "$FONT_UNIMAP"
                 return 1
@@ -104,10 +120,15 @@ build() {
         fi
 
         if [[ -n "$FONT" ]]; then
-            for file in "/usr/share/kbd/consolefonts/$FONT"?('.psfu'|'.psf'|'.cp'|'.fnt')?('.gz'|'.bz2'|'.zst'); do
-                add_font_file "$file"
+            if [[ "$FONT" == /* && -f "$FONT" ]]; then
+                add_font_file "$FONT"
                 return
-            done
+            else
+                for file in "/usr/share/kbd/consolefonts/$FONT"?('.psfu'|'.psf'|'.cp'|'.fnt')?('.gz'|'.bz2'|'.zst'); do
+                    add_font_file "$file"
+                    return
+                done
+            fi
             error "sd-vconsole: requested font not found: '%s'" "$FONT"
             return 1
         fi
