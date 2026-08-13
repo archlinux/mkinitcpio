@@ -299,7 +299,7 @@ decompress_firmware() {
     if (( ${#fw_file_symlinks[@]} )); then
         msg2 'Fixing firmware file symlinks'
         for file in "${fw_file_symlinks[@]}"; do
-            linkobject="$(find "$file" -prune -printf '%l')"
+            linkobject="$(LC_ALL=C.UTF-8 find "$file" -prune -printf '%l')"
             symlink_message="Rewriting '${file#"${BUILDROOT}"} -> ${linkobject#"${BUILDROOT}"}' to"
             # Remove the now invalid symlink
             rm -- "${file:?}"
@@ -338,8 +338,8 @@ build_image() {
             fi
             # move all compressed files to the early cpio to avoid double compression
             local compressed_files=()
-            mapfile -td '' compressed_files < <(find "$BUILDROOT" -type f \
-                -regextype posix-extended -regex '.*\.(bz2|gz|lz4|lzma|lzo|xz|zst)' -printf './%P\0')
+            mapfile -td '' compressed_files < <(LC_ALL=C.UTF-8 find "$BUILDROOT" -type f \
+                -regextype posix-extended -regex '.*\.(bz2|gz|lz4|lzma|lzo|xz|zst)' -printf './%P\0' | LC_ALL=C.UTF-8 sort -uz)
             if (( ${#compressed_files[@]} )) && pushd "$BUILDROOT" >/dev/null; then
                 quiet "Moving to early root: '%s'" "${compressed_files[@]#.}"
                 # try to hard link files, fall back to copy if that fails
@@ -352,7 +352,7 @@ build_image() {
                     | awk -vRS='\0' '{printf("%d\t%s\0", split($0, _, "/"), $0)}' \
                     | LC_ALL=C.UTF-8 sort -uz -k1n,1 -k2 | cut -zf2-)
                 while (( ${#moved_dirs[@]} )); do
-                    mapfile -td '' moved_dirs < <(find "${moved_dirs[@]}" -maxdepth 0 -empty -delete -printf '%h\0' | uniq -z)
+                    mapfile -td '' moved_dirs < <(LC_ALL=C.UTF-8 find "${moved_dirs[@]}" -maxdepth 0 -empty -delete -printf '%h\0' | LC_ALL=C.UTF-8 uniq -z)
                 done
                 popd >/dev/null || return
             fi
