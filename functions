@@ -860,7 +860,11 @@ add_symlink() {
 
     add_dir "${name%/*}"
 
-    if [[ -L "${BUILDROOT}${1}" ]]; then
+    if [[ -L "${BUILDROOT}${name}" ]]; then
+        # skip adding an already existing symlink
+        if [[ "$target" == "$(LC_ALL=C.UTF-8 find "${BUILDROOT}${name}" -prune -printf '%l')" ]]; then
+            return 0
+        fi
         quiet "overwriting symlink %s -> %s" "$name" "$target"
     else
         quiet "adding symlink: %s -> %s" "$name" "$target"
@@ -934,6 +938,12 @@ add_file() {
 
     # if destination ends with a slash, then use the source file name
     if [[ -e "${BUILDROOT}${dest/%\//\/${src##*/}}" ]]; then
+        # skip adding an already existing file
+        if [[ ! -f "${BUILDROOT}${dest/%\//\/${src##*/}}" ]]; then
+            :
+        elif [[ -z "$mode" || ( -n "$mode" && "$mode" == "$(stat -c %a -- "${BUILDROOT}${dest/%\//\/${src##*/}}")" ) ]]; then
+            cmp -s -- "$src" "${BUILDROOT}${dest}" && return 0
+        fi
         quiet 'overwriting file: %s' "${dest/%\//\/${src##*/}}"
     else
         quiet 'adding file: %s' "${dest/%\//\/${src##*/}}"
