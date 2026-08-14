@@ -91,6 +91,12 @@ build() {
         /usr/lib/systemd/system-generators/systemd-hibernate-resume-generator \
         /usr/lib/systemd/system-generators/systemd-debug-generator
 
+    map add_symlink \
+        /usr/bin/halt \
+        /usr/bin/reboot \
+        /usr/bin/poweroff \
+        /usr/bin/shutdown
+
     # udev rules
     map add_udev_rule "$rules" \
         50-udev-default.rules \
@@ -115,7 +121,10 @@ build() {
         local-fs.target \
         local-fs-pre.target \
         paths.target \
+        halt.target \
         reboot.target \
+        poweroff.target \
+        shutdown.target \
         slices.target \
         sockets.target \
         swap.target \
