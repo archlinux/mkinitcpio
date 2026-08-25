@@ -84,6 +84,12 @@ override the main configuration file.
     Note that any compressed files will be placed in the uncompressed early CPIO
     to avoid double compression.
 
+*MISSING_FIRMWARE_WARNING*::
+    Switch (_yes_/_no_) to decide whether to warn in case a firmware file
+    specified by a kernel module is not available. Enabled by default.
+    May be useful to disable in cases where the firmware files are not available
+    or not needed.
+
 == See also
 
 *mkinitcpio*(8)
