@@ -1,5 +1,46 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v42
+
+        Changes in mkinitcpio:
+
+        * Busybox-based init now uses /sysroot as the root mountpoint just like
+          the systemd-based one.
+
+        * When adding files, existing files, which have not changed and whose
+          permissions match, are not overwriten, but instead skipped. This
+          declutters the verbose output and avoids needless writes.
+
+        * Verbose output now correctly shows the included module dependency
+          file names.
+
+        Changes in hooks:
+
+        * install/systemd now includes systemd-pcrosseparator.service.
+
+        * install/systemd includes halt, reboot, poweroff and shutdown symlinks
+          from /usr/bin/ and .target units so that it is possible to invoke
+          those actions.
+
+        * install/sd-encrypt deprecates the mkinitcpio-specific
+          /etc/crypttab.initramfs file in favour of using the x-initrd.attach
+          option in /etc/crypttab (in the fourth field). This matches the
+          behaviour of other initramfs generators.
+
+        * install/sd-vconsole supports absolute paths in KEYMAP, FONT, etc.
+
+        * install/sd-vconsole includes the keymap and font files as-is without
+          decompressing them.
+
+        Changes in packaging:
+
+        * The libalpm script now skips rebuilding images when there are updates
+          to packages that are not needed by mkinitcpio hooks.
+
+        Contributions from: Aurelia, nl6720
+
+        - 2026-09-02
+
 CHANGES WITH v41.1
 
         Bugfix release:
