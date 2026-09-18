@@ -935,6 +935,12 @@ while :; do
             warning 'The --uefi option is deprecated. Use --uki instead.'
             ;&
         -U | --uki)
+            # Create a /EFI/Linux directory on the ESP if needed
+            if [[ "$2" == '/efi/EFI/Linux/'* && ! -d '/efi/EFI/Linux' ]] && mountpoint -q '/efi'; then
+                install -d '/efi/EFI/Linux'
+            elif [[ "$2" == '/boot/EFI/Linux/'* && ! -d '/boot/EFI/Linux' ]] && mountpoint -q '/boot'; then
+                install -d '/boot/EFI/Linux'
+            fi
             _optuki="$(check_path w "$1" "$2")" || exit
             shift
             ;;
