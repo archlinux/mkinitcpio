@@ -1,7 +1,7 @@
 #!/bin/bash
 
 build() {
-    local mod
+    local veritytab
 
     map add_module 'dm-verity' 'sha256' 'sha512'
 
@@ -22,7 +22,14 @@ build() {
     add_binary '/usr/bin/veritysetup'
 
     # Add veritytab if present
-    [[ -f /etc/veritytab.initramfs ]] && add_file '/etc/veritytab.initramfs' '/etc/veritytab'
+    if [[ -f /etc/veritytab.initramfs ]]; then
+        add_file '/etc/veritytab.initramfs' '/etc/veritytab' 600
+        warning '/etc/veritytab.initramfs is deprecated. Merge it into /etc/veritytab and add a x-initrd.attach option to the devices that need to be set up in the initramfs stage.'
+    elif [[ -f /etc/veritytab ]]; then
+        if veritytab="$(awk '!/^\s*($|#)/ && $5 ~ /x-initrd\.attach/' /etc/veritytab 2>/dev/null)" && [[ -n "$veritytab" ]]; then
+            printf '%s\n' "$veritytab" | add_file - '/etc/veritytab' 600
+        fi
+    fi
 }
 
 help() {
@@ -30,8 +37,9 @@ help() {
 This hook sets up dm-verity in the initramfs environment.
 
 Ensure your kernel command line contains valid parameters for dm-verity.
-If /etc/veritytab.initramfs exists, it will be included in the initramfs as
-/etc/veritytab. See veritytab(5) for details.
+If /etc/veritytab contains lines with x-initrd.attach in the fifth field, those
+lines will be added to /etc/veritytab in the initramfs. See veritytab(5) for
+details.
 HELPEOF
 }
 
