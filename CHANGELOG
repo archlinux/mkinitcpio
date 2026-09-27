@@ -1,5 +1,28 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v42.1
+
+        Changes in mkinitcpio:
+
+        * Create a /EFI/Linux directory on the ESP if the UKI will be output
+          there, avoiding the need to create the directory manually beforehand.
+
+        Changes in hooks:
+
+        * install/systemd explicitly creates /usr/bin/halt, /usr/bin/reboot,
+          /usr/bin/poweroff and /usr/bin/shutdown symlinks instead of copying
+          them to prevent errors on systems without these symlinks.
+
+        * install/systemd includes systemd-pcrextend.socket and
+          systemd-pcrextend@.service because of changes in systemd v262. For
+          volume key measurement into PCR 15, systemd-cryptsetup now
+          communicates with systemd-pcrextend over Varlink and requires these
+          unit files to do that.
+
+        Contributions from: Gergely Imreh, nl6720
+
+        - 2026-09-27
+
 CHANGES WITH v42
 
         Changes in mkinitcpio:
