@@ -136,10 +136,11 @@ build() {
         systemd-journald-dev-log.socket \
         systemd-journald.service \
         systemd-modules-load.service \
-        systemd-pcrphase-initrd.service \
-        systemd-pcrosseparator.service \
         systemd-pcrextend.socket \
         systemd-pcrextend@.service \
+        systemd-pcrnvdone.service \
+        systemd-pcrosseparator.service \
+        systemd-pcrphase-initrd.service \
         systemd-tmpfiles-setup.service \
         systemd-tmpfiles-setup-dev.service \
         systemd-tpm2-setup-early.service \
