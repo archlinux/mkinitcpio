@@ -137,6 +137,8 @@ build() {
         systemd-modules-load.service \
         systemd-pcrphase-initrd.service \
         systemd-pcrosseparator.service \
+        systemd-pcrextend.socket \
+        systemd-pcrextend@.service \
         systemd-tmpfiles-setup.service \
         systemd-tmpfiles-setup-dev.service \
         systemd-udevd-control.socket \
