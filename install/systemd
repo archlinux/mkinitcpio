@@ -85,6 +85,7 @@ build() {
         /usr/lib/systemd/systemd-hibernate-resume \
         /usr/lib/systemd/systemd-shutdown \
         /usr/lib/systemd/systemd-sulogin-shell \
+        /usr/lib/systemd/systemd-tpm2-setup \
         /usr/lib/systemd/systemd-validatefs \
         /usr/lib/systemd/system-generators/systemd-fstab-generator \
         /usr/lib/systemd/system-generators/systemd-gpt-auto-generator \
@@ -141,6 +142,7 @@ build() {
         systemd-pcrextend@.service \
         systemd-tmpfiles-setup.service \
         systemd-tmpfiles-setup-dev.service \
+        systemd-tpm2-setup-early.service \
         systemd-udevd-control.socket \
         systemd-udevd-kernel.socket \
         systemd-udevd.service \
