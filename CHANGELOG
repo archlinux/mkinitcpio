@@ -1,5 +1,21 @@
 mkinitcpio - Arch Linux initramfs generation tools
 
+CHANGES WITH v42.2
+
+        Changes in hooks:
+
+        * install/systemd includes systemd-tpm2-setup-early.service and
+          systemd-pcrnvdone.service because of changes in systemd v262. They are
+          required to initialize NvPCRs and to measure a separator into PCR 9.
+          Note that this does not fix the issue of failing units with UKIs built
+          by mkinitcpio itself. systemd v262 requires that the UKI must be
+          signed with a PCR policy and there is still no solution for that
+          without using ukify.
+
+        Contributions from: Aidan Dang, nl6720
+
+        - 2026-10-01
+
 CHANGES WITH v42.1
 
         Changes in mkinitcpio:
