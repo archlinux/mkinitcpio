@@ -10,6 +10,11 @@ build() {
         add_all_modules -f 'nls' '/kernel/fs'
     else
         add_checked_modules -f 'nls' '/kernel/fs'
+
+        # systemd-gpt-auto-generator could mount the EFI system partition to /sysefi, so include the vfat module
+        if declare -F add_systemd_unit &>/dev/null; then
+            add_module 'fs-vfat?'
+        fi
     fi
 
     # Some file systems may need `mount.FSTYPE` binaries to properly mount.

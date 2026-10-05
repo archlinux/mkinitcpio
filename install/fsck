@@ -19,6 +19,11 @@ build() {
                 add_binary fsck.xfs
                 add_binary xfs_repair
                 ;;
+            fat|vfat|msdos)
+                add_binary fsck.fat
+                add_symlink /usr/bin/fsck.vfat fsck.fat
+                add_symlink /usr/bin/fsck.msdos fsck.fat
+                ;;
             *)
                 if compgen -c "fsck.$1" &>/dev/null; then
                     add_binary "fsck.$1"
@@ -37,6 +42,10 @@ build() {
         fi
         if [[ -n "$usrfstype" && "$usrfstype" != "$rootfstype" ]]; then
             add_fsck "$usrfstype" && (( ++added ))
+        fi
+        # systemd-gpt-auto-generator could mount the EFI system partition to /sysefi, so include the fsck binary for vfat
+        if declare -F add_systemd_unit &>/dev/null; then
+            add_fsck 'vfat'
         fi
     else
         for fsck in $(compgen -c fsck.); do
