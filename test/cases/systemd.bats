@@ -28,10 +28,20 @@ setup() {
     }
 }
 
+@test "add_systemd_unit follows BindsTo and its transitive dependencies" {
+    printf '[Unit]\nBindsTo=bound.service\n' > "$_d_units/main.service"
+    printf '[Unit]\nRequires=required.socket\n' > "$_d_units/bound.service"
+    printf '[Socket]\nListenStream=/run/example\n' > "$_d_units/required.socket"
+
+    run add_systemd_unit main.service
+    assert_success
+    assert_output $'main.service\nbound.service\nrequired.socket'
+}
+
 @test "add_systemd_unit skips device and specifier dependencies" {
     cat > "$_d_units/main@.service" <<'EOF'
 [Unit]
-Requires=%i.device dev-sda.device bound.service
+BindsTo=%i.device dev-sda.device bound.service
 Requires=%i.mount required.socket
 EOF
     printf '[Service]\n' > "$_d_units/bound.service"
@@ -44,7 +54,7 @@ EOF
 }
 
 @test "add_systemd_unit stops dependency cycles and retains sibling dependencies" {
-    printf '[Unit]\nRequires=bound.service sibling.socket\n' > "$_d_units/main.service"
+    printf '[Unit]\nBindsTo=bound.service sibling.socket\n' > "$_d_units/main.service"
     printf '[Unit]\nRequires=main.service\n' > "$_d_units/bound.service"
     printf '[Socket]\n' > "$_d_units/sibling.socket"
 
@@ -54,7 +64,7 @@ EOF
 }
 
 @test "add_systemd_unit scans dependencies again on independent calls" {
-    printf '[Unit]\nRequires=bound.service\n' > "$_d_units/main.service"
+    printf '[Unit]\nBindsTo=bound.service\n' > "$_d_units/main.service"
     printf '[Service]\n' > "$_d_units/bound.service"
 
     add_systemd_unit main.service > "$BATS_TEST_TMPDIR/first"

@@ -26,7 +26,7 @@ add_systemd_unit() {
         read -ra values <<< "$values"
 
         case $key in
-            Requires|OnFailure|OnSuccess)
+            Requires|BindsTo|OnFailure|OnSuccess)
                 # only add hard dependencies (not Wants)
                 for dep in "${values[@]}"; do
                     [[ "$dep" == *%* || "$dep" == *.device ]] || add_systemd_unit "$dep"
