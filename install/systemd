@@ -13,6 +13,9 @@ add_systemd_unit() {
         return 1
     fi
 
+    in_array "$unit" "${systemd_unit_stack[@]}" && return 0
+    local -a systemd_unit_stack=("${systemd_unit_stack[@]}" "$unit")
+
     add_file "$unit"
 
     shopt -s nullglob
@@ -25,7 +28,9 @@ add_systemd_unit() {
         case $key in
             Requires|OnFailure|OnSuccess)
                 # only add hard dependencies (not Wants)
-                map add_systemd_unit "${values[@]}"
+                for dep in "${values[@]}"; do
+                    [[ "$dep" == *%* || "$dep" == *.device ]] || add_systemd_unit "$dep"
+                done
                 ;;
             Exec*)
                 # do not add binaries unless they are required,
