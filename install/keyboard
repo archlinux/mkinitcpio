@@ -3,7 +3,7 @@
 
 build() {
     add_checked_modules -f '(_cs|sl811_hcd|isp116x_hcd)' '/usb/host'
-    add_module 'usbhid'
+    map add_module 'usbhid?' 'ohci_hcd?' 'ohci_pci?' 'ehci_hcd?' 'ehci_pci?' 'xhci_hcd?' 'xhci_pci?' 'thunderbolt?'
     map add_checked_modules '/hid/hid' '/input/(serio|keyboard)'
 }
 
