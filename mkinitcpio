@@ -268,6 +268,17 @@ create_image() {
             return 1
         fi
     done
+
+    # The legacy LZ4 format used by the kernel has no end marker, so the decoder
+    # can only stop at a chunk size of 0. Append 4 zero bytes to terminate the
+    # stream. Without them, the kernel fails to decompress this image when
+    # another cpio image follows it (for example, one added by systemd-stub).
+    if [[ -n "$_optuki" && "$compress" == "lz4" ]]; then
+        if ! head -c 4 /dev/zero >>"$out"; then
+            printf "lz4 zero padding"
+            return 1
+        fi
+    fi
 }
 
 # Decompress firmware files
