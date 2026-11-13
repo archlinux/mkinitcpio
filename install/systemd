@@ -7,13 +7,16 @@ add_systemd_unit() {
 
     local unit key dep
 
-    unit=$(PATH=/usr/lib/systemd/system:/lib/systemd/system:/etc/systemd/system:/usr/local/lib/systemd/system type -P "$1")
+    unit=$(PATH=/etc/systemd/system:/usr/local/lib/systemd/system:/usr/lib/systemd/system type -P "$1")
     if [[ -z $unit ]]; then
         # complain about not found unit file
         return 1
     fi
 
-    add_file "$unit"
+    # add_file doesn't like device links, so just leave it out if it's masked
+    if [[ "$(realpath -- "$unit")" != '/dev/null' ]]; then
+        add_file "$unit"
+    fi
 
     shopt -s nullglob
     map add_file /{etc,usr/lib}/systemd/system/"${unit##*/}".d/*.conf
