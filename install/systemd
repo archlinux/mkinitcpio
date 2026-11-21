@@ -218,9 +218,9 @@ build() {
     done
 
     # Include nvpcr files
-    for nvpcr in /usr/lib/nvpcr/*.nvpcr; do
-        add_file "$nvpcr"
-    done
+    shopt -s nullglob
+    map add_file /{etc,usr/local/lib,usr/lib}/nvpcr/*.nvpcr
+    shopt -u nullglob
 }
 
 help() {

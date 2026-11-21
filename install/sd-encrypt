@@ -49,9 +49,6 @@ build() {
     # add mkswap for creating swap space on the fly (see 'swap' in crypttab(5))
     add_binary 'mkswap'
 
-    # add NVPCR definition files
-    map add_file /usr/lib/nvpcr/*.nvpcr
-
     if [[ -f /etc/crypttab.initramfs ]]; then
         add_file '/etc/crypttab.initramfs' '/etc/crypttab' 600
         warning '/etc/crypttab.initramfs is deprecated. Merge it into /etc/crypttab and add a x-initrd.attach option to the devices that need to be unlocked in the initramfs.'
