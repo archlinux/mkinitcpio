@@ -12,6 +12,10 @@ test_files = [
     'zsh-completion',
 ]
 
+if want_systemd.enabled()
+    test_files += 'systemd'
+endif
+
 coverage_dirs = []
 
 test_env.set('LC_ALL', 'C.UTF-8')

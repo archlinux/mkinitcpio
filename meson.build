@@ -185,6 +185,7 @@ shellcheck_files = [
     'test/cases/functions.bats',
     'test/cases/mkinitcpio.bats',
     'test/cases/parse_cmdline.bats',
+    'test/cases/systemd.bats',
     'test/cases/zsh-completion.bats',
     'test/helpers/common.bash',
 ]

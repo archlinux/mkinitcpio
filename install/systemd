@@ -13,6 +13,9 @@ add_systemd_unit() {
         return 1
     fi
 
+    in_array "$unit" "${systemd_unit_stack[@]}" && return 0
+    local -a systemd_unit_stack=("${systemd_unit_stack[@]}" "$unit")
+
     # add_file doesn't like device links, so just leave it out if it's masked
     if [[ "$(realpath -- "$unit")" != '/dev/null' ]]; then
         add_file "$unit"
@@ -26,9 +29,11 @@ add_systemd_unit() {
         read -ra values <<< "$values"
 
         case $key in
-            Requires|OnFailure|OnSuccess)
+            Requires|BindsTo|OnFailure|OnSuccess)
                 # only add hard dependencies (not Wants)
-                map add_systemd_unit "${values[@]}"
+                for dep in "${values[@]}"; do
+                    [[ "$dep" == *%* || "$dep" == *.device ]] || add_systemd_unit "$dep"
+                done
                 ;;
             Exec*)
                 # do not add binaries unless they are required,
